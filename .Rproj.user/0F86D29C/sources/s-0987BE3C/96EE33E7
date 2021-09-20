@@ -1,0 +1,25 @@
+{
+    "id": "96EE33E7",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1631526315124.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "id": "e60ed1840f7c4b5f9be1109ee45eec28",
+        "name": "res.negative",
+        "title": "res.negative"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2363938889096,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1631526315124,
+    "read_only": false,
+    "read_only_alternatives": []
+}

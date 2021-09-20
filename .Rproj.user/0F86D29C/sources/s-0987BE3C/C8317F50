@@ -1,0 +1,32 @@
+{
+    "id": "C8317F50",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1631270385052.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "expression": "reactomeGS",
+        "caption": "reactomeGS",
+        "totalObservations": 1304,
+        "displayedObservations": 1304,
+        "variables": 18818,
+        "cacheKey": "A6037779",
+        "object": "reactomeGS",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=reactomeGS&cache_key=A6037779&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 3472328296229196622,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1631270385052,
+    "read_only": false,
+    "read_only_alternatives": []
+}

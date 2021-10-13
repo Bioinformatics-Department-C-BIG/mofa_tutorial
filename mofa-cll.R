@@ -1,10 +1,10 @@
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install("MOFA2")
-devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
-browseVignettes("MOFA2")
-BiocManager::install("MOFAdata")
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# 
+# BiocManager::install("MOFA2")
+# devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
+# browseVignettes("MOFA2")
+# BiocManager::install("MOFAdata")
 
 library(MOFA2)
 library(MOFAdata)
@@ -156,6 +156,20 @@ print(p)
 
 
 
+###### Heatmaps 
+
+  plot_data_heatmap(MOFAobject, 
+                  view = "mRNA",
+                  factor = 5,  
+                  features = 25,
+                  denoise = TRUE,
+                  cluster_rows = FALSE, cluster_cols = FALSE,
+                  show_rownames = TRUE, show_colnames = FALSE,
+                  scale = "row"
+)
+
+
+
 ##### Predicton of cilincal subgroups 
 install.packages('randomForest')
 suppressPackageStartupMessages(library(randomForest))
@@ -205,7 +219,7 @@ library(MOFAdata)
 
 utils::data(reactomeGS)
 
-head(colnames(reactomeGS))
+head((reactomeGS))
 
 head(colnames(reactomeGS))
 
@@ -215,6 +229,8 @@ res.positive <- run_enrichment(MOFAobject,
                                view = "mRNA",
                                sign = "positive"
 )
+
+
 
 # GSEA on negative weights, with default options
 res.negative <- run_enrichment(MOFAobject, 
@@ -227,11 +243,26 @@ res.negative <- run_enrichment(MOFAobject,
 MOFAobject@data$Mutations
 res.negative
 
+theme(plot.margin=grid::unit(c(0,0,0,0), "mm"))
 
 names(res.positive)
 
 plot_enrichment_heatmap(res.positive)
-plot_enrichment(res.positive, factor = 5, max.pathways = 15)
+ggsave(paste0('Enrichment_heatmap_positive','.png'), width = 9, height=4, dpi=100)
+
+
+plot_enrichment_heatmap(res.negative)
+ggsave(paste0('Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=100)
+
+
+factor_to_plot=9
+plot_enrichment(res.positive, factor = factor_to_plot, max.pathways = 15)
+ggsave(paste0('GSEA_factor_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+
+factor_to_plot=9
+plot_enrichment(res.negative, factor = factor_to_plot, max.pathways = 15)
+ggsave(paste0('GSEA_factor_neg_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+
 
 ##### ASSOCIATE FACTORS WITH SURVIVAL 
 library(survival)

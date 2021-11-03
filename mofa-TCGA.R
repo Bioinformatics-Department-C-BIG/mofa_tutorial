@@ -26,7 +26,7 @@ plot_data_overview(MOFAobject)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts
 model_opts <- get_default_model_options(MOFAobject)
-model_opts$num_factors <- 13
+model_opts$num_factors <- 10
 model_opts
 
 
@@ -78,13 +78,21 @@ plot_weights(MOFAobject,
 
 
 plot_top_weights(MOFAobject,
-                 view = 'protein',
+                 view = 'miRNA',
                  factor = 1,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
 
 
+plot_top_weights(MOFAobject,
+                 view = 'mRNA',
+                 factor = 2,
+                 nfeatures = 10,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+ggsave('top_weights.png', width = 4, height = 4, dpi=500 )
+ggsave(paste0('GSEA_factor_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
 
 #####Prediction of clinical subgroups 
 
@@ -122,10 +130,10 @@ plot_data_scatter(MOFAobject,
                   color_by = "ER-alpha"
 ) + labs(y="RNA expression")
 
-
+factor_to_plot=1
 plot_data_heatmap(MOFAobject, 
-                  view = "miRNA",
-                  factor = 1,  
+               #   view = "mRNA",
+                  factor = factor_to_plot,  
                   features = 25,
                   denoise = TRUE,
                   cluster_rows = FALSE, cluster_cols = FALSE,
@@ -134,6 +142,7 @@ plot_data_heatmap(MOFAobject,
 )
 
 
+ggsave(paste0('heatmap/heatmap',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
 
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
@@ -184,7 +193,7 @@ res.positive <- run_enrichment(MOFAobject,
 
 # GSEA on negative weights, with default options
 res.negative <- run_enrichment(MOFAobject, 
-                               feature.sets = reac, 
+                               feature.sets = reactomeGS, 
                                view = "mRNA",
                                sign = "negative"
 )
@@ -203,4 +212,26 @@ library (biomaRt)
 
 g_All <- getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol' ,mart=ensembl )
 
+res.positive <- run_enrichment(MOFAobject, 
+                               feature.sets = reactomeGS, 
+                               view = "mRNA",
+                               sign = "positive"
+)
+
+library("AnnotationDbi")
+install.packages('org.Hs.eg.db')
+library("org.Hs.eg.db")
+BiocManager::install("org.Hs.eg.db")
+
+
+ensid = mapIds(org.Hs.eg.db,
+                  keys=rownames(MOFAobject@data$mRNA$group1), 
+                  column="ENSEMBL",
+                  keytype="SYMBOL",
+                  multiVals="first")
+
+
+
+select(edb, keys=keys, columns=rownames(MOFAobject@data$mRNA$group1),
+       keytype="GENEID")
 

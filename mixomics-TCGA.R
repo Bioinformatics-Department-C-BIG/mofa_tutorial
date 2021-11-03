@@ -43,6 +43,7 @@ plotIndiv(MyResult.diablo)
 plotVar(MyResult.diablo, var.names = c(FALSE, FALSE, TRUE),
         legend=TRUE, pch=c(16,16,1))
 
+selectVar(MyResult.diablo, block = 'protein', comp = 1)$protein$name
 
 
 ##### Customize sample plots 
@@ -59,9 +60,12 @@ plotVar(MyResult.diablo, var.names = c(FALSE, FALSE, TRUE),
 ##### GLoval OVERVIEW of the correlation structure at the componet level 
 plotDiablo(MyResult.diablo, ncomp = 1)
 
+plotArrow(MyResult.diablo, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
+
 
 ### Visualize correlations between variables 
-circosPlot(MyResult.diablo, cutoff=0.7)
+p<-circosPlot(MyResult.diablo, cutoff=0.7)
+save(file= 'circos.png' )
 
 
 ##### cimDiablo
@@ -82,8 +86,11 @@ cimDiablo(MyResult.diablo, color.blocks = c('darkorchid', 'brown1', 'lightgreen'
 ###### Plot loadings: visualizes loading weights of each selected variables on each component
 # And each dataset 
 #plotLoadings(MyResult.diablo, contrib = "max")
-plotLoadings(MyResult.diablo, comp = 2, contrib = "max")
+P<-plotLoadings(MyResult.diablo, comp = 2, contrib = "max")
+ggsave('top_weights.png', width = 4, height = 4, dpi=500 )
 
+
+?network
 
 network(MyResult.diablo, blocks = c(1,2,3),
         color.node = c('darkorchid', 'brown1', 'lightgreen'), 

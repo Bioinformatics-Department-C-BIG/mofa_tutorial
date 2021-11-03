@@ -4,8 +4,12 @@
 
 
 
-install.packages("readxl")
+
 library('readxl')
+library('stringr')
+library(ggplot2)
+library(data.table)
+
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer.xlsx' )
 
 #stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_cancer_literature_curated.xlsx')
@@ -19,3 +23,38 @@ stats_summarize[order(stats_summarize$Var1),]
 #write.csv(ordered_stats,'Frequency_stats_cancer.csv')
 
 write.csv(ordered_stats,'Frequency_stats_not_cancer.csv')
+
+ordered_stats
+stats$`Objective-Code`
+
+###Filters
+#### 1. remove same sample 
+stats_filter<-stats[stats$`Same sample`=='Yes',]
+stats_filter<-stats
+#stats_filter<-stats[stats$`Data` %like% 'Proteomics',]
+
+#### Split the omics and count number each used 
+
+get_frequencies<-function(stats_filter,x){
+  omics_data<-str_split(stats_filter[[x]], ',|\r|\n')
+  omics_data_frequencies<-table(tolower(unlist(omics_data)))
+  omics_data_frequencies<-omics_data_frequencies[order(-omics_data_frequencies)]
+  omics_data_frequencies<-data.frame(omics_data_frequencies)
+  return(omics_data_frequencies)
+}
+
+
+omics_data_frequencies<-get_frequencies(stats_filter, 'Objective-Code')
+omics_data_frequencies<-omics_data_frequencies[omics_data_frequencies$Freq>1,]
+
+#x<-'Data'
+#str_split(stats_filter[[x]], ',|\r|\n|\ ')
+#barplot(omics_data_frequencies$Freq)
+#omics_data_frequencies<-omics_data_frequencies[-1,]
+ggplot(omics_data_frequencies, aes(x=Var1, y=Freq))+geom_bar(stat='identity')+
+  theme(axis.text.x = element_text(size=rel(1.3),angle = 45, vjust = 0.5, hjust=1))
+
+omics_data_frequencies
+
+
+

@@ -1,0 +1,32 @@
+{
+    "id": "593EA3E1",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1636982844568.0,
+    "source_on_save": false,
+    "relative_order": 11,
+    "properties": {
+        "expression": "omics_data_frequencies",
+        "caption": "omics_data_frequencies",
+        "totalObservations": 30,
+        "displayedObservations": 30,
+        "variables": 2,
+        "cacheKey": "0F0C111E",
+        "object": "omics_data_frequencies",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=omics_data_frequencies&cache_key=0F0C111E&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 8386094342261139821,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1636982844568,
+    "read_only": false,
+    "read_only_alternatives": []
+}

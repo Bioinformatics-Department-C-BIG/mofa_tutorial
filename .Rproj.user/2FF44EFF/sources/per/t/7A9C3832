@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1634286701698.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1181709377",
+    "id" : "7A9C3832",
+    "lastKnownWriteTime" : 1634286655,
+    "last_content_update" : 1634286655,
+    "path" : "~/git/mofa/mofa-TCGA.R",
+    "project_path" : "mofa-TCGA.R",
+    "properties" : {
+        "cursorPosition" : "236,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

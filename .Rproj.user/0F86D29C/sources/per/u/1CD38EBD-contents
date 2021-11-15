@@ -1,0 +1,23 @@
+library(data.table)
+library(ggplot2)
+library(Seurat)
+library(Signac)
+
+# for GSEA analysis
+library(msigdbr)
+
+# For motif enrichment analysis
+library(JASPAR2020)
+library(TFBSTools)
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+install.packages('Seurat')
+# MOFA
+library(MOFA2)
+
+# run this to download the data set
+# seurat <- readRDS(url("ftp://ftp.ebi.ac.uk/pub/databases/mofa/10x_rna_atac_vignette/seurat.rds"))
+
+seurat <- readRDS("/Users/ricard/data/10x_rna_atac/PBMC/seurat.rds")
+
+seurat

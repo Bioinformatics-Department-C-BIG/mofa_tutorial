@@ -1,0 +1,25 @@
+{
+    "id": "E16E9DCF",
+    "path": "~/git/mofa/mixomics-TCGA.R",
+    "project_path": "mixomics-TCGA.R",
+    "type": "r_source",
+    "hash": "311363297",
+    "contents": "",
+    "dirty": false,
+    "created": 1632735571815.0,
+    "source_on_save": false,
+    "relative_order": 10,
+    "properties": {
+        "tempName": "Untitled3",
+        "cursorPosition": "87,27",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1634286663,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1634286663052,
+    "read_only": false,
+    "read_only_alternatives": []
+}

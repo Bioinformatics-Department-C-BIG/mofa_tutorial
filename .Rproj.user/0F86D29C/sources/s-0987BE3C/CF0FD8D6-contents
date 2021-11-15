@@ -1,7 +1,0 @@
-library(reticulate)
-use_condaenv('py37', required = TRUE)
-vignette("MOFA_example_CLL")
-vignette("MOFA_example_scMT")
-
-vignette("MOFA")
-library('MOFA')

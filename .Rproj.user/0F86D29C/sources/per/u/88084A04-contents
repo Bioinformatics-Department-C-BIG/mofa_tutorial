@@ -1,0 +1,3 @@
+view(breast.TCGA)
+miRNAs<-colnames(breast.TCGA$data.train$mirna)
+write.csv2(miRNAs,file = 'miRNAs.txt')

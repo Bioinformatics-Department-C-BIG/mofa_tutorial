@@ -1,0 +1,26 @@
+{
+    "id": "13EF4D40",
+    "path": "~/git/mofa/mofa-cll.R",
+    "project_path": "mofa-cll.R",
+    "type": "r_source",
+    "hash": "237154447",
+    "contents": "",
+    "dirty": false,
+    "created": 1633337611117.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "tempName": "Untitled2",
+        "cursorPosition": "226,0",
+        "scrollLine": "0",
+        "source_window_id": ""
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1633417511,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1633417512000,
+    "read_only": false,
+    "read_only_alternatives": []
+}

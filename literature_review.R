@@ -25,18 +25,18 @@ preprocessing<-function(df,colname){
 comb_frequencies_by_group<-get_combination_frequencies_by_group(stats, 'Data')
 
 
-get_frequencies<-function(omics_data){
+
+get_frequencies<-function(x){
   
   #' Get the frequency of each occurrence 
   #' 
   #' 
   
-  omics_data<-unlist(omics_data) # collapse accross studies 
-  omics_data<-omics_data[omics_data!='']
-  omics_data_frequencies<-table(tolower(unlist(omics_data)))
-  omics_data_frequencies<-omics_data_frequencies[order(-omics_data_frequencies)]
-  omics_data_frequencies<-data.frame(omics_data_frequencies)
-  return(omics_data_frequencies)
+  x<-unlist(x) # collapse accross studies 
+  x<-x[x!='']
+  x<-table(tolower(unlist(x)))
+  x<-data.frame(x)
+  #return(omics_data_frequencies)
   
   
 }
@@ -56,11 +56,6 @@ stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Int
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
 
 #stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_cancer_literature_curated.xlsx')
-
-#write.csv(table(tolower(stats$Disease)),'Frequency_stats.csv')
-stats_summarize<-as.data.frame(table(tolower(stats$Disease)))
-ordered_stats<-stats_summarize[order(-stats_summarize$Freq),]
-stats_summarize[order(stats_summarize$Var1),]
 
 
 #write.csv(ordered_stats,'Frequency_stats_cancer.csv')
@@ -91,8 +86,8 @@ stats <- stats %>%
 
 
 stats$same_sample<-as.factor(tolower(stats$same_sample))
-  get_frequencies_by_group<-function(stats,colname){
-
+get_frequencies_by_group<-function(stats,colname){
+  
   df_by_group<- stats %>%
     #filter(Type!= 'Review') %>%
     group_by(same_sample) %>%
@@ -101,13 +96,13 @@ stats$same_sample<-as.factor(tolower(stats$same_sample))
     )  %>%
     map_df(I, .id='same_sample')
   
-    
-    df_by_group$same_sample<-as.factor(df_by_group$same_sample)
-    #### Filter by categories 
   
-    df_by_group$same_sample<-recode_factor(df_by_group$same_sample,
-                  '1'=cats[1], '2'=cats[2], '3'=cats[3], '4'=cats[4], '5'=cats[5] )
-
+  df_by_group$same_sample<-as.factor(df_by_group$same_sample)
+  #### Filter by categories 
+  
+  df_by_group$same_sample<-recode_factor(df_by_group$same_sample,
+                                         '1'=cats[1], '2'=cats[2], '3'=cats[3], '4'=cats[4], '5'=cats[5] )
+  
   return(df_by_group)
 }
 
@@ -130,8 +125,8 @@ frequencies_by_group$Freq<-as.numeric(frequencies_by_group$Freq)
 group_objectives<-function(df, Var1){
   #'Group objective code column 
   df[Var1]<-sapply(df[Var1],
-                    function(x) 
-              gsub('.*diagnosis.*|*prognosis*', 'Diagnosis/Prognosis', x))
+                   function(x) 
+                     gsub('.*diagnosis.*|*prognosis*', 'Diagnosis/Prognosis', x))
   return(df)
 }
 
@@ -204,27 +199,28 @@ df_by_group <- stats %>%
   )  %>%
   map_df(I, .id='same_sample')
 
+
 df_by_group$same_sample<-as.factor(df_by_group$same_sample)
 #### Filter by categories 
 
 #df_by_group$same_sample<-recode_factor(df_by_group$same_sample,
- #                                      '1'=cats[1], '2'=cats[2], '3'=cats[3], '4'=cats[4], '5'=cats[5] )
+#                                      '1'=cats[1], '2'=cats[2], '3'=cats[3], '4'=cats[4], '5'=cats[5] )
 
 comb_frequencies_by_group<-df_by_group
 
 comb_frequencies_by_group<- comb_frequencies_by_group %>%
   group_by(same_sample) %>%
- filter(Freq>1)
-    
+  filter(Freq>1)
+
 comb_frequencies_by_group %>%
-#filter(same_sample %in% c(2)) %>%
-ggplot(data=., aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=same_sample))+
+  #filter(same_sample %in% c(2)) %>%
+  ggplot(data=., aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=same_sample))+
   geom_bar(stat='identity',position='stack')+
   labs(x=NULL, title='Combinations with > 1 occurences')+
   theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
   theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
 
-  
+
 
 
 
@@ -238,18 +234,18 @@ get_combs<-function(x) {
   x=unlist(lapply(x,trimws) )
   x<-x[tolower(x) %in% tolower(level1)]
   #' Get the combinations of omnics in pairs of 2
-    if (length(x)>1){
-      x<-x[order(x)]
-      res<-combn(x,2, FUN=paste, collapse=' - ')
-      return(res)
-      }
- 
+  if (length(x)>1){
+    x<-x[order(x)]
+    res<-combn(x,2, FUN=paste, collapse=' - ')
+    return(res)
   }
   
-  library(tidyverse)
-  
+}
 
- 
+library(tidyverse)
+
+
+
 
 ########
 ###
@@ -262,7 +258,6 @@ new<-stats %>%
   unnest(`Objective-Code`) 
 
 
-
 new['Objective-Code'] <-apply(new['Objective-Code'], 1, function(x) trimws(tolower(x)))
 colnames(new)[which(colnames(new)=='Objective-Code')]<-'objective'
 colname='Data'
@@ -273,36 +268,61 @@ cats<-levels(new$objective)
 
 
 keys<-pull(new %>%
-  group_by(objective) %>%
-  group_keys())
+             group_by(objective) %>%
+             group_keys())
+
+
+#' TODO: check the rownames given by get frequencies..
+#' TODO: use dplyr instead 
+#' 
+#' 
+
 
 df_by_group<-new %>%
   group_by(objective) %>%
   group_map(~ preprocessing(.x, colname)  %>%
-              preprocessing_combinations %>%
+              preprocessing_combinations() %>%
               get_frequencies() 
   )  %>%
   map_df(I, .id='objective') 
 
-keys
+
+
+
+df_by_group<-as.data.frame(as.matrix(df_by_group))
+
+df_by_group$objective<-as.numeric(df_by_group$objective)
+
+key_names<-c(keys[df_by_group$objective])
+
+df_by_group<-cbind(key_names,df_by_group)
+df_by_group$Var1<-as.factor(df_by_group$Var1)
+
+
+df_by_group$Freq<-as.numeric(df_by_group$Freq)
+
+df_to_plot<-df_by_group %>% 
+  group_by(Var1)  %>% 
+  filter( sum(Freq) >= 7) %>% 
+  group_by(objective)  %>% 
+  filter( sum(Freq) >= 4) 
+
+
+df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
+
+plotbyObjective(df_to_plot )
 
 
 
 
-df_by_group=df_by_group[df_by_group[,'Freq']>2,]
-ggplot(df_by_group, aes(x=objective, y=Freq, fill=Var1))+
-  geom_bar(stat='identity',position='stack')+
-  labs(x=NULL)+
-  theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-  theme(plot.margin=unit(c(1,1,2,1.5),"cm"))
-  
-
-plotby<-function(df, colname){ 
-  ggplot(df, aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=))+
+plotbyObjective<-function(df){ 
+  ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,1.5),"cm"))
+    theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
+  save(paste0('plots/by', as.character(colname), '.png'), width = 8, height = 5)
+  
   
 }
 
@@ -361,9 +381,8 @@ plotby<-function(freq_to_plot, colname){
 }
 
 plotby(freq_to_plot)
- ## Plot the graph of proteomics transc
+## Plot the graph of proteomics transc
 freq_to_plot
-
 
 
 

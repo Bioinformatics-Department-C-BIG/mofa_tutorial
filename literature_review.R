@@ -53,7 +53,7 @@ library(data.table)
 
 
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
-stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
 
 #stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_cancer_literature_curated.xlsx')
 
@@ -81,7 +81,8 @@ stats$`Objective-Code`
 ### todo remove reviews? #
 ## GLOBAL FILTER
 stats <- stats %>%
-  filter(Type!= 'Review')
+  filter(Type!= 'Review')%>%
+  filter(is.na(`Rejection /Critic`))
 
 
 
@@ -305,15 +306,15 @@ df_to_plot<-df_by_group %>%
   group_by(Var1)  %>% 
   filter( sum(Freq) >= 7) %>% 
   group_by(objective)  %>% 
-  filter( sum(Freq) >= 4) 
+  filter( sum(Freq) >= 3) 
 
 
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
-plotbyObjective(df_to_plot )
+show_p<-plotbyObjective(df_to_plot )
 
 
-
+show_p
 
 plotbyObjective<-function(df){ 
   ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
@@ -321,7 +322,9 @@ plotbyObjective<-function(df){
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
     theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
-  save(paste0('plots/by', as.character(colname), '.png'), width = 8, height = 5)
+  
+  ggsave(paste0('plots/by', as.character(colname), '.png'), width = 8, height=6)
+  
   
   
 }
@@ -383,6 +386,7 @@ plotby<-function(freq_to_plot, colname){
 plotby(freq_to_plot)
 ## Plot the graph of proteomics transc
 freq_to_plot
+
 
 
 

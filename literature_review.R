@@ -42,15 +42,25 @@ get_frequencies<-function(x){
 }
 
 
-
+df<-new
+Var1<-'objective'
 group_objectives<-function(df, Var1){
   #'Group objective code column 
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     gsub('.*diagnosis.*|*prognosis*', 'Diagnosis/Prognosis', x))
+                     gsub('.*diagnosis.*|*prognosis*', 'Diagnosis/Prognosis', tolower(x)))
   return(df)
 }
 
+
+#TODO: make a function to check if there is methylomics
+group_omics<-function(df, Var1){
+  #'Group objective code column 
+  df[Var1]<-sapply(df[Var1],
+                   function(x) 
+                     gsub('*methyl*', 'Epigenomics', tolower(x)))
+  return(df)
+}
 
 
 library('readxl')
@@ -171,6 +181,9 @@ preprocessing_combinations<-function(x){
 }
 
 
+total<-NROW(stats[!is.na(stats$Data),]$PMID)
+
+
 
 df_by_group <- stats %>%
   group_by(same_sample) %>%
@@ -187,6 +200,7 @@ df_by_group<-df_by_group %>%
   filter( sum(Freq) >= freq_cutoff) 
 
 plotByData(df_by_group)
+
 
 plotByData<-function(df_by_group){
   ggplot(df_by_group, aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=same_sample))+
@@ -210,27 +224,25 @@ library(tidyverse)
 colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 
-new<-stats %>% 
-  mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
-  unnest(objective) 
+
 
 new<-stats %>% 
   mutate(method=strsplit(method, ',|\r|\n' ))%>%
   unnest(method) 
 
-x_group<-'objective'
+#x_group<-'objective'
 x_group<-'method'
 
-new<-stats %>% 
-  mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
-  unnest(objective) 
+#new<-stats %>% 
+#  mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
+#  unnest(objective) 
 
 colname='Data'
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
 
 
-new<-group_objectives(new, x_group)
+#new<-group_objectives(new, x_group)
 
 keys<-pull(new %>%
              group_by_at(x_group) %>%
@@ -241,6 +253,9 @@ keys<-pull(new %>%
 #' TODO: use dplyr instead 
 #' 
 #' 
+df_by_group<-new %>%
+  group_by_at(x_group) 
+
 df_by_group<-new %>%
   group_by_at(x_group) %>%
   group_map(~ preprocessing(.x, colname)  %>%
@@ -260,13 +275,13 @@ df_by_group<-cbind(key_names,df_by_group)
 
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
-df_to_plot<-df_by_group %>% 
-  group_by(Var1)  %>% 
-  filter( sum(Freq) >= 8) %>% 
-  group_by_at(x_group)  %>% 
-  filter( sum(Freq) >= 4) 
+df_to_plot<-df_by_group %>%
+group_by(Var1)  %>%
+filter( sum(Freq) >= 5) %>%
+group_by_at(x_group)  %>%
+filter( sum(Freq) >= 2)
 
-
+#df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
 show_p<-plotbyObjective(df_to_plot )
@@ -275,14 +290,14 @@ show_p<-plotbyObjective(df_to_plot )
 show_p
 
 plotbyObjective<-function(df){ 
-  ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
+  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
     theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
   
-  ggsave(paste0('plots/by', as.character(colname), '.png'), width = 8, height=6)
-  
+  ggsave(paste0('plots/byGroup', as.character(x_group), '.png'), width = 8, height=6)
+  return(g)
   
   
 }
@@ -291,17 +306,13 @@ plotbyObjective<-function(df){
 
 ##### 
 #' Create an edge list from the frequency table ! 
-omics_data_frequencies<-comb_frequencies_by_group %>% filter(same_sample %in% c(2))
 # aggregated or separately? 
-aggr_freqs<-aggregate(Freq ~ Var1, omics_data_frequencies, sum)
 
-comb_freq<-aggr_freqs
 
 #comb_freq<- comb_frequencies_by_group %>% filter(same_sample ==3)
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
-edge_list<-edge_list[order(edge_l------------------------------------------+
-                             ist$weight, decreasing = TRUE),]
+edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
 
 
 edge_list

@@ -5,7 +5,6 @@
 
 #first remember the names
 library(dplyr )
-install.packages('resample')
 library(resample)
 library(mixOmics)
 
@@ -43,10 +42,13 @@ pca.gene <- pca(X, ncomp = 10, center = TRUE, scale = TRUE)
 
 plot(pca.gene)
 
-dir='H:/My Drive/PHD 2020/Projects/Bladder cancer/'
+dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
+
+
+
 
 X1_t<-transpose_matrix(X1_raw)
 X1_t<-X1_t[,1:27000]
@@ -58,6 +60,15 @@ df<-df[,!ind]
 X1_t<-df
 #X1_t<-preprocess_raw_data(X1_t)
 
+X2_t<-transpose_matrix(X2_raw)
+df<-X2_t
+df<-as.data.frame(apply(df, 2, function(x) as.numeric(x)))
+ind <- apply(df, 2, function(x) sum(x, na.rm = TRUE)==0) 
+#remove genes with zero variance
+df<-df[,!ind]
+X2_t<-df
+
+
 
 Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 ################
@@ -66,10 +77,6 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 
 pca.gene <- pca(X1_t, ncomp = 10, center = TRUE, scale = TRUE)
 plot(pca.gene)
-
-
-
-
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
 
@@ -78,6 +85,24 @@ spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE,
                     keepX = c(10, 5, 15))
 
 selectVar(spca.result, comp = 1)$value
+
+
+
+
+pca.proteomics <- pca(X2_t, ncomp = 10, center = TRUE, scale = TRUE)
+plot(pca.proteomics)
+plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
+          legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
+
+
+spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
+                    keepX = c(10, 5, 15))
+
+selectVar(spca.result, comp = 1)$value
+
+
+
+
 
 ####################################################################
 ##### SPLS DA
@@ -112,26 +137,44 @@ tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
 
 
 
-library(mixOmics)
-data(nutrimouse)
-X <- nutrimouse$lipid
-Y <- nutrimouse$gene
+
+#DIABLO
+data = list(mRNA = X1_t, 
+            proteomics = X2_t )
+
+Y<-Y_raw$Subtype
 
 
-nutrimouse.shrink <- rcc(X, Y, ncomp = 3, method = 'shrinkage')
+design = matrix(0.1, ncol = length(data), nrow = length(data), 
+                dimnames = list(names(data), names(data)))
+diag(design) = 0
+
+design 
+
+# tune components
+sgccda.res = block.splsda(X = data, Y = Y, ncomp = 5, 
+                         design = design)
+
+set.seed(123) # for reproducibility, only when the `cpus' argument is not used
+# this code takes a couple of min to run
+perf.diablo = perf(sgccda.res, validation = 'Mfold', folds = 4, nrepeat = 10)
+
+#perf.diablo  # lists the different outputs
+plot(perf.diablo) 
 
 
-plot(nutrimouse.shrink, type = "barplot")
+sgccda.res$design
+selectVar(sgccda.res, block = 'mRNA', comp = 1)$mRNA$name 
 
 
-## Estimation of penalisation parameters (CV method)
-grid1 <- seq(0, 0.2, length = 5) 
-grid2 <- seq(0.0001, 0.2, length = 5)
-
-cv <- tune.rcc(X, Y, grid1 = grid1, grid2 = grid2, validation = "loo")
+plotDiablo(sgccda.res, ncomp = 1)
+plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 
-result <- rcc(X, Y, ncomp = 3, lambda1 = cv$opt.lambda1, lambda2 = cv$opt.lambda2)
-result$cor
 
+plotArrow(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
+
+
+plotVar(sgccda.res, var.names = FALSE, style = 'graphics', legend = TRUE, 
+        pch = c(16, 17), cex = c(2,2), col = c('darkorchid', 'brown1' ))
 

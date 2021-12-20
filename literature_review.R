@@ -63,6 +63,9 @@ group_omics<-function(df, Var1){
 }
 
 
+
+
+
 library('readxl')
 library('stringr')
 library(ggplot2)
@@ -72,6 +75,7 @@ library(data.table)
 
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
 stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 
 
 ###Filters
@@ -86,16 +90,19 @@ stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_
 #' 
 #' 
 
+stats$Cancer<-c(rep('no',289), rep('yes',(nrow(stats)-289)))
 
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
-  filter(Type!= 'Review')%>%
-  filter(is.na(`Rejection /Critic`))
-
+  #filter(Type!= 'Review')%>%
+  filter(is.na(`Rejection /Critic`)) %>%
+  filter(tolower(same_sample)!='no')
 
 
 stats$same_sample<-as.factor(tolower(stats$same_sample))
+stats$Cancer<-as.factor(tolower(stats$Cancer))
+
 get_frequencies_by_group<-function(stats,colname){
   
   df_by_group<- stats %>%
@@ -118,11 +125,25 @@ colname<-'Data'
 frequencies_by_group<-get_frequencies_by_group(stats, colname)
 
 freq_to_plot<-frequencies_by_group %>% filter(Var1 %in% tolower(level1))
-
+single_omics_frequencies=freq_to_plot
 
 #### Create the stacked plot
 
 library(grid)
+
+plotByData<-function(df_by_group){
+  ggplot(df_by_group, 
+         aes(x=reorder(Var1, -Freq, sum), y=Freq))+
+    aes_string(fill=y_group)+
+    geom_bar(stat='identity',position='stack')+
+    labs(x=NULL, title=paste0('Combinations with > ',freq_cutoff, ' occurences'))+
+    theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
+    theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
+  ggsave(paste0('plots/byCombinations', as.character(colname), '.png'), width = 8, height=6)
+  
+}
+
+
 
 
 plotByData(freq_to_plot)
@@ -183,17 +204,20 @@ preprocessing_combinations<-function(x){
 
 total<-NROW(stats[!is.na(stats$Data),]$PMID)
 
+y_group='same_sample'
+y_group='Cancer'
 
 
 df_by_group <- stats %>%
-  group_by(same_sample) %>%
+  #group_by(same_sample) %>%
+  group_by_at(y_group) %>%
   group_map(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )  %>%
-  map_df(I, .id='same_sample')
+  map_df(I, .id=y_group)
 
-freq_cutoff<-4
+freq_cutoff<-7
 
 df_by_group<-df_by_group %>% 
   group_by(Var1)  %>% 
@@ -201,17 +225,7 @@ df_by_group<-df_by_group %>%
 
 plotByData(df_by_group)
 
-
-plotByData<-function(df_by_group){
-  ggplot(df_by_group, aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=same_sample))+
-  geom_bar(stat='identity',position='stack')+
-  labs(x=NULL, title=paste0('Combinations with > ',freq_cutoff, ' occurences'))+
-  theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
-  theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
-  ggsave(paste0('plots/byCombinations', as.character(colname), '.png'), width = 8, height=6)
-  
-}
-
+comb_frequencies_by_group<-df_by_group
 
 
 library(tidyverse)
@@ -284,11 +298,6 @@ filter( sum(Freq) >= 2)
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
-show_p<-plotbyObjective(df_to_plot )
-
-
-show_p
-
 plotbyObjective<-function(df){ 
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
@@ -303,13 +312,19 @@ plotbyObjective<-function(df){
 }
 
 
+show_p<-plotbyObjective(df_to_plot )
+
+
+show_p
+
+
 
 ##### 
 #' Create an edge list from the frequency table ! 
 # aggregated or separately? 
 
 
-#comb_freq<- comb_frequencies_by_group %>% filter(same_sample ==3)
+comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==1)
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
 edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
@@ -319,12 +334,20 @@ edge_list
 
 library(igraph)
 
+#### Add the frequency of single omics to the network vertices
+df<-single_omics_frequencies
 
 net<-graph_from_data_frame(edge_list, directed = FALSE, vertices =NULL)
-save(paste0('plots/network', as.character(colname), '.png'), width = 8, height=6)
+net_att<-df[match(V(net)$name, df$Var1),]
 
-plot.igraph(net, edge.width=edge_list$weight)
 
+vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
+
+p<-plot.igraph(net, edge.width=edge_list$weight, vertex.size=net_att$Freq)
+save(p,paste0('plots/network', as.character(colname), '.png'))
+
+
+g <- set.vertex.attribute(g,'id',1,'first_id')
 
 
 

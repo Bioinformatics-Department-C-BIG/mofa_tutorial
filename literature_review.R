@@ -95,9 +95,10 @@ stats$Cancer<-c(rep('no',289), rep('yes',(nrow(stats)-289)))
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
-  #filter(Type!= 'Review')%>%
-  filter(is.na(`Rejection /Critic`)) %>%
+  filter(Type!= 'Review')%>%
+  filter(is.na(`Rejection /Critic`))%>%
   filter(tolower(same_sample)!='no')
+
 
 
 stats$same_sample<-as.factor(tolower(stats$same_sample))
@@ -178,21 +179,21 @@ omics_data<-df_by_group[[1]]
 #' 
 
 get_combs<- function(x){
-    x<-unlist(x)
+    
+  #' return omics combinations as individual strings to count them+
+  x<-unlist(x)
     x<-x[tolower(x) %in% tolower(level1)]
     if (length(x)>1){
       x<-x[order(x)]
-      combn(x,2, FUN=paste, collapse=' - ')}
-    
-  }
+      combn(x,2, FUN=paste, collapse=' - ')
+    }
+}
+
+preprocessing_combinations(preprocessing(stats, 'Data'))
 
 preprocessing_combinations<-function(x){
-  
   #' Create combinations of omics datasets  
-  
-  
   x<-x[x!='']
-  # 
   x<-x[!is.na(x)]
   #' Create pairs of omics 
   #' #
@@ -219,11 +220,25 @@ df_by_group <- stats %>%
 
 freq_cutoff<-7
 
-df_by_group<-df_by_group %>% 
+df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
 
-plotByData(df_by_group)
+plotByData(df_by_group_filtered)
+
+
+combinations<-df_by_group
+
+
+combinations <-df_by_group %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
+
+ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
+  geom_tile()+
+  geom_text(aes(label = round(Freq, 2)), size=7)+
+  theme_
+
+  
+  
 
 comb_frequencies_by_group<-df_by_group
 

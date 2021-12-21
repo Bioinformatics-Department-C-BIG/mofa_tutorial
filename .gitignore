@@ -1,8 +1,9 @@
 
 *.pper
+*.Rdata/*
+*.Rhistory/
 *.Rdata
-*.Rdata
-*.Rproj.user/*
+*.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper
 .Rproj.user/0F86D29C/pcs/source-pane.pper
 .Rproj.user/0F86D29C/pcs/source-window.pper

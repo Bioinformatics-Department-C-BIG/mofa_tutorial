@@ -3,6 +3,13 @@
 *.Rdata/*
 *.Rhistory/
 *.Rdata
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper
 .Rproj.user/0F86D29C/pcs/source-pane.pper

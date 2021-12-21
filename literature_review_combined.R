@@ -84,7 +84,7 @@ library(data.table)
 
 
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
-stats<-read_excel('G:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 #stats<-stats[1:289,]
 stats$PMID<-as.numeric(stats$PMID)
@@ -230,11 +230,13 @@ library('ggalluvial')
 library('alluvial')
 
 
-new_concise<-new[c('Data', 'objective', 'method', 'PMID' )]
 
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
+Cancer='yes'
+new2<-new2 %>% filter(Cancer==Cancer)
+
 
 new2$Data<-tolower(trimws(new2$Data))
 new2<-new2 %>% filter(Data %in% tolower(level1))
@@ -250,11 +252,12 @@ counts<-new2 %>% count(Data, objective)
 
 
 counts<-counts%>% filter(n>1)
-
-
+axis1='Data'
+axis2='objective'
+s
 df<-counts
 ggplot(as.data.frame(df),
-       aes(y = n, axis1 = Data, axis2 = objective)) +
+       aes_string(y = 'n', axis1 = axis1, axis2 = axis2)) +
   geom_alluvium(aes(fill = Data),
                 width = 0, knot.pos = 0, reverse = FALSE) +
   guides(fill = FALSE) +
@@ -262,10 +265,12 @@ ggplot(as.data.frame(df),
   geom_text(stat = "stratum", aes(label = after_stat(stratum)),
             reverse = FALSE) +
   scale_x_continuous(breaks = 1:2, labels = c("Data", "objective")) +
-  ggtitle("Multi omics objectives")
+  ggtitle(paste0("Multi omics objectives, Cancer = ", Cancer))
+
+
+ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', Cancer, '.png'), width = 10, height=6)
 
 
 
-
-
+## TODO: separate in cancer and not cancer !! 
 

@@ -48,7 +48,7 @@ group_objectives<-function(df, Var1){
   #'Group objective code column 
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     gsub('.*diagnosis.*|*prognosis*', 'Diagnosis/Prognosis', tolower(x)))
+                     gsub('.*diagnosis.*|.*prognosis.*', 'Diagnosis/Prognosis', tolower(x)))
   return(df)
 }
 
@@ -75,7 +75,7 @@ library(data.table)
 
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
 stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
-stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 
 
 ###Filters
@@ -104,14 +104,16 @@ stats <- stats %>%
 stats$same_sample<-as.factor(tolower(stats$same_sample))
 stats$Cancer<-as.factor(tolower(stats$Cancer))
 
+x_group<-'Cancer'
+
 get_frequencies_by_group<-function(stats,colname){
   
   df_by_group<- stats %>%
-    group_by(same_sample) %>%
+    group_by_at(x_group) %>%
     group_map(~ preprocessing(.x, colname) %>%
                 get_frequencies() 
     )  %>%
-    map_df(I, .id='same_sample')
+    map_df(I, .id=x_group)
   
   
   return(df_by_group)
@@ -149,7 +151,8 @@ plotByData<-function(df_by_group){
 
 plotByData(freq_to_plot)
 
-ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq, fill=same_sample))+
+ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
+         aes_string(fill=x_group)+
   geom_bar(stat='identity',position='stack')+
   labs(x=NULL)+
   theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
@@ -235,8 +238,11 @@ combinations <-df_by_group %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
 ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
   geom_tile()+
   geom_text(aes(label = round(Freq, 2)), size=7)+
-  theme_
+  theme(axis.text.x = element_text(size=rel(1.5),angle = 90, vjust = 0.5, hjust=1))+
+  theme(axis.text.y = element_text( size=rel(1.5)))
+  
 
+#TODO: add red find overflow 
   
   
 
@@ -254,24 +260,25 @@ colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 
 
+#change here to select by objective or by method 
+# TODO: MAKE this one variable to choose method or objective
 
+x_group<-'method'
+# and here!!! 
 new<-stats %>% 
   mutate(method=strsplit(method, ',|\r|\n' ))%>%
   unnest(method) 
 
-#x_group<-'objective'
-x_group<-'method'
 
-#new<-stats %>% 
-#  mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
-#  unnest(objective) 
+x_group<-'objective'
+new<-stats %>% 
+  mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
+  unnest(objective) 
 
 colname='Data'
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
-
-
-#new<-group_objectives(new, x_group)
+new<-group_objectives(new, 'objective')
 
 keys<-pull(new %>%
              group_by_at(x_group) %>%
@@ -306,9 +313,9 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
-filter( sum(Freq) >= 5) %>%
+filter( sum(Freq) >= 7) %>%
 group_by_at(x_group)  %>%
-filter( sum(Freq) >= 2)
+filter( sum(Freq) >= 3)
 
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
@@ -320,7 +327,7 @@ plotbyObjective<-function(df){
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
     theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
   
-  ggsave(paste0('plots/byGroup', as.character(x_group), '.png'), width = 8, height=6)
+  ggsave(paste0('plots/barplot_byGroup', as.character(x_group), '.png'), width = 8, height=6)
   return(g)
   
   
@@ -339,7 +346,9 @@ show_p
 # aggregated or separately? 
 
 
-comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==1)
+comb_freq<- comb_frequencies_by_group #%>% filter(Cancer ==2)
+single_omics_frequencies_filtered<-single_omics_frequencies #%>% filter(Cancer ==2)
+
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
 edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
@@ -350,12 +359,13 @@ edge_list
 library(igraph)
 
 #### Add the frequency of single omics to the network vertices
-df<-single_omics_frequencies
+df<-single_omics_frequencies_filtered
 
 net<-graph_from_data_frame(edge_list, directed = FALSE, vertices =NULL)
 net_att<-df[match(V(net)$name, df$Var1),]
 
 
+# TODO: assign omics frequencies of all samples or only cancer? 
 vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
 
 p<-plot.igraph(net, edge.width=edge_list$weight, vertex.size=net_att$Freq)

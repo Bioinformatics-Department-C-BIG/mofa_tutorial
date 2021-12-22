@@ -211,8 +211,9 @@ total<-NROW(stats[!is.na(stats$Data),]$PMID)
 y_group='same_sample'
 y_group='Cancer'
 
+new<-stats[! ( is.na(stats['Data'] ) ),]
 
-df_by_group <- stats %>%
+df_by_group <- new %>%
   #group_by(same_sample) %>%
   group_by_at(y_group) %>%
   group_map(~ preprocessing(.x, colname)  %>%
@@ -228,6 +229,8 @@ df_by_group_filtered<-df_by_group %>%
   filter( sum(Freq) >= freq_cutoff) 
 
 plotByData(df_by_group_filtered)
+
+df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 combinations<-df_by_group

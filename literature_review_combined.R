@@ -5,7 +5,7 @@
 colname<-'Data'
 library('dplyr')
 library('purrr')
-level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
+level1<-c('transcriptomics', 'genomics','epigenomics', 'proteomics', 'metabolomics', 'metagenomics', 'mirnas')
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -36,6 +36,7 @@ get_frequencies<-function(x){
   x<-x[x!='']
   x<-table(tolower(unlist(x)))
   x<-data.frame(x)
+  
   #return(omics_data_frequencies)
   
   
@@ -147,7 +148,10 @@ new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 
 #x_group<-'objective'
 x_group<-'method'
+#colname='method'
 colname='objective'
+
+
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
 new[colname] <-apply(new[colname], 1, function(x) trimws(tolower(x)))
@@ -170,6 +174,7 @@ keys<-pull(new %>%
 #' TODO: use dplyr instead 
 #' 
 #' 
+new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
 df_by_group<-new %>%
   group_by_at(x_group) 
 
@@ -188,14 +193,14 @@ df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
 key_names<-c(keys[df_by_group[,x_group]])
 df_by_group<-cbind(key_names,df_by_group)
 
-
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
+df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
-  filter( sum(Freq) >= 1) %>%
+  filter( sum(Freq) >= 2) %>%
   group_by_at(x_group)  %>%
-  filter( sum(Freq) >= 1)
+  filter( sum(Freq) >= 3)
 
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
@@ -206,13 +211,13 @@ show_p<-plotbyObjective(df_to_plot )
 show_p
 
 plotbyObjective<-function(df){ 
-  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
+  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=perc, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
-    theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
+    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
+    theme(plot.margin=unit(c(1,1,2.2,2),"cm"))
   
-  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 10, height=6)
+  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 6, height=6)
   return(g)
   
   
@@ -234,8 +239,9 @@ library('alluvial')
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
-Cancer='yes'
-new2<-new2 %>% filter(Cancer==Cancer)
+
+cancer_filter=c("no")
+new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 
 new2$Data<-tolower(trimws(new2$Data))
@@ -247,28 +253,29 @@ new2<-new2[!is.na(new2$method),]
 new2<-new2[!is.na(new2$Data),]
 new2<-new2[!is.na(new2$objective),]
 
+axis1='objective'
+axis2='method'
 
-counts<-new2 %>% count(Data, objective)
+counts<-new2 %>% count(objective, method)
 
 
 counts<-counts%>% filter(n>1)
-axis1='Data'
-axis2='objective'
-s
+
+
 df<-counts
 ggplot(as.data.frame(df),
        aes_string(y = 'n', axis1 = axis1, axis2 = axis2)) +
-  geom_alluvium(aes(fill = Data),
+  geom_alluvium(aes_string(fill = axis1),
                 width = 0, knot.pos = 0, reverse = FALSE) +
   guides(fill = FALSE) +
   geom_stratum(width = 1/8, reverse = FALSE) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum)),
             reverse = FALSE) +
-  scale_x_continuous(breaks = 1:2, labels = c("Data", "objective")) +
-  ggtitle(paste0("Multi omics objectives, Cancer = ", Cancer))
+  scale_x_continuous(breaks = 1:2, labels = c(axis1,axis2)) +
+  ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
 
 
-ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', Cancer, '.png'), width = 10, height=6)
+ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
 
 
 

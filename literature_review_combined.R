@@ -49,7 +49,7 @@ group_objectives_method<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand mol.*'),
                            c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
@@ -61,13 +61,15 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*",  '.*pca.*', '.*regression.*', '.*factor.*', 
-                  '.*multivar.*', '.*snf.*', '.*gsea.*', '.*cca.*', 
-                  '.*kernel.*', '.*autoencoder.*'), 
+                c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*|.*kmeans.*|.*support vector.*",  
+                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|decomposition', 
+                  '.*multivar.*', '.*snf.*|.*network.*', '.*gsea.*', '.*cca.*', 
+                  '.*kernel.*', '.*autoencoder.*', 
+                  '.*partial least.*|.*diablo.*'), 
                 c( "machine/deep learning", 'clustering',
-                                 'regression', 'factor Analysis', 'multivariate analysis', 
+                                 'regression', 'factor analysis', 'multivariate analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder + deep learning'
+                   'kernel learning', 'autoencoder + deep learning', 'partial least squares'
                    ))}
 )
       #new_col=as.factor(new_col)
@@ -146,11 +148,13 @@ new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 
 
 
-#x_group<-'objective'
-x_group<-'method'
-#colname='method'
-colname='objective'
+#x_group<-'method'
+#colname='objective'
+width=10
 
+x_group<-'objective'
+colname='method'
+width=7
 
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
@@ -180,30 +184,30 @@ df_by_group<-new %>%
 
 df_by_group<-new %>%
   group_by_at(x_group) %>%
-  group_map(~ preprocessing(.x, colname) %>%
+  group_modify(~ preprocessing(.x, colname) %>%
               get_frequencies() 
-  )  %>%
-  map_df(I, .id=x_group) 
+  )  
+# %>%  map_df(I, .id=x_group) 
 
 
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
-key_names<-c(keys[df_by_group[,x_group]])
-df_by_group<-cbind(key_names,df_by_group)
+# df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
+# key_names_1<-c(keys[df_by_group[,x_group]])
+# df_by_group<-cbind(key_names,df_by_group)
+df_by_group['key_names']<-df_by_group[x_group]
 
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
-  filter( sum(Freq) >= 2) %>%
+  filter( sum(Freq) >= 3) %>%
   group_by_at(x_group)  %>%
   filter( sum(Freq) >= 3)
 
-#df_to_plot<-df_by_group
-df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
+# df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
 show_p<-plotbyObjective(df_to_plot )
 
@@ -215,9 +219,9 @@ plotbyObjective<-function(df){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2.2,2),"cm"))
+    theme(plot.margin=unit(c(1,1,3,3),"cm"))
   
-  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 6, height=6)
+  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = width, height=6)
   return(g)
   
   
@@ -280,4 +284,6 @@ ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_f
 
 
 ## TODO: separate in cancer and not cancer !! 
+
+
 

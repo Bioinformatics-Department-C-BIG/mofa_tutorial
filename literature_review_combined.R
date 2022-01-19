@@ -235,16 +235,18 @@ new_concise<-new[c('Data', 'objective', 'method' )]
 
 #install.packages('alluvial')
 #install.packages('ggalluvial')
+install.packages('ggsankey')
 library('ggalluvial')
 library('alluvial')
 
+library('ggsankey')
 
 
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
 
-cancer_filter=c("no")
+cancer_filter=c("yes")
 new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 
@@ -263,7 +265,7 @@ axis2='method'
 counts<-new2 %>% count(objective, method)
 
 
-counts<-counts%>% filter(n>1)
+counts<-counts%>% filter(n>2)
 
 
 df<-counts
@@ -271,7 +273,8 @@ ggplot(as.data.frame(df),
        aes_string(y = 'n', axis1 = axis1, axis2 = axis2)) +
   geom_alluvium(aes_string(fill = axis1),
                 width = 0, knot.pos = 0, reverse = FALSE) +
-  guides(fill = FALSE) +
+  guides(fill = FALSE) + 
+  
   geom_stratum(width = 1/8, reverse = FALSE) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum)),
             reverse = FALSE) +
@@ -283,7 +286,44 @@ ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_f
 
 
 
-## TODO: separate in cancer and not cancer !! 
+counts<-new2 %>% count(objective, method)
+counts<-counts%>% filter(n>2)
+
+
+
+
+# New implementation with ggalluvial
+axis1='objective'
+axis2="method"
+counts <- new2 %>% 
+  count( objective, method) %>% 
+  mutate(
+    col = objective
+  ) %>%
+  ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
+
+df<-counts %>% filter(n>3)
+# df<-counts
+ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
+  # geom_lode(width = 1/6) +
+  geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
+            curve_type = "cubic") +
+  # geom_alluvium(aes(fill = stratum)) +
+  geom_stratum(color = "grey", width = 1/6) + 
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme(
+    panel.background = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15, face = "bold"),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()+
+  ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
+
+
+ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
 
 
 

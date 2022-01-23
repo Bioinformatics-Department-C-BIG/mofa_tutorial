@@ -62,14 +62,14 @@ group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
                 c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*|.*kmeans.*|.*support vector.*",  
-                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|decomposition', 
+                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*', 
                   '.*multivar.*', '.*snf.*|.*network.*', '.*gsea.*', '.*cca.*', 
                   '.*kernel.*', '.*autoencoder.*', 
                   '.*partial least.*|.*diablo.*'), 
                 c( "machine/deep learning", 'clustering',
                                  'regression', 'factor analysis', 'multivariate analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder + deep learning', 'partial least squares'
+                   'kernel learning', 'autoencoder', 'partial least squares'
                    ))}
 )
       #new_col=as.factor(new_col)
@@ -246,7 +246,7 @@ new2<-new %>%
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
 
-cancer_filter=c("yes")
+cancer_filter=c("no")
 new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 
@@ -265,7 +265,7 @@ axis2='method'
 counts<-new2 %>% count(objective, method)
 
 
-counts<-counts%>% filter(n>2)
+counts<-counts%>% filter(n>1)
 
 
 df<-counts
@@ -287,7 +287,7 @@ ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_f
 
 
 counts<-new2 %>% count(objective, method)
-counts<-counts%>% filter(n>2)
+counts<-counts%>% filter(n>1)
 
 
 
@@ -302,7 +302,7 @@ counts <- new2 %>%
   ) %>%
   ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
 
-df<-counts %>% filter(n>3)
+df<-counts %>% filter(n>2)
 # df<-counts
 ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
   # geom_lode(width = 1/6) +

@@ -47,9 +47,6 @@ X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
-
-
-
 X1_t<-transpose_matrix(X1_raw)
 X1_t<-X1_t[,1:27000]
 df<-X1_t
@@ -174,7 +171,11 @@ plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 plotArrow(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
-
+dev.off()  
 plotVar(sgccda.res, var.names = FALSE, style = 'graphics', legend = TRUE, 
         pch = c(16, 17), cex = c(2,2), col = c('darkorchid', 'brown1' ))
 
+
+circosPlot(sgccda.res, cutoff = 0.7, line = TRUE, 
+           color.blocks= c('darkorchid', 'brown1'),
+           color.cor = c("chocolate3"), size.labels = 1.5)

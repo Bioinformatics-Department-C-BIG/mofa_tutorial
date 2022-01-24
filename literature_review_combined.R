@@ -49,7 +49,7 @@ group_objectives_method<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand mol.*'),
                            c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
@@ -61,19 +61,15 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*",  '.*pca.*', 
-                  '.*regression.*|.*linear model.*', '.*factor.*|.*matrix decomp.*', 
-                  '.*multivar.*', '.*snf.*|.*netcs.*', '.*gsea.*', '.*cca.*', 
-                  '.*kernel.*', '.*autoencoder.*', '.*partial least square.*',
-                  '.*clustering.*|.*kmeans.*', 
-                  '.*support vector.*'), 
-              
-                 c( "machine/deep learning", 'clustering',
-                                 'regression', 'factor Analysis', 'multivariate analysis', 
+                c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*|.*kmeans.*|.*support vector.*",  
+                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*', 
+                  '.*multivar.*', '.*snf.*|.*network.*', '.*gsea.*', '.*cca.*', 
+                  '.*kernel.*', '.*autoencoder.*', 
+                  '.*partial least.*|.*diablo.*'), 
+                c( "machine/deep learning", 'clustering',
+                                 'regression', 'factor analysis', 'multivariate analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder + deep learning',
-                   'partial least squares', 'clustering', 
-                   'classification'
+                   'kernel learning', 'autoencoder', 'partial least squares'
                    ))}
 )
       #new_col=as.factor(new_col)
@@ -153,11 +149,13 @@ new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 # this can produce the plot of x axis objective with groups of method 
 # or the other way round! 
 
-#x_group<-'objective'
-x_group<-'method'
-#colname='method'
-colname='objective'
+#x_group<-'method'
+#colname='objective'
+width=10
 
+x_group<-'objective'
+colname='method'
+width=7
 
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
@@ -187,30 +185,30 @@ df_by_group<-new %>%
 
 df_by_group<-new %>%
   group_by_at(x_group) %>%
-  group_map(~ preprocessing(.x, colname) %>%
+  group_modify(~ preprocessing(.x, colname) %>%
               get_frequencies() 
-  )  %>%
-  map_df(I, .id=x_group) 
+  )  
+# %>%  map_df(I, .id=x_group) 
 
 
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
-key_names<-c(keys[df_by_group[,x_group]])
-df_by_group<-cbind(key_names,df_by_group)
+# df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
+# key_names_1<-c(keys[df_by_group[,x_group]])
+# df_by_group<-cbind(key_names,df_by_group)
+df_by_group['key_names']<-df_by_group[x_group]
 
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
-  filter( sum(Freq) >= 2) %>%
+  filter( sum(Freq) >= 3) %>%
   group_by_at(x_group)  %>%
   filter( sum(Freq) >= 2)
 
-#df_to_plot<-df_by_group
-df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
+# df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
 show_p<-plotbyObjective(df_to_plot )
 
@@ -222,9 +220,9 @@ plotbyObjective<-function(df){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2.2,3),"cm"))
-  
-  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 10, height=6)
+
+    theme(plot.margin=unit(c(1,1,3,3),"cm"))
+  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = width, height=6)
   return(g)
   
   
@@ -238,9 +236,11 @@ new_concise<-new[c('Data', 'objective', 'method' )]
 
 #install.packages('alluvial')
 #install.packages('ggalluvial')
+install.packages('ggsankey')
 library('ggalluvial')
 library('alluvial')
 
+library('ggsankey')
 
 
 new2<-new %>% 
@@ -274,7 +274,8 @@ ggplot(as.data.frame(df),
        aes_string(y = 'n', axis1 = axis1, axis2 = axis2)) +
   geom_alluvium(aes_string(fill = axis1),
                 width = 0, knot.pos = 0, reverse = FALSE) +
-  guides(fill = FALSE) +
+  guides(fill = FALSE) + 
+  
   geom_stratum(width = 1/8, reverse = FALSE) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum)),
             reverse = FALSE) +
@@ -286,5 +287,44 @@ ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_f
 
 
 
-## TODO: separate in cancer and not cancer !! 
+counts<-new2 %>% count(objective, method)
+counts<-counts%>% filter(n>1)
+
+
+
+
+# New implementation with ggalluvial
+axis1='objective'
+axis2="method"
+counts <- new2 %>% 
+  count( objective, method) %>% 
+  mutate(
+    col = objective
+  ) %>%
+  ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
+
+df<-counts %>% filter(n>2)
+# df<-counts
+ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
+  # geom_lode(width = 1/6) +
+  geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
+            curve_type = "cubic") +
+  # geom_alluvium(aes(fill = stratum)) +
+  geom_stratum(color = "grey", width = 1/6) + 
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme(
+    panel.background = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15, face = "bold"),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()+
+  ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
+
+
+ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
+
+
 

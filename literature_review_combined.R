@@ -61,13 +61,19 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*",  '.*pca.*', '.*regression.*', '.*factor.*', 
-                  '.*multivar.*', '.*snf.*', '.*gsea.*', '.*cca.*', 
-                  '.*kernel.*', '.*autoencoder.*'), 
-                c( "machine/deep learning", 'clustering',
+                c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*",  '.*pca.*', 
+                  '.*regression.*|.*linear model.*', '.*factor.*|.*matrix decomp.*', 
+                  '.*multivar.*', '.*snf.*|.*netcs.*', '.*gsea.*', '.*cca.*', 
+                  '.*kernel.*', '.*autoencoder.*', '.*partial least square.*',
+                  '.*clustering.*|.*kmeans.*', 
+                  '.*support vector.*'), 
+              
+                 c( "machine/deep learning", 'clustering',
                                  'regression', 'factor Analysis', 'multivariate analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder + deep learning'
+                   'kernel learning', 'autoencoder + deep learning',
+                   'partial least squares', 'clustering', 
+                   'classification'
                    ))}
 )
       #new_col=as.factor(new_col)
@@ -144,7 +150,8 @@ new<-stats %>%
 
 new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 
-
+# this can produce the plot of x axis objective with groups of method 
+# or the other way round! 
 
 #x_group<-'objective'
 x_group<-'method'
@@ -200,7 +207,7 @@ df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
   filter( sum(Freq) >= 2) %>%
   group_by_at(x_group)  %>%
-  filter( sum(Freq) >= 3)
+  filter( sum(Freq) >= 2)
 
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
@@ -215,9 +222,9 @@ plotbyObjective<-function(df){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2.2,2),"cm"))
+    theme(plot.margin=unit(c(1,1,2.2,3),"cm"))
   
-  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 6, height=6)
+  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = 10, height=6)
   return(g)
   
   
@@ -240,7 +247,7 @@ new2<-new %>%
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
 
-cancer_filter=c("no")
+cancer_filter=c("yes")
 new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 

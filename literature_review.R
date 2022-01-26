@@ -90,7 +90,7 @@ stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/D
 #' 
 #' 
 
-stats$Cancer<-c(rep('no',289), rep('yes',(nrow(stats)-289)))
+stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
 
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
@@ -110,8 +110,8 @@ get_frequencies_by_group<-function(stats,colname){
   
   df_by_group<- stats %>%
     group_by_at(x_group) %>%
-    group_map(~ preprocessing(.x, colname) %>%
-                get_frequencies() 
+    group_modify(~ preprocessing(.x, colname) %>%
+                   get_frequencies() 
     )  %>%
     map_df(I, .id=x_group)
   
@@ -209,20 +209,22 @@ preprocessing_combinations<-function(x){
 total<-NROW(stats[!is.na(stats$Data),]$PMID)
 
 y_group='same_sample'
+
 y_group='Cancer'
 
 new<-stats[! ( is.na(stats['Data'] ) ),]
 
+
 df_by_group <- new %>%
   #group_by(same_sample) %>%
   group_by_at(y_group) %>%
-  group_map(~ preprocessing(.x, colname)  %>%
+  group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )  %>%
   map_df(I, .id=y_group)
 
-freq_cutoff<-7
+freq_cutoff<-5
 
 df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
@@ -262,21 +264,26 @@ library(tidyverse)
 colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 
+cancer_filter = 'no'
+stats_fil<-stats[stats$Cancer == cancer_filter,]
+
 
 #change here to select by objective or by method 
 # TODO: MAKE this one variable to choose method or objective
 
 x_group<-'method'
 # and here!!! 
-new<-stats %>% 
+new<-stats_fil %>% 
   mutate(method=strsplit(method, ',|\r|\n' ))%>%
   unnest(method) 
 
 
 x_group<-'objective'
-new<-stats %>% 
+new<-stats_fil %>% 
   mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
   unnest(objective) 
+
+
 
 colname='Data'
 
@@ -323,6 +330,16 @@ filter( sum(Freq) >= 3)
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
+
+##TODO: MOVE TO FUNCTION
+df_to_plot$labels<-df_to_plot$key_names
+ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
+df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+ind<-df_to_plot$labels%in% c('')
+df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+
+df_to_plot$key_names<-df_to_plot$labels
+
 plotbyObjective<-function(df){ 
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
@@ -330,7 +347,7 @@ plotbyObjective<-function(df){
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
     theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
   
-  ggsave(paste0('plots/barplot_byGroup', as.character(x_group), '.png'), width = 8, height=6)
+  ggsave(paste0('plots/barplot_byGroup', as.character(x_group), '_', colname, '_', cancer_filter,  '.png'), width = 8, height=6)
   return(g)
   
   
@@ -349,8 +366,8 @@ show_p
 # aggregated or separately? 
 
 
-comb_freq<- comb_frequencies_by_group #%>% filter(Cancer ==2)
-single_omics_frequencies_filtered<-single_omics_frequencies #%>% filter(Cancer ==2)
+comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==2)
+single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==2)
 
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq

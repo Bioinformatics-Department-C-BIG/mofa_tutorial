@@ -91,7 +91,7 @@ stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/D
 stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 #stats<-stats[1:289,]
 stats$PMID<-as.numeric(stats$PMID)
-stats$Cancer<-c(rep('no',289), rep('yes',(nrow(stats)-289)))
+stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
 
 ###Filters
 #### 1. remove same sample 
@@ -116,11 +116,6 @@ which(stats$PMID==31856727)
 
 #### Create the stacked plot
 
-library(grid)
-library(tidyverse)
-
-
-
 
 #### Create the stacked plot
 
@@ -142,6 +137,8 @@ new<-stats %>%
   mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
   unnest(ObjeMeth) 
 
+cancer_filter = 'no'
+new<-new[new$Cancer == cancer_filter,]
 
 
 new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
@@ -156,6 +153,7 @@ width=10
 x_group<-'objective'
 colname='method'
 width=7
+
 
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
@@ -194,9 +192,7 @@ df_by_group<-new %>%
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-# df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
-# key_names_1<-c(keys[df_by_group[,x_group]])
-# df_by_group<-cbind(key_names,df_by_group)
+
 df_by_group['key_names']<-df_by_group[x_group]
 
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
@@ -208,21 +204,20 @@ df_to_plot<-df_by_group %>%
   group_by_at(x_group)  %>%
   filter( sum(Freq) >= 2)
 
-# df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
 show_p<-plotbyObjective(df_to_plot )
 
 
 show_p
 
-plotbyObjective<-function(df){ 
+plotbyObjectie<-function(df){ 
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=perc, fill=Var1))+
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
 
     theme(plot.margin=unit(c(1,1,3,3),"cm"))
-  ggsave(paste0('plots/byObjMethod', as.character(x_group), '.png'), width = width, height=6)
+  ggsave(paste0('plots/byObjMethod', as.character(x_group),'_', cancer_filter, '.png'), width = width, height=6)
   return(g)
   
   

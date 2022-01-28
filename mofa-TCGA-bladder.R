@@ -1,9 +1,11 @@
-reticulate::use_python(python = "C:/Users/athienitie/Anaconda3/python.exe")
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
 
+#BiocManager::install("MOFA2")
+#BiocManager::install("MOFAdata")
 
 library(mixOmics)
 data(breast.TCGA)
-#BiocManager::install("biomaRt")
 
 library(MOFA2)
 library(MOFAdata)
@@ -13,25 +15,25 @@ library(tidyverse)
 
 
 
+clean_all_zeros<-function(df){
+  df<-as.data.frame(apply(df, 1, function(x) as.numeric(x)))
+  ind <- apply(df, 1, function(x) sum(x, na.rm = TRUE)==0) 
+  #remove genes with zero variance
+  df<-df[!ind,]
+  return(df)
+}
 
+
+# depends on SPLS.R to process X1,X2
 X1_mat<-clean_all_zeros(X1_raw[,-1])
 X2_mat<-clean_all_zeros(X2_raw[,-1])
 
 df<-X1_raw[,-1]
 
 
-clean_all_zeros<-function(df){
-  df<-as.data.frame(apply(df, 1, function(x) as.numeric(x)))
-  ind <- apply(df, 1, function(x) sum(x, na.rm = TRUE)==0) 
-  #remove genes with zero variance
-  df<-df[!ind,]
-return(df)
-}
-
-
 data<-list()
-data$RNA<-as.matrix(X1_mat)
-data$protein<-as.matrix(X2_mat)
+data$RNA<-as.matrix(t(X1_mat))
+data$protein<-as.matrix(t(X2_mat))
   
 MOFAobject <- create_mofa(data)
 plot_data_overview(MOFAobject)
@@ -39,7 +41,7 @@ plot_data_overview(MOFAobject)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts
 model_opts <- get_default_model_options(MOFAobject)
-model_opts$num_factors <- 10
+model_opts$num_factors <- 4
 model_opts
 
 
@@ -57,8 +59,9 @@ MOFAobject <- prepare_mofa(MOFAobject,
                            training_options = train_opts
 )
 
+outfile = file.path(getwd(),"model.hdf5")
+MOFAobject.trained <- run_mofa(MOFAobject, outfile)
 
-MOFAobject <- run_mofa(MOFAobject, outfile="MOFA2_CLL.hdf5")
 
 
 metadata<- data.frame(subtype=breast.TCGA$data.train$subtype)

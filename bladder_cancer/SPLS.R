@@ -19,6 +19,7 @@ transpose_matrix<- function(df.aree){
   }
 
 
+
 preprocess_raw_data<-function(df){
       df<- as.data.frame(apply(df, 2, function(x) as.numeric(x)) )
       ind <- apply(df, 2, function(x) sum(x, na.rm = TRUE)==0) 
@@ -41,9 +42,9 @@ pca.gene <- pca(X, ncomp = 10, center = TRUE, scale = TRUE)
 
 
 plot(pca.gene)
+dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
 dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
@@ -142,6 +143,9 @@ plotIndiv(result.spls, ind.names = FALSE,
           legend = TRUE)
 
 
+
+
+#### TUNING 
 # Enrichment analysis
 
 reticulate::use_python(python = "C:/Users/athienitie/Anaconda3/python.exe")

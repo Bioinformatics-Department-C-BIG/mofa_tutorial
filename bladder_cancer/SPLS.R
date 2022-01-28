@@ -43,6 +43,8 @@ pca.gene <- pca(X, ncomp = 10, center = TRUE, scale = TRUE)
 plot(pca.gene)
 
 dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
@@ -79,7 +81,7 @@ plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
 
 
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 5, 15))
+                    keepX = c(10, 10,5))
 
 selectVar(spca.result, comp = 1)$value
 
@@ -92,10 +94,10 @@ plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
 
 
-spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 5, 15))
+spca.result <- spca(X2_t, ncomp = 3, center = TRUE, scale = TRUE, 
+                    keepX = c(10, 10, 5))
 
-selectVar(spca.result, comp = 1)$value
+selectVar(spca.result, comp = 2)$value
 
 
 
@@ -125,13 +127,47 @@ tune.pls <- perf(result, validation = 'loo', criterion = 'all', progressBar = FA
 
 # SPLS
 ncomp = 10
-result.spls <- spls(X, Y, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
+result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
 tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
                   criterion = 'all', progressBar = FALSE)
 
 
+plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
+          legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
 
 
+plotIndiv(result.spls, ind.names = FALSE,
+          rep.space = "XY-variate", # plot in Y-variate subspace
+          group =  Y_raw$Subtype, # colour by time group
+          legend = TRUE)
+
+
+# Enrichment analysis
+
+reticulate::use_python(python = "C:/Users/athienitie/Anaconda3/python.exe")
+
+
+library(mixOmics)
+data(breast.TCGA)
+#BiocManager::install("biomaRt")
+
+library(MOFA2)
+library(MOFAdata)
+library(data.table)
+library(ggplot2)
+library(tidyverse)
+
+#### Enrichment analysis 
+utils::data()
+
+
+
+# GSEA on positive weights, with default options
+res.positive <- run_enrichment(MOFAobject, 
+                               feature.sets = reactomeGS, 
+                               view = "mRNA",
+                               sign = "positive"
+)
 
 
 

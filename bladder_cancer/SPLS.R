@@ -75,7 +75,7 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 #### Preprocessing -transpose
 
 
-pca.gene <- pca(X1_t, ncomp = 10, center = TRUE, scale = TRUE)
+pca.gene <- pca(X1_t, ncomp = 5, center = TRUE, scale = TRUE)
 plot(pca.gene)
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
@@ -89,7 +89,7 @@ selectVar(spca.result, comp = 1)$value
 
 
 
-pca.proteomics <- pca(X2_t, ncomp = 10, center = TRUE, scale = TRUE)
+pca.proteomics <- pca(X2_t, ncomp = 5, center = TRUE, scale = TRUE)
 plot(pca.proteomics)
 plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
@@ -108,9 +108,7 @@ selectVar(spca.result, comp = 2)$value
 ##### SPLS DA
 
 library(mixOmics)
-data(liver.toxicity)
-X <- liver.toxicity$gene
-Y <- liver.toxicity$clinic
+
 
 
 pca.clinical <- pca(Y, ncomp = 10, center = TRUE, scale = TRUE)
@@ -125,9 +123,19 @@ plotIndiv(pca.gene, comp = c(1, 2), group = liver.toxicity$treatment[, 4],
 result <- pls(X, Y, ncomp = 3)  # where ncomp is the number of dimensions/components to choose
 tune.pls <- perf(result, validation = 'loo', criterion = 'all', progressBar = FALSE)
 
+result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
+spls.bladder<-result.spls
+
+# repeated CV tuning of component count
+perf.spls.bladder <- perf(spls.bladder, validation = 'Mfold',
+                        folds = 2, nrepeat = 5) 
+
+plot(perf.spls.liver, criterion = 'Q2.total')
+
+
 
 # SPLS
-ncomp = 10
+ncomp = 5
 result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
 tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
                   criterion = 'all', progressBar = FALSE)

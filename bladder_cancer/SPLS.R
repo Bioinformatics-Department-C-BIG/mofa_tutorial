@@ -74,11 +74,23 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 ################
 #### Preprocessing -transpose
 
+### Preprocessing select the msot variable genes by the Median absolute deviation
 
-pca.gene <- pca(X1_t, ncomp = 5, center = TRUE, scale = TRUE)
+most_variable<-function(df){
+  df<-X1_t
+  n=round(dim(df)[2]/4)
+  mads<-apply(df,2,mad)
+df_selected=df[,rev(order(mads))[1:n]]
+}
+
+X1_t<-most_variable(X1_t)
+X2_t<-most_variable(X2_t)
+
+ncomp=2
+pca.gene <- pca(X1_t, ncomp = ncomp, center = TRUE, scale = TRUE)
 plot(pca.gene)
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
+          legend = TRUE, title = 'Bladder gene, PCA comp 1 - 2')
 
 
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
@@ -87,18 +99,16 @@ spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE,
 selectVar(spca.result, comp = 1)$value
 
 
-
-
-pca.proteomics <- pca(X2_t, ncomp = 5, center = TRUE, scale = TRUE)
+pca.proteomics <- pca(X2_t, ncomp = ncomp, center = TRUE, scale = TRUE)
 plot(pca.proteomics)
 plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
+          legend = TRUE, title = 'Bladder proteomics, PCA comp 1 - 2')
 
 
 spca.result <- spca(X2_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 10, 5))
+                    keepX = c(10, 5, 5))
 
-selectVar(spca.result, comp = 2)$value
+selectVar(spca.result, comp = 1)$value
 
 
 

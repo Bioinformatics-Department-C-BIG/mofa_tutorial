@@ -224,10 +224,12 @@ df_by_group_filtered<-df_by_group %>%
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
 
-plotByData(df_by_group_filtered, y_group)
+p<-plotByData(df_by_group_filtered, y_group)
+
+p
 
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
-cancer_filter='yes'
+cancer_filter='no'
 df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
 combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
 combinations<-setNames(combinations,c('Var1','Freq'))
@@ -309,20 +311,18 @@ df_by_group<-new %>%
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-df_by_group[,x_group]<-as.numeric(df_by_group[,x_group])
-key_names<-c(keys[df_by_group[,x_group]])
-df_by_group<-cbind(key_names,df_by_group)
-
+df_by_group['key_names']<-df_by_group[x_group]
 
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
+
+# non cancer: 10,7, cancer: 7,3,
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
 filter( sum(Freq) >= 0) %>%
 group_by_at(x_group)  %>%
 filter( sum(Freq) >= 0)
 
-#df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
 

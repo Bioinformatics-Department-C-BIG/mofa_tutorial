@@ -6,6 +6,7 @@ colname<-'Data'
 library('dplyr')
 library('purrr')
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
+level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -168,6 +169,7 @@ ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 8, 
 
 #### Get combinations 
 ### Co-Occurrence #
+library(tidyverse)
 
 colname<-'Data'
 
@@ -179,11 +181,11 @@ omics_data<-df_by_group[[1]]
 #' 
 #' 
 
-get_combs<- function(x){
+get_combs<- function(x, omics_level=level1){
     
   #' return omics combinations as individual strings to count them+
   x<-unlist(x)
-    x<-x[tolower(x) %in% tolower(level1)]
+    x<-x[tolower(x) %in% tolower(omics_level)]
     if (length(x)>1){
       x<-x[order(x)]
       combn(x,2, FUN=paste, collapse=' - ')
@@ -199,7 +201,7 @@ preprocessing_combinations<-function(x){
   #' Create pairs of omics 
   #' #
   #'
-  combinations<-lapply(x,get_combs)
+  combinations<-lapply(x,get_combs, omics_level=level2)
   return(combinations)
 }
 
@@ -229,7 +231,7 @@ p<-plotByData(df_by_group_filtered, y_group)
 p
 
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
-cancer_filter='no'
+cancer_filter='yes'
 df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
 combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
 combinations<-setNames(combinations,c('Var1','Freq'))
@@ -241,6 +243,7 @@ ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
   geom_text(aes(label = round(Freq, 2)), size=7)+
   theme(axis.text.x = element_text(size=rel(1.5),angle = 90, vjust = 0.5, hjust=1))+
   theme(axis.text.y = element_text( size=rel(1.5)))+
+  scale_fill_gradient(low = "white", high = "red")+
   ggtitle(paste0('Cancer = ', cancer_filter))
 ggsave(paste0('plots/GridPlot', as.character(colname),'_',cancer_filter, '.png'), width = 8, height=6)
 
@@ -252,7 +255,6 @@ ggsave(paste0('plots/GridPlot', as.character(colname),'_',cancer_filter, '.png')
 comb_frequencies_by_group<-df_by_group
 
 
-library(tidyverse)
 
 ########
 ###
@@ -317,11 +319,16 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
 # non cancer: 10,7, cancer: 7,3,
+if (cancer_filter == 'yes')
+  {freq_cutoff1=0; freq_cutoff2=0
+}else
+{freq_cutoff1=15; freq_cutoff2=10
+}
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
-filter( sum(Freq) >= 0) %>%
+filter( sum(Freq) >= freq_cutoff1) %>%
 group_by_at(x_group)  %>%
-filter( sum(Freq) >= 0)
+filter( sum(Freq) >= freq_cutoff2)
 
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 

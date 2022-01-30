@@ -76,6 +76,7 @@ library(data.table)
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
 stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
 stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 
 
 ###Filters
@@ -91,13 +92,13 @@ stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/D
 #' 
 
 stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
-
+stats=stats[1:600,]
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
-  filter(Type!= 'Review')%>%
-  filter(is.na(`Rejection /Critic`))%>%
-  filter(tolower(same_sample)!='no')
+  filter(Type!= 'Review' | is.na(Type)) %>%
+  filter(is.na(`Rejection /Critic`)) %>%
+  filter(tolower(same_sample)!='no' | is.na(same_sample))
 
 
 
@@ -112,8 +113,7 @@ get_frequencies_by_group<-function(stats,colname){
     group_by_at(x_group) %>%
     group_modify(~ preprocessing(.x, colname) %>%
                    get_frequencies() 
-    )  %>%
-    map_df(I, .id=x_group)
+    )
   
   
   return(df_by_group)
@@ -134,7 +134,7 @@ single_omics_frequencies=freq_to_plot
 
 library(grid)
 
-plotByData<-function(df_by_group){
+plotByData<-function(df_by_group, y_group){
   ggplot(df_by_group, 
          aes(x=reorder(Var1, -Freq, sum), y=Freq))+
     aes_string(fill=y_group)+
@@ -147,9 +147,7 @@ plotByData<-function(df_by_group){
 }
 
 
-
-
-plotByData(freq_to_plot)
+plotByData(freq_to_plot, y_group=x_group)
 
 ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
@@ -216,36 +214,34 @@ new<-stats[! ( is.na(stats['Data'] ) ),]
 
 
 df_by_group <- new %>%
-  #group_by(same_sample) %>%
   group_by_at(y_group) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
-  )  %>%
-  map_df(I, .id=y_group)
-
+  )
 freq_cutoff<-5
-
 df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
 
-plotByData(df_by_group_filtered)
+plotByData(df_by_group_filtered, y_group)
 
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
-
-
-combinations<-df_by_group
-
-
-combinations <-df_by_group %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
+cancer_filter='yes'
+df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
+combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
+combinations<-setNames(combinations,c('Var1','Freq'))
+combinations <-combinations %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
+combinations<-combinations[order(combinations$Freq, decreasing = TRUE),]
 
 ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
   geom_tile()+
   geom_text(aes(label = round(Freq, 2)), size=7)+
   theme(axis.text.x = element_text(size=rel(1.5),angle = 90, vjust = 0.5, hjust=1))+
-  theme(axis.text.y = element_text( size=rel(1.5)))
-  
+  theme(axis.text.y = element_text( size=rel(1.5)))+
+  ggtitle(paste0('Cancer = ', cancer_filter))
+ggsave(paste0('plots/GridPlot', as.character(colname),'_',cancer_filter, '.png'), width = 8, height=6)
+
 
 #TODO: add red find overflow 
   
@@ -264,7 +260,7 @@ library(tidyverse)
 colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 
-cancer_filter = 'no'
+cancer_filter = 'yes'
 stats_fil<-stats[stats$Cancer == cancer_filter,]
 
 
@@ -304,11 +300,10 @@ df_by_group<-new %>%
 
 df_by_group<-new %>%
   group_by_at(x_group) %>%
-  group_map(~ preprocessing(.x, colname)  %>%
+  group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations() %>%
               get_frequencies() 
-  )  %>%
-  map_df(I, .id=x_group) 
+  )  
 
 
 
@@ -323,9 +318,9 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
-filter( sum(Freq) >= 7) %>%
+filter( sum(Freq) >= 0) %>%
 group_by_at(x_group)  %>%
-filter( sum(Freq) >= 3)
+filter( sum(Freq) >= 0)
 
 #df_to_plot<-df_by_group
 df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
@@ -345,7 +340,8 @@ plotbyObjective<-function(df){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL)+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,1.7),"cm"))
+    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
+    ggtitle(paste0("Cancer = ", cancer_filter))
   
   ggsave(paste0('plots/barplot_byGroup', as.character(x_group), '_', colname, '_', cancer_filter,  '.png'), width = 8, height=6)
   return(g)

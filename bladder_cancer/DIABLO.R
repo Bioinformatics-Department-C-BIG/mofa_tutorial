@@ -1,4 +1,7 @@
+library('mixOmics')
+
 data(breast.TCGA) # load in the data
+
 
 # set a list of all the X dataframes
 data = list(mRNA = X1_t,
@@ -90,7 +93,7 @@ plotVar(final.diablo.model, cutoff=0.8, var.names = FALSE,
         col = c('darkorchid', 'brown1'))
 
 
-circosPlot(final.diablo.model, cutoff = 0.7, line = TRUE,
+circosPlot(final.diablo.model, cutoff = 0.98, line = TRUE,
            color.blocks= c('darkorchid', 'brown1'),
            color.cor = c("chocolate3","grey20"), size.labels = 1.5)
 

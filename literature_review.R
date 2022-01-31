@@ -133,6 +133,11 @@ single_omics_frequencies=freq_to_plot
 
 #### Create the stacked plot
 
+ggplot(stats[stats$Cancer=='no',])+stat_count(aes(tolower(Disease)))+
+  theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))
+  
+  
+
 library(grid)
 
 plotByData<-function(df_by_group, y_group){
@@ -231,6 +236,8 @@ p<-plotByData(df_by_group_filtered, y_group)
 p
 
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
+
+
 cancer_filter='yes'
 df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
 combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
@@ -264,7 +271,7 @@ comb_frequencies_by_group<-df_by_group
 colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 
-cancer_filter = 'yes'
+cancer_filter = 'no'
 stats_fil<-stats[stats$Cancer == cancer_filter,]
 
 

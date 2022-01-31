@@ -109,10 +109,9 @@ stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
-  #filter(Type!= 'Review')%>%
-  filter(is.na(`Rejection /Critic`))
-
-which(stats$PMID==31856727)
+  filter(Type!= 'Review' | is.na(Type)) %>%
+  filter(is.na(`Rejection /Critic`)) %>%
+  filter(tolower(same_sample)!='no' | is.na(same_sample))
 
 #### Create the stacked plot
 
@@ -132,12 +131,12 @@ colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
 
+cancer_filter = 'yes'
 
 new<-stats %>% 
   mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
   unnest(ObjeMeth) 
 
-cancer_filter = 'no'
 new<-new[new$Cancer == cancer_filter,]
 
 

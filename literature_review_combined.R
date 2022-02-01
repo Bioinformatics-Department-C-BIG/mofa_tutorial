@@ -2,6 +2,8 @@
 # frequency of each disease 
 # frequency of each omics
 
+
+
 colname<-'Data'
 library('dplyr')
 library('purrr')
@@ -61,15 +63,19 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*|.*boosting.*|.*kmeans.*|.*support vector.*",  
-                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*', 
-                  '.*multivar.*', '.*snf.*|.*network.*', '.*gsea.*', '.*cca.*', 
+                c(".*learning.*|.*decision.*|.*neural.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
+                  '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*|.*mofa.*', 
+                   '.*snf.*|.*network.*', '.*gsea.*', 
+                  '.*cca.*|.*smccnet.*', 
                   '.*kernel.*', '.*autoencoder.*', 
-                  '.*partial least.*|.*diablo.*'), 
+                  '.*partial least.*|.*diablo.*', 
+                  '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
+                  '.*multivar.*'), 
                 c( "machine/deep learning", 'clustering',
-                                 'regression', 'factor analysis', 'multivariate analysis', 
+                                 'regression', 'factor analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder', 'partial least squares'
+                   'kernel learning', 'autoencoder', 'partial least squares',
+                   'multiomics pathway analysis', 'multivariate analysis'
                    ))}
 )
       #new_col=as.factor(new_col)
@@ -83,15 +89,17 @@ library('readxl')
 library('stringr')
 library(ggplot2)
 library(data.table)
+library(gdata) 
 
 
 
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
 stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-#stats<-stats[1:289,]
+stats<-stats[1:600,]
 stats$PMID<-as.numeric(stats$PMID)
 stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
+
 
 ###Filters
 #### 1. remove same sample 
@@ -111,7 +119,8 @@ stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
 stats <- stats %>%
   filter(Type!= 'Review' | is.na(Type)) %>%
   filter(is.na(`Rejection /Critic`)) %>%
-  filter(tolower(same_sample)!='no' | is.na(same_sample))
+  filter(tolower(same_sample)!='no' | is.na(same_sample)) %>%
+  filter(!is.na(Data))
 
 #### Create the stacked plot
 
@@ -131,7 +140,7 @@ colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
 
-cancer_filter = 'yes'
+cancer_filter = 'no'
 
 new<-stats %>% 
   mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
@@ -154,21 +163,14 @@ colname='method'
 width=7
 
 
-
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
 new[colname] <-apply(new[colname], 1, function(x) trimws(tolower(x)))
 
 
-new[x_group]
-
 new<-group_objectives_method(new, 'objective')
+# make a backup of the original entries 
+new['method_orig']<-new['method']
 new<-group_methods(new, 'method')
-
-
-keys<-pull(new %>%
-             group_by_at(x_group) %>%
-             group_keys())
-
 
 
 
@@ -177,16 +179,14 @@ keys<-pull(new %>%
 #' 
 #' 
 new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
-df_by_group<-new %>%
-  group_by_at(x_group) 
+
+
 
 df_by_group<-new %>%
   group_by_at(x_group) %>%
   group_modify(~ preprocessing(.x, colname) %>%
               get_frequencies() 
   )  
-# %>%  map_df(I, .id=x_group) 
-
 
 
 # Attach the key names back to the dataframe 
@@ -197,6 +197,9 @@ df_by_group['key_names']<-df_by_group[x_group]
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
+
+
+######## Plotting - Filter
 df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
   filter( sum(Freq) >= 3) %>%
@@ -228,20 +231,64 @@ new_concise<-new[c('Data', 'objective', 'method' )]
 
 
 
+
+
+
+##### Section 4: PRINT METHODS to table
+
+width=10
+
+x_group<-'method_orig'
+colname='method'
+width=7
+
+
+new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
+new[colname] <-apply(new[colname], 1, function(x) trimws(tolower(x)))
+
+
+
+
+#' TODO: check the rownames given by get frequencies..
+#' TODO: use dplyr instead 
+#' 
+#' 
+new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
+
+
+
+df_by_group_meth<-new %>%
+  group_by_at(x_group) %>%
+  group_modify(~ preprocessing(.x, colname) %>%
+                 get_frequencies() 
+  )  
+
+aggr_methods<-aggregate(method_orig ~., df_by_group_meth[c('Var1', 'method_orig')], toString)
+aggr_methods$x<-'\\\\'
+
+write.table(aggr_methods, file = "review/output/methods.txt", sep='\t', row.names = FALSE, quote = FALSE)
+write.table(aggr_methods, file = "review/output/methods_latex.txt", sep = " & ", row.names = FALSE, quote = FALSE)
+
+write.table(df_by_group_meth, file = "review/output/methods_freq.txt", sep='\t', row.names = FALSE, quote = FALSE)
+
+
+################ Section 5: ALLUVIAL 
+
+
 #install.packages('alluvial')
 #install.packages('ggalluvial')
-install.packages('ggsankey')
+#install.packages('ggsankey')
 library('ggalluvial')
 library('alluvial')
 
 library('ggsankey')
 
-
+cancer_filter=c("no")
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
 
-cancer_filter=c("yes")
+
 new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 
@@ -259,30 +306,13 @@ axis2='method'
 
 counts<-new2 %>% count(objective, method)
 
-
-counts<-counts%>% filter(n>1)
+if (cancer_filter == 'yes'){n_cutoff=3} else {n_cutoff=4}
+counts<-counts%>% filter(n>n_cutoff)
 
 
 df<-counts
-ggplot(as.data.frame(df),
-       aes_string(y = 'n', axis1 = axis1, axis2 = axis2)) +
-  geom_alluvium(aes_string(fill = axis1),
-                width = 0, knot.pos = 0, reverse = FALSE) +
-  guides(fill = FALSE) + 
-  
-  geom_stratum(width = 1/8, reverse = FALSE) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum)),
-            reverse = FALSE) +
-  scale_x_continuous(breaks = 1:2, labels = c(axis1,axis2)) +
-  ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
-
-
-ggsave(paste0('plots/alluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
-
-
-
 counts<-new2 %>% count(objective, method)
-counts<-counts%>% filter(n>1)
+counts<-counts%>% filter(n>n_cutoff)
 
 
 
@@ -297,7 +327,7 @@ counts <- new2 %>%
   ) %>%
   ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
 
-df<-counts %>% filter(n>2)
+df<-counts %>% filter(n>n_cutoff)
 # df<-counts
 ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
   # geom_lode(width = 1/6) +
@@ -319,6 +349,20 @@ ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) 
 
 
 ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
+
+
+
+stats
+
+
+
+# TODO: CREATE a new column whch is merged from objective and method
+  stats_to_write<-stats[c('Title', 'Data', 'ObjeMeth')]
+stats_to_write$x<-'\\\\'
+
+#install.packages('gdata')
+
+write.table(stats_to_write, file = "review/output/literature_latex.txt", sep = " & ", row.names = FALSE, quote = FALSE)
 
 
 

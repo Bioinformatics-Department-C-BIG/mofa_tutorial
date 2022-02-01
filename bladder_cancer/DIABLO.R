@@ -46,7 +46,7 @@ basic.diablo.model = block.splsda(X = data, Y = Y, ncomp = 5, design = design)
 ### tune the number of components
 # run component number tuning with repeated CV
 perf.diablo = perf(basic.diablo.model, validation = 'Mfold', 
-                   folds = 9, nrepeat = 10) 
+                   folds = 4, nrepeat = 10) 
 
 plot(perf.diablo) # plot output of tuning
 
@@ -56,16 +56,16 @@ plot(perf.diablo) # plot output of tuning
 test.keepX = list (mRNA = c(6:7, seq(20,30,5)), 
                    proteomics = c(6:7,  seq(20,30,5)))
 
-# run the feature selection tuning
-# tune.TCGA = tune.block.splsda(X = data, Y = Y, ncomp = ncomp, 
-#                               test.keepX = test.keepX, design = design,
-#                               validation = 'Mfold', folds = 10, nrepeat = 1,
-#                               dist = "centroids.dist")
-# 
+#run the feature selection tuning
+tune.TCGA = tune.block.splsda(X = data, Y = Y, ncomp = ncomp, 
+                       test.keepX = test.keepX, design = design,
+                       validation = 'Mfold', folds = 10, nrepeat = 1,
+                       dist = "centroids.dist")
+
 
 
 #####
-list.keepX = list(mRNA=10,proteomics=10)
+#list.keepX = list(mRNA=10,proteomics=10)
 # set the optimised DIABLO model
 final.diablo.model = block.splsda(X = data, Y = Y, ncomp = ncomp, 
                                   keepX = list.keepX, design = design)

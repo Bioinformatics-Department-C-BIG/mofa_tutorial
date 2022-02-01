@@ -36,3 +36,5 @@ stats$
     omics_data_frequencies<-data.frame(omics_data_frequencies)
     return(omics_data_frequencies)
   }
+
+  

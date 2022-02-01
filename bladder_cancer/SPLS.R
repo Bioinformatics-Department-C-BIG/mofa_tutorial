@@ -28,23 +28,19 @@ preprocess_raw_data<-function(df){
 
 }
 
+most_variable<-function(df){
+  n=round(dim(df)[2]/4)
+  mads<-apply(df,2,mad)
+  df_selected=df[,rev(order(mads))[1:n]]
+  return(df_selected)
+}
+
 ####################################
 #### Preliminary analysis with PCA
+dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
-
-data(liver.toxicity)
-X <- liver.toxicity$gene
-Y <- liver.toxicity$clinic
-head(cbind(rownames(X), rownames(Y)))
-
-pca.gene <- pca(X, ncomp = 10, center = TRUE, scale = TRUE)
-
-
-
-plot(pca.gene)
 dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
-dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
@@ -76,34 +72,49 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 
 ### Preprocessing select the msot variable genes by the Median absolute deviation
 
-most_variable<-function(df){
-  df<-X1_t
-  n=round(dim(df)[2]/4)
-  mads<-apply(df,2,mad)
-df_selected=df[,rev(order(mads))[1:n]]
+
+
+most_var=TRUE
+if (most_var){
+  X1_t<-most_variable(X1_t)
+  X2_t<-most_variable(X2_t)
+ X1_t<-log2(X1_t+1) 
+X2_t<-log2(X2_t+1) 
 }
 
-X1_t<-most_variable(X1_t)
-X2_t<-most_variable(X2_t)
 
-ncomp=2
-pca.gene <- pca(X1_t, ncomp = ncomp, center = TRUE, scale = TRUE)
+ncomp_g=2
+pca.gene <- pca(X1_t, ncomp = ncomp_g, center = TRUE, scale = TRUE)
+png(paste0('bladder_cancer/plots/pca_gene_percent', '_', most_var, '_', ncomp_g, '.png'))
 plot(pca.gene)
+dev.off()
+
+
+png(paste0('bladder_cancer/plots/pca_gene', '_', most_var, '.png'))
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Bladder gene, PCA comp 1 - 2')
 
-
+dev.off()
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
                     keepX = c(10, 10,5))
 
-selectVar(spca.result, comp = 1)$value
+pc_genes<-selectVar(spca.result, comp = 1)$value
+
+# Inspect row data
+X1_t[,rownames(pc_genes)[1:3]]
 
 
-pca.proteomics <- pca(X2_t, ncomp = ncomp, center = TRUE, scale = TRUE)
+ncomp_p=5
+pca.proteomics <- pca(X2_t, ncomp = ncomp_p, center = TRUE, scale = TRUE)
+png(paste0('bladder_cancer//plots/pca_proteomics_percent', '_', most_var,'_', ncomp_p, '.png'))
 plot(pca.proteomics)
+dev.off()
+png(paste0('bladder_cancer/plots/pca_proteomics', '_', most_var, '.png'))
 plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE, title = 'Bladder proteomics, PCA comp 1 - 2')
-
+          legend = TRUE,
+          title = paste0('Proteomics, PCA comp 1 - 2'),
+          subtitle = paste0( 'most_var = ', most_var))
+dev.off()
 
 spca.result <- spca(X2_t, ncomp = 3, center = TRUE, scale = TRUE, 
                     keepX = c(10, 5, 5))
@@ -151,11 +162,9 @@ tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
                   criterion = 'all', progressBar = FALSE)
 
 
-plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE, title = 'Liver gene, PCA comp 1 - 2')
 
 
-plotIndiv(result.spls, ind.names = FALSE,
+plotIndiv(result.spls, ind.names = TRUE,
           rep.space = "XY-variate", # plot in Y-variate subspace
           group =  Y_raw$Subtype, # colour by time group
           legend = TRUE)
@@ -230,10 +239,10 @@ plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 plotArrow(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 dev.off()  
-plotVar(sgccda.res, var.names = FALSE, style = 'graphics', legend = TRUE, 
+plotVar(sgccda.res, cutoff = 0.7, var.names = FALSE, style = 'graphics', legend = TRUE, 
         pch = c(16, 17), cex = c(2,2), col = c('darkorchid', 'brown1' ))
 
 
-circosPlot(sgccda.res, cutoff = 0.7, line = TRUE, 
+circosPlot(sgccda.res, cutoff = 0.8,line = TRUE, 
            color.blocks= c('darkorchid', 'brown1'),
-           color.cor = c("chocolate3"), size.labels = 1.5)
+           color.cor = c("chocolate3", ), size.labels = 1.5)

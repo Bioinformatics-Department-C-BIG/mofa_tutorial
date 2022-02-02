@@ -10,6 +10,7 @@
 # Session Data files
 .RData
 .RDataTmp
+./bladder_cancer/plots/*
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper
 .Rproj.user/0F86D29C/pcs/source-pane.pper
@@ -74,3 +75,4 @@
 .Rproj.user/0F86D29C/pcs/windowlayoutstate.pper
 .Rproj.user/0F86D29C/sources/per/t/0FAA731A
 .Rproj.user/0F86D29C/sources/per/t/13EF4D40
+.Rproj.user

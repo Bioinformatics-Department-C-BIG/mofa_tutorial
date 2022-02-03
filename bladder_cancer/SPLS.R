@@ -1,6 +1,6 @@
 
-BiocManager::install(c("mixOmics"))
-library(mixOmics)
+#BiocManager::install(c("mixOmics"))
+#library(mixOmics)
 #### 
 # Preprocessing 
 
@@ -22,7 +22,7 @@ transpose_matrix<- function(df.aree){
 
 
 
-preprocess_raw_data<-function(df, most_var, cut_n){
+preprocess_raw_data<-function(df, most_var, cut_n, ng){
       
       
       # first remove all zero entries
@@ -35,7 +35,7 @@ preprocess_raw_data<-function(df, most_var, cut_n){
       
       # take the most variable entries 
       if (most_var){
-        n=round(dim(df)[2]/4)
+        n=round(dim(df)[2]/ng)
         mads<-apply(df,2,mad)
         df_selected=df[,rev(order(mads))[1:n]]
         return(df_selected)
@@ -66,8 +66,11 @@ X1_t_raw<-transpose_matrix(X1_raw)
 X2_t_raw<-transpose_matrix(X2_raw)
 
 most_var=TRUE
-X1_t<-preprocess_raw_data(X1_t_raw,most_var=most_var, cut_n=27000)
-X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE)
+
+ng_p=round(10/9,2)
+ng_g=round(3,2)
+X1_t<-preprocess_raw_data(X1_t_raw,most_var=most_var, cut_n=27000, ng_g)
+X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE, ng_p)
 
 
 X1_t<-log2(X1_t+1) 
@@ -84,25 +87,40 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 
 
 
-
 ncomp_g=2
+ncomp_p=5
+param_str_g<-paste0( '_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2))
+param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2),  ', ncomp = ', ncomp_g)
+
+
 pca.gene <- pca(X1_t, ncomp = ncomp_g, center = TRUE, scale = TRUE)
-png(paste0(output, 'pca_gene_percent', '_', most_var, '_', ncomp_g, '.png'))
+
+
+png(paste0(output, 'pca_gene_percent', param_str_g, '.png'))
 plot(pca.gene)
 dev.off()
 
 
-png(paste0(output,'pca_gene', '_', most_var, '.png'))
+
+png(paste0(output,'pca_gene', param_str_g,  '.png'))
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE, title = 'Bladder gene, PCA comp 1 - 2')
+          legend = TRUE, title = 'Bladder gene, PCA comp 1 - 2', 
+          subtitle = paste0(param_str_g_plot) )
 
 dev.off()
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
                     keepX = c(10, 10,5))
 
-pc_genes<-selectVar(spca.result, comp = 1)$value
+pc_genes1<-selectVar(spca.result, comp=1)$value
+pc_genes2<-selectVar(spca.result, comp=2)$value
+
+write.csv(pc_genes1, paste0(output,'Vars_genes',param_str, '_1_X','.csv'))
+write.csv(pc_genes2, paste0(output,'Vars_genes',param_str, '_2_X','.csv'))
+
+
 cim(spca.result, xlab = "genes", ylab = "Samples", save='png', 
-    name.save =paste0(output,'cim_genes') ) 
+    name.save =paste0(output,'cim_genes', param_str_g), 
+    title = paste0(param_str_g_plot) ) 
 
 png(paste0(output, 'pca_genes.png'))
 plotVar(spca.result, cex=c(5))
@@ -112,29 +130,41 @@ dev.off()
 X1_t[,rownames(pc_genes)[1:3]]
 
 
+param_str_p<-paste0( '_', most_var, '_', ncomp_p, '_ng_', round(ng_p,2))
+param_str_p_plot<-paste( 'most var = ', most_var, ', ng =', round(ng_p,2),  ', ncomp = ', ncomp_g)
+
 ncomp_p=5
 pca.proteomics <- pca(X2_t, ncomp = ncomp_p, center = TRUE, scale = TRUE)
-png(paste0(output, 'pca_proteomics_percent', '_', most_var,'_', ncomp_p, '.png'))
+png(paste0(output, 'pca_proteomics_percent', param_str_p, '.png'))
 plot(pca.proteomics)
 dev.off()
-png(paste0(output, 'pca_proteomics', '_', most_var, '.png'))
+png(paste0(output, 'pca_proteomics', '_', param_str_p, '.png'))
 plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE,
           title = paste0('Proteomics, PCA comp 1 - 2'),
-          subtitle = paste0( 'most_var = ', most_var))
+          subtitle = param_str_p_plot)
 dev.off()
 
 spca.result <- spca(X2_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 5, 5))
+                    keepX = c(10, 10, 5))
 
-selectVar(spca.result, comp = 1)$value
+pc_proteins1<-selectVar(spca.result, comp = 1)$value
+pc_proteins2<-selectVar(spca.result, comp = 2)$value
 
-png(paste0(output, 'pca_proteins.png'))
-plotVar(spca.result)
+write.csv(pc_proteins1, paste0(output,'Vars_pr',param_str_p, '_1_Y','.csv'))
+write.csv(pc_proteins2, paste0(output,'Vars_pr',param_str_p, '_2_Y','.csv'))
+
+
+png(paste0(output, 'pca_proteins',param_str_p, '.png'))
+plotVar(spca.result, title =param_str_p_plot )
 dev.off()
 
-cim(spca.result, xlab = "proteins", ylab = "Samples",
-    save='png',name.save =paste0(output,'cim_proteins') ) 
+
+cim(spca.result,xlab = "proteins", ylab = "Samples",
+    title = param_str_p_plot,
+    save='png',
+    name.save =paste0(output,'cim_proteins', param_str_p),
+    ) 
 
 
 
@@ -150,13 +180,15 @@ cim(spca.result, xlab = "proteins", ylab = "Samples",
 
 #PLS # calclate the q2 criterion used in simca-p 
 ### TUNING
-
 ncomp=2
+param_str<-paste0( '_', most_var, '_', ncomp_g, '_ng_g_', round(1/ng_g,2),'_ncomp_g_', ncomp_p, '_ng_p_', round(1/ng_p,2) )
+
+param_str_plot = paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2), ' ng_p = ' , round(1/ng_p,2), ', ncomp = ', ncomp_g)
 result.pls <- pls(X1_t, X2_t, ncomp = ncomp, mode='canonical')  # where ncomp is the number of dimensions/components to choose
 perf.pls <- perf.pls <- perf(result.pls, validation = "loo",
                              progressBar = FALSE, nrepeat = 10)
 
-png(paste0(output,'/PLS_Q2.png'))
+png(paste0(output,'/PLS_Q2',param_str,'.png'))
 plot(perf.pls, criterion = 'Q2.total')
 abline(h = 0.0975)
 dev.off()
@@ -173,33 +205,39 @@ tune.spls.bladder <- tune.spls(X1_t, X2_t, ncomp = ncomp,
                              test.keepX = list.keepX,
                              test.keepY = list.keepY,
                              nrepeat = 1, folds =4, # use 10 folds
-                             mode = 'canonical', measure = 'cor') 
+                             mode = 'canonical', measure = 'cor')
 
-png(paste0(output,'/PLS_tune.png'))
 tune.spls.bladder$choice.keepX
 tune.spls.bladder$choice.keepY
 # extract optimal number of variables for X dataframe
-optimal.keepX <- tune.spls.bladder$choice.keepX 
+optimal$keepX <- tune.spls.bladder$choice.keepX 
 
-# extract optimal number of variables for Y datafram
-optimal.keepY <- tune.spls.bladder$choice.keepY
-optimal.keepY <- c(comp1=10, comp2=9)
+ #extract optimal number of variables for Y datafram
+optimal$keepY <- tune.spls.bladder$choice.keepY
+#optimal.keepX <- c(comp1=20, comp2=50)
 
-optimal.ncomp <-  length(optimal.keepX) # extract optimal number of components
+#optimal.keepY <- c(comp1=10, comp2=9)
 
+optimal$ncomp <-  length(optimal.keepX) # extract optimal number of components
 
+fname=paste0(output,'/PLS_tune', param_str, '.png')
+png(fname)
 plot(tune.spls.bladder)         # use the correlation measure for tuning
-dev.off()
 
+
+
+fname<-paste0('bladder_cancer/settings/optimal', param_str, '.csv') 
+saveRDS(optimal,fname)
+readRDS(file = fname)
 
 
 #result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
 #spls.bladder<-result.spls
 
 # use all tuned values from above
-final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal.ncomp, 
-                         keepX = optimal.keepX,
-                         keepY = optimal.keepY,
+final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal$ncomp, 
+                         keepX = optimal$keepX,
+                         keepY = optimal$keepY,
                          mode = "canonical") # explanitory approach being used, 
 
 
@@ -207,7 +245,9 @@ plotIndiv(final.spls.bladder, ind.names = TRUE,
           rep.space = "XY-variate", # plot in averaged subspace
           group = Y_raw$Subtype, # colour by time group
           col.per.group = color.mixo(1:2),                      # by dose group
-          legend = TRUE, legend.title = 'Time', legend.title.pch = 'Proteomic subtypes')
+          legend = TRUE, legend.title = 'Time', 
+          legend.title.pch = 'Proteomic subtypes', 
+          title = param_str_plot)
 
 
 
@@ -218,7 +258,8 @@ tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
                   criterion = 'all', progressBar = FALSE)
 
 props<-as.character(unlist(optimal.keepY))
-png(paste0(output,'/PLS_clustering', props, '.png'))
+fname<-paste0(output,'/PLS_clustering', param_str, props, '.png')
+png(fname)
 plotIndiv(result.spls, ind.names = TRUE,
           rep.space = "XY-variate", # plot in Y-variate subspace,
           cex = c(7,7),
@@ -233,14 +274,15 @@ plotArrow(final.spls.bladder, ind.names = FALSE,
           legend.title = 'Time.Group')
 
 #########variable plots
-png(paste0(output,'/PLS_correlation_circle',props, '.png'))
-plotVar(final.spls.bladder , cex = c(4,4), var.names = c(TRUE, TRUE))
+png(paste0(output,'/PLS_correlation_circle', param_str, props, '.png'))
+plotVar(final.spls.bladder , cex = c(5,5), var.names = c(TRUE, TRUE),
+        title=paste0('Correlation Circle Plot',param_str), 
+        )
 dev.off()
 
 ########network
 
 color.edge <- color.GreenRed(50)  # set the colours of the connecting lines
-
 common_ind<-final.spls.bladder$names$colnames$X %in%final.spls.bladder$names$colnames$Y
 final.spls.bladder$names$colnames$X[common_ind]<-
   paste0(final.spls.bladder$names$colnames$X[common_ind], '__g')
@@ -248,24 +290,36 @@ final.spls.bladder$names$colnames$X[common_ind]<-
 
 
 #X11() # To open a new window for Rstudio
-network(final.spls.bladder, comp = 1:2,
+#try comp 1 or 2 
+comp=1
+network(final.spls.bladder, comp = comp,
         cutoff = 0.8, # only show connections with a correlation above 0.7
         shape.node = c("rectangle", "circle"),
         color.node = c("cyan", "pink"),
         color.edge = color.edge,
         save = 'png', # save as a png to the current working directory
-        name.save = paste0(output,'sPLS Bladder Cancer Network Plot'))
+        name.save = paste0(output,'sPLS Bladder Cancer Network Plot', param_str))
 
 
 
-###### corelation plot
-png(paste0(output,'/PLS_cim',  'props', '.png'))
-cim(final.spls.bladder, comp = 1:2, xlab = "proteins", ylab = "genes",
+###### correlation plot
+comp=c(1,2)
+png(paste0(output,'/PLS_cim',  props, param_str, '_comp_', as.character(unlist(comp)), '.png'))
+cim(final.spls.bladder, comp = comp, xlab = "proteins", ylab = "genes",
     row.cex=1.5, col.cex = 1.5, margins=c(8,8))
 dev.off()
 
 
-selectVar(final.spls.bladder, comp = 1)$Y
+#####save important features
+saveRDS(final.spls.bladder, paste0(output,'final_spls', param_str, '.RDS'))
+sel_vars_1=selectVar(final.spls.bladder, comp=1)
+sel_vars_2=selectVar(final.spls.bladder, comp=2)
+
+write.csv(sel_vars_1$X, paste0(output,'Vars',param_str, '_1_X','.csv'))
+write.csv(sel_vars_1$Y, paste0(output,'Vars',param_str, '_1_Y','.csv'))
+write.csv(sel_vars_2$X, paste0(output,'Vars',param_str, '_2_X','.csv'))
+write.csv(sel_vars_2$Y, paste0(output,'Vars',param_str, '_2_Y','.csv'))
+
 selectVar(final.spls.bladder, comp = 2)$Y
 
 
@@ -313,34 +367,4 @@ diag(design) = 0
 design 
 
 # tune components
-sgccda.res = block.splsda(X = data, Y = Y, ncomp = 5, 
-                         design = design)
-
-set.seed(123) # for reproducibility, only when the `cpus' argument is not used
-# this code takes a couple of min to run
-perf.diablo = perf(sgccda.res, validation = 'Mfold', folds = 4, nrepeat = 10)
-
-#perf.diablo  # lists the different outputs
-plot(perf.diablo) 
-
-
-sgccda.res$design
-selectVar(sgccda.res, block = 'mRNA', comp = 1)$mRNA$name 
-
-
-plotDiablo(sgccda.res, ncomp = 1)
-plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
-
-
-
-plotArrow(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
-
-dev.off()  
-plotVar(sgccda.res, cutoff = 0.7, var.names = FALSE, style = 'graphics', legend = TRUE, 
-        pch = c(16, 17), cex = c(2,2), col = c('darkorchid', 'brown1' ))
-
-
-circosPlot(sgccda.res, cutoff = 0.8,line = TRUE, 
-           color.blocks= c('darkorchid', 'brown1'),
-           color.cor = c("chocolate3", ), size.labels = 1.5)
 

@@ -6,11 +6,15 @@
 # History files
 .Rhistory
 .Rapp.history
+./bladder_cancer/plots/*
+./bladder_cancer/settings/*
 
 # Session Data files
 .RData
 .RDataTmp
 ./bladder_cancer/plots/*
+./bladder_cancer/plots/*
+
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper
 .Rproj.user/0F86D29C/pcs/source-pane.pper

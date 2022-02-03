@@ -67,8 +67,9 @@ X2_t_raw<-transpose_matrix(X2_raw)
 
 most_var=TRUE
 
-ng_p=round(10/9,2)
+
 ng_g=round(3,2)
+ng_p=round(2,2)
 X1_t<-preprocess_raw_data(X1_t_raw,most_var=most_var, cut_n=27000, ng_g)
 X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE, ng_p)
 
@@ -130,8 +131,8 @@ dev.off()
 X1_t[,rownames(pc_genes)[1:3]]
 
 
-param_str_p<-paste0( '_', most_var, '_', ncomp_p, '_ng_', round(ng_p,2))
-param_str_p_plot<-paste( 'most var = ', most_var, ', ng =', round(ng_p,2),  ', ncomp = ', ncomp_g)
+param_str_p<-paste0( '_', most_var, '_', ncomp_p, '_ng_p', round(1/ng_p,2))
+param_str_p_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_p,2),  ', ncomp = ', ncomp_g)
 
 ncomp_p=5
 pca.proteomics <- pca(X2_t, ncomp = ncomp_p, center = TRUE, scale = TRUE)

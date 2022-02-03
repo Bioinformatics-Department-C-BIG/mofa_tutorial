@@ -5,7 +5,6 @@
 #BiocManager::install("MOFAdata")
 
 library(mixOmics)
-data(breast.TCGA)
 
 library(MOFA2)
 library(MOFAdata)
@@ -32,8 +31,8 @@ df<-X1_raw[,-1]
 
 
 data<-list()
-data$RNA<-as.matrix(t(X1_mat))
-data$protein<-as.matrix(t(X2_mat))
+data$mRNA<-as.matrix(t(X1_t))
+data$protein<-as.matrix(t(X2_t))
   
 MOFAobject <- create_mofa(data)
 plot_data_overview(MOFAobject)
@@ -60,42 +59,42 @@ MOFAobject <- prepare_mofa(MOFAobject,
 )
 
 outfile = file.path(getwd(),"model.hdf5")
-MOFAobject.trained <- run_mofa(MOFAobject, outfile)
+MOFAobject <- run_mofa(MOFAobject, outfile)
+
+#MOFAobject<-MOFAobject.trained
+
+#metadata<- data.frame(subtype=breast.TCGA$data.train$subtype)
 
 
+#metadata<-cbind(MOFAobject@samples_metadata, metadata)
 
-metadata<- data.frame(subtype=breast.TCGA$data.train$subtype)
-
-
-metadata<-cbind(MOFAobject@samples_metadata, metadata)
-
-samples_metadata(MOFAobject)<-metadata
+#samples_metadata(MOFAobject)<-metadata
 
 plot_factor_cor(MOFAobject)
-
+saveRDS(MOFAobject, 'bladder_cancer/mofa_object.RDS')
 plot_variance_explained(MOFAobject, max_r2=14)
 
 
 plot_variance_explained(MOFAobject, plot_total = T)[[2]]
 
 
-plot_factor(MOFAobject, 
+plot_factor(MOFAobject.trained, 
             factors = 1, 
             color_by = "Factor1"
 )
 
-
+dev.off()
 plot_weights(MOFAobject,
              view = "mRNA",
-             factor = 2,
+             factor = 1,
              nfeatures = 10,     # Top number of features to highlight
              scale = T           # Scale weights from -1 to 1
 )
 
 
 plot_top_weights(MOFAobject,
-                 view = 'miRNA',
-                 factor = 1,
+                 view = 'protein',
+                 factor = 2,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
@@ -107,8 +106,9 @@ plot_top_weights(MOFAobject,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
-ggsave('top_weights.png', width = 4, height = 4, dpi=500 )
-ggsave(paste0('GSEA_factor_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+output<-'bladder_cancer/plots/mofa/'
+ggsave(paste0(output,'top_weights.png'), width = 4, height = 4, dpi=500 )
+ggsave(paste0(output,'GSEA_factor_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
 
 #####Prediction of clinical subgroups 
 
@@ -148,7 +148,7 @@ plot_data_scatter(MOFAobject,
 
 factor_to_plot=1
 plot_data_heatmap(MOFAobject, 
-               #   view = "mRNA",
+                  view = "mRNA",
                   factor = factor_to_plot,  
                   features = 25,
                   denoise = TRUE,
@@ -158,7 +158,7 @@ plot_data_heatmap(MOFAobject,
 )
 
 
-ggsave(paste0('heatmap/heatmap',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+ggsave(paste0(output,'heatmap',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
 
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
@@ -177,7 +177,7 @@ print(p)
 ###### TODO: overlay the subtypes in 3d 
 #install.packages("scatterplot3d") # Install
 library("scatterplot3d") # load
-
+data("reactomeGS", package = "MOFAdata")
 
 colors <- c("#999999", "#E69F00", "#56B4E9")
 colors <- colors[as.numeric(MOFAobject@samples_metadata$subtype)]
@@ -188,16 +188,47 @@ MOFAobject@expectations$W
 scatterplot3d(MOFAobject@expectations$Z$group1[,c(1,2,3)], pch=16, color=colors)
 #install.packages('GGally')
 
-library()
 plot_factors(MOFAobject, 
              factors = c(1:3), 
              color_by = 'subtype'
 )
 
 #### Enrichment analysis 
-utils::data()
+#utils::data()
 
 head(colnames(reactomeGS))
+require('biomaRt')
+BiocManager::install("org.Hs.eg.db")
+library(org.Hs.eg.db)
+
+## Bimap interface:
+## select() interface:
+## Objects in this package can be accessed using the select() interface
+## from the AnnotationDbi package. See ?select for details.
+## Bimap interface:
+x <- org.Hs.egGENENAME
+# Get the gene names that are mapped to an entrez gene identifier
+mapped_genes <- mappedkeys(x)
+# Convert to a list
+xx <- as.list(x[mapped_genes])
+if(length(xx) > 0) {
+  # Get the GENE NAME for the first five genes
+  xx[1:5]
+  # Get the first one
+  xx[[1]]
+}
+
+mart <- useMart('ENSEMBL_MART_ENSEMBL')
+mart <- useDataset('hsapiens_gene_ensembl', MOFAobject$m)
+
+annotLookup <- getBM(
+  mart = mart,
+  attributes = c(
+    'hgnc_symbol',
+    'ensembl_gene_id',
+    'gene_biotype'),
+  uniqueRows = TRUE)
+
 
 
 # GSEA on positive weights, with default options

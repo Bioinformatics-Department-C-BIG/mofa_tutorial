@@ -17,21 +17,35 @@ library(NMF)
 dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 
 dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-output='bladder_cancer/plots/'
+output_de_1='bladder_cancer/plots/deseq/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
+Y_raw$Subtype<-as.factor(Y_raw$Subtype)
+Y_raw$Grade<-as.factor(Y_raw$Grade)
+Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
+
+prot=TRUE
+
+if (prot){
+  seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
+  output_de=paste0(output_de_1, 'prot')
+}else{
+  seqdata <- read.delim(paste0(dir,'RNAseq_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
+  output_de=paste0(output_de_1, 'genes')
+  
+  }
 
 
-seqdata <- read.delim(paste0(dir,'RNAseq_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
 dim(seqdata)
 
 
 no_name<-which(is.na(seqdata[1]))
 #### Format
-seqdata<-seqdata[-no_name,]
+if (length(no_name)>0){
+  seqdata<-seqdata[-no_name,]}
 # Remove first  from seqdata
 countdata <- seqdata[,-1]
 
@@ -55,7 +69,10 @@ group <- paste(Y_raw$Subtype)
 group <- factor(group)
 y$samples$group <- group
 
-### 1. Filter lowly expresed genes
+##### 1. Filter lowly expresed genes
+# Note that by converting to CPMs we are normalising for 
+# the different sequencing depths for each sample.
+
 myCPM <- cpm(countdata)
 
 head(myCPM)
@@ -73,22 +90,24 @@ plot(myCPM[,1],countdata[,1],ylim=c(0,50),xlim=c(0,30))
 # Add a vertical line at 0.5 CPM
 abline(v=0.5)
 
+
+# Filter 
 y <- y[keep, keep.lib.sizes=FALSE]
 
-
-#### qc
+##### QC: Library size
 
 y$samples$lib.size
+png(paste0(output_de,'lib_size.png' ))
 barplot(y$samples$lib.size,names=colnames(y),las=2)
-
 title("Barplot of library sizes")
 
 
 ######## boxplots
-
-# Get log2 counts per million
+# count data is not normally distributed
+# Get log2 counts per million so we can examine count data
 logcounts <- cpm(y,log=TRUE)
 # Check distributions of samples using boxplots
+png(paste0(output_de,'boxplot.png' ))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(logcounts),col="blue")
@@ -100,8 +119,32 @@ plotMDS(y)
 labels <- paste(Y_raw$Sample, Y_raw$Subtype, Y_raw$Grade)
 
 
-#(y, labels=labels, groups=group, folder="mds")
+# We specify the option to let us plot two plots side-by-sde
+par(mfrow=c(1,2))
+# Let's set up colour schemes for CellType
+# How many cell types and in what order are they stored?
+levels(Y_raw$Subtype)
 
+## Let's choose purple for basal and orange for luminal
+col.cell <- c("purple","orange")[as.factor(Y_raw$Subtype)]
+data.frame(Y_raw$Subtype,col.cell)
+# Redo the MDS with cell type colouring
+plotMDS(y,col=col.cell)
+# Let's add a legend to the plot so we know which colours correspond to which cell type
+legend("topleft",fill=c("purple","orange"),legend=levels(Y_raw$Subtype))
+# Add a title
+title("Cell type")
+
+# Similarly for status
+levels(Y_raw$TURB.stage)
+col.status <- c("blue","red","black")[Y_raw$TURB.stage]
+plotMDS(y,col=col.status)
+legend("topleft",fill=c("blue","red","black"),legend=levels(Y_raw$TURB.stage),cex=0.8)
+title("Status")
+col.status
+
+labels <- paste(Y_raw$TURB.stage, Y_raw$Subtype,  Y_raw$Grade)
+#glMDSPlot(y, labels=labels, groups=group, folder="mds")
 
 
 ###hierarchical clustering
@@ -112,13 +155,24 @@ head(var_genes)
 
 # Get the gene names for the top 5000 most variable genes
 most_var_n=5000
-select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
-select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
 
-head(select_var)
+ng_g
+
+select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
+select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
+
 
 # Subset logcounts matrix
+
 highly_variable_lcpm_most_var <- logcounts[select_var_5000,]
+
+if (prot){
+  highly_variable_proteins<-highly_variable_lcpm_most_var
+}else{
+  highly_variable_genes<-highly_variable_lcpm_most_var
+}
+head(select_var)
+
 dim(as.data.frame(highly_variable_lcpm_most_var))
 highly_variable_lcpm <- logcounts[select_var,]
 dim(highly_variable_lcpm)
@@ -129,21 +183,25 @@ morecols <- colorRampPalette(mypalette)
 # Set up colour vector for celltype variable
 col.cell <- c("purple","orange")[Y_raw$Subtype]
 
+dev.off()
 # Plot the heatmap
+png(paste0(output_de, param_str, 'heatmap.png'),  width=800, height=750)
+par(mar = c(2, 2, 2, 2)+0.1)
 heatmap.2(highly_variable_lcpm,col=rev(morecols(50)),trace="none", 
           main="Top 500 most variable genes across samples",
-          ColSideColors=col.cell,scale="row", 
+          ColSideColors=col.cell,scale="row", cexRow = 1.2,
           labCol=group)
 
-
+dev.off()
 
 
 ## normalization
 # Apply normalisation to DGEList object
-y <- calcNormFactors(y)# normalize
-logcounts_norm <- cpm(y,log=TRUE)  # take cpm
-highly_variable_lcpm_norm<-logcounts_norm[select_var_5000,] # and filter!
-
+# y_norm <- calcNormFactors(y)# normalize
+# logcounts_norm <- cpm(y_norm,log=TRUE)  # take cpm
+# 
+# highly_variable_lcpm_norm<-logcounts_norm[select_var_5000,] # and filter!
+# 
 
 
 y$samples
@@ -176,6 +234,7 @@ fit <- lmFit(v)
 names(fit)
 fit$design
 cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
+
 fit.cont <- contrasts.fit(fit, cont.matrix)
 fit.cont <- eBayes(fit.cont)
 summa.fit <- decideTests(fit.cont)
@@ -188,11 +247,12 @@ library(ggplot2)
 par(mfrow=c(1,2))
 plotMD(fit.cont,coef=1,status=summa.fit[,"B.NPS3vsNPS1"], 
        values = c(-1, 1), hl.col=c("blue","red"))
+dev.off()
 
 # For the volcano plot we have to specify how many of the top genes to highlight.
 # We can also specify that we want to plot the gene symbol for the highlighted genes.
 # let's highlight the top 100 most DE genes
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
-ggsave(paste0(output,'volcano.png'))
-
+ggsave(paste0(output_de,'volcano.png'))
+  

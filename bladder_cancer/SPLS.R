@@ -10,6 +10,11 @@ library(dplyr )
 library(resample)
 library(mixOmics)
 
+## NEEDED FOR CPM function in gene preprocessing" 
+library(edgeR)
+library(limma)
+library(Glimma)
+
 transpose_matrix<- function(df.aree){
     n <- df.aree$Symbol
     # transpose all but the first column (name)
@@ -22,7 +27,7 @@ transpose_matrix<- function(df.aree){
 
 
 
-preprocess_raw_data<-function(df, most_var, cut_n, ng){
+preprocess_raw_data<-function(df, cut_n){
       
       
       # first remove all zero entries
@@ -32,22 +37,24 @@ preprocess_raw_data<-function(df, most_var, cut_n, ng){
       ind <- apply(df, 2, function(x) sum(x, na.rm = TRUE)==0) 
       df<-df[,!ind]
       
-      
-      # take the most variable entries 
-      if (most_var){
-        n=round(dim(df)[2]/ng)
-        mads<-apply(df,2,mad)
-        df_selected=df[,rev(order(mads))[1:n]]
-        return(df_selected)
-      }else {
-        return(df)
-      }
-        
-      
-      
+      return(df)
+    
       
 
 }
+
+filter_most_var<-function(df,most_var, ng){  # take the most variable entries 
+    if (most_var){
+      n=round(dim(df)[2]/ng)
+      mads<-apply(df,2,mad)
+      df_selected=df[,rev(order(mads))[1:n]]
+      return(df_selected)
+    }else {
+      return(df)
+    }
+}
+
+
 
 
 
@@ -62,20 +69,45 @@ X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
+
 X1_t_raw<-transpose_matrix(X1_raw)
 X2_t_raw<-transpose_matrix(X2_raw)
 
 most_var=TRUE
 
 
-ng_g=round(3,2)
-ng_p=round(2,2)
-X1_t<-preprocess_raw_data(X1_t_raw,most_var=most_var, cut_n=27000, ng_g)
-X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE, ng_p)
+X1_cut<-preprocess_raw_data(X1_raw, cut_n=27000)
 
 
-X1_t<-log2(X1_t+1) 
-X2_t<-log2(X2_t+1) 
+ng_p=round(3/2,2)
+ng_g=round(10,2)
+X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
+X1_t_most_var<-filter_most_var(X1_t_cut,most_var,ng_g)
+
+
+X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
+X2_t_most_var<-filter_most_var(X2_t_cut, most_var,ng_p)
+
+
+X1_t_1<-as.data.frame(cpm(X1_t_most_var, log = TRUE) )
+X2_t_1<-as.data.frame(cpm(X2_t_most_var, log = TRUE) )
+
+
+#X2_t_un<-as.data.frame(highly_variable_proteins)
+#X2_t<-as.data.frame(t(X2_t_un))
+
+
+##### bring data processed by deseq2
+#select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
+#head(select_var)
+# Subset logcounts matrix
+#highly_variable_lcpm_most_var <- logcounts[select_var_5000,]
+
+#X1_t_un<-as.data.frame(highly_variable_genes)
+#X1_t<-as.data.frame(t(X1_t_un))
+#rownames(X1_t)<-seq(1:16)
+#rownames(X2_t)<-seq(1:16)
+
 
 # question: should I normalize the data? use broad institute recomendations in protigy? 
 
@@ -88,10 +120,13 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 
 
 
-ncomp_g=2
+ncomp_g=5
 ncomp_p=5
-param_str_g<-paste0( '_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2))
+param_str_g<-paste0( '_edger_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2), 'de')
 param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2),  ', ncomp = ', ncomp_g)
+
+X1_t=t(highly_variable_genes_voom)
+X2_t = t(highly_variable_proteins_voom)
 
 
 pca.gene <- pca(X1_t, ncomp = ncomp_g, center = TRUE, scale = TRUE)
@@ -106,17 +141,18 @@ dev.off()
 png(paste0(output,'pca_gene', param_str_g,  '.png'))
 plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
           legend = TRUE, title = 'Bladder gene, PCA comp 1 - 2', 
-          subtitle = paste0(param_str_g_plot) )
+          subtitle = paste0(param_str_g_plot), 
+          cex = c(5))
 
 dev.off()
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 10,5))
+                    keepX = c(50, 50,5))
 
 pc_genes1<-selectVar(spca.result, comp=1)$value
 pc_genes2<-selectVar(spca.result, comp=2)$value
 
-write.csv(pc_genes1, paste0(output,'Vars_genes',param_str, '_1_X','.csv'))
-write.csv(pc_genes2, paste0(output,'Vars_genes',param_str, '_2_X','.csv'))
+write.csv(pc_genes1, paste0(output,'Vars_genes',param_str_g, '_1_X','.csv'))
+write.csv(pc_genes2, paste0(output,'Vars_genes',param_str_g, '_2_X','.csv'))
 
 
 cim(spca.result, xlab = "genes", ylab = "Samples", save='png', 
@@ -128,11 +164,11 @@ plotVar(spca.result, cex=c(5))
 dev.off()
 
 # Inspect row data
-X1_t[,rownames(pc_genes)[1:3]]
+#X1_t[,rownames(pc_genes)[1:3]]
 
 
-param_str_p<-paste0( '_', most_var, '_', ncomp_p, '_ng_p', round(1/ng_p,2))
-param_str_p_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_p,2),  ', ncomp = ', ncomp_g)
+param_str_p<-paste0( '_edger_', most_var, '_', ncomp_p, '_ng_p', round(1/ng_p,2),'de')
+param_str_p_plot<-paste( 'most var = ', most_var, ', ng_p =', round(1/ng_p,2),', ncomp = ', ncomp_g)
 
 ncomp_p=5
 pca.proteomics <- pca(X2_t, ncomp = ncomp_p, center = TRUE, scale = TRUE)
@@ -141,7 +177,7 @@ plot(pca.proteomics)
 dev.off()
 png(paste0(output, 'pca_proteomics', '_', param_str_p, '.png'))
 plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
-          legend = TRUE,
+          legend = TRUE, cex = c(5),
           title = paste0('Proteomics, PCA comp 1 - 2'),
           subtitle = param_str_p_plot)
 dev.off()
@@ -159,6 +195,12 @@ write.csv(pc_proteins2, paste0(output,'Vars_pr',param_str_p, '_2_Y','.csv'))
 png(paste0(output, 'pca_proteins',param_str_p, '.png'))
 plotVar(spca.result, title =param_str_p_plot )
 dev.off()
+
+
+cim(spca.result, xlab = "genes", ylab = "Samples", save='png', 
+    name.save =paste0(output,'cim_genes', param_str_g), 
+    title = paste0(param_str_g_plot) ) 
+
 
 
 cim(spca.result,xlab = "proteins", ylab = "Samples",
@@ -186,23 +228,23 @@ param_str<-paste0( '_', most_var, '_', ncomp_g, '_ng_g_', round(1/ng_g,2),'_ncom
 
 param_str_plot = paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2), ' ng_p = ' , round(1/ng_p,2), ', ncomp = ', ncomp_g)
 result.pls <- pls(X1_t, X2_t, ncomp = ncomp, mode='canonical')  # where ncomp is the number of dimensions/components to choose
-perf.pls <- perf.pls <- perf(result.pls, validation = "loo",
+perf.pls <- perf(result.pls, validation = "loo",
                              progressBar = FALSE, nrepeat = 10)
 
 png(paste0(output,'/PLS_Q2',param_str,'.png'))
-plot(perf.pls, criterion = 'Q2.total')
+  plot(perf.pls, criterion = 'Q2.total')
 abline(h = 0.0975)
 dev.off()
 
 
 ########## Tune number of features
 # set range of test values for number of variables to use from X dataframe
-list.keepX <- c(seq(20, 50, 5))
+list.keepX <- c(seq(30, 50, 5))
 # set range of test values for number of variables to use from Y dataframe
-list.keepY <- c(3:10) 
+list.keepY <- c(seq(5,50,5))
 
 
-tune.spls.bladder <- tune.spls(X1_t, X2_t, ncomp = ncomp,
+tune.spls.bladder <- tune.spls(as.matrix(X1_t), as.matrix(X2_t), ncomp = ncomp,
                              test.keepX = list.keepX,
                              test.keepY = list.keepY,
                              nrepeat = 1, folds =4, # use 10 folds
@@ -324,48 +366,13 @@ write.csv(sel_vars_2$Y, paste0(output,'Vars',param_str, '_2_Y','.csv'))
 selectVar(final.spls.bladder, comp = 2)$Y
 
 
-#### TUNING 
-# Enrichment analysis
-
-reticulate::use_python(python = "C:/Users/athienitie/Anaconda3/python.exe")
-
-
-library(mixOmics)
-data(breast.TCGA)
-#BiocManager::install("biomaRt")
-
-library(MOFA2)
-library(MOFAdata)
-library(data.table)
-library(ggplot2)
-library(tidyverse)
-
-#### Enrichment analysis 
-utils::data()
 
 
 
-# GSEA on positive weights, with default options
-res.positive <- run_enrichment(MOFAobject, 
-                               feature.sets = reactomeGS, 
-                               view = "mRNA",
-                               sign = "positive"
-)
 
 
+### ENRICHR 
 
-#DIABLO
-data = list(mRNA = X1_t, 
-            proteomics = X2_t )
-
-Y<-Y_raw$Subtype
-
-
-design = matrix(0.1, ncol = length(data), nrow = length(data), 
-                dimnames = list(names(data), names(data)))
-diag(design) = 0
-
-design 
-
-# tune components
+install.packages("enrichR")
+library(enrichR)
 

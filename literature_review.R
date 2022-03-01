@@ -23,7 +23,6 @@ preprocessing<-function(df,colname){
   
 }
 
-comb_frequencies_by_group<-get_combination_frequencies_by_group(stats, 'Data')
 
 
 
@@ -67,18 +66,32 @@ group_omics<-function(df, Var1){
 
 
 
+expand_ObjeMeth<- function(stats){
+  # expand the objective method column!! 
+  # this will increase the rows of stats dataframe and fill in the objective and method columns 
+  stats<-stats %>% 
+    mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
+    unnest(ObjeMeth) 
+  
+  stats <-stats %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
+  return(stats)
+}
+
 library('readxl')
 library('stringr')
 library(ggplot2)
 library(data.table)
+sysinf <- Sys.info()
 
 
-
-stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
-stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
-stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-
+# stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
+# stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+os <- sysinf['sysname']
+if ( os  == 'Darwin'){
+  stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+}else{
+  stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  }
 
 ###Filters
 #### 1. remove same sample 
@@ -92,8 +105,8 @@ stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literatur
 #' 
 #' 
 
-stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
-stats=stats[1:600,]
+#stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
+#stats=stats[1:600,] do not filter anymore 
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
@@ -198,6 +211,7 @@ get_combs<- function(x, omics_level=level1){
 }
 
 preprocessing_combinations(preprocessing(stats, 'Data'))
+preprocessing_combinations(preprocessing(new, 'Data'))
 
 preprocessing_combinations<-function(x){
   #' Create combinations of omics datasets  
@@ -226,7 +240,7 @@ df_by_group <- new %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )
-freq_cutoff<-5
+freq_cutoff<-0
 df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
@@ -270,9 +284,13 @@ comb_frequencies_by_group<-df_by_group
 #' 
 colnames(stats)[which(colnames(stats)=='Objective-Code')]<-'objective'
 colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
+colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
-cancer_filter = 'no'
-stats_fil<-stats[stats$Cancer == cancer_filter,]
+
+
+stats_expanded<-expand_ObjeMeth(stats)
+
+stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 
 
 #change here to select by objective or by method 
@@ -295,6 +313,7 @@ new<-stats_fil %>%
 colname='Data'
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
+
 new<-group_objectives(new, 'objective')
 
 keys<-pull(new %>%
@@ -306,13 +325,11 @@ keys<-pull(new %>%
 #' TODO: use dplyr instead 
 #' 
 #' 
-df_by_group<-new %>%
-  group_by_at(x_group) 
 
 df_by_group<-new %>%
   group_by_at(x_group) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
-              preprocessing_combinations() %>%
+              preprocessing_combinations %>%
               get_frequencies() 
   )  
 
@@ -327,9 +344,9 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 # non cancer: 10,7, cancer: 7,3,
 if (cancer_filter == 'yes')
-  {freq_cutoff1=0; freq_cutoff2=0
+  {freq_cutoff1=15; freq_cutoff2=5
 }else
-{freq_cutoff1=15; freq_cutoff2=10
+{freq_cutoff1=15; freq_cutoff2=5
 }
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
@@ -376,8 +393,8 @@ show_p
 # aggregated or separately? 
 
 
-comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==2)
-single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==2)
+comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==cancer_filter)
+single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==cancer_filter)
 
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
@@ -396,13 +413,13 @@ net_att<-df[match(V(net)$name, df$Var1),]
 
 
 # TODO: assign omics frequencies of all samples or only cancer? 
-vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
+#vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
 
 p<-plot.igraph(net, edge.width=edge_list$weight, vertex.size=net_att$Freq)
-save(p,paste0('plots/network', as.character(colname), '.png'))
+#save(p,paste0('plots/network', as.character(colname), '.png'))
 
 
-g <- set.vertex.attribute(g,'id',1,'first_id')
+#g <- set.vertex.attribute(g,'id',1,'first_id')
 
 
 

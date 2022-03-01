@@ -7,6 +7,7 @@
 colname<-'Data'
 library('dplyr')
 library('purrr')
+source('literature_review.R')
 level1<-c('transcriptomics', 'genomics','epigenomics', 'proteomics', 'metabolomics', 'metagenomics', 'mirnas')
 
 # Process; if methylation or histone; add epigenomics!
@@ -63,7 +64,7 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
+                c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
                   '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*|.*mofa.*', 
                    '.*snf.*|.*network.*', '.*gsea.*', 
                   '.*cca.*|.*smccnet.*', 
@@ -96,9 +97,9 @@ library(gdata)
 stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
 stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-stats<-stats[1:600,]
+#stats<-stats[1:600,]
 stats$PMID<-as.numeric(stats$PMID)
-stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
+#stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
 
 
 ###Filters
@@ -142,14 +143,16 @@ colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
 cancer_filter = 'no'
 
-new<-stats %>% 
-  mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
-  unnest(ObjeMeth) 
 
-new<-new[new$Cancer == cancer_filter,]
-
-
-new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
+new<-expand_ObjeMeth(stats)
+# new<-stats %>% 
+#   mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
+#   unnest(ObjeMeth) 
+# 
+# new<-new[new$Cancer == cancer_filter,]
+# 
+# 
+# new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 
 # this can produce the plot of x axis objective with groups of method 
 # or the other way round! 

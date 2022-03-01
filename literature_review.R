@@ -252,7 +252,7 @@ p
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
-cancer_filter='yes'
+cancer_filter='no'
 df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
 combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
 combinations<-setNames(combinations,c('Var1','Freq'))
@@ -344,9 +344,9 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 # non cancer: 10,7, cancer: 7,3,
 if (cancer_filter == 'yes')
-  {freq_cutoff1=15; freq_cutoff2=5
+  {freq_cutoff1=19; freq_cutoff2=5
 }else
-{freq_cutoff1=15; freq_cutoff2=5
+{freq_cutoff1=17; freq_cutoff2=5
 }
 df_to_plot<-df_by_group %>%
 group_by(Var1)  %>%
@@ -415,7 +415,7 @@ net_att<-df[match(V(net)$name, df$Var1),]
 # TODO: assign omics frequencies of all samples or only cancer? 
 #vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
 
-p<-plot.igraph(net, edge.width=edge_list$weight, vertex.size=net_att$Freq)
+p<-plot.igraph(net, edge.width=edge_list$weight, vertex.size=log2(net_att$Freq)*5)
 #save(p,paste0('plots/network', as.character(colname), '.png'))
 
 

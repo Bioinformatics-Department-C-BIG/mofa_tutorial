@@ -52,7 +52,7 @@ group_objectives_method<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand mol.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
                            c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
@@ -66,7 +66,7 @@ group_methods<-function(df, Var1){
                  mgsub::mgsub(tolower(x),  
                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
                   '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*|.*mofa.*', 
-                   '.*snf.*|.*network.*', '.*gsea.*', 
+                   '.*snf.*|.*net.*', '.*gsea.*', 
                   '.*cca.*|.*smccnet.*', 
                   '.*kernel.*', '.*autoencoder.*', 
                   '.*partial least.*|.*diablo.*', 
@@ -205,7 +205,7 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 ######## Plotting - Filter
 df_to_plot<-df_by_group %>%
   group_by(Var1)  %>%
-  filter( sum(Freq) >= 3) %>%
+  filter( sum(Freq) >= 4) %>%
   group_by_at(x_group)  %>%
   filter( sum(Freq) >= 2)
 

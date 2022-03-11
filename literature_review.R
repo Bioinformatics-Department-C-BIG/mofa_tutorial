@@ -44,11 +44,14 @@ get_frequencies<-function(x){
 
 df<-new
 Var1<-'objective'
+
 group_objectives<-function(df, Var1){
   #'Group objective code column 
+  #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     gsub('.*diagnosis.*|.*prognosis.*', 'Diagnosis/Prognosis', tolower(x)))
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
 
@@ -112,7 +115,7 @@ if ( os  == 'Darwin'){
 stats <- stats %>%
   filter(Type!= 'Review' | is.na(Type)) %>%
   filter(is.na(`Rejection /Critic`)) %>%
-  filter(tolower(same_sample)!='no' | is.na(same_sample))
+  filter(tolower(same_sample)!='no' | is.na(same_sample)) # also includes nas that i did not label as no
 
 
 
@@ -252,8 +255,10 @@ p
 df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
-cancer_filter='no'
+cancer_filter=c('no')
 df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
+df_by_group_fil<-df_by_group 
+
 combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
 combinations<-setNames(combinations,c('Var1','Freq'))
 combinations <-combinations %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
@@ -291,6 +296,7 @@ colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 stats_expanded<-expand_ObjeMeth(stats)
 
 stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
+stats_fil<-stats_expanded
 
 
 #change here to select by objective or by method 
@@ -299,14 +305,17 @@ stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 x_group<-'method'
 # and here!!! 
 new<-stats_fil %>% 
+  group_by('Cancer') %>%
+  
   mutate(method=strsplit(method, ',|\r|\n' ))%>%
   unnest(method) 
 
 
 x_group<-'objective'
-new<-stats_fil %>% 
+new<-stats_fil %>%
+  group_by('Cancer') %>%
   mutate(objective=strsplit(objective, ',|\r|\n' ))%>%
-  unnest(objective) 
+  unnest(objective)
 
 
 
@@ -327,7 +336,7 @@ keys<-pull(new %>%
 #' 
 
 df_by_group<-new %>%
-  group_by_at(x_group) %>%
+  group_by_at(c(x_group, 'Cancer')) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
@@ -343,13 +352,14 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
 # non cancer: 10,7, cancer: 7,3,
-if (cancer_filter == 'yes')
-  {freq_cutoff1=19; freq_cutoff2=5
-}else
-{freq_cutoff1=17; freq_cutoff2=5
-}
+
+freq_cutoff1=15; freq_cutoff2=5
+
+
+df_by_group<-df_by_group %>%
+  filter(objective!='multiomics pathway analysis')
 df_to_plot<-df_by_group %>%
-group_by(Var1)  %>%
+group_by(Var1, Cancer)  %>%
 filter( sum(Freq) >= freq_cutoff1) %>%
 group_by_at(x_group)  %>%
 filter( sum(Freq) >= freq_cutoff2)
@@ -361,29 +371,49 @@ df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 df_to_plot$labels<-df_to_plot$key_names
 ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
 df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
-ind<-df_to_plot$labels%in% c('')
-df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+
+ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
+df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
+#ind<-df_to_plot$labels%in% c('')
+#df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
 
 df_to_plot$key_names<-df_to_plot$labels
 
-plotbyObjective<-function(df){ 
+### Load the package or install if not present
+if (!require("RColorBrewer")) {
+  install.packages("RColorBrewer")
+  library(RColorBrewer)
+}
+
+colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
+
+df_to_plot$Var1 <- factor(df_to_plot$Var1)
+
+# filter out the NA
+df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
+plotbyObjective<-function(df, legend_t="Omics combinations"){ 
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
-    geom_bar(stat='identity',position='stack')+
+    geom_bar(stat='identity',position='stack', color='black')+
+    scale_fill_brewer(palette = 'Paired')+
+
+    guides(fill = guide_legend(title = legend_t))+
+                                 
     labs(x=NULL)+
-    theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
-    ggtitle(paste0("Cancer = ", cancer_filter))
-  
-  ggsave(paste0('plots/barplot_byGroup', as.character(x_group), '_', colname, '_', cancer_filter,  '.png'), width = 8, height=6)
+    facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
+                 c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
+    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
+    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))
+
+  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
+                '.png')
+  ggsave(fname, width = 9, height=10)
+  print(paste0('saved ', fname))
   return(g)
   
   
 }
 
-
 show_p<-plotbyObjective(df_to_plot )
-
-
 show_p
 
 
@@ -392,7 +422,7 @@ show_p
 #' Create an edge list from the frequency table ! 
 # aggregated or separately? 
 
-
+## todo label the size of the nodes by frequency 
 comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==cancer_filter)
 single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==cancer_filter)
 

@@ -64,18 +64,18 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
+                c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*kmeans.*|.*support vector.*|.*random forest.*",  
                   '.*pca.*|.*cluster.*', '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*|.*mofa.*', 
                    '.*snf.*|.*net.*', '.*gsea.*', 
                   '.*cca.*|.*smccnet.*', 
-                  '.*kernel.*', '.*autoencoder.*', 
+                  '.*kernel.*', 
                   '.*partial least.*|.*diablo.*', 
                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
                   '.*multivar.*'), 
                 c( "machine/deep learning", 'clustering',
                                  'regression', 'factor analysis', 
                    'network', 'enrichment', 'canonical correlation analysis',
-                   'kernel learning', 'autoencoder', 'partial least squares',
+                   'kernel learning', 'partial least squares',
                    'multiomics pathway analysis', 'multivariate analysis'
                    ))}
 )
@@ -141,7 +141,7 @@ colnames(stats)[which(colnames(stats)=='Integration method-Category')]<-'method'
 colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
 
-cancer_filter = 'no'
+cancer_filter = 'yes'
 
 
 new<-expand_ObjeMeth(stats)
@@ -186,7 +186,7 @@ new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
 
 
 df_by_group<-new %>%
-  group_by_at(x_group) %>%
+  group_by_at(c(x_group, 'Cancer')) %>%
   group_modify(~ preprocessing(.x, colname) %>%
               get_frequencies() 
   )  
@@ -204,29 +204,16 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 ######## Plotting - Filter
 df_to_plot<-df_by_group %>%
-  group_by(Var1)  %>%
-  filter( sum(Freq) >= 4) %>%
+  group_by(Var1, Cancer)  %>%
+  filter( sum(Freq) >=6) %>%
   group_by_at(x_group)  %>%
-  filter( sum(Freq) >= 2)
+  filter( sum(Freq) >= 5)
 
-
-show_p<-plotbyObjective(df_to_plot )
+df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
+show_p<-plotbyObjective(df_to_plot, 'Cancer' )
 
 
 show_p
-
-plotbyObjectie<-function(df){ 
-  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=perc, fill=Var1))+
-    geom_bar(stat='identity',position='stack')+
-    labs(x=NULL)+
-    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-
-    theme(plot.margin=unit(c(1,1,3,3),"cm"))
-  ggsave(paste0('plots/byObjMethod', as.character(x_group),'_', cancer_filter, '.png'), width = width, height=6)
-  return(g)
-  
-  
-}
 
 new_concise<-new_concise[!is.na(new_concise['Data']),]
 new_concise<-new[c('Data', 'objective', 'method' )]
@@ -292,7 +279,7 @@ new2<-new %>%
   unnest(Data) 
 
 
-new2<-new2 %>% filter(Cancer %in% cancer_filter)
+#new2<-new2 %>% filter(Cancer %in% cancer_filter)
 
 
 new2$Data<-tolower(trimws(new2$Data))
@@ -360,12 +347,14 @@ stats
 
 
 # TODO: CREATE a new column whch is merged from objective and method
-  stats_to_write<-stats[c('Title', 'Data', 'ObjeMeth')]
+# TODO: add a \newline after each objective 
+  stats_to_write<-stats[c('PMID','Title', 'Data', 'ObjeMeth')]
 stats_to_write$x<-'\\\\'
 
+stats_to_write$ObjeMeth<- gsub(',',',\\\\newline',stats_to_write$ObjeMeth)
 #install.packages('gdata')
 
-write.table(stats_to_write, file = "review/output/literature_latex.txt", sep = " & ", row.names = FALSE, quote = FALSE)
+write.table(stats_to_write, file = "review/output/literature_latex_2.txt", sep = " & ", row.names = FALSE, quote = FALSE)
 
 
 

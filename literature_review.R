@@ -152,18 +152,19 @@ single_omics_frequencies=freq_to_plot
 ggplot(stats[stats$Cancer=='no',])+stat_count(aes(tolower(Disease)))+
   theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))
   
-  
+  ### TODO: how many are the total number considred!!??
 
 library(grid)
 
 plotByData<-function(df_by_group, y_group){
   ggplot(df_by_group, 
          aes(x=reorder(Var1, -Freq, sum), y=Freq))+
-    aes_string(fill=y_group)+
+    aes_string(fill=factor(y_group)) +#, labels=c('Cancer', 'Other Diseases', 'NA')))+
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL, title=paste0('Combinations with > ',freq_cutoff, ' occurences'))+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
     theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
+    
   ggsave(paste0('plots/byCombinations', as.character(colname), '.png'), width = 8, height=6)
   
 }

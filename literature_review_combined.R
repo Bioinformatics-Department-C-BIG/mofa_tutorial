@@ -64,21 +64,19 @@ library(gsubfn)
 group_methods<-function(df, Var1){
       df[Var1]<-sapply(df[Var1],function(x){
                  mgsub::mgsub(tolower(x),  
-                c(".*machine learning.*|.*decision.*|.*random forest.*|.*support vector.*|.*boost.*",
-                  ".*neural.*|.*deep.*|.*autoencoder.*",  
-                  '.*pca.*|.*cluster.*|.*kmeans.*', '.*regression.*|.*linear model.*',
-                  '.*factor.*|.*decomposition.*|.*mofa.*', 
-                   '.*snf.*|.*net.*', '.*gsea.*', 
-                  '.*cca.*|.*smccnet.*', 
+                c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*",  
+                  '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*', 
+                  '.*regression.*|.*linear model.*', '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
+                   '.*snf.*|.*net.*|.*piumet.*', '.*gsea.*', 
+                  '.*cca.*|.*smccnet.*|.*correlation.*', 
                   '.*kernel.*', 
-                  '.*partial least.*|.*diablo.*', 
+                  '.*partial least.*|.*diablo.*|.*pls.*', 
                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
                   '.*multivar.*'), 
-                c( "ML classification", 
-                   'deep learning',
-                   'clustering',
-                                 'regression', 'factor analysis', 
-                   'network', 'enrichment', 'canonical correlation analysis',
+                c( "ML/DL Classification", 
+                   'ML/DL clustering',
+                    'regression', 'factor analysis', 
+                   'network', 'enrichment', 'correlation',
                    'kernel learning', 'partial least squares',
                    'multiomics pathway analysis', 'multivariate analysis'
                    ))}
@@ -179,8 +177,7 @@ new<-group_objectives_method(new, 'objective')
 new['method_orig']<-new['method']
 new<-group_methods(new, 'method')
 
-
-
+as.data.frame(new[new$method=='regression',c('PMID', 'method_orig')])
 #' TODO: check the rownames given by get frequencies..
 #' TODO: use dplyr instead 
 #' 
@@ -206,16 +203,34 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 
+
 ######## Plotting - Filter
-df_to_plot<-df_by_group %>%
+df_most_common<-df_by_group %>%
   group_by(Var1, Cancer)  %>%
   filter( sum(Freq) >=6) %>%
   group_by_at(x_group)  %>%
   filter( sum(Freq) >= 5)
 
-df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-show_p<-plotbyObjective(df_to_plot, 'Cancer' )
+# group all the miscellaneous in one category
+most_common_groups<-levels(as.factor(df_most_common$Var1))
 
+df_to_plot<-df_by_group
+df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]
+df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]<-'Other'
+
+
+
+
+#df_to_plot<- df_by_group
+df_to_plot$Var1<-as.factor(df_to_plot$Var1)
+df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
+
+#df_to_plot %>% 
+ # group_by(c(Cancer, objective, key_names, Var1)) 
+
+#show_p<-plotbyObjective(df_to_plot, 'Methods' )
+
+# TODO REGROUP THE TOTALS 
 
 show_p
 
@@ -295,8 +310,8 @@ new2<-new2[!is.na(new2$method),]
 new2<-new2[!is.na(new2$Data),]
 new2<-new2[!is.na(new2$objective),]
 
-axis1='objective'
-axis2='method'
+axis1='Data'
+axis2='objective'
 
 counts<-new2 %>% count(objective, method)
 
@@ -312,10 +327,10 @@ counts<-counts%>% filter(n>n_cutoff)
 
 
 # New implementation with ggalluvial
-axis1='objective'
-axis2="method"
+axis1='Data'
+axis2="objective"
 counts <- new2 %>% 
-  count( objective, method) %>% 
+  count( Data, objective) %>% 
   mutate(
     col = objective
   ) %>%

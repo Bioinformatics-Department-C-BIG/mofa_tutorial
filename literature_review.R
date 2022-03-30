@@ -5,6 +5,8 @@
 colname<-'Data'
 library('dplyr')
 library('purrr')
+library(RColorBrewer)
+
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
 
@@ -50,7 +52,7 @@ group_objectives<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
                                   c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
@@ -115,7 +117,9 @@ if ( os  == 'Darwin'){
 stats <- stats %>%
   filter(Type!= 'Review' | is.na(Type)) %>%
   filter(is.na(`Rejection /Critic`)) %>%
-  filter(tolower(same_sample)!='no' | is.na(same_sample)) # also includes nas that i did not label as no
+  filter(tolower(same_sample)!='no' | is.na(same_sample)) %>% # also includes nas that i did not label as no
+  filter(!is.na(ObjeMeth))
+
 
 
 
@@ -354,31 +358,58 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 # non cancer: 10,7, cancer: 7,3,
 
-freq_cutoff1=15; freq_cutoff2=5
+freq_cutoff1=17; freq_cutoff2=17
 
 
-df_by_group<-df_by_group %>%
-  filter(objective!='multiomics pathway analysis')
-df_to_plot<-df_by_group %>%
+#df_by_group<-df_by_group %>%
+#  filter(objective!='multiomics pathway analysis')
+df_most_common<-df_by_group %>%
 group_by(Var1, Cancer)  %>%
 filter( sum(Freq) >= freq_cutoff1) %>%
 group_by_at(x_group)  %>%
 filter( sum(Freq) >= freq_cutoff2)
 
-df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
 
+df_to_plot<-df_by_group
+# #df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
+# # group all the miscellaneous in one category
+# most_common_groups<-levels(as.factor(df_most_common$Var1))
+# most_common_objectives<-levels(as.factor(df_most_common$objective))
+# 
+# 
+# df_to_plot<-df_by_group
+# #other_data<-df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]; other_data
+# #df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]<-'Other'
+# 
+# #filter only data
+# df_to_plot=df_to_plot[!(df_to_plot$Var1 %in% most_common_groups),]
+# 
+# other_objectives<-df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]
+# other_objectives
+# df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]<-'Other biomarker discovery questions'
+# 
+# df_to_plot['key_names']<-df_to_plot[x_group]
 
 ##TODO: MOVE TO FUNCTION
-df_to_plot$labels<-df_to_plot$key_names
-ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
-df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+#overwrite
+df_to_plot<-df_most_common
 
-ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
+df_to_plot['key_names']<-df_to_plot[x_group]
+
+relabel_objectives<-function(df_to_plot){
+  df_to_plot$labels<-df_to_plot$key_names
+  ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
+  df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+  
+  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
+  df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
+  return(df_to_plot)
+}
+df_to_plot<-relabel_objectives(df_to_plot)
 #ind<-df_to_plot$labels%in% c('')
 #df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
 
-df_to_plot$key_names<-df_to_plot$labels
+#df_to_plot$key_names<-df_to_plot$labels
 
 ### Load the package or install if not present
 if (!require("RColorBrewer")) {
@@ -393,9 +424,14 @@ df_to_plot$Var1 <- factor(df_to_plot$Var1)
 # filter out the NA
 df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
 plotbyObjective<-function(df, legend_t="Omics combinations"){ 
+  
+  mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
+  
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
     scale_fill_brewer(palette = 'Paired')+
+    #scale_fill_manual(mycolors)+
+    
 
     guides(fill = guide_legend(title = legend_t))+
                                  
@@ -431,8 +467,11 @@ edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
 edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
 
-
-edge_list
+# most frequent datasets
+# most_frequent<-comb_freq[order(comb_freq$perc, 
+#                                                decreasing = TRUE),]
+# most_frequent_5<-most_frequent$Var1[1:5]
+# edge_list
 
 library(igraph)
 
@@ -441,7 +480,7 @@ df<-single_omics_frequencies_filtered
 
 net<-graph_from_data_frame(edge_list, directed = FALSE, vertices =NULL)
 net_att<-df[match(V(net)$name, df$Var1),]
-
+cancer_filter
 
 # TODO: assign omics frequencies of all samples or only cancer? 
 #vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq

@@ -400,9 +400,13 @@ relabel_objectives<-function(df_to_plot){
   df_to_plot$labels<-df_to_plot$key_names
   ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
   df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+  df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
   
   ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
   df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
+  df_to_plot[ind,]$key_names<-'understand \n molecular mechanisms'
+  
+  
   return(df_to_plot)
 }
 df_to_plot<-relabel_objectives(df_to_plot)
@@ -433,17 +437,19 @@ plotbyObjective<-function(df, legend_t="Omics combinations"){
     #scale_fill_manual(mycolors)+
     
 
-    guides(fill = guide_legend(title = legend_t))+
+    guides(fill = guide_legend(title = legend_t), )+
                                  
     labs(x=NULL)+
     facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
                  c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
     theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))
+    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
+    theme(legend.text=element_text(size=rel(1.5)))
+  
 
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                 '.png')
-  ggsave(fname, width = 9, height=10)
+  ggsave(fname, width = 10, height=9)
   print(paste0('saved ', fname))
   return(g)
   

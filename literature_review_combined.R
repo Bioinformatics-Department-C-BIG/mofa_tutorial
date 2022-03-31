@@ -52,7 +52,7 @@ group_objectives_method<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
                            c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
   return(df)
 }
@@ -292,7 +292,7 @@ library('alluvial')
 
 library('ggsankey')
 
-cancer_filter=c("no")
+cancer_filter=c("yes")
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 

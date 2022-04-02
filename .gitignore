@@ -14,6 +14,16 @@
 .RDataTmp
 ./bladder_cancer/plots/*
 ./bladder_cancer/plots/*
+.tmp.driveupload/*
+.Rproj.user/*/*
+bladder_cancer/plots/*
+bladder_cancer/settings/*
+mds/*
+plots/*
+plots/*
+plots/barplot_byGroupobjective_method.png
+
+bladder_cancer/Enrichment/*
 
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper

@@ -107,7 +107,7 @@ group_methods<-function(df, Var1){
                    '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
                    # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
+                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*pathme.*', 
                    '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
                    '.*gsea.*|.*enrichment.*', 
                    '.*cca.*|.*smccnet.*|.*canonical correlation analysis.*',
@@ -400,8 +400,11 @@ tool_obj<-df_by_group_meth_obj %>%
 
 tool_obj$data2<-unlist(tool_obj$data)
 
-tool_obj<-df_by_group_meth_obj %>% 
+tool_obj_2<-df_by_group_meth_obj %>% 
   spread(key=objective, value = Freq)
+
+write.table(tool_obj_2, file = "review/output/tools_objectives.txt", sep='\t', row.names = FALSE, quote = FALSE)
+
 
 
 unlist(tool_obj$data)

@@ -139,7 +139,7 @@ group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   ".*autoencoder.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*",
+                   ".*autoencoder.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*DeepOmix.*",
                    '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
                    # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
@@ -351,7 +351,6 @@ width=10
 
 x_group<-'method_orig'
 colname='method'
-width=7
 
 
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
@@ -393,6 +392,19 @@ write.table(df_by_group_meth_obj, file = "review/output/objective_methods_freq.t
 df_by_group_meth_obj$x<-'\\\\'
 
 write.table(df_by_group_meth_obj, file = "review/output/objective_methods_freq_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+
+
+tool_obj<-df_by_group_meth_obj %>% 
+  group_by_at(c("Cancer","method_orig"))%>% 
+  nest(data=objective) 
+
+tool_obj$data2<-unlist(tool_obj$data)
+
+tool_obj<-df_by_group_meth_obj %>% 
+  spread(key=objective, value = Freq)
+
+
+unlist(tool_obj$data)
 
 ################ Section 5: ALLUVIAL 
 

@@ -8,6 +8,7 @@ colname<-'Data'
 library('dplyr')
 library('purrr')
 source('literature_review.R')
+source('utils.R')
 level1<-c('transcriptomics', 'genomics','epigenomics', 'proteomics', 'metabolomics', 'metagenomics', 'mirnas')
 
 # Process; if methylation or histone; add epigenomics!
@@ -63,115 +64,6 @@ Var1<-'method'
 #install.packages('mgsub')
 library(gsubfn)
 library(mgsub)
-
-group_methods<-function(df, Var1){
-      df[Var1]<-sapply(df[Var1],function(x){
-                 mgsub::mgsub(tolower(x),  
-                c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                  '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                  # '|.*lasso.*', 
-                  '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                  '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                  '.*gsea.*|.*enrichment.*', 
-                  '.*cca.*|.*smccnet.*|.*canonical correlation.*',
-                  '.*correlation.*', 
-                  '.*kernel.*', 
-                  '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                  '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                  '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                c( "ML/DL Classification", 
-                   'ML/DL clustering',
-                   'regression', 
-                   'factor analysis', 
-                   'network', 
-                   'enrichment',
-                   'correlation-based',
-                   'correlation',
-                   'kernel learning', 
-                   'partial least squares',
-                   'multiomics pathway analysis',
-                   'Other tools'
-                   ))}
-)
-      #new_col=as.factor(new_col)
-return(df)                 
-}
-
-
-
-group_methods<-function(df, Var1){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation analysis.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML/DL Classification", 
-                    'ML/DL clustering',
-                    'regression', 
-                    'factor analysis', 
-                    'network', 
-                    'enrichment',
-                    'correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
-
-
-group_methods<-function(df, Var1){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   ".*autoencoder.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*",
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*',
-                   '.*snf.*|.*coni.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML Classification", 
-                    'JDR - NonLinear',
-                    'JDR - Linear',
-                    'Regression', 
-                    'JDR - Linear', 
-                    'Network analysis',
-                    'Graph-based', 
-                    'enrichment',
-                    'JDR - correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'JDR - partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
 
 
 library(magrittr)
@@ -327,7 +219,7 @@ df_to_plot$Var1<-as.factor(df_to_plot$Var1)
 df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
 df_to_plot['key_names']<-df_to_plot[x_group]
 
-df_to_plot<-relabel_objectives(df_to_plot)
+df_to_plot<-relabel_objectives_short(df_to_plot)
 
 #df_to_plot %>% 
  # group_by(c(Cancer, objective, key_names, Var1)) 
@@ -396,6 +288,56 @@ df_by_group_meth_obj$x<-'\\\\'
 
 write.table(df_by_group_meth_obj, file = "review/output/objective_methods_freq_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
+
+# create labels 
+new_df<-df_by_group_meth_obj
+# FILTER
+
+new_df<-new_df[new_df$objective %in% most_common_objectives,]
+new_df<-new_df[new_df$Var1 %in% most_common_groups,]
+
+
+new_df$objective<-relabel_objectives(new_df$objective)
+
+
+tool_obj<-new_df[,c('method_orig', 'Var1', 'objective')] %>% 
+  group_by_at('method_orig') %>% 
+  nest(objectives=c(objective))
+
+
+
+paste(unlist(tool_obj$objectives[[1]] ), collapse=', ')
+tool_obj[tool_obj$method_orig=='pls',]
+
+
+tool_obj$objectives_concat<-sapply(tool_obj$objectives, function(x){
+  paste(unlist(x), collapse=', ')
+}
+       )
+
+# tool_obj<-df_by_group_meth_obj %>% 
+#   tool_obj_2<-df_by_group_meth_obj %>% 
+#   spread(key=objective, value = Freq)
+
+write.table(tool_obj[,c('method_orig', 'Var1', 'objectives_concat')], file = "review/output/tools_objectives.txt", sep='\t', row.names = FALSE, quote = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ################ Section 5: ALLUVIAL 
 
 
@@ -420,6 +362,7 @@ new2$Data<-tolower(trimws(new2$Data))
 new2<-new2 %>% filter(Data %in% tolower(level1))
 
 levels(as.factor(new2$Data))
+
 
 new2<-new2[!is.na(new2$method),]
 new2<-new2[!is.na(new2$Data),]

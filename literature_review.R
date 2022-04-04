@@ -1,7 +1,6 @@
 # import literature review table and analysis 
 # frequency of each disease 
 # frequency of each omics
-
 colname<-'Data'
 library('dplyr')
 library('purrr')
@@ -396,7 +395,7 @@ df_to_plot<-df_most_common
 
 df_to_plot['key_names']<-df_to_plot[x_group]
 
-relabel_objectives<-function(df_to_plot){
+relabel_objectives_short<-function(df_to_plot){
   df_to_plot$labels<-df_to_plot$key_names
   ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
   df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'

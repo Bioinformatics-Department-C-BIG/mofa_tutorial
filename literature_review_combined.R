@@ -9,7 +9,8 @@ library('dplyr')
 library('purrr')
 source('literature_review.R')
 source('utils.R')
-level1<-c('transcriptomics', 'genomics','epigenomics', 'proteomics', 'metabolomics', 'metagenomics', 'mirnas')
+
+data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -47,16 +48,6 @@ get_frequencies<-function(x){
 }
 
 
-
-group_objectives_method<-function(df, Var1){
-  #'Group objective code column 
-  #'These groups are for objective - method
-  df[Var1]<-sapply(df[Var1],
-                   function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
-                           c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
-  return(df)
-}
 
 
 df<-new
@@ -239,87 +230,10 @@ new_concise<-new[c('Data', 'objective', 'method' )]
 
 
 
-##### Section 4: PRINT METHODS to table
-
-width=10
-
-x_group<-'method_orig'
-colname='method'
-width=7
-
-
-new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
-new[colname] <-apply(new[colname], 1, function(x) trimws(tolower(x)))
 
 
 
 
-#' TODO: check the rownames given by get frequencies..
-#' TODO: use dplyr instead 
-#' 
-#' 
-new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
-
-
-
-df_by_group_meth<-new %>%
-  group_by_at(x_group) %>%
-  group_modify(~ preprocessing(.x, colname) %>%
-                 get_frequencies() 
-  )  
-df_by_group_meth<-df_by_group_meth[order(df_by_group_meth$Var1),]
-aggr_methods<-aggregate(method_orig ~., df_by_group_meth[c('Var1', 'method_orig')], toString)
-aggr_methods$x<-'\\\\'
-
-write.table(df_by_group_meth, file = "review/output/methods_freq.txt", sep='\t', row.names = FALSE, quote = FALSE)
-df_by_group_meth$x<-'\\\\'
-write.table(df_by_group_meth, file = "review/output/methods_freq_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
-
-df_by_group_meth_obj<-new %>%
-  group_by_at(c('Cancer', x_group, 'objective')) %>%
-  group_modify(~ preprocessing(.x, colname) %>%
-                 get_frequencies() 
-  )  
-df_by_group_meth_obj<-df_by_group_meth_obj[
-  with(df_by_group_meth_obj, order(objective, Var1, Cancer, Freq, decreasing = TRUE)),
-  ]
-write.table(df_by_group_meth_obj, file = "review/output/objective_methods_freq.txt", sep='\t', row.names = FALSE, quote = FALSE)
-df_by_group_meth_obj$x<-'\\\\'
-
-write.table(df_by_group_meth_obj, file = "review/output/objective_methods_freq_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
-
-
-# create labels 
-new_df<-df_by_group_meth_obj
-# FILTER
-
-new_df<-new_df[new_df$objective %in% most_common_objectives,]
-new_df<-new_df[new_df$Var1 %in% most_common_groups,]
-
-
-new_df$objective<-relabel_objectives(new_df$objective)
-
-
-tool_obj<-new_df[,c('method_orig', 'Var1', 'objective')] %>% 
-  group_by_at('method_orig') %>% 
-  nest(objectives=c(objective))
-
-
-
-paste(unlist(tool_obj$objectives[[1]] ), collapse=', ')
-tool_obj[tool_obj$method_orig=='pls',]
-
-
-tool_obj$objectives_concat<-sapply(tool_obj$objectives, function(x){
-  paste(unlist(x), collapse=', ')
-}
-       )
-
-# tool_obj<-df_by_group_meth_obj %>% 
-#   tool_obj_2<-df_by_group_meth_obj %>% 
-#   spread(key=objective, value = Freq)
-
-write.table(tool_obj[,c('method_orig', 'Var1', 'objectives_concat')], file = "review/output/tools_objectives.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
 
 

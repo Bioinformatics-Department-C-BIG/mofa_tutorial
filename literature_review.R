@@ -395,20 +395,7 @@ df_to_plot<-df_most_common
 
 df_to_plot['key_names']<-df_to_plot[x_group]
 
-relabel_objectives_short<-function(df_to_plot){
-  df_to_plot$labels<-df_to_plot$key_names
-  ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
-  df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
-  df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
-  
-  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-  df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
-  df_to_plot[ind,]$key_names<-'understand \n molecular mechanisms'
-  
-  
-  return(df_to_plot)
-}
-df_to_plot<-relabel_objectives(df_to_plot)
+df_to_plot<-relabel_objectives_short(df_to_plot)
 #ind<-df_to_plot$labels%in% c('')
 #df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
 

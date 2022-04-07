@@ -1,0 +1,46 @@
+Cancer	Var1	concat	Freq
+no	proteomics - transcriptomics	Aging, Alzheimer's disease, Alzheimer's Disease, Amyotrophic Lateral Sclerosis, Anxiety, Cardiomyopathy, COPD, Diabetes, Diabetes Mellitus, Type 2, Facioscapulohumeral Dystrophy, HIV, Insulin Resistance, Ischemic Stroke, liver, lung injury, Nonalcoholic steatohepatitis, Obesity, Parkinson's disease, Pneumonia, Pressure Overload Hearts, pulmonary injury, Renal Amyloidosis, Rheumatoid Arthritis, Steatohepatitis, NA	25
+no	metabolomics - proteomics	Alzheimer's disease, Alzheimer's Disease, Amyotrophic Lateral Sclerosis, Cardiovascular Diseases, Cigarette Smoke, COPD, Depression, Diabetes, HIV, inflammatory bowel disease, Inflammatory Bowel Disease, Intermittent Fasting, IVDH, metabolic syndrome, mitral valve disease, multiple sclerosis, nonalcoholic fatty liver disease, pulmonary injury, Vogt-Koyanagi-Harada disease, NA	20
+no	epigenomics - transcriptomics	Aging, Alzheimer Disease, CLL, Alzheimer's disease, Alzheimer's Disease, Atrial Fibrillation, Autism, Cardiomyopathy, COVID-19, heart failure, hypertrophic cardiomyopathy, liver, Osteoporosis, Parkinson's disease, Pneumonia, rheumatoid arthritis, Rheumatoid Arthritis, Sjögren´s syndrome, NA	18
+no	metabolomics - metagenomics	Acute Coronary Syndrome, Alcohol-Associated Liver Disease, Cronh's Disease, inflammatory bowel disease, Inflammatory Bowel Disease, Insulin Sensitivity, Irritable Bowel Syndrome, lung transplantation, NAFLD, Obesity, Parkinson, Psychological stress, NA	13
+no	metabolomics - transcriptomics	Alzheimer's Disease, Amyotrophic Lateral Sclerosis, COPD, Diabetes, heart disease, HIV, Insulin Sensitivity, Obesity, Osteoporosis, pulmonary injury, Response to Traffic related pollutants, Toxoplasma, NA	13
+no	mirnas - transcriptomics	Alzheimer's disease, Anxiety, Diabetes, heart failure, HIV, Obesity, Renal Amyloidosis, NA	8
+no	genomics - transcriptomics	Alzheimer Disease, CLL, Alzheimer's disease, Alzheimer's Disease, liver, Osteoporosis, NA	6
+no	epigenomics - proteomics	Alzheimer's disease, Cardiomyopathy, liver, Parkinson's disease, Pneumonia, NA	6
+no	mirnas - proteomics	Anxiety, Diabetes, HIV, Obesity, Renal Amyloidosis, NA	6
+no	metagenomics - transcriptomics	Insulin Resistance, Insulin Sensitivity, Liver Injury, nonalcoholic steatohepatitis, Obesity, NA	6
+no	epigenomics - genomics	Alzheimer Disease, CLL, Alzheimer's disease, liver, Osteoporosis, NA	5
+no	genomics - proteomics	Alzheimer's disease, Alzheimer's Disease, liver, NA	4
+no	epigenomics - mirnas	Alzheimer's disease, heart failure, NA	3
+no	metabolomics - mirnas	Diabetes, HIV, NA	3
+no	metagenomics - proteomics	inflammatory bowel disease, Inflammatory Bowel Disease, Insulin Resistance	3
+no	genomics - metabolomics	Major Depressive Disorder, Osteoporosis, NA	3
+no	epigenomics - metabolomics	Osteoporosis, NA	2
+no	genomics - mirnas	Alzheimer's disease	1
+no	genomics - metagenomics	NA	1
+no	metagenomics - mirnas	NA	1
+yes	epigenomics - transcriptomics	Acute lymphoblastic leukemia, bladder, Bladder Cancer, breast cancer, Breast cancer, breast Tumor, cancer, Cancer, cancers, Cervical cancer, Cholangiocarcinoma, Chrondrosarcoma, esophageal squamous cell carcinoma, Esophageal Squamous Cell Carcinoma, glioblastoma, Glioblastoma, Head and Neck cancer, hepatitis B vaccine response, hepatocellular carcinoma, Liver hepatocellular carcinoma, Lung adenocarcinoma, lung squamous cell carcinoma, non-muscle invasive bladder cancer, non-small lung cell carcinoma, Ovarian cancer, Ovarian Carcinoma, ovarian cystadenocarcinoma, pancreatic cancer, pancreatic ductal adenocarcinoma, NA	30
+yes	genomics - transcriptomics	bladder, breast cancer, Breast cancer, breast Tumor, cancer, Cancer, Cervical cancer, cervival cancer, Cholangiocarcinoma, Colorectal Cancer, glioblastoma, Glioblastoma, Head and Neck cancer, Head and Neck Cancer, Lung adenocarcinoma, lung squamous cell carcinoma, Multiple Myeloma, non-muscle invasive bladder cancer, Ovarian cancer, Ovarian Carcinoma, NA	21
+yes	epigenomics - genomics	bladder, breast cancer, Breast cancer, breast Tumor, cancer, Cancer, Cervical cancer, Cholangiocarcinoma, glioblastoma, Glioblastoma, Head and Neck cancer, Lung adenocarcinoma, lung squamous cell carcinoma, non-muscle invasive bladder cancer, Ovarian cancer, Ovarian Carcinoma, NA	17
+yes	mirnas - transcriptomics	Bladder Cancer, Breast cancer, cancer, Cancer, cancers, Chrondrosarcoma, Clear-cell renal cell carcinoma, Glioblastoma, Head and Neck, hepatocellular carcinoma, Ovarian cancer, ovarian cystadenocarcinoma, pancreatic cancer, placenta percreta, NA	15
+yes	epigenomics - mirnas	Bladder Cancer, Breast cancer, cancer, Cancer, cancers, Chrondrosarcoma, Glioblastoma, Head and neck cancer, Ovarian cancer, ovarian cystadenocarcinoma, pancreatic cancer, NA	12
+yes	proteomics - transcriptomics	Bladder Cancer, Breast cancer, cancer, Cancer, hepatitis B vaccine response, Lung adenocarcinoma, non-muscle invasive bladder cancer, sarcoma, NA	9
+yes	epigenomics - proteomics	Bladder Cancer, Breast cancer, hepatitis B vaccine response, Lung adenocarcinoma, non-muscle invasive bladder cancer, NA	6
+yes	genomics - mirnas	Breast cancer, cancer, Cancer, Glioblastoma, Ovarian cancer	5
+yes	genomics - proteomics	Breast cancer, cancer, Lung adenocarcinoma, non-muscle invasive bladder cancer	4
+yes	mirnas - proteomics	Bladder Cancer, Breast cancer, NA	3
+yes	metabolomics - transcriptomics	cancer, Diffuse large B-cell lymphoma, hepatocellular carcinoma	3
+yes	metagenomics - transcriptomics	Cancer, hepatitis B vaccine response, NA	3
+yes	metabolomics - proteomics	cancer, Prostate cancer	2
+yes	epigenomics - metagenomics	Cancer, hepatitis B vaccine response	2
+yes	genomics - metabolomics	cancer	1
+yes	metagenomics - proteomics	hepatitis B vaccine response	1
+yes	epigenomics - metabolomics	hepatocellular carcinoma	1
+yes	metagenomics - mirnas	NA	1
+NA	epigenomics - genomics	Colorectal Cancer, NA	2
+NA	epigenomics - transcriptomics	Colorectal Cancer, NA	2
+NA	genomics - transcriptomics	Colorectal Cancer, NA	2
+NA	epigenomics - mirnas	Colorectal Cancer	1
+NA	genomics - mirnas	Colorectal Cancer	1
+NA	mirnas - transcriptomics	Colorectal Cancer	1
+NA	proteomics - transcriptomics	NA	1

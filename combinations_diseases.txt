@@ -1,0 +1,17 @@
+\begin{table}[]
+    \centering
+    \begin{tabular}{|c|c|}
+Main Question & How to choose data and methods in a multi-omics study? \\
+Objective & The objective was to search in the literature if examples of multi omics studies explain how to choose data and methods for their analysis  \\
+Inclusion Criteria & Studies that mention multi-omics \\
+The paper performs multi-omics data integration \\
+The paper has a scientific objective applied to personalized medicine\\
+Exclusion criteria &  The paper does not combine omics datasets from the same samples \\ 
+The paper did not combine different types of omics (for example studies combining SNVs and CNVs only) \\
+The paper did not perform integration using a bioinformatics methodology \\ 
+Specific questions & \\
+
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:my_label}
+\end{table}

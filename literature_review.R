@@ -117,7 +117,7 @@ stats <- stats %>%
   filter(Type!= 'Review' | is.na(Type)) %>%
   filter(is.na(`Rejection /Critic`)) %>%
   filter(tolower(same_sample)!='no' | is.na(same_sample)) %>% # also includes nas that i did not label as no
-  filter(!is.na(ObjeMeth))
+  filter(!is.na(`Objective-Method`))
 
 
 
@@ -189,8 +189,6 @@ ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 8, 
 ####### Objectives 
 
 ##### Plot by objective
-#' 1. Group objectives to higher level
-
 
 #### Get combinations 
 ### Co-Occurrence #
@@ -241,6 +239,7 @@ y_group='Cancer'
 new<-stats[! ( is.na(stats['Data'] ) ),]
 
 
+
 df_by_group <- new %>%
   group_by_at(y_group) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
@@ -285,6 +284,42 @@ ggsave(paste0('plots/GridPlot', as.character(colname),'_',cancer_filter, '.png')
 comb_frequencies_by_group<-df_by_group
 
 
+
+##### List of disease by combinations 
+
+df_by_group <- new %>%
+  group_by_at(y_group) %>%
+  group_modify(~ preprocessing(.x, colname) )
+
+x_group='Disease'
+df_by_group<-new %>%
+  group_by_at(c(x_group, 'Cancer')) %>%
+  group_modify(~ preprocessing(.x, colname)  %>%
+                 preprocessing_combinations %>%
+                 get_frequencies() 
+  )  
+
+
+df_nested<-df_by_group[,-4] %>% 
+  nest(data = Disease)
+# size of tibbles shows frequencies
+df_nested$Freq<-sapply(df_nested$data, dim)[1,]
+
+df_nested$concat<-sapply(df_nested$data, function(x){
+  x2=as.character(unlist(x))
+  print(as.character(x2))
+  x2=x2[order(x2)]
+  print(x2)
+  x2=paste(x2, collapse=', ')
+  return(x2)
+})
+
+df_nested %>% filter()
+df_nested<-df_nested %>% arrange(Cancer, Freq)
+# two lists - most frequest is just not cancer now 
+df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+  
+write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
 ########
 ###
@@ -338,13 +373,14 @@ keys<-pull(new %>%
 #' TODO: use dplyr instead 
 #' 
 #' 
-
+# x group is the objective
 df_by_group<-new %>%
   group_by_at(c(x_group, 'Cancer')) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )  
+
 
 
 

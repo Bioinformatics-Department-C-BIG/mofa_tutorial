@@ -1,2 +1,42 @@
-Disease	Cancer	data	Freq	concat
-Acute Coronary Syndrome	no	
+Cancer	Var1	Freq	concat
+no	proteomics - transcriptomics	15	aging, Cardiovascular, Endrocrine, facioscapulohumeral dystrophy, Gastrointestinal, hiv, ischemic stroke, Metabolism, Musculoskeletal, Nervous system, obesity, pneumonia, Pulmonary, Urinary, NA
+no	metabolomics - proteomics	10	Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous system, Pulmonary, vogt-koyanagi-harada disease, NA
+no	metabolomics - transcriptomics	10	Cardiovascular, Endrocrine, hiv, Metabolism, Musculoskeletal, Nervous system, obesity, Pulmonary, toxoplasma, NA
+no	epigenomics - transcriptomics	9	aging, Cardiovascular, covid-19, Gastrointestinal, Musculoskeletal, Nervous system, pneumonia, sjögren´s syndrome, NA
+no	metabolomics - metagenomics	8	Cardiovascular, Gastrointestinal, Metabolism, Nervous system, obesity, psychological stress, Pulmonary, NA
+no	mirnas - transcriptomics	7	Cardiovascular, Endrocrine, hiv, Nervous system, obesity, Urinary, NA
+no	mirnas - proteomics	6	Endrocrine, hiv, Nervous system, obesity, Urinary, NA
+no	epigenomics - proteomics	5	Cardiovascular, Gastrointestinal, Nervous system, pneumonia, NA
+no	epigenomics - genomics	4	Gastrointestinal, Musculoskeletal, Nervous system, NA
+no	genomics - transcriptomics	4	Gastrointestinal, Musculoskeletal, Nervous system, NA
+no	metagenomics - transcriptomics	4	Gastrointestinal, Metabolism, obesity, NA
+no	epigenomics - mirnas	3	Cardiovascular, Nervous system, NA
+no	metabolomics - mirnas	3	Endrocrine, hiv, NA
+no	genomics - proteomics	3	Gastrointestinal, Nervous system, NA
+no	genomics - metabolomics	3	Musculoskeletal, Nervous system, NA
+no	metagenomics - proteomics	2	Gastrointestinal, Metabolism
+no	epigenomics - metabolomics	2	Musculoskeletal, NA
+no	genomics - mirnas	1	Nervous system
+no	genomics - metagenomics	1	NA
+no	metagenomics - mirnas	1	NA
+yes	epigenomics - transcriptomics	9	acute lymphoblastic leukemia, breast tumor, Cancer, chrondrosarcoma, Gastrointestinal, glioblastoma, Pulmonary, Urinary, NA
+yes	mirnas - transcriptomics	8	Cancer, chrondrosarcoma, Gastrointestinal, glioblastoma, head and neck, placenta percreta, Urinary, NA
+yes	genomics - transcriptomics	7	breast tumor, Cancer, glioblastoma, multiple myeloma, Pulmonary, Urinary, NA
+yes	epigenomics - genomics	6	breast tumor, Cancer, glioblastoma, Pulmonary, Urinary, NA
+yes	proteomics - transcriptomics	6	Cancer, Gastrointestinal, Pulmonary, sarcoma, Urinary, NA
+yes	epigenomics - mirnas	5	Cancer, chrondrosarcoma, glioblastoma, Urinary, NA
+yes	epigenomics - proteomics	5	Cancer, Gastrointestinal, Pulmonary, Urinary, NA
+yes	genomics - proteomics	3	Cancer, Pulmonary, Urinary
+yes	metabolomics - transcriptomics	3	Cancer, diffuse large b-cell lymphoma, Gastrointestinal
+yes	metagenomics - transcriptomics	3	Cancer, Gastrointestinal, NA
+yes	epigenomics - metagenomics	2	Cancer, Gastrointestinal
+yes	genomics - mirnas	2	Cancer, glioblastoma
+yes	mirnas - proteomics	2	Cancer, Urinary
+yes	genomics - metabolomics	1	Cancer
+yes	metabolomics - proteomics	1	Cancer
+yes	epigenomics - metabolomics	1	Gastrointestinal
+yes	metagenomics - proteomics	1	Gastrointestinal
+yes	metagenomics - mirnas	1	NA
+NA	epigenomics - genomics	1	NA
+NA	epigenomics - transcriptomics	1	NA
+NA	genomics - transcriptomics	1	NA

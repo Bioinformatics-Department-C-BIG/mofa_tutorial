@@ -112,19 +112,7 @@ group_methods<-function(df, Var){
 
 
 
-relabel_objectives_short<-function(df_to_plot){
-  df_to_plot$labels<-df_to_plot$key_names
-  ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
-  df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
-  df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
-  
-  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-  df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
-  df_to_plot[ind,]$key_names<-'understand \n molecular mechanisms'
-  
-  
-  return(df_to_plot)
-}
+
 
 relabel_objectives<-function(obj_col){
   
@@ -159,12 +147,14 @@ group_objectives_method<-function(df, Var1){
 group_disease<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
-                c(".*alzheimer.*|.*amyotrophic.*|.*anxiety*|.*depression.*|.*parkinson.*|.*autism.*",
-                  '.*cardio.*|.*heart.*|.*coronary.*',
+                c(".*alzheimer.*|.*amyotrophic.*|.*anxiety*|.*depressi.*|.*parkinson.*|.*autism.*|.*multiple sclerosis.*|.*epilepsy.*",
+                  '.*cardio.*|.*heart.*|.*coronary.*|.*valve.*|.*atrial.*',
                   '.*bowel.*|.*hep.*|.*liver.*|.*nafld.*|.*crohn.*', 
-                  '.*arthritis.*|.*osteo.*', 
+                  '.*arthritis.*|.*osteo.*|.*fasioscapulo.*', 
                   '.*diabetes.*', 
-                  '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*',
+                  '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*|.*cigarette.*|.*traffic.*',
+                  '.*metabolic.*|.*insulin.*|.*fasting.*',
+                  '.*bladder.*|.*kidney.*|.*renal.*',
                   '.*cancer.*|.*carcinoma'), 
                 c('Nervous system', 
                   'Cardiovascular',
@@ -172,9 +162,85 @@ group_disease<-function(df, Var1){
                   'Musculoskeletal', 
                   'Endrocrine', 
                   'Pulmonary', 
+                  'Metabolism', 
+                  'Urinary',
                   'Cancer'
                  ))}
   )
   #new_col=as.factor(new_col)
   return(df)                 
+}
+
+
+
+### Only keep the most common combinations!! 
+filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
+  
+  df_most_common<-df_by_group %>%
+    group_by(Var1, Cancer)  %>%
+    filter( sum(Freq) >= freq_cutoff[1]) %>%
+    group_by_at(x_group)  %>%
+    filter( sum(Freq) >= freq_cutoff[2])
+  return(df_most_common)
+}
+
+### 
+plot_filters<-function(df_to_plot){
+  df_to_plot$Var1 <- factor(df_to_plot$Var1)
+  # filter out the NA
+  df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
+  return(df_to_plot)
+}
+
+plotbyObjective<-function(df, legend_t="Omics combinations"){ 
+  
+  
+  
+  mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
+
+  #### plot filter 
+  
+  
+  
+  
+  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
+    geom_bar(stat='identity',position='stack', color='black')+
+    scale_fill_brewer(palette = 'Paired')+
+    #scale_fill_manual(mycolors)+
+    
+    
+    guides(fill = guide_legend(title = legend_t), )+
+    
+    labs(x=NULL)+
+    facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
+                                                      c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
+    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
+    theme(axis.text.y = element_text(size=rel(1.5)))+
+    
+    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
+    theme(legend.text=element_text(size=rel(1.5)))
+  
+  
+  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
+               '.png')
+  ggsave(fname, width = plot_width, height=plot_height)
+  print(paste0('saved ', fname))
+  return(g)
+  
+  
+}
+
+
+relabel_objectives_short<-function(df_to_plot){
+  df_to_plot$labels<-df_to_plot$key_names
+  ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
+  df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
+  df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
+  
+  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
+  df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
+  df_to_plot[ind,]$key_names<-'understand \n molecular mechanisms'
+  
+  
+  return(df_to_plot)
 }

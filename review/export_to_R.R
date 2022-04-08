@@ -94,3 +94,22 @@ ft3
 save_as_image( ft3, 
                path = 'plots/data_disease_table.png')
 
+
+
+  data4<-aggr_methods[,1:2]
+data4<-data4 %>% filter(Var1 %in% most_common_groups)%>%
+  arrange(desc(Var1))
+
+data4<-data4[with(data4, order(Var1)), ]
+
+ft4=flextable(data4) %>% 
+  autofit(add_w = 0.1,  part = c("body", "header"))
+ft4<-hline(ft4, part = 'all' )
+
+
+ft4<-set_header_labels(ft4, Var1 = 'Category', method_orig='Method' ) 
+
+ft4
+save_as_image( ft4, 
+               path = 'plots/method_categories.png')
+

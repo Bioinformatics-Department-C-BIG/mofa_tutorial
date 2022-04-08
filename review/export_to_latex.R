@@ -39,7 +39,6 @@ aggr_methods<-aggregate(method_orig ~., df_by_group_meth[c('Var1', 'method_orig'
 write.table(aggr_methods, file = "review/output/methods_category.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
 
-aggr_methods$x<-'\\\\'
 
 write.table(df_by_group_meth, file = "review/output/methods_freq.txt", sep='\t', row.names = FALSE, quote = FALSE)
 df_by_group_meth$x<-'\\\\'
@@ -112,9 +111,6 @@ tool_obj$objectives_concat<-sapply(tool_obj$objectives, function(x){
 }
 )
 
-# tool_obj<-df_by_group_meth_obj %>% 
-#   tool_obj_2<-df_by_group_meth_obj %>% 
-#   spread(key=objective, value = Freq)
 
 write.table(tool_obj[,c('method_orig', 'Var1', 'objectives_concat')], file = "review/output/tools_objectives.txt", sep='\t', row.names = FALSE, quote = FALSE)
 

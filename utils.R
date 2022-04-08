@@ -75,7 +75,7 @@ group_methods<-function(df, Var1){
 }
 
 
-group_methods<-function(df, Var1){
+group_methods<-function(df, Var){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
@@ -83,14 +83,14 @@ group_methods<-function(df, Var1){
                    '.*cluster.*|.*kmeans.*|.*pins.*|.*k means.*|.*kernel.*', 
                    # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*', 
+                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
                    '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*nem-tar.*|.*paradigm.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
-                   '.*.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*'), 
+                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*'), 
                  c( "ML Classification", 
                     'JDR - NonLinear',
                     'JDR - Linear',
@@ -100,7 +100,7 @@ group_methods<-function(df, Var1){
                     'Graph-based', 
                     'JDR - correlation-based',
                     'correlation',
-                    'JDR - partial least squares',
+                    'JDR - Linear - PLS',
                     'multiomics pathway analysis',
                     'Other tools'
                  ))}
@@ -155,3 +155,26 @@ group_objectives_method<-function(df, Var1){
   return(df)
 }
 
+
+group_disease<-function(df, Var1){
+  df[Var1]<-sapply(df[Var1],function(x){
+    mgsub::mgsub(tolower(x),  
+                c(".*alzheimer.*|.*amyotrophic.*|.*anxiety*|.*depression.*|.*parkinson.*|.*autism.*",
+                  '.*cardio.*|.*heart.*|.*coronary.*',
+                  '.*bowel.*|.*hep.*|.*liver.*|.*nafld.*|.*crohn.*', 
+                  '.*arthritis.*|.*osteo.*', 
+                  '.*diabetes.*', 
+                  '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*',
+                  '.*cancer.*|.*carcinoma'), 
+                c('Nervous system', 
+                  'Cardiovascular',
+                  'Gastrointestinal', 
+                  'Musculoskeletal', 
+                  'Endrocrine', 
+                  'Pulmonary', 
+                  'Cancer'
+                 ))}
+  )
+  #new_col=as.factor(new_col)
+  return(df)                 
+}

@@ -12,8 +12,13 @@ all_tools_new<-as.data.frame(merge(all_tools[c('method_orig')], tool_obj[c('meth
 
 df1 = all_tools
 df2=tool_obj[c('method_orig', 'Var1',  'objectives_concat')]
+df2$objectives_concat_new<-df2$objectives_concat
+
 all_tools_new= df1 %>% full_join(df2,by="method_orig")
 
+tool_obj[tool_obj$method_orig %like% 'pathme',]
+
+all_tools_new[all_tools_new$method_orig %like% 'pathme',]
 all_tools_new2<-sapply(all_tools_new,as.character)
 all_tools_new2[is.na(all_tools_new2)]<-""
 
@@ -24,7 +29,7 @@ write.table(all_tools_new2, file = "review/output/tools_objectives_concatenated.
 
 all_tools_to_write<-all_tools[!is.na(all_tools$Refined),]
 all_tools_to_write<-all_tools_to_write[
-  with(all_tools_to_write, order(Var1, objectives_concat, method_orig,decreasing = TRUE)),
+  with(all_tools_to_write, order( Var1,objectives_concat, method_orig,decreasing = TRUE)),
 ]
 
 
@@ -32,25 +37,12 @@ all_tools_to_write$x<-'\\\\'
 
 
 # todo: add column to all_tools ? 
-write.table(all_tools_to_write[c('name display', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+write.table(all_tools_to_write[c('name display','Year', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
-data<-all_tools_to_write[c('name display', 'Var1','objectives_concat', 'Tool/Method')]
+data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method')]
 
 
 # 
-# 
-# footnote(
-#   x,
-#   i = NULL,
-#   j = NULL,
-#   value,
-#   ref_symbols = NULL,
-#   part = "body",
-#   inline = FALSE,
-#   sep = "; "
-# )
-
-
 
 library(RColorBrewer)
 
@@ -89,4 +81,16 @@ ft2
 save_as_image( ft2, 
                path = 'plots/objective_tools_table.png')
 
+
+
+##### Third table with disease 
+data3=  df_nested_filtered[,-c(1,3)]
+ft3=flextable(data3) %>% 
+  autofit(add_w = 0.1,  part = c("body", "header"))
+ # highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("no", "yes"), source=c("Var1"))
+ft3<-hline(ft3, i =5 )
+ft3<-set_header_labels(ft3, Var1 = 'Omics pair', Freq='Frequency', concat = 'Disease' ) 
+ft3
+save_as_image( ft3, 
+               path = 'plots/data_disease_table.png')
 

@@ -1,19 +1,20 @@
+library('plyr')
 
 library('dplyr')
 library('purrr')
 source('literature_review.R')
 source('utils.R')
-source('plyr')
 
 
 
 source('literature_review_combined.R')
+# continue from part 3 lit review- prerequisite! 
 #' TODO: check the rownames given by get frequencies..
 #' TODO: use dplyr instead 
 #' 
 #' 
 ##### Section 4: PRINT METHODS to table
-
+new<-new_objective_method
 width=10
 
 x_group<-'method_orig'

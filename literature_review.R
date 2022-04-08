@@ -300,8 +300,10 @@ df_by_group<-new %>%
   )  
 
 
+df_by_group$disease_group<-group_disease(df_by_group, 'Disease')$Disease
+
 df_nested<-df_by_group[,-4] %>% 
-  nest(data = Disease)
+  nest(data = disease_group)
 # size of tibbles shows frequencies
 df_nested$Freq<-sapply(df_nested$data, dim)[1,]
 
@@ -317,7 +319,11 @@ df_nested$concat<-sapply(df_nested$data, function(x){
 df_nested %>% filter()
 df_nested<-df_nested %>% arrange(Cancer, desc(Freq))
 # two lists - most frequest is just not cancer now 
-df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+df_nested_filtered<-df_nested %>% filter(Cancer %in% c('yes', 'no'))%>%
+                     group_by(Cancer) %>% 
+                      slice_max(order_by = Freq, n=5)
+
 write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
 ########

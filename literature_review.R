@@ -315,11 +315,15 @@ df_nested$concat<-sapply(df_nested$data, function(x){
 })
 
 df_nested %>% filter()
-df_nested<-df_nested %>% arrange(Cancer, Freq)
+df_nested<-df_nested %>% arrange(Cancer, desc(Freq))
 # two lists - most frequest is just not cancer now 
 df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
   
 write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
+
+df_nested$x<-'\\\\'
+
+write.table(df_nested[,-c(1,3)], file = "review/output/data_diseases_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 ########
 ###

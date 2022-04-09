@@ -6,6 +6,15 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 
+### Load the package or install if not present
+if (!require("RColorBrewer")) {
+  install.packages("RColorBrewer")
+  library(RColorBrewer)
+}
+
+colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
+
+
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
 
@@ -287,12 +296,13 @@ comb_frequencies_by_group<-df_by_group
 
 ##### List of disease by combinations 
 
-df_by_group <- new %>%
-  group_by_at(y_group) %>%
-  group_modify(~ preprocessing(.x, colname) )
 
-x_group='Disease'
-df_by_group<-new %>%
+
+new_disease<-new
+new_disease$disease_group<-group_disease(new_disease, 'Disease')$Disease
+x_group='disease_group'
+
+df_by_group<-new_disease %>%
   group_by_at(c(x_group, 'Cancer')) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
                  preprocessing_combinations %>%
@@ -300,8 +310,16 @@ df_by_group<-new %>%
   )  
 
 
+df_to_plot<-df_by_group %>% filter(Cancer == 'no')
+
+#### do the filtering further down... 
+
+
+
+show_p<-plotbyObjective(df_to_plot )
+
 df_nested<-df_by_group[,-4] %>% 
-  nest(data = Disease)
+  nest(data = disease_group)
 # size of tibbles shows frequencies
 df_nested$Freq<-sapply(df_nested$data, dim)[1,]
 
@@ -317,8 +335,11 @@ df_nested$concat<-sapply(df_nested$data, function(x){
 df_nested %>% filter()
 df_nested<-df_nested %>% arrange(Cancer, desc(Freq))
 # two lists - most frequest is just not cancer now 
-df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
-  
+df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+df_nested_filtered<-df_nested %>% filter(Cancer %in% c('yes', 'no'))%>%
+                     group_by(Cancer) %>% 
+                      slice_max(order_by = Freq, n=5)
+
 write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
 df_nested$x<-'\\\\'
@@ -338,12 +359,19 @@ colnames(stats)[which(colnames(stats)=='Objective-Method')]<-'ObjeMeth'
 
 stats_expanded<-expand_ObjeMeth(stats)
 
+
 stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 stats_fil<-stats_expanded
 
+#stats_fil$disease_group<-group_disease(stats_fil$Disease)
 
 #change here to select by objective or by method 
 # TODO: MAKE this one variable to choose method or objective
+
+
+
+
+
 
 x_group<-'method'
 # and here!!! 
@@ -361,16 +389,13 @@ new<-stats_fil %>%
   unnest(objective)
 
 
-
 colname='Data'
-
 new[x_group] <-apply(new[x_group], 1, function(x) trimws(tolower(x)))
-
 new<-group_objectives(new, 'objective')
 
-keys<-pull(new %>%
-             group_by_at(x_group) %>%
-             group_keys())
+
+
+
 
 
 #' TODO: check the rownames given by get frequencies..
@@ -391,96 +416,41 @@ df_by_group<-new %>%
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
 df_by_group['key_names']<-df_by_group[x_group]
-
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
 # non cancer: 10,7, cancer: 7,3,
 
-freq_cutoff1=17; freq_cutoff2=17
-
-
-#df_by_group<-df_by_group %>%
-#  filter(objective!='multiomics pathway analysis')
-df_most_common<-df_by_group %>%
-group_by(Var1, Cancer)  %>%
-filter( sum(Freq) >= freq_cutoff1) %>%
-group_by_at(x_group)  %>%
-filter( sum(Freq) >= freq_cutoff2)
-
-
 df_to_plot<-df_by_group
-# #df_to_plot<-df_to_plot[!is.na(df_to_plot$key_names),]
-# # group all the miscellaneous in one category
-# most_common_groups<-levels(as.factor(df_most_common$Var1))
-# most_common_objectives<-levels(as.factor(df_most_common$objective))
-# 
-# 
-# df_to_plot<-df_by_group
-# #other_data<-df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]; other_data
-# #df_to_plot$Var1[!(df_to_plot$Var1 %in% most_common_groups)]<-'Other'
-# 
-# #filter only data
-# df_to_plot=df_to_plot[!(df_to_plot$Var1 %in% most_common_groups),]
-# 
-# other_objectives<-df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]
-# other_objectives
-# df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]<-'Other biomarker discovery questions'
-# 
-# df_to_plot['key_names']<-df_to_plot[x_group]
+
+
 
 ##TODO: MOVE TO FUNCTION
 #overwrite
-df_to_plot<-df_most_common
 
-df_to_plot['key_names']<-df_to_plot[x_group]
-
-df_to_plot<-relabel_objectives_short(df_to_plot)
-#ind<-df_to_plot$labels%in% c('')
-#df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
-
-#df_to_plot$key_names<-df_to_plot$labels
-
-### Load the package or install if not present
-if (!require("RColorBrewer")) {
-  install.packages("RColorBrewer")
-  library(RColorBrewer)
-}
-
-colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
-
-df_to_plot$Var1 <- factor(df_to_plot$Var1)
-
-# filter out the NA
-df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-plotbyObjective<-function(df, legend_t="Omics combinations"){ 
+if (x_group == 'objective'){
+  df_most_common<-filter_common_groups(df_by_group)
+  df_to_plot<-df_most_common
+  df_to_plot<-relabel_objectives_short(df_to_plot)
   
-  mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
   
-  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
-    geom_bar(stat='identity',position='stack', color='black')+
-    scale_fill_brewer(palette = 'Paired')+
-    #scale_fill_manual(mycolors)+
-    
-
-    guides(fill = guide_legend(title = legend_t), )+
-                                 
-    labs(x=NULL)+
-    facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
-                 c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
-    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
-    theme(legend.text=element_text(size=rel(1.5)))
+}else if (x_group == 'disease_group' ){
+  # select common groups 
+  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(15,15))
   
-
-  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
-                '.png')
-  ggsave(fname, width = 10, height=9)
-  print(paste0('saved ', fname))
-  return(g)
+  df_to_plot<-df_most_common
+  # show them all
+  df_to_plot<-df_by_group
+  
+  # remove cancer
+  df_to_plot<- df_to_plot %>%filter(Cancer %in% c('no'))
   
   
 }
+
+
+# Remove non_cancer
+df_to_plot=  plot_filters(df_to_plot)
 
 show_p<-plotbyObjective(df_to_plot )
 show_p

@@ -161,6 +161,7 @@ as.data.frame(new[new$method=='regression',c('PMID', 'method_orig')])
 new<-new[! (is.na(new[x_group]) | is.na(new['Data'] )),]
 
 
+new_objective_method<-new
 
 df_by_group<-new %>%
   group_by_at(c(x_group, 'Cancer')) %>%

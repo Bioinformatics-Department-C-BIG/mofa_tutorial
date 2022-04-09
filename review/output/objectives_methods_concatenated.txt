@@ -1,0 +1,83 @@
+objective	Var1	methods_concat
+understand molecular mechanisms	graph-based	graphical model nem-tar 1
+understand molecular mechanisms	multiomics pathway analysis	david 1
+understand molecular mechanisms	multiomics pathway analysis	ipa 1
+understand molecular mechanisms	regression	linear regression 1
+understand molecular mechanisms	regression	linear regression 3, group lasso 1, multivariable regression analysis 1, pls regression 1
+understand molecular mechanisms	jdr - linear - mf	mofa 2, multi layer nonegative matrix factorization 1
+understand molecular mechanisms	jdr - linear - mf	mofa 3, pca 2
+understand molecular mechanisms	correlation	correlation 6, cross correlation 1, pearson's correlation 1
+understand molecular mechanisms	correlation	correlation 5, spearman's rank correlation 2, spearman’s correlation 1, spearmank's rank correlation 1
+understand molecular mechanisms	jdr - partial least squares	pls-da 1
+understand molecular mechanisms	jdr - partial least squares	diablo 2, spls 2, opls da 1, pls 1, two way orthogonal pls 1
+understand molecular mechanisms	jdr - linear	kmeans 1
+understand molecular mechanisms	jdr - correlation-based	canonical correlation analysis 6
+understand molecular mechanisms	jdr - nonlinear	variational autoencoder 1
+understand molecular mechanisms	network analysis	network 5, genie3 integrated network 1, netdx 1, netics 1
+understand molecular mechanisms	network analysis	network 6, integrated network 2, association network 1, bayesian directed network 1, correlation guided network integration coni 1, inetmodels 1, integrative network analysis xmwas 1, interactome network 1, multiomics network 1, partial correlation analysis (pcoa) networks 1, pcsf network analysis 1, rimbanet network 1, smccnet: sparse multiple canonical correlation network analysis tool 1, string network 1
+understand molecular mechanisms	other tools	ioda 1, miodin 1
+understand molecular mechanisms	other tools	metaboanalyst 2, adas-viewer 1, metaboanalyst v5.0 1
+understand molecular mechanisms	ml classification	pathcnn 1
+understand molecular mechanisms	ml classification	deep learning 1
+subtype identification	graph-based	snf 4, absnf 1
+subtype identification	graph-based	snf 3
+subtype identification	jdr - linear - mf	intnmf 1, mofa 1, multi layer nonegative matrix factorization 1, multi view matrix decomposition 1, non negative matrix factorization 1, partitioning around medoid algorithm 1, pca 1
+subtype identification	jdr - linear - mf	mofa 2, pca 1
+subtype identification	jdr - partial least squares	diablo 2, pls-da 1
+subtype identification	jdr - linear	icluster 4, consensus clustering 2, consensusclusterplus 2, iclusterplus 2, pinsplus 2, cluster of clusters analysis coca 1, consensus clustering clustomics 1, hierarchical clustering 1, k means 1, kernel principal component analysis 1, lra cluster 1, manaclust merged affinity network association clustering 1, nemo clustering 1, pins 1, spectral clustering algorithm 1
+subtype identification	jdr - linear	consensus clustering 1
+subtype identification	jdr - correlation-based	canonical correlation analysis 1, mcca multiple canonical correlation 1
+subtype identification	jdr - nonlinear	autoencoder 1, consensus factor analysis scfa using autoencoder 1, denoising autoencoder 1, mogonet graph convolutional network 1, sparse autoencoder 1, tsne 1, variational autoencoder 1
+subtype identification	jdr - nonlinear	autoencoder 1, joint deep semi non negative matrix factorization 1
+subtype identification	network analysis	netdx 1, network 1
+subtype identification	other tools	mousse 1
+subtype identification	ml classification	laplacian support vector machine 1, multi kernel learning 1, random forest 1, variational autoencoder and deep learning 1, xgboost 1
+subtype identification	ml classification	random forest 1, support vector machine 1
+multiomics pathway analysis	multiomics pathway analysis	activepathways 1, david pathway analysis 1
+multiomics pathway analysis	multiomics pathway analysis	ipa 3, pathway enrichment analysis 1
+multiomics pathway analysis	jdr - linear - mf	pathwaypca 1
+multiomics pathway analysis	other tools	metaboanalyst 3
+drug response prediction	regression	elastic net 1, ridge regression 1
+drug response prediction	regression	regression 1
+drug response prediction	jdr - linear - mf	diverse 1
+drug response prediction	jdr - partial least squares	pls 1
+drug response prediction	jdr - linear	multi-kernel linear mixed model with adaptive lasso 1
+drug response prediction	jdr - nonlinear	cdrscan 1, deepdcr convolutional neural network 1
+drug response prediction	network analysis	network 1
+drug response prediction	ml classification	random forest 2, machine learning 1, tcnn 1
+drug response prediction	ml classification	xgboost 1
+Diagnosis/Prognosis	graph-based	graphical model nem-tar 1
+Diagnosis/Prognosis	regression	regression 5, linear regression 2, multivariate cox regression analysis 2, cox regression 1, elastic net 1, lasso 1, lasso cox regression model 1, multivariate pls 1
+Diagnosis/Prognosis	regression	logistic regression 3, generalized linear model 1, linear model 1, modularity constrained logistic regression model 1, multivariable analysis 1, multivariable regression analysis 1, multivariate orthogonal pls-da 1
+Diagnosis/Prognosis	jdr - linear - mf	pca 1
+Diagnosis/Prognosis	jdr - partial least squares	pls 2, pls-da 2, pls projection to latent structures 1, sparse pls-da 1
+Diagnosis/Prognosis	jdr - nonlinear	autoencoder 1, deepomix 1, multi view factorization autoencoder mae 1
+Diagnosis/Prognosis	network analysis	netdx 2
+Diagnosis/Prognosis	network analysis	glmnet 1
+Diagnosis/Prognosis	ml classification	random forest 3, svm 2, deep learning 1, extreme gradient boosting 1, machine learning 1, novel classifier 1, pathcnn 1, support vector machine 1
+Diagnosis/Prognosis	ml classification	svm 2, adaboost 1, decision tree algorithm 1, deep learning 1, machine learning 1, random forest 1
+connect molecular patterns to phenotypic traits	regression	cox regression 1, multivariable cox regression analysis 1, regression 1
+connect molecular patterns to phenotypic traits	regression	elastic net 1, modularity constrained logistic regression model 1, regression 1, spls regression 1
+connect molecular patterns to phenotypic traits	jdr - linear - mf	non negative matrix factorization 1
+connect molecular patterns to phenotypic traits	correlation	correlation 1
+connect molecular patterns to phenotypic traits	correlation	correlation 3, spearman's rank correlation 1
+connect molecular patterns to phenotypic traits	jdr - partial least squares	diablo 1
+connect molecular patterns to phenotypic traits	jdr - partial least squares	pls 6, consensus orthogonal pls 1, sparse pls-da 1
+connect molecular patterns to phenotypic traits	jdr - linear	kernel machine 1, multi-kernel linear mixed model with adaptive lasso 1
+connect molecular patterns to phenotypic traits	jdr - nonlinear	deep denoising autoencoder and multi layer perceptron 1, multi view autoencoder 1
+connect molecular patterns to phenotypic traits	other tools	metaboanalyst 2
+connect molecular patterns to phenotypic traits	ml classification	deep learning 1
+biomarker discovery	graph-based	absnf 1
+biomarker discovery	multiomics pathway analysis	david 1, panther 1
+biomarker discovery	regression	elastic net 1, lasso 1, tensor regression 1
+biomarker discovery	regression	linear regression 1, logistic regression 1, multivariable logistic regression 1, multivariate orthogonal pls-da 1, regression 1
+biomarker discovery	jdr - linear - mf	mofa 2, diverse 1, pca 1
+biomarker discovery	correlation	correlation 2
+biomarker discovery	jdr - partial least squares	pls 2
+biomarker discovery	jdr - linear	kernel 1
+biomarker discovery	jdr - correlation-based	canonical correlation analysis 1
+biomarker discovery	jdr - nonlinear	mogonet graph convolutional network 1, neural network 1
+biomarker discovery	network analysis	network 1, networkanalyst 1
+biomarker discovery	network analysis	network 7, biomened neural encoder decoder network 1, omics integrator 1, piumet 1, smccnet: sparse multiple canonical correlation network analysis tool 1
+biomarker discovery	ml classification	random forest 1, svm 1
+biomarker discovery	ml classification	boruta random forest feature selection 1, random forest 1

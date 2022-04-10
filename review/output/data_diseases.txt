@@ -1,13 +1,13 @@
 Cancer	Var1	Freq	concat
 no	proteomics - transcriptomics	15	aging, Cardiovascular, Endrocrine, facioscapulohumeral dystrophy, Gastrointestinal, hiv, ischemic stroke, Metabolism, Musculoskeletal, Nervous system, obesity, pneumonia, Pulmonary, Urinary, NA
+no	epigenomics - transcriptomics	10	aging, all, Cardiovascular, covid-19, Gastrointestinal, Musculoskeletal, Nervous system, pneumonia, sjögren´s syndrome, NA
 no	metabolomics - proteomics	10	Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous system, Pulmonary, vogt-koyanagi-harada disease, NA
 no	metabolomics - transcriptomics	10	Cardiovascular, Endrocrine, hiv, Metabolism, Musculoskeletal, Nervous system, obesity, Pulmonary, toxoplasma, NA
-no	epigenomics - transcriptomics	9	aging, Cardiovascular, covid-19, Gastrointestinal, Musculoskeletal, Nervous system, pneumonia, sj�gren�s syndrome, NA
-no	metabolomics - metagenomics	8	Cardiovascular, Gastrointestinal, Metabolism, Nervous system, obesity, psychological stress, Pulmonary, NA
+no	metabolomics - metagenomics	9	Cardiovascular, Endrocrine, Gastrointestinal, Metabolism, Nervous system, obesity, psychological stress, Pulmonary, NA
 no	mirnas - transcriptomics	7	Cardiovascular, Endrocrine, hiv, Nervous system, obesity, Urinary, NA
 no	mirnas - proteomics	6	Endrocrine, hiv, Nervous system, obesity, Urinary, NA
 no	epigenomics - proteomics	5	Cardiovascular, Gastrointestinal, Nervous system, pneumonia, NA
-no	epigenomics - genomics	4	Gastrointestinal, Musculoskeletal, Nervous system, NA
+no	epigenomics - genomics	5	Gastrointestinal, Musculoskeletal, Nervous system, peripheral blood, NA
 no	genomics - transcriptomics	4	Gastrointestinal, Musculoskeletal, Nervous system, NA
 no	metagenomics - transcriptomics	4	Gastrointestinal, Metabolism, obesity, NA
 no	epigenomics - mirnas	3	Cardiovascular, Nervous system, NA

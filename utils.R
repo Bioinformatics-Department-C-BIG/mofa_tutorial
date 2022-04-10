@@ -192,7 +192,7 @@ plot_filters<-function(df_to_plot){
   return(df_to_plot)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations"){ 
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height){ 
   
   
   
@@ -244,3 +244,4 @@ relabel_objectives_short<-function(df_to_plot){
   
   return(df_to_plot)
 }
+

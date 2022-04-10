@@ -184,9 +184,9 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 ######## Plotting - Filter
 df_most_common<-df_by_group %>%
   group_by(Var1, Cancer)  %>%
-  filter( sum(Freq) >=3) %>%
+  filter( sum(Freq) >=7) %>%
   group_by_at(x_group)  %>%
-  filter( sum(Freq) >= 5)
+  filter( sum(Freq) >= 7)
 
 # group all the miscellaneous in one category
 most_common_groups<-levels(as.factor(df_most_common$Var1))
@@ -204,7 +204,10 @@ df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]<-'Othe
 
 # remove most common objective -only for visualization
 df_to_plot<-df_to_plot[(df_to_plot$objective %in% most_common_objectives),]
+df_to_plot<-df_to_plot[!(df_to_plot$objective == 'multiomics pathway analysis'),]
+
 df_to_plot<-df_to_plot[(df_to_plot$Var1 %in% most_common_groups),]
+df_to_plot<-df_to_plot[!(df_to_plot$Var1 == 'multiomics pathway analysis'),]
 
 
 df_to_plot$Var1<-as.factor(df_to_plot$Var1)
@@ -216,7 +219,7 @@ df_to_plot<-relabel_objectives_short(df_to_plot)
 #df_to_plot %>% 
  # group_by(c(Cancer, objective, key_names, Var1)) 
 
-show_p<-plotbyObjective(df_to_plot, 'Methods' )
+show_p<-plotbyObjective(df_to_plot, 'Methods', plot_width=9, plot_height=9)
 
 # TODO REGROUP THE TOTALS 
 

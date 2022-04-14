@@ -84,21 +84,21 @@ group_methods<-function(df, Var){
                    # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
-                   '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*',
-                   '.*snf.*|.*coni.*|.*netdx.*|.*nem-tar.*|.*paradigm.*',
+                   '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
+                   '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
                    '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*'), 
                  c( "ML Classification", 
-                    'JDR - NonLinear',
-                    'JDR - Linear',
+                    'JDR - NL',
+                    'JDR - LN',
                     'Regression', 
-                    'JDR - Linear - MF', 
-                    'Network analysis',
-                    'Graph-based', 
-                    'JDR - correlation-based',
+                    'JDR - Ln - MF', 
+                    'NB ',
+                    'NB - SNF', 
+                    'JDR - correlation',
                     'correlation',
                     'JDR - Linear - PLS',
                     'multiomics pathway analysis',
@@ -156,7 +156,7 @@ group_disease<-function(df, Var1){
                   '.*metabolic.*|.*insulin.*|.*fasting.*',
                   '.*bladder.*|.*kidney.*|.*renal.*',
                   '.*cancer.*|.*carcinoma'), 
-                c('Nervous system', 
+                c('Nervous', 
                   'Cardiovascular',
                   'Gastrointestinal', 
                   'Musculoskeletal', 
@@ -195,7 +195,7 @@ plot_filters<-function(df_to_plot){
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height){ 
   
   
-  
+  df_to_plot['key_names']<-df_to_plot[x_group]
   mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
 
   #### plot filter 
@@ -209,12 +209,12 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     #scale_fill_manual(mycolors)+
     
     
-    guides(fill = guide_legend(title = legend_t), )+
+    guides(fill = guide_legend(title = legend_t))+
     
     labs(x=NULL)+
     facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
                                                       c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
-    theme(axis.text.x = element_text(size=rel(1.5),angle = 25, vjust = 0.5, hjust=1))+
+    theme(axis.text.x = element_text(size=rel(1.5),angle = 30, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=rel(1.5)))+
     
     theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+

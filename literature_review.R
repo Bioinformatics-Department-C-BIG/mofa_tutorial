@@ -451,9 +451,13 @@ if (x_group == 'objective'){
 
 # Remove non_cancer
 df_to_plot=  plot_filters(df_to_plot)
-
-show_p<-plotbyObjective(df_to_plot )
+df_to_plot$key_names<- df_to_plot[x_group]
+show_p<-plotbyObjective(df_to_plot, plot_height = 9, plot_width = 9 )
 show_p
+
+axis1=x_group
+axis2=colname
+run_sankey(df_to_plot, axis1,axis2, cancer_filter  )
 
 
 

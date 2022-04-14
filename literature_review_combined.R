@@ -10,7 +10,6 @@ library('purrr')
 source('literature_review.R')
 source('utils.R')
 
-data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -71,9 +70,25 @@ library(gdata)
 
 
 
-stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
-stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+sysinf <- Sys.info()
+
+
+# stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
+# stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+os <- sysinf['sysname']
+if ( os  == 'Darwin'){
+  data_int_dir<-'/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
+  }else{
+  data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
+  
+}
+
+
+stats<-read_excel(paste0(data_int_dir,'Multi-omics_merge.xlsx' ))
+
+
+
+
 #stats<-stats[1:600,]
 stats$PMID<-as.numeric(stats$PMID)
 #stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))

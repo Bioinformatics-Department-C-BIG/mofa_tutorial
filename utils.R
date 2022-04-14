@@ -100,7 +100,7 @@ group_methods<-function(df, Var){
                     'NB - SNF', 
                     'JDR - correlation',
                     'correlation',
-                    'JDR - Linear - PLS',
+                    'JDR - LN - PLS',
                     'multiomics pathway analysis',
                     'Other tools'
                  ))}
@@ -192,16 +192,13 @@ plot_filters<-function(df_to_plot){
   return(df_to_plot)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height){ 
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30){ 
   
   
-  df_to_plot['key_names']<-df_to_plot[x_group]
+  #df_to_plot['key_names']<-df_to_plot[x_group]
   mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
 
   #### plot filter 
-  
-  
-  
   
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
@@ -214,11 +211,11 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     labs(x=NULL)+
     facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
                                                       c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
-    theme(axis.text.x = element_text(size=rel(1.5),angle = 30, vjust = 0.5, hjust=1))+
+    theme(axis.text.x = element_text(size=rel(1.5),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=rel(1.5)))+
     
-    theme(plot.margin=unit(c(1,1,2,3.2),"cm"))+
-    theme(legend.text=element_text(size=rel(1.5)))
+    theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))+
+    theme(legend.text=element_text(size=rel(1.4)))
   
   
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
@@ -243,5 +240,40 @@ relabel_objectives_short<-function(df_to_plot){
   
   
   return(df_to_plot)
+}
+
+
+run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter, col){
+  
+  
+  
+  
+  
+  counts<-df_to_plot %>%
+    ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
+  
+  
+  df<-counts
+  ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
+    # geom_lode(width = 1/6) +
+    geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
+              curve_type = "cubic") +
+    # geom_alluvium(aes(fill = stratum)) +
+    geom_stratum(color = "grey", width = 1/6) + 
+    geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+    theme(
+      panel.background = element_blank(),
+      axis.text.y = element_blank(),
+      axis.text.x = element_text(size = 15, face = "bold"),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      legend.position = "none"
+    ) +
+    scale_fill_viridis_d()+
+    ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
+  
+  
+  ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
+  
 }
 

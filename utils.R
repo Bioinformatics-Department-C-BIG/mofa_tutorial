@@ -165,7 +165,8 @@ group_disease<-function(df, Var1){
                   'Metabolism', 
                   'Urinary',
                   'Cancer'
-                 ))}
+                ))}
+   
   )
   #new_col=as.factor(new_col)
   return(df)                 
@@ -192,7 +193,7 @@ plot_filters<-function(df_to_plot){
   return(df_to_plot)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30){ 
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30, ncol=1){ 
   
   
   #df_to_plot['key_names']<-df_to_plot[x_group]
@@ -209,13 +210,20 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     guides(fill = guide_legend(title = legend_t))+
     
     labs(x=NULL)+
-    facet_wrap(~Cancer, ncol=1, labeller = labeller(Cancer=
-                                                      c('no'='Other Diseases','yes' ='Cancer')), scales='free_y')+
+    
     theme(axis.text.x = element_text(size=rel(1.5),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=rel(1.5)))+
     
     theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))+
     theme(legend.text=element_text(size=rel(1.4)))
+  if ('Cancer' %in% colnames(df_to_plot)){
+    print('add cancer')
+    g<-g+ facet_grid(~Cancer,  labeller = labeller(Cancer=
+                c('no'='Other Diseases','yes' ='Cancer')),  
+                scales = 'free', space='free')
+      # scale_x_discrete(expand = c(0, 0.9)) 
+      
+  }
   
   
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  

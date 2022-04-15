@@ -299,7 +299,10 @@ comb_frequencies_by_group<-df_by_group
 
 
 new_disease<-new
-new_disease$disease_group<-group_disease(new_disease, 'Disease')$Disease
+
+new_disease$disease_group[which(new_disease$Cancer=='no')]<-group_disease(new_disease[which(new_disease$Cancer=='no'),], 'Disease')$Disease
+new_disease$disease_group[which(new_disease$Cancer=='yes')]<-'Cancer'
+
 x_group='disease_group'
 
 df_by_group<-new_disease %>%
@@ -309,14 +312,13 @@ df_by_group<-new_disease %>%
                  get_frequencies() 
   )  
 
-
-df_to_plot<-df_by_group %>% filter(Cancer == 'no')
-
+df_by_group_disease<-df_by_group
+df_to_plot<-df_by_group_disease %>% filter(Cancer == 'no')
+df_by_group_disease
 #### do the filtering further down... 
 
+##### Save the disease table
 
-
-show_p<-plotbyObjective(df_to_plot )
 
 df_nested<-df_by_group[,-4] %>% 
   nest(data = disease_group)
@@ -362,12 +364,6 @@ stats_expanded<-expand_ObjeMeth(stats)
 
 stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 stats_fil<-stats_expanded
-
-#stats_fil$disease_group<-group_disease(stats_fil$Disease)
-
-#change here to select by objective or by method 
-# TODO: MAKE this one variable to choose method or objective
-
 
 
 
@@ -429,30 +425,37 @@ df_to_plot<-df_by_group
 #overwrite
 
 if (x_group == 'objective'){
-  df_most_common<-filter_common_groups(df_by_group)
+  df_most_common<-filter_common_groups(df_by_group,freq_cutoff = c(17,17))
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
-  
-  
+  df_to_plot<-df_to_plot[df_to_plot$objective!='multiomics pathway analysis',]
+  plot_height=9
+  ncol=1
 }else if (x_group == 'disease_group' ){
-  # select common groups 
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(15,15))
+  df_by_group<-df_by_group_disease
+  df_by_group['key_names']<-df_by_group[x_group]
   
+  # select common groups 
+  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(10,5))
   df_to_plot<-df_most_common
+  #df_to_plot<-df_to_plot[,-2]
+  
+  df_most_common_disease<-df_most_common
   # show them all
-  df_to_plot<-df_by_group
+  #df_to_plot<-df_by_group
   
   # remove cancer
-  df_to_plot<- df_to_plot %>%filter(Cancer %in% c('no'))
+  #df_to_plot<- df_to_plot %>%filter(Cancer %in% c('no'))
   
+  plot_height=5
+  ncol=2
   
 }
 
-
+df_to_plot<-df_to_plot[!is.na(df_to_plot[x_group]),]
 # Remove non_cancer
 df_to_plot=  plot_filters(df_to_plot)
-df_to_plot$key_names<- df_to_plot[x_group]
-show_p<-plotbyObjective(df_to_plot, plot_height = 9, plot_width = 9 )
+show_p<-plotbyObjective(df_to_plot, plot_height = plot_height, plot_width = 9, angle=35, ncol=ncol)
 show_p
 
 axis1=x_group

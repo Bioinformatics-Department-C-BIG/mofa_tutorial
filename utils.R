@@ -1,7 +1,6 @@
 
 
 
-library('plyr')
 
 library('dplyr')
 group_methods<-function(df, Var1){

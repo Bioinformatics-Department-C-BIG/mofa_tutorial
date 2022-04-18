@@ -312,7 +312,8 @@ df_by_group<-new_disease %>%
 
 df_to_plot<-df_by_group %>% filter(Cancer == 'no')
 
-#### do the filtering further down... 
+#### do the filtering further down... jump to line 418
+# TODO: make this automatic to create all graphs by a switch
 
 
 
@@ -342,9 +343,11 @@ df_nested_filtered<-df_nested %>% filter(Cancer %in% c('yes', 'no'))%>%
 
 write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
 
-df_nested$x<-'\\\\'
 
-write.table(df_nested[,-c(1,3)], file = "review/output/data_diseases_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+
+
+#stats_fil$disease_group<-group_disease(stats_fil$Disease)
+
 
 ########
 ###
@@ -429,22 +432,27 @@ df_to_plot<-df_by_group
 #overwrite
 
 if (x_group == 'objective'){
-  df_most_common<-filter_common_groups(df_by_group)
+  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
-  
+  df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
+  plot_width=10
+  plot_height=9
   
 }else if (x_group == 'disease_group' ){
   # select common groups 
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(15,15))
+  df_by_group<- df_by_group %>%filter(Cancer %in% c('no'))
+  
+  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(13,11))
   
   df_to_plot<-df_most_common
   # show them all
-  df_to_plot<-df_by_group
+  #df_to_plot<-df_by_group
   
   # remove cancer
-  df_to_plot<- df_to_plot %>%filter(Cancer %in% c('no'))
-  
+  df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
+  plot_width=10
+  plot_height=5
   
 }
 
@@ -452,7 +460,7 @@ if (x_group == 'objective'){
 # Remove non_cancer
 df_to_plot=  plot_filters(df_to_plot)
 
-show_p<-plotbyObjective(df_to_plot )
+show_p<-plotbyObjective(df_to_plot)
 show_p
 
 

@@ -74,7 +74,7 @@ group_methods<-function(df, Var1){
 }
 
 
-group_methods<-function(df, Var){
+group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
@@ -94,12 +94,12 @@ group_methods<-function(df, Var){
                     'JDR - NL',
                     'JDR - LN',
                     'Regression', 
-                    'JDR - Ln - MF', 
-                    'NB ',
-                    'NB - SNF', 
+                    'JDR - LN - Matrix Factorization', 
+                    'Network-Based ',
+                    'Network-Based - Similarity network Fusion', 
                     'JDR - correlation',
                     'correlation',
-                    'JDR - LN - PLS',
+                    'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools'
                  ))}
@@ -107,6 +107,41 @@ group_methods<-function(df, Var){
   #new_col=as.factor(new_col)
   return(df)                 
 }
+
+group_methods_to_short<-function(df, Var1){
+  df[Var1]<-sapply(df[Var1],function(x){
+    mgsub::mgsub(tolower(x), 
+                 tolower(c( "ML Classification", 
+                    'JDR - NL',
+                    'JDR - LN',
+                    'Regression', 
+                    'JDR - LN - Matrix Factorization', 
+                    'Network-Based ',
+                    'Network-Based - Similarity network Fusion', 
+                    'JDR - correlation',
+                    'correlation',
+                    'JDR - LN - Partial least squares',
+                    'multiomics pathway analysis',
+                    'Other tools'
+                 )),
+                  c( "ML Classification", 
+                    'JDR - NL',
+                    'JDR - LN',
+                    'Regression', 
+                    'JDR - LN - MF', 
+                    'NB ',
+                    'NB - SNF', 
+                    'JDR - correlation',
+                    'correlation',
+                    'JDR - LN - PLS',
+                    'multiomics pathway analysis',
+                    'Other tools'
+                  ))}
+  )
+  #new_col=as.factor(new_col)
+  return(df)                 
+}
+
 
 
 
@@ -118,7 +153,7 @@ relabel_objectives<-function(obj_col){
   obj_col <- mapvalues(obj_col, from=c("understand molecular mechanisms",
                                        "understand regulatory processes",   
                                  "connect molecular patterns to phenotypic traits",
-                                 "Diagnosis/Prognosis",
+                                 "diagnosis/prognosis",
                                  "biomarker discovery",
                                  
                                  "subtype identification",
@@ -138,7 +173,7 @@ group_objectives_method<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],
                    function(x) 
                      mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
+                                  c('diagnosis/prognosis', 'understand molecular mechanisms')))
   return(df)
 }
 
@@ -192,7 +227,7 @@ plot_filters<-function(df_to_plot){
   return(df_to_plot)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30, ncol=1){ 
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30, plot_cols=FALSE){ 
   
   
   #df_to_plot['key_names']<-df_to_plot[x_group]
@@ -215,12 +250,21 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     
     theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))+
     theme(legend.text=element_text(size=rel(1.4)))
-  if ('Cancer' %in% colnames(df_to_plot)){
+   
+    if ('Cancer' %in% colnames(df_to_plot)){
+
     print('add cancer')
-    g<-g+ facet_grid(~Cancer,  labeller = labeller(Cancer=
+    if (plot_cols){
+      
+      g<-g+ facet_grid(cols = vars(Cancer),  labeller = labeller(Cancer=
                 c('no'='Other Diseases','yes' ='Cancer')),  
                 scales = 'free', space='free')
-      # scale_x_discrete(expand = c(0, 0.9)) 
+    }else{
+      print('add rows')
+      
+        g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
+                  c('no'='Other Diseases','yes' ='Cancer')),  
+                       scales = 'free_y')    }
       
   }
   
@@ -261,6 +305,7 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter, col){
   
   
   df<-counts
+  
   ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
     # geom_lode(width = 1/6) +
     geom_flow(aes(fill = col), width = 1/6, color = "darkgray",

@@ -6,6 +6,9 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 
+
+
+
 ### Load the package or install if not present
 if (!require("RColorBrewer")) {
   install.packages("RColorBrewer")
@@ -16,7 +19,7 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 
 
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
-level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
+level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -268,22 +271,37 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 cancer_filter=c('no')
-df_by_group_fil<-df_by_group %>% filter(Cancer==cancer_filter)
-df_by_group_fil<-df_by_group 
 
-combinations<-aggregate(df_by_group_fil$Freq, by=list(Var1=df_by_group_fil$Var1), FUN=sum)
-combinations<-setNames(combinations,c('Var1','Freq'))
-combinations <-combinations %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
-combinations<-combinations[order(combinations$Freq, decreasing = TRUE),]
+df_by_group_data<-df_by_group 
 
-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
-  geom_tile()+
-  geom_text(aes(label = round(Freq, 2)), size=7)+
-  theme(axis.text.x = element_text(size=rel(1.5),angle = 90, vjust = 0.5, hjust=1))+
-  theme(axis.text.y = element_text( size=rel(1.5)))+
-  scale_fill_gradient(low = "white", high = "red")+
-  ggtitle(paste0('Cancer = ', cancer_filter))
-ggsave(paste0('plots/GridPlot', as.character(colname),'_',cancer_filter, '.png'), width = 8, height=6)
+
+
+
+plotGridCombinations<-function(df_by_group){
+  
+  #### Plots a grid showing the frequencies 
+  combinations <-df_by_group %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
+  combinations<-combinations[order(combinations$Freq, decreasing = TRUE),]
+  
+  
+  g<-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
+    geom_tile()+
+    geom_text(aes(label = round(Freq, 2)), size=7)+
+    theme(axis.text.x = element_text(size=rel(1.5),angle = 45, vjust = 0.5, hjust=1), 
+                                     axis.text.y = element_text( size=rel(1.5)), 
+          plot.margin = margin(10, 10, 40, 20))+
+    labs(x=NULL, y=NULL)+
+    scale_fill_gradient(low = "white", high = "red")+
+    guides(fill=guide_legend(title="Frequency"))+
+    facet_grid(~Cancer,  labeller = labeller(Cancer=
+                                               c('no'='Other Diseases','yes' ='Cancer')),  
+               scales = 'free', space='free')
+  show(g)
+  ggsave(paste0('plots/GridPlot', as.character(colname), '.png'), width = 10, height=6)
+  
+}
+
+plotGridCombinations(df_by_group_data)
 
 
 #TODO: add red find overflow 

@@ -10,7 +10,6 @@ library('purrr')
 source('literature_review.R')
 source('utils.R')
 
-data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -71,9 +70,25 @@ library(gdata)
 
 
 
-stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
-stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
-stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+sysinf <- Sys.info()
+
+
+# stats<-read_excel('C:/Users/athienitie/Google Drive/PHD 2020/Literature/Data Integration/Copy of Multi-omics_not cancer_updated at home  - November 2, 6_24 Pm.xlsx' )
+# stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
+os <- sysinf['sysname']
+if ( os  == 'Darwin'){
+  data_int_dir<-'/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
+  }else{
+  data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
+  
+}
+
+
+stats<-read_excel(paste0(data_int_dir,'Multi-omics_merge.xlsx' ))
+
+
+
+
 #stats<-stats[1:600,]
 stats$PMID<-as.numeric(stats$PMID)
 #stats$Cancer<-c(rep('no',345), rep('yes',(nrow(stats)-345)))
@@ -123,20 +138,8 @@ cancer_filter = 'yes'
 
 
 new<-expand_ObjeMeth(stats)
-# new<-stats %>% 
-#   mutate(ObjeMeth=strsplit(ObjeMeth, ',|\r|\n' ))%>%
-#   unnest(ObjeMeth) 
-# 
-# new<-new[new$Cancer == cancer_filter,]
-# 
-# 
-# new <-new %>% separate(ObjeMeth, c("objective","method"), sep = " - ")
 
-# this can produce the plot of x axis objective with groups of method 
-# or the other way round! 
 
-#x_group<-'method'
-#colname='objective'
 width=10
 
 x_group<-'objective'
@@ -182,12 +185,7 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 ######## Plotting - Filter
-df_most_common<-df_by_group %>%
-  group_by(Var1, Cancer)  %>%
-  filter( sum(Freq) >=7) %>%
-  group_by_at(x_group)  %>%
-  filter( sum(Freq) >= 7)
-
+df_most_common<-filter_common_groups(df_by_group,freq_cutoff=c(5,5))
 # group all the miscellaneous in one category
 most_common_groups<-levels(as.factor(df_most_common$Var1))
 most_common_objectives<-levels(as.factor(df_most_common$objective))
@@ -248,7 +246,14 @@ new_concise<-new[c('Data', 'objective', 'method' )]
 
 
 
+axis1='objective'
+axis2="Data"
 
+df_to_plot[axis2]<-df_to_plot$Var1
+df_to_plot<-df_to_plot%>%filter(Cancer==cancer_filter)
+df_to_plot$n=df_to_plot$Freq
+df_to_plot$col<-df_to_plot$key_names
+run_sankey(df_to_plot, axis1,axis2, cancer_filter  )
 
 
 
@@ -273,7 +278,7 @@ new2<-new %>%
   unnest(Data) 
 
 
-#new2<-new2 %>% filter(Cancer %in% cancer_filter)
+new2<-new %>% filter(Cancer %in% cancer_filter)
 
 
 new2$Data<-tolower(trimws(new2$Data))
@@ -284,70 +289,47 @@ levels(as.factor(new2$Data))
 
 new2<-new2[!is.na(new2$method),]
 new2<-new2[!is.na(new2$Data),]
+
 new2<-new2[!is.na(new2$objective),]
 
 axis1='Data'
 axis2='objective'
 
-counts<-new2 %>% count(objective, method)
 
-if (cancer_filter == 'yes'){n_cutoff=3} else {n_cutoff=4}
-counts<-counts%>% filter(n>n_cutoff)
+counts<-new2 %>% count(Data, objective)
 
-
-df<-counts
-counts<-new2 %>% count(objective, method)
-counts<-counts%>% filter(n>n_cutoff)
-
-
-
+if (cancer_filter == 'yes')
+  {n_cutoff=1} else {n_cutoff=1}
 
 # New implementation with ggalluvial
 axis1='Data'
-axis2="objective"
-counts <- new2 %>% 
+axis2='objective'
+
+counts1 <- new2 %>% 
   count( Data, objective) %>% 
   mutate(
     col = objective
   ) %>%
   ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
 
-df<-counts %>% filter(n>n_cutoff)
-# df<-counts
-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
-  # geom_lode(width = 1/6) +
-  geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
-            curve_type = "cubic") +
-  # geom_alluvium(aes(fill = stratum)) +
-  geom_stratum(color = "grey", width = 1/6) + 
-  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
-  theme(
-    panel.background = element_blank(),
-    axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 15, face = "bold"),
-    axis.title = element_blank(),
-    axis.ticks = element_blank(),
-    legend.position = "none"
-  ) +
-  scale_fill_viridis_d()+
-  ggtitle(paste0("Multi omics objectives, Cancer = ", cancer_filter))
-
-
-ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
 
 
 
-stats
+run_sankey(new2, axis1, axis2, cancer_filter  )
 
 
-# Extract information 
-## TODO: CREATE a new column whch is merged from objective and method
-# TODO: add a \newline after each objective 
-  stats_to_write<-stats[c('PMID','Title', 'Data', 'ObjeMeth')]
-stats_to_write$x<-'\\\\'
 
-stats_to_write$ObjeMeth<- gsub(',',',\\\\newline',stats_to_write$ObjeMeth)
-#install.packages('gdata')
+  stats
+  
+  
+  # Extract information 
+  ## TODO: CREATE a new column whch is merged from objective and method
+  # TODO: add a \newline after each objective 
+    stats_to_write<-stats[c('PMID','Title', 'Data', 'ObjeMeth')]
+  stats_to_write$x<-'\\\\'
+  
+  stats_to_write$ObjeMeth<- gsub(',',',\\\\newline',stats_to_write$ObjeMeth)
+  #install.packages('gdata')
 
 write.table(stats_to_write, file = "review/output/literature_latex_2.txt", sep = " & ", row.names = FALSE, quote = FALSE)
 

@@ -5,7 +5,7 @@ colname<-'Data'
 library('dplyr')
 library('purrr')
 library(RColorBrewer)
-
+source('utils.R')
 
 
 
@@ -159,13 +159,13 @@ colname<-'Data'
 #### Also filter by omics
 frequencies_by_group<-get_frequencies_by_group(stats, colname)
 
-freq_to_plot<-frequencies_by_group %>% filter(Var1 %in% tolower(level1))
+freq_to_plot<-frequencies_by_group %>% filter(Var1 %in% tolower(level2))
 single_omics_frequencies=freq_to_plot
 
 #### Create the stacked plot
 
 ggplot(stats[stats$Cancer=='no',])+stat_count(aes(tolower(Disease)))+
-  theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 35, vjust = 0.5, hjust=1))
   
   ### TODO: how many are the total number considred!!??
 
@@ -184,17 +184,21 @@ plotByData<-function(df_by_group, y_group){
   
 }
 
-
+plt_txt_size=1.5
 plotByData(freq_to_plot, y_group=x_group)
 
-ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
+
+  ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
   geom_bar(stat='identity',position='stack')+
   labs(x=NULL)+
-  theme(axis.text.x = element_text(size=rel(1.3),angle = 25, vjust = 0.5, hjust=1))+
-  theme(plot.margin=unit(c(1,1,2,1.5),"cm"))
+  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 25, vjust = 0.5, hjust=1))+
+  theme(plot.margin=unit(c(1,1,2,1.5),"cm"))+
+  labs(y='Frequency')+
+   scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))
+    
 
-ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 8, height = 5)
+ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
 
 
 
@@ -287,7 +291,7 @@ plotGridCombinations<-function(df_by_group){
   g<-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
     geom_tile()+
     geom_text(aes(label = round(Freq, 2)), size=7)+
-    theme(axis.text.x = element_text(size=rel(1.5),angle = 45, vjust = 0.5, hjust=1), 
+    theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 45, vjust = 0.5, hjust=1), 
                                      axis.text.y = element_text( size=rel(1.5)), 
           plot.margin = margin(10, 10, 40, 20))+
     labs(x=NULL, y=NULL)+
@@ -318,6 +322,9 @@ comb_frequencies_by_group<-df_by_group
 
 new_disease<-new
 new_disease$disease_group<-group_disease(new_disease, 'Disease')$Disease
+new_disease$disease_group[which(new_disease$Cancer=='yes')]
+new_disease$disease_group[which(new_disease$Cancer=='yes')]<-'Cancer'
+
 x_group='disease_group'
 
 df_by_group<-new_disease %>%
@@ -328,7 +335,8 @@ df_by_group<-new_disease %>%
   )  
 
 
-df_to_plot<-df_by_group %>% filter(Cancer == 'no')
+
+df_by_group_disease<- df_by_group
 
 #### do the filtering further down... jump to line 418
 # TODO: make this automatic to create all graphs by a switch
@@ -364,7 +372,6 @@ write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', 
 
 
 
-#stats_fil$disease_group<-group_disease(stats_fil$Disease)
 
 
 ########
@@ -449,6 +456,8 @@ df_to_plot<-df_by_group
 ##TODO: MOVE TO FUNCTION
 #overwrite
 
+
+x_group<-'disease_group'
 if (x_group == 'objective'){
   df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
   df_to_plot<-df_most_common
@@ -459,9 +468,8 @@ if (x_group == 'objective'){
   
 }else if (x_group == 'disease_group' ){
   # select common groups 
-  df_by_group<- df_by_group %>%filter(Cancer %in% c('no'))
-  
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(13,11))
+  df_by_group<-df_by_group_disease
+  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(9,6))
   
   df_to_plot<-df_most_common
   # show them all
@@ -469,8 +477,12 @@ if (x_group == 'objective'){
   
   # remove cancer
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=10
-  plot_height=5
+  df_to_plot<-df_to_plot[!df_to_plot[x_group]=='all diseases',]
+  
+  df_to_plot<-df_to_plot[!df_to_plot['Cancer']=='NA',]
+  
+  plot_width=9
+  plot_height=5.5
   
 }
 
@@ -478,8 +490,12 @@ if (x_group == 'objective'){
 # Remove non_cancer
 df_to_plot=  plot_filters(df_to_plot)
 
-show_p<-plotbyObjective(df_to_plot)
+show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = TRUE)
 show_p
+
+
+
+
 
 
 
@@ -487,7 +503,7 @@ show_p
 #' Create an edge list from the frequency table ! 
 # aggregated or separately? 
 
-## todo label the size of the nodes by frequency 
+## todo label the size of the nodes df_to_plotby frequency 
 comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==cancer_filter)
 single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==cancer_filter)
 

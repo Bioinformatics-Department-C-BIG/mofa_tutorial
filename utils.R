@@ -188,8 +188,7 @@ group_disease<-function(df, Var1){
                   '.*diabetes.*', 
                   '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*|.*cigarette.*|.*traffic.*',
                   '.*metabolic.*|.*insulin.*|.*fasting.*',
-                  '.*bladder.*|.*kidney.*|.*renal.*',
-                  '.*cancer.*|.*carcinoma'), 
+                  '.*bladder.*|.*kidney.*|.*renal.*'),
                 c('Nervous', 
                   'Cardiovascular',
                   'Gastrointestinal', 
@@ -197,9 +196,7 @@ group_disease<-function(df, Var1){
                   'Endrocrine', 
                   'Pulmonary', 
                   'Metabolism', 
-                  'Urinary',
-                  'Cancer'
-                ))}
+                  'Urinary' ))}
    
   )
   #new_col=as.factor(new_col)
@@ -210,7 +207,8 @@ group_disease<-function(df, Var1){
 
 ### Only keep the most common combinations!! 
 filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
-  
+  #' Returns the most common groups 
+  #' freq_cutoff[1]: y-axis, freq_cutoff[2]: x-axis variables
   df_most_common<-df_by_group %>%
     group_by(Var1, Cancer)  %>%
     filter( sum(Freq) >= freq_cutoff[1]) %>%
@@ -219,18 +217,57 @@ filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
   return(df_most_common)
 }
 
-### 
-plot_filters<-function(df_to_plot){
-  df_to_plot$Var1 <- factor(df_to_plot$Var1)
-  # filter out the NA
-  df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-  return(df_to_plot)
+ 
+library(ggforce)
+
+
+
+adjust_facet_width<-function(g,fname){# convert ggplot object to grob object
+
+  print('adjusting')
+  gp <- ggplotGrob(g)
+  
+  # optional: take a look at the grob object's layout
+  gtable::gtable_show_layout(gp)
+  
+  # get gtable columns corresponding to the facets (5 & 9, in this case)
+  facet.columns <- gp$layout$l[grepl("panel", gp$layout$name)]
+  
+  # get the number of unique x-axis values per facet (1 & 3, in this case)
+  x.var <- sapply(ggplot_build(g)$layout$panel_scales_x,
+                  function(l) length(l$range$range))
+  
+  # change the relative widths of the facet columns based on
+  # how many unique x-axis values are in each facet
+  gp$widths[facet.columns] <- gp$widths[facet.columns] * x.var
+  
+  
+  png(fname, height =plot_height*100, width=plot_width*100)
+  # plot result
+  grid::grid.draw(gp)
+  dev.off()
+  gg<-arrangeGrob(gp)
+  ggsave('tmp_gg_save.png', height =plot_height, width=plot_width)
+  
+  return(gg)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30, plot_cols=FALSE){ 
+plot_width=8
+plot_height=8
+angle=30
+plot_cols=TRUE
+df<-df_to_plot
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   
+
   
-  #df_to_plot['key_names']<-df_to_plot[x_group]
+  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
+               '.png')
+  
+  if (!('key_names' %in% df)){
+    df['key_names']=df[x_group]
+  }
+  
   mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
 
   #### plot filter 
@@ -239,8 +276,6 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     geom_bar(stat='identity',position='stack', color='black')+
     scale_fill_brewer(palette = 'Paired')+
     #scale_fill_manual(mycolors)+
-    
-    
     guides(fill = guide_legend(title = legend_t))+
     
     labs(x=NULL)+
@@ -253,27 +288,32 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
    
     if ('Cancer' %in% colnames(df_to_plot)){
 
-    print('add cancer')
     if (plot_cols){
+      print('add columns')
       
-      g<-g+ facet_grid(cols = vars(Cancer),  labeller = labeller(Cancer=
-                c('no'='Other Diseases','yes' ='Cancer')),  
-                scales = 'free', space='free')
+      #g<-g+facet_wrap(vars(Cancer),  scales = 'free',  labeller = labeller(Cancer=
+             #c('no'=' ','yes' =' ')))+
+       #scale_x_discrete(expand = c(0, 0.5))
+      g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
+                      labeller(Cancer=c('no'=' ','yes' =' ')))                                                                             
+
+      ggsave(fname, width = plot_width, height=plot_height)
+      
     }else{
       print('add rows')
       
         g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
                   c('no'='Other Diseases','yes' ='Cancer')),  
                        scales = 'free_y')    }
+      ggsave(fname, width = plot_width, height=plot_height)
+      
       
   }
   
   
-  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
-               '.png')
-  ggsave(fname, width = plot_width, height=plot_height)
-  print(paste0('saved ', fname))
-  return(g)
+
+
+    return(g)
   
   
 }

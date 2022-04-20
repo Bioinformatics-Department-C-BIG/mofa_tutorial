@@ -42,7 +42,7 @@ if (!('Var1' %in% colnames(all_tools_to_write))){
 write.table(all_tools_to_write[c('name display','Year', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method')]
-
+data<-data[!(data$Var1 == 'multiomics pathway analysis'),]
 
 # 
 

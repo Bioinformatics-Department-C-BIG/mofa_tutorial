@@ -2,106 +2,37 @@
 
 
 
-library('dplyr')
-group_methods<-function(df, Var1){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML/DL Classification", 
-                    'ML/DL clustering',
-                    'regression', 
-                    'factor analysis', 
-                    'network', 
-                    'enrichment',
-                    'correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
-
-
 
 group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation analysis.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML/DL Classification", 
-                    'ML/DL clustering',
-                    'regression', 
-                    'factor analysis', 
-                    'network', 
-                    'enrichment',
-                    'correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
-
-
-group_methods<-function(df, Var1){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   ".*autoencoder.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*cluster.*|.*kmeans.*|.*pins.*|.*k means.*|.*kernel.*', 
+                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*",  
+                   ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
+                   '.*cluster.*|.*pins.*|.*kernel.*', 
                    # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
-                   '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
+                   '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
-                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*'), 
+                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
+                   '.*kmeans.*|.*k-means.*'), 
                  c( "ML Classification", 
                     'JDR - NL',
                     'JDR - LN',
                     'Regression', 
                     'JDR - LN - Matrix Factorization', 
                     'Network-Based ',
-                    'Network-Based - Similarity network Fusion', 
+                    'Network-Based - Similarity network', 
                     'JDR - correlation',
-                    'correlation',
+                    'Correlation',
                     'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
-                    'Other tools'
+                    'Other tools', 
+                    'ML - DR'
                  ))}
   )
   #new_col=as.factor(new_col)
@@ -109,6 +40,7 @@ group_methods<-function(df, Var1){
 }
 
 group_methods_to_short<-function(df, Var1){
+  #' Use only before plotting 
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x), 
                  tolower(c( "ML Classification", 
@@ -117,9 +49,9 @@ group_methods_to_short<-function(df, Var1){
                     'Regression', 
                     'JDR - LN - Matrix Factorization', 
                     'Network-Based ',
-                    'Network-Based - Similarity network Fusion', 
+                    'Network-Based - Similarity network', 
                     'JDR - correlation',
-                    'correlation',
+                    'Correlation',
                     'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools'
@@ -132,7 +64,7 @@ group_methods_to_short<-function(df, Var1){
                     'NB ',
                     'NB - SNF', 
                     'JDR - correlation',
-                    'correlation',
+                    'Correlation',
                     'JDR - LN - PLS',
                     'multiomics pathway analysis',
                     'Other tools'

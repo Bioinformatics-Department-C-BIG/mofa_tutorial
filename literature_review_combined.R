@@ -145,7 +145,6 @@ new<-group_objectives_method(new, 'objective')
 # make a backup of the original entries 
 new['method_orig']<-new['method']
 new<-group_methods(new, 'method')
-new<-group_methods_to_short(new, 'method')
 
 
 #' TODO: check the rownames given by get frequencies..
@@ -205,7 +204,10 @@ df_to_plot['key_names']<-df_to_plot[x_group]
 
 df_to_plot<-relabel_objectives_short(df_to_plot)
 
+
+# Convert to short names for the plot
 df_to_plot<-group_methods_to_short(df_to_plot,'Var1' )
+
 
 show_p<-plotbyObjective(df_to_plot, 'Methods', plot_width=9, plot_height=9)
 

@@ -97,6 +97,13 @@ relabel_objectives<-function(obj_col){
 
 
 
+relabel_omics<-function(omics_col){
+  
+  omics_col <- mapvalues(omics_col, from=c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics'), 
+                       to=c('TR', 'GE', 'EP', 'PR', 'MB', 'MT'))
+  return(obj_col)
+}
+
 
 group_objectives_method<-function(df, Var1){
   #'Group objective code column 

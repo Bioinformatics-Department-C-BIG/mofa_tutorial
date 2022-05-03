@@ -312,7 +312,7 @@ plotGridCombinations(df_by_group_data)
   
   
 
-comb_frequencies_by_group<-df_by_group
+comb_frequencies_by_group<-df_by_group_data
 
 
 
@@ -494,56 +494,6 @@ df_to_plot=  plot_filters(df_to_plot)
 
 show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
 show_p
-
-
-
-
-
-
-
-##### 
-#' Create an edge list from the frequency table ! 
-# aggregated or separately? 
-
-## todo label the size of the nodes df_to_plotby frequency 
-comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==cancer_filter)
-single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==cancer_filter)
-
-
-# Add weight as the value of the combination frequency
-edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
-edge_list$weight<-comb_freq$Freq
-edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
-
-# most frequent datasets
-# most_frequent<-comb_freq[order(comb_freq$perc, 
-#                                                decreasing = TRUE),]
-# most_frequent_5<-most_frequent$Var1[1:5]
-# edge_list
-
-# Also add the value on the node 
-
-
-library(igraph)
-
-#### Add the frequency of single omics to the network vertices
-df<-single_omics_frequencies_filtered
-
-net<-graph_from_data_frame(edge_list, directed = FALSE, vertices =NULL)
-net_att<-df[match(V(net)$name, df$Var1),]
-cancer_filter
-
-# TODO: assign omics frequencies of all samples or only cancer? 
-#vertex_attr(net, 'freq', index=V(net))<-single_omics_frequencies$Freq
-
-p<-plot.igraph(net, edge.width=edge_list$weight, 
-               vertex.size=log2(net_att$Freq)*5, 
-               edge.label= edge_list$weight, vertex.attributes())
-#save(p,paste0('plots/network', as.character(colname), '.png'))
-
-
-#g <- set.vertex.attribute(g,'id',1,'first_id')
-
 
 
 

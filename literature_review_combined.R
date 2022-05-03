@@ -272,7 +272,7 @@ new2<-new %>% filter(Cancer %in% cancer_filter)
 
 
 new2$Data<-tolower(trimws(new2$Data))
-new2<-new2 %>% filter(Data %in% tolower(level1))
+new2<-new2 %>% filter(Data %in% tolower(level))
 
 levels(as.factor(new2$Data))
 

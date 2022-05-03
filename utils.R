@@ -9,7 +9,6 @@ group_methods<-function(df, Var1){
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*",  
                    ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
                    '.*cluster.*|.*pins.*|.*kernel.*', 
-                   # '|.*lasso.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
@@ -25,9 +24,9 @@ group_methods<-function(df, Var1){
                     'JDR - LN',
                     'Regression', 
                     'JDR - LN - Matrix Factorization', 
-                    'Network-Based ',
+                    'Network-Based',
                     'Network-Based - Similarity network', 
-                    'JDR - correlation',
+                    'JDR - LN - Correlation',
                     'Correlation',
                     'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
@@ -48,9 +47,9 @@ group_methods_to_short<-function(df, Var1){
                     'JDR - LN',
                     'Regression', 
                     'JDR - LN - Matrix Factorization', 
-                    'Network-Based ',
+                    'Network-Based',
                     'Network-Based - Similarity network', 
-                    'JDR - correlation',
+                    'JDR - Correlation',
                     'Correlation',
                     'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
@@ -61,8 +60,8 @@ group_methods_to_short<-function(df, Var1){
                     'JDR - LN',
                     'Regression', 
                     'JDR - LN - MF', 
-                    'NB ',
-                    'NB - SNF', 
+                    'NB',
+                    'NB - SN', 
                     'JDR - correlation',
                     'Correlation',
                     'JDR - LN - PLS',
@@ -189,6 +188,8 @@ plot_height=8
 angle=30
 plot_cols=TRUE
 df<-df_to_plot
+
+
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   
 
@@ -196,7 +197,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.png')
   
-  if (!('key_names' %in% df)){
+  if (!('key_names' %in% colnames(df))){
     df['key_names']=df[x_group]
   }
   
@@ -210,7 +211,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
     #scale_fill_manual(mycolors)+
     guides(fill = guide_legend(title = legend_t))+
     
-    labs(x=NULL)+
+    labs(x=NULL, y='Frequency')+
     
     theme(axis.text.x = element_text(size=rel(1.5),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=rel(1.5)))+

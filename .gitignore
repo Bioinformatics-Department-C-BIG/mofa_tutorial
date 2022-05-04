@@ -92,3 +92,4 @@ bladder_cancer/Enrichment/*
 .Rproj.user
 review/output/data_diseases.txt
 review/output/data_diseases.txt
+*.csv

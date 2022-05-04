@@ -16,3 +16,5 @@ for (i in 1:7){
 top_combs %>% count()
 lapply(top_combs, write, "combinations_diseases.txt", append=TRUE, ncolumns=1000)
 
+write.table(df_nested[,-3], file = "review/output/data_diseases.txt", sep='\t', row.names = FALSE, quote = FALSE)
+

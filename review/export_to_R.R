@@ -7,7 +7,7 @@ library('webshot')
 
 #### 
 
-  tool_obj[tool_obj$method_orig=='pls',]
+tool_obj[tool_obj$method_orig=='pls',]
 
 all_tools<-read_excel(paste0(data_int_dir,'/all tools.xlsx'))
 
@@ -20,10 +20,9 @@ df2$objectives_concat_new<-df2$objectives_concat
 
 all_tools_new= df1 %>% full_join(df2,by="method_orig")
 
-tool_obj[tool_obj$method_orig %like% 'pathme',]
 
-all_tools_new[all_tools_new$method_orig %like% 'pathme',]
-all_tools_new2<-sapply(all_tools_new,as.character)
+all_tools_new2<-sapply(all_tools_new,as.character) # convert to char, save in new df
+
 all_tools_new2[is.na(all_tools_new2)]<-""
 
 
@@ -42,10 +41,13 @@ all_tools_to_write$x<-'\\\\'
 
 
 # todo: add column to all_tools ? 
+if (!('Var1' %in% colnames(all_tools_to_write))){
+  print('Missing required colnames')}
+
 write.table(all_tools_to_write[c('name display','Year', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method')]
-
+data<-data[!(data$Var1 == 'multiomics pathway analysis'),]
 
 # 
 
@@ -60,7 +62,11 @@ ft1=flextable(data) %>%
   autofit(add_w = 0.1,  part = c("body", "header"))%>%
   highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("Var1"))
 
-ft1
+ft1 <- set_header_labels(ft1,
+                           values = list('name display' = "Name",
+                                         'objectives_concat' = "Objectives",
+                                         Var1 = "Category", 
+                                         'Tool/Method'='Type') )
 
 save_as_html( 'Tools'= ft1, 
               path = 'plots/tools_table.html')

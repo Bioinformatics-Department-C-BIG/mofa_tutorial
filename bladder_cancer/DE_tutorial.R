@@ -20,6 +20,7 @@ dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer
 dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
 }
 output_1='bladder_cancer/plots/deseq/'
+output_files<-'bladder_cancer/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
 X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
@@ -35,7 +36,11 @@ if (prot){
   countdata <- seqdata[,-1]
   
   
-  seqdata<- t(X1_t_cut)
+  seqdata<- t(X2_t_cut) ; rownames(seqdata)<-colnames(X2_t_cut)
+  no_name<-which(is.na(seqdata[1]))
+#### Format
+if (length(no_name)>0){
+  seqdata<-seqdata[,-no_name]}
   countdata<-seqdata
   
   output_de=paste0(output_1, 'prot')
@@ -44,8 +49,15 @@ if (prot){
   countdata <- seqdata[,-1]
   
   
-  seqdata<- t(X2_t_cut)
+  seqdata<- t(X1_t_cut) ; rownames(seqdata)<-colnames(X1_t_cut)
+  no_name<-which(is.na(seqdata[1]))
+  #### Format
+  if (length(no_name)>0){
+    seqdata<-seqdata[,-no_name]}
   countdata<-seqdata
+  
+  
+  
   output_de=paste0(output_1, 'genes')
   
   }
@@ -54,17 +66,13 @@ if (prot){
 dim(seqdata)
 
 
-no_name<-which(is.na(seqdata[1]))
-#### Format
-if (length(no_name)>0){
-  seqdata<-seqdata[-no_name,]}
+
 # Remove first  from seqdata
 
 
 # Look at the output
 head(countdata)
 
-rownames(countdata) <- seqdata[,1]
 
 
 ######## convert to dgelist
@@ -72,14 +80,19 @@ y <- DGEList(countdata)
 y$samples
 
 
-group <- paste(Y_raw$Subtype,Y_raw$Grade,sep=".")
-group <- factor(group)
+group_all <- paste(Y_raw$Subtype,Y_raw$Grade,sep=".")
+group_all <- factor(group)
 y$samples$group <- group
 
 
 group <- paste(Y_raw$Subtype)
 group <- factor(group)
 y$samples$group <- group
+
+
+
+y$samples$Age <- paste(Y_raw$Age)
+y$samples$Sex <- factor(paste(Y_raw$Sex))
 
 ##### 1. Filter lowly expresed genes
 # Note that by converting to CPMs we are normalising for 
@@ -158,7 +171,7 @@ title("Status")
 col.status
 
 labels <- paste(Y_raw$TURB.stage, Y_raw$Subtype,  Y_raw$Grade)
-glMDSPlot(y, labels=labels, groups=group, folder="mds")
+#glMDSPlot(y, labels=labels, groups=group, folder="mds")
 
 
 ###hierarchical clustering
@@ -218,10 +231,10 @@ logcounts_norm <- cpm(y,prior.count=2, log=TRUE)  # take cpm
 highly_variable_lcpm_norm<-logcounts_norm[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-highly_variable_lcpm_norm
-  write.csv2(highly_variable_proteins_voom,'highly_variable_proteins_normalized.csv')
+  write.csv2(highly_variable_proteins_voom,paste0(output_files,'highly_variable_proteins_normalized.csv'))
 }else{
   highly_variable_genes_voom<-highly_variable_lcpm_norm
-  write.csv2(highly_variable_genes_voom,'highly_variable_genes_normalized.csv')
+  write.csv2(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized.csv'))
   
 }
 
@@ -229,14 +242,14 @@ if (prot){
 y$samples
 
 par(mfrow=c(1,2))
-plotMD(logcounts,column = 7)
+#plotMD(logcounts,column = 7)
 abline(h=0,col="grey")
-plotMD(logcounts,column = 11)
+#plotMD(logcounts,column = 11)
 abline(h=0,col="grey")
 
 ####### voom transform
 par(mfrow=c(1,1))
-design <- model.matrix(~ 0 + group)
+design <- model.matrix(~ 0 + group )
 v <- voom(y,design,plot = TRUE)
 par(mfrow=c(1,1))
 v <- voom(y,design,plot = TRUE)
@@ -255,10 +268,10 @@ abline(h=median(v$E),col="blue")
 v_most_var<-v$E[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-v_most_var
-  write.csv2(highly_variable_proteins_voom,'highly_variable_proteins_normalized_VOOM.csv')
+  write.csv2(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
 }else{
-  highly_variable_genes<-v_most_var
-  write.csv2(highly_variable_genes_voom,'highly_variable_genes_normalized_VOOM.csv')
+  highly_variable_genes_voom<-v_most_var
+  write.csv2(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
   
 }
 
@@ -266,7 +279,9 @@ if (prot){
 fit <- lmFit(v)
 names(fit)
 fit$design
-cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
+#cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
+cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1-groupNPS3,levels=design)
+
 fit.cont <- contrasts.fit(fit, cont.matrix)
 fit.cont <- eBayes(fit.cont)
 summa.fit <- decideTests(fit.cont)
@@ -274,7 +289,7 @@ summary(summa.fit)
 library(ggplot2)
 
 
-### write out results 
+  ### write out results 
 # We want to highlight the significant genes. We can get this from decideTests.
 par(mfrow=c(1,2))
 plotMD(fit.cont,coef=1,status=summa.fit[,"B.NPS3vsNPS1"], 
@@ -286,5 +301,5 @@ dev.off()
 # let's highlight the top 100 most DE genes
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
-ggsave(paste0(output,'volcano.png'))
+ggsave(paste0(output_de,'volcano.png'))
 

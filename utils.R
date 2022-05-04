@@ -1,113 +1,78 @@
 
 
 
-library('plyr')
-
-library('dplyr')
-group_methods<-function(df, Var1){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML/DL Classification", 
-                    'ML/DL clustering',
-                    'regression', 
-                    'factor analysis', 
-                    'network', 
-                    'enrichment',
-                    'correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
-
 
 
 group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*neural.*|.*deep.*|.*autoencoder.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   '.*pca.*|.*cluster.*|.*kmeans.*|.*pins.*|.*movis.*|.*k means.*|.*partitioning.*', 
-                   # '|.*lasso.*', 
-                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*', 
-                   '.*snf.*|.*net.*|.*piumet.*|.*omics integrator.*',
-                   '.*gsea.*|.*enrichment.*', 
-                   '.*cca.*|.*smccnet.*|.*canonical correlation analysis.*',
-                   '.*correlation.*', 
-                   '.*kernel.*', 
-                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
-                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*',
-                   '.*david.*|.*metaboanalyst.*|.*nemo.*|.*adas.*'), 
-                 c( "ML/DL Classification", 
-                    'ML/DL clustering',
-                    'regression', 
-                    'factor analysis', 
-                    'network', 
-                    'enrichment',
-                    'correlation-based',
-                    'correlation',
-                    'kernel learning', 
-                    'partial least squares',
-                    'multiomics pathway analysis',
-                    'Other tools'
-                 ))}
-  )
-  #new_col=as.factor(new_col)
-  return(df)                 
-}
-
-
-group_methods<-function(df, Var){
-  df[Var1]<-sapply(df[Var1],function(x){
-    mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*cnn.*|.*classifier.*",  
-                   ".*autoencoder.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*cluster.*|.*kmeans.*|.*pins.*|.*k means.*|.*kernel.*', 
-                   # '|.*lasso.*', 
+                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*",  
+                   ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
+                   '.*cluster.*|.*pins.*|.*kernel.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
-                   '.*net.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
+                   '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
-                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*'), 
+                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
+                   '.*kmeans.*|.*k-means.*'), 
                  c( "ML Classification", 
                     'JDR - NL',
                     'JDR - LN',
                     'Regression', 
-                    'JDR - Ln - MF', 
-                    'NB ',
-                    'NB - SNF', 
-                    'JDR - correlation',
-                    'correlation',
-                    'JDR - LN - PLS',
+                    'JDR - LN - Matrix Factorization', 
+                    'Network-Based',
+                    'Network-Based - Similarity network', 
+                    'JDR - LN - Correlation',
+                    'Correlation',
+                    'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
-                    'Other tools'
+                    'Other tools', 
+                    'ML - DR'
                  ))}
   )
   #new_col=as.factor(new_col)
   return(df)                 
 }
+
+group_methods_to_short<-function(df, Var1){
+  #' Use only before plotting 
+  df[Var1]<-sapply(df[Var1],function(x){
+    mgsub::mgsub(tolower(x), 
+                 tolower(c( "ML Classification", 
+                    'JDR - NL',
+                    'JDR - LN',
+                    'Regression', 
+                    'JDR - LN - Matrix Factorization', 
+                    'Network-Based',
+                    'Network-Based - Similarity network', 
+                    'JDR - Correlation',
+                    'Correlation',
+                    'JDR - LN - Partial least squares',
+                    'multiomics pathway analysis',
+                    'Other tools'
+                 )),
+                  c( "ML Classification", 
+                    'JDR - NL',
+                    'JDR - LN',
+                    'Regression', 
+                    'JDR - LN - MF', 
+                    'NB',
+                    'NB - SN', 
+                    'JDR - correlation',
+                    'Correlation',
+                    'JDR - LN - PLS',
+                    'multiomics pathway analysis',
+                    'Other tools'
+                  ))}
+  )
+  #new_col=as.factor(new_col)
+  return(df)                 
+}
+
 
 
 
@@ -119,7 +84,7 @@ relabel_objectives<-function(obj_col){
   obj_col <- mapvalues(obj_col, from=c("understand molecular mechanisms",
                                        "understand regulatory processes",   
                                  "connect molecular patterns to phenotypic traits",
-                                 "Diagnosis/Prognosis",
+                                 "diagnosis/prognosis",
                                  "biomarker discovery",
                                  
                                  "subtype identification",
@@ -132,6 +97,13 @@ relabel_objectives<-function(obj_col){
 
 
 
+relabel_omics<-function(omics_col){
+  
+  omics_col <- mapvalues(omics_col, from=c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics'), 
+                       to=c('TR', 'GE', 'EP', 'PR', 'MB', 'MT'))
+  return(obj_col)
+}
+
 
 group_objectives_method<-function(df, Var1){
   #'Group objective code column 
@@ -139,7 +111,7 @@ group_objectives_method<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],
                    function(x) 
                      mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
+                                  c('diagnosis/prognosis', 'understand molecular mechanisms')))
   return(df)
 }
 
@@ -154,8 +126,7 @@ group_disease<-function(df, Var1){
                   '.*diabetes.*', 
                   '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*|.*cigarette.*|.*traffic.*',
                   '.*metabolic.*|.*insulin.*|.*fasting.*',
-                  '.*bladder.*|.*kidney.*|.*renal.*',
-                  '.*cancer.*|.*carcinoma'), 
+                  '.*bladder.*|.*kidney.*|.*renal.*'),
                 c('Nervous', 
                   'Cardiovascular',
                   'Gastrointestinal', 
@@ -163,9 +134,7 @@ group_disease<-function(df, Var1){
                   'Endrocrine', 
                   'Pulmonary', 
                   'Metabolism', 
-                  'Urinary',
-                  'Cancer'
-                ))}
+                  'Urinary' ))}
    
   )
   #new_col=as.factor(new_col)
@@ -176,7 +145,8 @@ group_disease<-function(df, Var1){
 
 ### Only keep the most common combinations!! 
 filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
-  
+  #' Returns the most common groups 
+  #' freq_cutoff[1]: y-axis, freq_cutoff[2]: x-axis variables
   df_most_common<-df_by_group %>%
     group_by(Var1, Cancer)  %>%
     filter( sum(Freq) >= freq_cutoff[1]) %>%
@@ -185,18 +155,59 @@ filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
   return(df_most_common)
 }
 
-### 
-plot_filters<-function(df_to_plot){
-  df_to_plot$Var1 <- factor(df_to_plot$Var1)
-  # filter out the NA
-  df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-  return(df_to_plot)
+ 
+library(ggforce)
+
+
+
+adjust_facet_width<-function(g,fname){# convert ggplot object to grob object
+
+  print('adjusting')
+  gp <- ggplotGrob(g)
+  
+  # optional: take a look at the grob object's layout
+  gtable::gtable_show_layout(gp)
+  
+  # get gtable columns corresponding to the facets (5 & 9, in this case)
+  facet.columns <- gp$layout$l[grepl("panel", gp$layout$name)]
+  
+  # get the number of unique x-axis values per facet (1 & 3, in this case)
+  x.var <- sapply(ggplot_build(g)$layout$panel_scales_x,
+                  function(l) length(l$range$range))
+  
+  # change the relative widths of the facet columns based on
+  # how many unique x-axis values are in each facet
+  gp$widths[facet.columns] <- gp$widths[facet.columns] * x.var
+  
+  
+  png(fname, height =plot_height*100, width=plot_width*100)
+  # plot result
+  grid::grid.draw(gp)
+  dev.off()
+  gg<-arrangeGrob(gp)
+  ggsave('tmp_gg_save.png', height =plot_height, width=plot_width)
+  
+  return(gg)
 }
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_height, angle=30, ncol=1){ 
+plot_width=8
+plot_height=8
+angle=30
+plot_cols=TRUE
+df<-df_to_plot
+
+
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   
+
   
-  #df_to_plot['key_names']<-df_to_plot[x_group]
+  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
+               '.png')
+  
+  if (!('key_names' %in% colnames(df))){
+    df['key_names']=df[x_group]
+  }
+  
   mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
 
   #### plot filter 
@@ -205,32 +216,44 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width, plot_he
     geom_bar(stat='identity',position='stack', color='black')+
     scale_fill_brewer(palette = 'Paired')+
     #scale_fill_manual(mycolors)+
-    
-    
     guides(fill = guide_legend(title = legend_t))+
     
-    labs(x=NULL)+
+    labs(x=NULL, y='Frequency')+
     
     theme(axis.text.x = element_text(size=rel(1.5),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=rel(1.5)))+
     
     theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))+
     theme(legend.text=element_text(size=rel(1.4)))
-  if ('Cancer' %in% colnames(df_to_plot)){
-    print('add cancer')
-    g<-g+ facet_grid(~Cancer,  labeller = labeller(Cancer=
-                c('no'='Other Diseases','yes' ='Cancer')),  
-                scales = 'free', space='free')
-      # scale_x_discrete(expand = c(0, 0.9)) 
+   
+    if ('Cancer' %in% colnames(df_to_plot)){
+
+    if (plot_cols){
+      print('add columns')
+      
+      #g<-g+facet_wrap(vars(Cancer),  scales = 'free',  labeller = labeller(Cancer=
+             #c('no'=' ','yes' =' ')))+
+       #scale_x_discrete(expand = c(0, 0.5))
+      g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
+                      labeller(Cancer=c('no'=' ','yes' =' ')))                                                                             
+
+      ggsave(fname, width = plot_width, height=plot_height)
+      
+    }else{
+      print('add rows')
+      
+        g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
+                  c('no'='Other Diseases','yes' ='Cancer')),  
+                       scales = 'free_y')    }
+      ggsave(fname, width = plot_width, height=plot_height)
+      
       
   }
   
   
-  fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
-               '.png')
-  ggsave(fname, width = plot_width, height=plot_height)
-  print(paste0('saved ', fname))
-  return(g)
+
+
+    return(g)
   
   
 }
@@ -262,6 +285,7 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter, col){
   
   
   df<-counts
+  
   ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
     # geom_lode(width = 1/6) +
     geom_flow(aes(fill = col), width = 1/6, color = "darkgray",

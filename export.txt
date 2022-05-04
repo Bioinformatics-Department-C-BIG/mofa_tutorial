@@ -1,0 +1,197 @@
+Title & Data & ObjeMeth & x
+Integrative Multi-Omics Reveals Serum Markers of Tuberculosis in Advanced HIV & Transcriptomics, Proteomics, miRNAs, metabolomics, & Diagnosis - Decision Tree algorithm & \\
+A Mouse Brain-based Multi-omics Integrative Approach Reveals Potential Blood Biomarkers for Ischemic Stroke & Transcriptomics, proteomics & Understand molecular mechanisms - Network, Biomarker discovery - network,  Understand molecular mechanisms - MCIA, Early Diagnosis - Logistic Regression, Understand molecular mechanisms - Canonical Correlation analysis & \\
+Multi-omics profiling predicts allograft function after lung transplantation & Metagenomics, Metabolomics, Lipidomics, & Prognosis - Machine Learning & \\
+Multi-omics profiling of living human pancreatic islet donors reveals heterogeneous beta cell trajectories towards type 2 diabetes & Proteomics, 
+Lipidomics, Transcriptomics & connect molecular patterns to phenotypic traits  - consensus orthogonal partial least squares & \\
+An integrated multi-omics approach identifies epigenetic alterations associated with Alzheimer's disease & transcriptomics, proteomics, epigenomics & Understand regulatory processes - Correlation, & \\
+Author Correction: An integrated multi-omics approach identifies epigenetic alterations associated with Alzheimer's disease & Proteomics, metabolomics, lipidomics,  
+Metabolomics, & NA & \\
+Longitudinal Multi-omics and Microbiome Meta-analysis Identify an Asymptomatic Gingival State That Links Gingivitis, Periodontitis, and Aging & Metagenomics, Metabolomics, Cytokines & NA & \\
+ADAS-viewer: web-based application for integrative analysis of multi-omics data in Alzheimer's disease & genomics, transcriptomics, methylomics, Epigenomics, miRNAs
+ & NA & \\
+Subtype identification - MOFA, Understand molecular mechanisms - MOFA, Connect molecular patterns to phenotypic traits - correlation, Biomarker discovery - factor analysis, Diagnosis - Generalized linear model & Proteomics, metabolomics, lipidomics, & Subtype identification - MOFA, Understand molecular mechanisms - MOFA, Connect molecular patterns to phenotypic traits - correlation, Biomarker discovery - factor analysis, Diagnosis - Generalized linear model & \\
+Multi-Omics Analysis Reveals MicroRNAs Associated With Cardiometabolic Traits & Transcriptomics, Methylomics, Epigenomics, DNA Methylation, miRNAs, & connect molecular patterns to phenotypic traits - Regression Model, Biomarker discovery - Regression Model & \\
+Multi-omics subtyping pipeline for chronic obstructive pulmonary disease & transcriptomics, metabolomics, proteomics & Subtype identification - Autoencoder, Subtype identification - Support vector Machine & \\
+The Joint Analysis of Multi-Omics Data Revealed the Methylation-Expression Regulations in Atrial Fibrillation & Epigenomics, DNA Methylation, 
+Transcriptomics & Understand Regulatory processes - Network, Biomarker discovery - Machine Learning & \\
+Clinical Multi-Omics Study on the Gut Microbiota in Critically Ill Patients After Cardiovascular Surgery Combined With Cardiopulmonary Bypass With or Without Sepsis (MUL-GM-CSCPB Study): A Prospective Study Protocol & Metabolomics, Metagenomics, & NA & \\
+A multi-omics investigation of the composition and function of extracellular vesicles along the temporal trajectory of COVID-19 & Proteomics, Lipidomics, Metabolomics, Transcriptomics & NA & \\
+Multi-omics Analysis of the Amygdala in a Rat Chronic Unpredictable Mild Stress Model of Depression & Metabolomics, proteomics, & Biomarker discovery - Network, multiomics pathway analysis - IPA & \\
+An epigenetic and transcriptomic signature of immune tolerance in human monocytes through multi-omics integration & Proteomics, 
+Transcriptomics,
+Cytokines,
+Methylomics, Epigenomics & Biomarker discovery - Partial least squares, Connect molecular patterns to phenotypic traits - Partial least squares & \\
+Deep Learning for Integrated Analysis of Insulin Resistance with Multi-Omics Data & metagenomics, 
+ Transcriptomics, 
+ proteomics, 
+ cytokines, & NA & \\
+Acute Kidney Injury in Severe COVID-19 Has Similarities to Sepsis-Associated Kidney Injury: A Multi-Omics Study & Transcriptomics, Proteomics, & NA & \\
+Biomarker discovery for chronic liver diseases by multi-omics - a preclinical case study & transcriptomics, proteomics, & biomarker discovery - regression, connect molecular patterns to phenotypic traits - regression, & \\
+A targeted multi-omics approach reveals paraoxonase-1 as a determinant of obesity-associated fatty liver disease & methylomics, Epigenomics,
+Transcriptomics, 
+Genomics, 
+Proteomics, & Understand Regulatory processes - Multivariable analysis & \\
+Fecal multi-omics analysis reveals diverse molecular alterations of gut ecosystem in COVID-19 patients & Metagenomics & NA & \\
+Lifestyle, multi-omics features, and preclinical dementia among Chinese: The Taizhou Imaging Study & Genomics, Metabolomics, Metagenomics & NA & \\
+Biomarkers and key pathways in atrial fibrillation associated with mitral valve disease identified by multi-omics study & Proteomics, metabolomics & Biomarker discovery - Correlation, Understand molecular mechanisms - Correlation & \\
+Multi-omics comparisons of different forms of centronuclear myopathies and the effects of several therapeutic strategies & Transcriptomics,  proteomics & NA & \\
+Unveiling molecular signatures of preeclampsia and gestational diabetes mellitus with multi-omics and innovative cheminformatics visualization tools & Proteomics, Lipidomics , & NA & \\
+Multi-Omics Analysis of Diabetic Nephropathy Reveals Potential New Mechanisms and Drug Targets & Transcriptomics, metabolomics, proteomics & NA & \\
+Multi-Omics Identifies Circulating miRNA and Protein Biomarkers for Facioscapulohumeral Dystrophy & Proteomics, Transcriptomics, & Multiomics pathway analysis - IPA & \\
+An Integrated Multi-Omics Analysis Defines Key Pathway Alterations in a Diet-Induced Obesity Mouse Model & Metabolomics, 
+Metagenomics, Transcriptomics & Understand Regulatory processes - PCA & \\
+Multi-omics Data Integration for Identifying Osteoporosis Biomarkers and Their Biological Interaction and Causal Mechanisms & genomics, transcriptomics, methylomics, Epigenomics, metabolomics & Biomarker discovery - Canonical correlation analysis, Understand molecular mechanisms - Canonical correlation analysis, & \\
+Multi-"-Omics" Profiling in Patients With Quiescent Inflammatory Bowel Disease Identifies Biomarkers Predicting Relapse & Proteomics, metabolomics, metagenomics,
+ & Biomarker discovery - Multivariable logistic regression & \\
+Application of Artificial Intelligence Modeling Technology Based on Multi-Omics in Noninvasive Diagnosis of Inflammatory Bowel Disease & metagenomics, metabolomics, metatranscriptomics, proteomics, viromics, & diagnosis - Machine learning & \\
+Gut Microbial Ecosystem in Parkinson Disease: New Clinicobiological Insights from Multi-Omics & Metagenomics, metabolomics, 
+ & Connect molecular patterns to phenotypic traits - Spearmans rank Correlation & \\
+Multi-omics analyses of cognitive traits and psychiatric disorders highlights brain-dependent mechanisms & Transcriptomics, 
+Methylomics, Epigenomics & NA & \\
+A multi-omics investigation of the molecular characteristics and classification of six metabolic syndrome relevant diseases & metabolomics, proteomics, peptidomics & Differential diagnosis - Machine learning , 
+Subtype identification - Random Forest, Biomarker discovery - Random forest, Subtype identification - Consensus clustering, 
+Understand molecular mechanisms - Association network, & \\
+Multi-omics characterization of a diet-induced obese model of non-alcoholic steatohepatitis & Transcriptomics, 
+Proteomics, & Subtype identification - PCA, biomarker discovery - PCA,  Understand molecular mechanisms - PCA & \\
+Parallel Multi-Omics in High-Risk Subjects for the Identification of Integrated Biomarker Signatures of Type 1 Diabetes & Transcriptomics, proteomics, miRNAs, metabolomics, lipidomics & Biomarker discovery - Network & \\
+multiGSEA: a GSEA-based pathway enrichment analysis for multi-omics data & Metabolomics, proteomics, transcriptomics & Understand molecular mechanisms - MultiOmics Pathway Analysis & \\
+Multi-Omics Analysis of Key microRNA-mRNA Metabolic Regulatory Networks in Skeletal Muscle of Obese Rabbits & miRNAs,
+Transcriptomics,
+Proteomics & Understand Regulatory processes - Network & \\
+Network integration and modelling of dynamic drug responses at multi-omics levels & Proteomics, transcriptomics, Epigenomics, DNA methylation & Understand molecular mechanisms - Network, Drug response prediction - Network & \\
+Epigenetic mechanisms involved in the neuroprotective effect of scorpion extract in a Parkinson's disease murine model based on multi-omics approach & Proteomics, epigenomics, transcriptomics & Understand molecular mechanisms - Integrated network & \\
+Multi-omics systems toxicology study of mouse lung assessing the effects of aerosols from two heat-not-burn tobacco products and cigarette smoke & Mrna, miRNAs transcriptomics, proteomics, metabolomics,  lipidomics & Understand molecular mechanisms - Factor analysis, Understand molecular mechanisms - Canonical correlation analysis,   Understand molecular mechanisms - Network
+ & \\
+Application of multi-omics technology for the elucidation of anti-pneumococcal activity of 3-acyl-2-phenylamino-1,4-dihydroquinolin-4-one (APDQ) derivative against Streptococcus pneumoniae & Transcriptomics, 
+Proteomics, & NA & \\
+Multi-Omics Studies Demonstrate Toxoplasma gondii-Induced Metabolic Reprogramming of Murine Dendritic Cells & Transcriptomics, metabolomics, & NA & \\
+Multi-Omics Analyses Show Disease, Diet, and Transcriptome Interactions With the Virome & Metagenomics & NA & \\
+A Multi-Omics Approach Identifies Key Regulatory Pathways Induced by Long-Term Zinc Supplementation in Human Primary Retinal Pigment Epithelium & Proteomics, transcriptomics, metagenomics & NA & \\
+Multi-omics reveal microbial determinants impacting responses to biologic therapies in inflammatory bowel disease & Metabolomics, Proteomics, Metagenomics & Prognosis - Multivariable analysis, Prognosis - Linear Model & \\
+Crowdsourcing assessment of maternal blood multi-omics for predicting gestational age and preterm birth & Transcriptomics, proteomics & NA & \\
+A multi-tissue multi-omics analysis reveals distinct kineztics in entrainment of diurnal transcriptomes by inverted feeding & Transcriptomics, metabolomics & NA & \\
+Multi-OMICS study of a CHCHD10 variant causing ALS demonstrates metabolic rewiring and activation of endoplasmic reticulum and mitochondrial unfolded protein responses & transcriptomics, proteomics, metabolomics & Connect molecular patterns to phenotypic traits  - MetaboAnalyst, MultiOmic pathway analysis - MetaboAnalyst & \\
+Multi-kernel linear mixed model with adaptive lasso for prediction analysis on high-dimensional multi-omics data & Genomics, transcriptomics, methylomics, epigenomics & Connect molecular patterns to phenotypic traits - multiple kernel Learning, Drug response prediction - Multiple Kernel Learning & \\
+A Multi-Omics Interpretable Machine Learning Model Reveals Modes of Action of Small Molecules & Metabolomics, Transcriptomics, Epigenomics & NA & \\
+Multi-omics Analysis of the Intermittent Fasting Response in Mice Identifies an Unexpected Role for HNF4a & Proteomics, Metabolomics & NA & \\
+Subtypes identification on heart failure with preserved ejection fraction via network enhancement fusion using multi-omics data & Transcriptomics, 
+miRNAs, Methylomics, mRNA, DNA methylation, epigenomics & Subtype identification - SNF & \\
+Paired rRNA-depleted and polyA-selected RNA sequencing data and supporting multi-omics data from human T cells & Genomics, Epigenomics, Transcriptomics, Mrna & NA & \\
+Multi-omics reveals the mechanisms of antidepressant-like effects of the low polarity fraction of Bupleuri Radix & Metabolomics, Metagenomics & NA & \\
+Deep Multilayer Brain Proteomics Identifies Molecular Networks in Alzheimer's Disease Progression & Proteomics, phosphoproteomics, genomics & Understand molecular mechanisms - MultiOmics Pathway Analysis & \\
+Integrated microbiota and metabolite profiles link Crohn's disease to sulfur metabolism & Metabolomics, Metagenomics & Understand molecular mechanisms - Network, Prognosis - Partial least squares projection to latent structures, understand molecular mechanisms - canonical correlation analysis & \\
+Multiscale causal networks identify VGF as a key regulator of Alzheimer's disease & Genomics, Transcriptomics, Proteomics, & Understand regulatory processes - Network & \\
+Coordinated changes of gut microbiome and lipidome differentiates nonalcoholic steatohepatitis (NASH) from isolated steatosis & Lipidomics, Transcriptomics, Metagenomics, & Connect molecular patterns to phenotypic traits - Correlation, Biomarker discovery - Correlation & \\
+Gut Microbial Dysbiosis and Plasma Metabolic Profile in Individuals With Vitiligo & metabolomics, metagenomics & Diagnosis - Partial least squares & \\
+Multi-omics study reveals that statin therapy is associated with restoration of gut microbiota homeostasis and improvement in outcomes in patients with acute coronary syndrome & Metagenomics, Metabolomics, & Connect molecular patterns to phenotypic traits - Metaboanalyst & \\
+Multi 'Omics Analysis of Intestinal Tissue in Ankylosing Spondylitis Identifies Alterations in the Tryptophan Metabolism Pathway & Metagenomics, metabolomics & NA & \\
+From Prevention to Disease Perturbations: A Multi-Omic Assessment of Exercise and Myocardial Infarctions & Lipidomics, metabolomics & NA & \\
+Multi-omics signature of brain amyloid deposition in asymptomatic individuals at-risk for Alzheimer's disease: The INSIGHT-preAD study & Transcriptomics, metabolomics, lipidomics, & Connect molecular patterns to phenotypic traits - sparse partial least squares discriminant, diagnosis - sparse partial least squares discriminant, Understand molecular mechanisms - MOFA & \\
+High-Throughput Identification of Putative Antimicrobial Peptides from Multi-Omics Data of the Lined Seahorse (Hippocampus erectus) & Transcriptomics, proteomics, genomics & NA & \\
+Multi-omics analysis identifies mitochondrial pathways associated with anxiety-related behavior & miRNAs, proteomics, transcriptomics & MultiOmics Pathway analysis - IPA & \\
+Diverse types of genomic evidence converge on alcohol use disorder risk genes & Epigenomics, Genomics, Transcriptomics, Methylomics & NA & \\
+Whole blood co-expression modules associate with metabolic traits and type 2 diabetes: an IMI-DIRECT study & Transcriptomics, genomics & NA & \\
+Deep in the Bowel: Highly Interpretable Neural Encoder-Decoder Networks Predict Gut Metabolites from Gut Microbiome & Metabolomics, Metagenomics & Biomarker discovery - Neural Encoder Decoder Networks & \\
+Integrated omics analysis of sweat reveals an aberrant amino acid metabolism pathway in Vogt-Koyanagi-Harada disease & Proteomics, metabolomics & NA & \\
+Integrative-omics for discovery of network-level disease biomarkers: a case study in Alzheimer's disease & genomics, transcriptomics, proteomics & Connect molecular patterns to phenotypic traits - modularity constrained logistic regression model, Diagnosis - modularity constrained logistic regression model & \\
+Pathological Change of Chronic Hepatitis B Patients with Different Tongue Coatings by Circular Multi-Omics Integrated Analysis & genomics, metabolomics & NA & \\
+DNA methylation and gene expression integration in cardiovascular disease & Epigenomics, transcriptomics & Biomarker discovery - Factor Analysis & \\
+Preoperative plasma biomarkers associated with atrial fibrillation after coronary artery bypass surgery & Proteomics, metabolomics & diagnosis - multivariable regression analysis & \\
+Integrating proteomic, lipidomic and metabolomic data to construct a global metabolic network of lethal ventricular tachyarrhythmias (LVTA) induced by aconitine & Proteomics, Lipidomics, Metabolomics, & NA & \\
+Functional changes of the liver in the absence of growth hormone (GH) action - Proteomic and metabolomic insights from a GH receptor deficient pig model & Proteomics, Metabolomics & NA & \\
+Genetic risk for Alzheimer's dementia predicts motor deficits through multi-omic systems in older adults & transcriptomics, epigenomics, DNA methylation, histone acetylation, proteomics, & NA & \\
+RNA sequencing of identical twins discordant for autism reveals blood-based signatures implicating immune and transcriptional dysregulation & Transcriptomics, DNA methylation, Epigenomics & NA & \\
+Salivaomics as a Potential Tool for Predicting Alzheimer's Disease During the Early Stages of Neurodegeneration & metabolomics, proteomics & Diagnosis - Partial Least squares, Understand molecular mechanisms - Metaboanalyst & \\
+Novel Insights Into Rheumatoid Arthritis Through Characterization of Concordant Changes in DNA Methylation and Gene Expression in Synovial Biopsies of Patients With Differing Numbers of Swollen Joints & Epigenomics, DNA methylation, Transcriptomics & Subtype identification - Factor analysis & \\
+Correlation guided Network Integration (CoNI) reveals novel genes affecting hepatic metabolism & transcriptomics, metabolomics, & NA & \\
+Integrated metagenome and metabolome analyses of blood pressure studies in early postmenopausal Chinese women & metabolomics, metagenomics & Understand molecular mechanisms - Partial least squares & \\
+Genetic variants shape rheumatoid arthritis-specific transcriptomic features in CD4(+) T cells through differential DNA methylation, explaining a substantial proportion of heritability & transcriptomics, methylomics, epigenomics & NA & \\
+Integrative analyses of TEDDY Omics data reveal lipid metabolism abnormalities, increased intracellular ROS and heightened inflammation prior to autoimmunity for type 1 diabetes & transcriptomics, metabolomics & Diagnosis - Partial least squares discriminant analysis, Understand molecular mechanisms - partial correlation analysis (PCoA) networks & \\
+Integrative biochemical, proteomics and metabolomics cerebrospinal fluid biomarkers predict clinical conversion to multiple sclerosis & metabolomics, proteomics & Biomarker discovery - Multivariate orthogonal partial least squares discriminant analysis, Prognosis - Multivariate orthogonal partial least squares discriminant analysis & \\
+Deciphering key regulators involved in epilepsy-induced cardiac damage through whole transcriptome and proteome analysis in a rat model & Transcriptomics, proteomics, & Biomarker discovery - Network & \\
+Identifying associations among genomic, proteomic and imaging biomarkers via adaptive sparse multi-view canonical correlation analysis & Genomics, proteomics & Canonical Correlation analysis & \\
+Integrated Multi-Omic Analyses of the Genomic Modifications by Gut Microbiome-Derived Metabolites of Epicatechin, 5-(4'-Hydroxyphenyl)-<U+03B3>-Valerolactone, in TNFalpha-Stimulated Primary Human Brain Microvascular Endothelial Cells & Proteomics, miRNAs, transcriptomics & Understand molecular mechanisms - Integrated network & \\
+Metabolic Modeling Combined With Machine Learning Integrates Longitudinal Data and Identifies the Origin of LXR-Induced Hepatic Steatosis & metabolomics, transcriptomics, & NA & \\
+Multiset sparse partial least squares path modeling for high dimensional omics data analysis & Genomics, epigenomics, transcriptomics, proteomics & Biomarker discovery - Partial least squares, Connect molecular patterns to phenotypic traits - Partial least squares & \\
+Epigenomics and Lipidomics Integration in Alzheimer Disease: Pathways Involved in Early Stages & Epigenomics, lipidomics, & Connect molecular patterns to phenotypic traits - Partial least squares & \\
+Longitudinal Multi-Omics Study of a Mother-Infant Dyad from Breastfeeding to Weaning: An Individualized Approach to Understand the Interactions Among Diet, Fecal Metabolome and Microbiota Composition & metagenomics, metabolomics & Connect molecular patterns to phenotypic traits - Partial least squares & \\
+Multi-omics integrative analysis identified SNP-methylation-mRNA: Interaction in peripheral blood mononuclear cells & Genomics, Methylomics, Epigenomics, mRNA, SNP, & NA & \\
+Unsupervised classification of multi-omics data during cardiac remodeling using deep learning & Proteomics, metabolomics & Understand molecular mechanisms - Variational AutoEncoder, Understand molecular mechanisms - Deep Learning, Understand molecular mechanisms - kMEANS & \\
+Integrative Analysis of Transcriptomic and Proteomic Profiling in Inflammatory Bowel Disease Colon Biopsies & Transcriptomics, proteomics, & NA & \\
+Immunometabolic Signatures Predict Risk of Progression to Active Tuberculosis and Disease Outcome & transcriptomics, metabolomics, & NA & \\
+Parkinson's Disease is Associated with Dysregulations of a Dopamine-Modulated Gene Network Relevant to Sleep and Affective Neurobehaviors in the Striatum & Transcriptomics, proteomics & Understand molecular mechanisms - Network & \\
+Network-Based Integrative Analysis of Genomics, Epigenomics and Transcriptomics in Autism Spectrum Disorders & genomics, transcriptomics, epigenomics & Biomarker discovery - network & \\
+A Combined Transcriptomic and Genomic Analysis Identifies a Gene Signature Associated With the Response to Anti-TNF Therapy in Rheumatoid Arthritis & transcriptomics, genomics & NA & \\
+AlzGPS: a genome-wide positioning systems platform to catalyze multi-omics for Alzheimer's drug discovery & genomics, transcriptomics, single-cell transcriptomics, proteomics, interactomics, drug-target networks, literature-derived evidence, AD clinical trials information & Drug discovery & \\
+Integrative Analysis of Multi-omics Data Identified EGFR and PTGS2 as Key Nodes in a Gene Regulatory Network Related to Immune Phenotypes in Head and Neck Cancer & Transcriptomics, somatic mutations, copy number variations, DNA methylation, genomics & Prognosis - Novel classifier, Prognosis - LASSO Cox Regression model & \\
+Prognosis prediction model for conversion from mild cognitive impairment to Alzheimer's disease created by integrative analysis of multi-omics data & miRNA, genomic, clinical factors, & Biomarker discovery - Logistic Regression, Prognosis - Logistic Regression & \\
+Integrative multi-omics analysis of muscle-invasive bladder cancer identifies prognostic biomarkers for frontline chemotherapy and immunotherapy & Genomics, DNA methylation, epigenomics, transcriptomics & Subtype identification - iCluster & \\
+An integrated multi-omics analysis identifies prognostic molecular subtypes of non-muscle-invasive bladder cancer & transcriptomics, genomics, proteomics,  methylomics, epigenomics & Subtype identification - ConsensusClustPlus & \\
+Multi-Omics Data Fusion for Cancer Molecular Subtyping Using Sparse Canonical Correlation Analysis & Transcriptomics, mrna, mirnas & Subtype identification - canonical correlation analysis & \\
+Diagnostic classification of cancers using extreme gradient boosting algorithm and multi-omics data & Transcriptomics, miRNAs, mRNA, DNA methylation, epigenomics & Diagnosis - Extreme gradient boosting & \\
+Network-based prioritization of cancer genes by integrative ranks from multi-omics data & DNA methylation, epigenomics, genomics, mirnas, transcriptomics & Biomarker discovery - Network & \\
+A prognosis-related molecular subtype for early-stage non-small lung cell carcinoma by multi-omics integration analysis & Transcriptomics, Epigenomics, DNA methylation & NA & \\
+A multi-omics-based serial deep learning approach to predict clinical outcomes of single-agent anti-PD-1/PD-L1 immunotherapy in advanced stage non-small-cell lung cancer & Radiomics & Prognosis - Multivariate Partial Least Squares & \\
+Multi-Omics Data Analysis of Gene Expressions and Alterations, Cancer-Associated Fibroblast and Immune Infiltrations, Reveals the Onco-Immune Prognostic Relevance of STAT3/CDK2/4/6 in Human Malignancies & Transcriptomics, Epigenomics, DNA methylation & NA & \\
+Prediction of survival and recurrence in patients with pancreatic cancer by integrating multi-omics data & Transcriptomics, miRNAs, DNA methylation, epigenomics & Subtype identification - Autoencoder, Subtype identification - k means clustering, Prognosis - Machine Learning, Prognosis - Regression, Prognosis - Support Vector Machine, Prognosis - Random Forest & \\
+MOVICS: an R package for multi-omics integration and visualization in cancer subtyping & Epigenomics, DNA methylation, Transcriptomics, Genomics & Subtype identification - Clustering & \\
+PathME: pathway based multi-modal sparse autoencoders for clustering of patient-level multi-omics data & miRNAs, Transcriptomics, Genomics, DNA methylation, Epigenomics & Subtype Identification - multi modal sparse denoising autoencoder framework coupled with sparse non negative matrix factorization, Connect molecular patterns to phenotypic traits  - Machine Learning & \\
+Integrate multi-omics data with biological interaction networks using Multi-view Factorization AutoEncoder (MAE) & Transcriptomics, miRNAs, proteomics, DNA methylation, Epigenomics & Connect molecular patterns to phenotypic traits - Deep Learning, Connect molecular patterns to phenotypic traits - Multi view AutoEncoder & \\
+A multi-omics analysis reveals the unfolded protein response regulon and stress-induced resistance to folate-based antimetabolites & Proteomics, transcriptomics & Understand molecular mechanisms - DAVID & \\
+Estimating gene expression from DNA methylation and copy number variation: A deep learning regression model for multi-omics integration & Transcriptomics, DNA methylation, Epigenomics & Connect molecular patterns to phenotypic traits - Deep denoising Autoencoder and multi layer perceptron & \\
+Integrated multi-omics analysis of ovarian cancer using variational autoencoders & miRNAs, transcriptomics, mRNA, DNA methylation , Epigenomics, Genomics & Subtype identification - Variational Autoencoder and Deep Learning & \\
+Multi-omics: Differential expression of IFN-<U+03B3> results in distinctive mechanistic features linking chronic inflammation, gut dysbiosis, and autoimmune diseases & miRNAs, metabolomics, metagenomics & Understand molecular mechanisms - IPA & \\
+PathwayPCA: an R/Bioconductor Package for Pathway Based Integrative Analysis of Multi-Omics Data & Proteomics, Transcriptomics & MutliOmics pathway analysis - pathwayPCA & \\
+Consensus clustering applied to multi-omics disease subtyping & transcriptomics, miRNA, methylation, epigenomics & Subtype Identification - Consensus clustering ClustOmics & \\
+Variability of multi-omics profiles in a population-based child cohort & Epigenomics, dna methylation, transcriptomics, mirnas, proteomics, metabolomics & Biomarker discovery - Network & \\
+Survey and comparative assessments of computational multi-omics integrative methods with multiple regulatory networks identifying distinct tumor compositions across pan-cancer data sets & Transcriptomics & Subtype identification - iCluster, Subtype identification - SNF, Subtype identification - Multi Kernel Learning, Subtype identification - PINS, Subtype identification - LRA Cluster & \\
+A machine learning framework that integrates multi-omics data predicts cancer-related LncRNAs & transcriptomics, miRNAs & Biomarker discovery - kernel, Biomarker discovery -  neural network & \\
+Multi-Omics Data Fusion via a Joint Kernel Learning Model for Cancer Subtype Discovery and Essential Gene Identification & DNA methylation, Epigenomics, proteomics, transcriptomics & Subtype Identification - Spectral clustering algorithm, Subtype identification - Kernel Principal component analysis & \\
+Multi-omics integration of methyltransferase-like protein family reveals clinical outcomes and functional signatures in human cancer & genomics, transcriptomics, proteomics & Biomarker discovery - LinkedOmics & \\
+Performance Comparison of Deep Learning Autoencoders for Cancer Subtype Detection Using Multi-Omics Data & transcriptomics, proteomics, epigenomics, DNA methylation, miRNAs & Subtype identification - deep learning autoencoders & \\
+From multi-omics integration towards novel genomic interaction networks to identify key cancer cell line characteristics & transcriptomics, DNA methylation, epigenomics, & Subtype identification - Multi layer nonegative matrix factorization, Understand molecular mechanisms - Multi layer nonegative matrix factorization, & \\
+MOGONET integrates multi-omics data using graph convolutional networks allowing patient classification and biomarker identification & transcriptomics, mirnas, epigenomics, dna methylation & Biomarker discovery - Graph Convolutional network, Subtype identification - Graph Convolutional network, Subtype identification - XGBoost, Subtype identification - Random forest & \\
+DeFusion: a denoised network regularization framework for multi-omics integration & transcriptomics, mRNAs, epigenomics, DNA methylation, miRNAs & Subtype identification - Non negative matrix factorization, Subtype identification - Network, Connect molecular patterns to phenotypic traits - Regression, Connect molecular patterns to phenotypic traits - Non negative matrix factorization & \\
+Expression signature, prognosis value, and immune characteristics of Siglec-15 identified by pan-cancer analysis & Genomics, Epigenomics, Transcriptomics & NA & \\
+Multi-faceted epigenetic dysregulation of gene expression promotes esophageal squamous cell carcinoma & Transcriptomics, epigenomics & Understand molecular mechanisms - Alignment & \\
+Integrative pathway enrichment analysis of multivariate omics data & Genomics, Transcriptomics, DNA methylation, Epigenomics, & MultiOmics Pathway analysis - ActivePathways, Prognosis - & \\
+Integrative and comparative genomic analyses identify clinically relevant pulmonary carcinoid groups and unveil the supra-carcinoids & Epigenomics, Transcriptomics, & Understand molecular mechanisms - mofa & \\
+Integrated Analyses of Microbiome and Longitudinal Metabolome Data Reveal Microbial-Host Interactions on Sulfur Metabolism in Parkinson's Disease & Metabolomics, Metagenomics, & NA & \\
+Whole-exome and RNA sequencing reveal novel insights into the pathogenesis of HPV associated cervical cancer & Genomics, transcriptomics & Understand molecular mechanisms - Correlation, Prognosis - Regression & \\
+Analysis of Pan-omics Data in Human Interactome Network (APODHIN) & Genomics, transcriptomics, proteomics, metabolomics & Biomarker discovery - & \\
+Multi-omic serum biomarkers for prognosis of disease progression in prostate cancer & Proteomics, metabolomics, lipidomics, & Prognosis - Linear Regression, Prognosis - Bayesian computational approach & \\
+Unsupervised discovery of phenotype-specific multi-omics networks & Transcriptomics, miRNAs, metabolomics, proteomics & Biomarker discovery - SmCCNet, Understand molecular mechanisms - SmCCNet, & \\
+A Proteotranscriptomic-Based Computational Drug-Repositioning Method for Alzheimer's Disease & Drug Repurposing - & NA & \\
+Integrated multi-omics analysis of genomics, epigenomics, and transcriptomics in ovarian carcinoma & Genomics, epigenomics, Transcriptomics, & Subtype Identification - iCluster, & \\
+Data-driven characterization of molecular phenotypes across heterogeneous sample collections & Transcriptomics, genomics, & Subtype identification - tSNE & \\
+A Novel Method for Cancer Subtyping and Risk Prediction Using Consensus Factor Analysis & mRNA, transcriptomics, mirnas, dna methylation, epigenomics, & Subtype identification - Autoencoder, Subtype identification - Factor analysis, & \\
+A Data Integration Multi-Omics Approach to Study Calorie Restriction-Induced Changes in Insulin Sensitivity & metabolomics, transcriptomics, metagenomics, & Connect molecular patterns to phenotypic traits - Partial least squares, Understand molecular mechanisms - Network & \\
+Concomitant DNA methylation and transcriptome signatures define epidermal responses to acute solar UV radiation & transcriptomics, epigenomics & NA & \\
+A Patient-Derived Cell Atlas Informs Precision Targeting of Glioblastoma & Transcriptomics, genomics, epigenomics, & Drug response prediction - Random forest, Drug response prediction - Elastic Net, Subtype identification - Consensus Clustering & \\
+Using association signal annotations to boost similarity network fusion & epigenomics, transcriptomics, genomics & Subtype identification - abSNF, Biomarker discovery - abSNF & \\
+Multi-Omic Data Integration Allows Baseline Immune Signatures to Predict Hepatitis B Vaccine Response in a Small Cohort & epigenomics, transcriptomics, proteomics, metagenomics & Biomarker discovery - NetworkAnalyst, Connect molecular patterns to phenotypic traits - DIABLO & \\
+Identification of key genes by integrating DNA methylation and next-generation transcriptome sequencing for esophageal squamous cell carcinoma & Epigenomics, DNA methylation,Transcriptomics, mRNA expression, Histone modification & Understand regulatory processes - DAVID, Connect molecular patterns to phenotypic traits - multivariable Cox regression analysis & \\
+Unified feature association networks through integration of transcriptomic and proteomic data & Transcriptomics, proteomics & NA & \\
+netDx: interpretable patient classification using integrated patient similarity networks & Transcriptomics, mIRNAS, proteomics, Epigenomics, genomics & Subtype Identification - NetDx, Prognosis - NetDx, Understand molecular mechanisms -NetDx, Prognosis - NetDx & \\
+Identification of Prognostic Markers in Cholangiocarcinoma Using Altered DNA Methylation and Gene Expression Profiles & Epigenomics, Genomics, transcriptomics & Understand molecular mechanisms - Network, Subtype identification - PCA, & \\
+A hierarchical clustering and data fusion approach for disease subtype discovery & Epigenomics, Genomics, transcriptomics & Subtype Identification - Hierarchical Clustering, Subtype Identification - PINSplus, Subtype Identification - NEMO, Subtype Identification - SNF & \\
+Deep learning-based model for predicting progression in patients with head and neck squamous cell carcinoma & mRNAs, Trancriptomics, miRNAs, DNA methylation, Epigenomics & Prognosis - Autoencoder, Prognosis - PCA, Prognosis - Regression & \\
+Introducing a panel for early detection of lung adenocarcinoma by using data integration of genomics, epigenomics, transcriptomics and proteomics & Genomics, epigenomics, transcriptomics, proteomics & Early diagnosis - Venn diagram, Understand molecular mechanisms - Network & \\
+Integrative subspace clustering by common and specific decomposition for applications on cancer subtype identification & DNA methylation, mRNA expression, miRNAS, Transcriptomics, Epigenomics & Subtype Identification - multi view matrix decomposition & \\
+Analyzing the 3D chromatin organization coordinating with gene expression regulation in B-cell lymphoma & Transcriptomics, Epigenomics, & Understand regulatory processes - & \\
+Integrated molecular characterization of chondrosarcoma reveals critical determinants of disease progression & miRNAs, Transcriptomics, DNA methylation, Epigenomics & Subtype Identification - Consensus Clustering, Prognosis - multivariate Cox Regression analysis & \\
+Unsupervised subtyping and methylation landscape of pancreatic ductal adenocarcinoma & Transcriptomics, Epigenomics, dna methylation & Understand molecular mechanisms - Correlation, Subtype identification - intNMF clustering & \\
+Characterization of heterogeneous redox responses in hepatocellular carcinoma patients using network analysis & Transcriptomics, metabolomics, Epigenomics & Subtype identification - ConsensusClustPlus, Understand molecular mechanisms - Correlation, Connect molecular patterns to phenotypic traits - Correlation & \\
+MicroRNA expression profiles in molecular subtypes of clear-cell renal cell carcinoma are associated with clinical outcome and repression of specific mRNA targets & Transcriptomics, miRNAs, & Connect molecular patterns to phenotypic traits - Cox Regression, Subtype identification - Cox Regression, Prognosis - Cox Regression & \\
+Identification and Validation of an Immune-Related RNA Signature to Predict Survival of Patients With Head and Neck Squamous Cell Carcinoma & transcriptomics, miRNAs, & Prognosis - multivariate Cox regression analysis & \\
+Merged Affinity Network Association Clustering: Joint multi-omic/clinical clustering to identify disease endotypes & Transcriptomics, DNA methylation, epigenomics, metagenomics, & Subtype identification - Merged Affinity Network Association Clustering & \\
+A Network-Based Methodology to Identify Subnetwork Markers for Diagnosis and Prognosis of Colorectal Cancer & Genomics, Transcriptomics, & Biomarker discovery - DAVID, Biomarker discovery - Panther & \\
+Integration of Metabolomics and Gene Expression Profiling Elucidates IL4I1 as Modulator of Ibrutinib Resistance in ABC-Diffuse Large B Cell Lymphoma & Metabolomics, transcriptomics & Understand drug resistance - Partial least squares discriminant analysis & \\
+Identification of a survival-related signature for sarcoma patients through integrated transcriptomic and proteomic profiling analyses & transcriptomics, proteomics & Prognosis - Regression & \\
+An Integrated Deep Network for Cancer Survival Prediction Using Omics Data & Transcriptomics, mirnas, epigenomics & Subtype Identification -  Laplacian support vector machine, Prognosis - Deep Learning & \\
+DNA methylation association with stage progression of head and neck squamous cell carcinoma & DNA methylation, epigenomics, Transcriptomics, Genomics & Understand regulatory processes - Correlation & \\
+Eight-lncRNA signature of cervical cancer were identified by integrating DNA methylation, copy number variation and transcriptome data & DNA methylation, Transcriptomics, Genomics, Epigenomics & Subtype identification - iClusterPlus, Prognosis - Regression & \\
+Genome-Wide Correlation of DNA Methylation and Gene Expression in Postmortem Brain Tissues of Opioid Use Disorder Patients & Transcriptomics, Epigenomics, dna methylation & NA & \\
+Identification of human glucocorticoid response markers using integrated multi-omic analysis from a randomized crossover trial & mirnas, metabolomics, transcriptomics & Biomarker discovery - Network & \\
+PathCNN: interpretable convolutional neural networks for survival prediction and pathway analysis applied to glioblastoma & mirnas, transcriptomics, genomics, epigenomics & Prognosis - PathCNN & \\

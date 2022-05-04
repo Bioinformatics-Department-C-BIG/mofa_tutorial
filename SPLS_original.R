@@ -68,8 +68,8 @@ X2_t_raw<-transpose_matrix(X2_raw)
 most_var=TRUE
 
 
-ng_g=round(3,2)
-ng_p=round(2,2)
+ng_g=round(15,2)
+ng_p=round(4,2)
 X1_t<-preprocess_raw_data(X1_t_raw,most_var=most_var, cut_n=27000, ng_g)
 X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE, ng_p)
 
@@ -77,6 +77,8 @@ X2_t<-preprocess_raw_data(X2_t_raw,most_var=most_var,cut_n = FALSE, ng_p)
 X1_t<-log2(X1_t+1) 
 X2_t<-log2(X2_t+1) 
 
+X1_t<-scale(X1_t)
+X2_t<-scale(X2_t)
 # question: should I normalize the data? use broad institute recomendations in protigy? 
 
 
@@ -110,7 +112,7 @@ plotIndiv(pca.gene, comp = c(1, 2), group = Y_raw$Subtype,
 
 dev.off()
 spca.result <- spca(X1_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 10,5))
+                    keepX = c(50, 50,5))
 
 pc_genes1<-selectVar(spca.result, comp=1)$value
 pc_genes2<-selectVar(spca.result, comp=2)$value
@@ -147,7 +149,7 @@ plotIndiv(pca.proteomics, comp = c(1, 2), group = Y_raw$Subtype,
 dev.off()
 
 spca.result <- spca(X2_t, ncomp = 3, center = TRUE, scale = TRUE, 
-                    keepX = c(10, 10, 5))
+                    keepX = c(50, 50, 5))
 
 pc_proteins1<-selectVar(spca.result, comp = 1)$value
 pc_proteins2<-selectVar(spca.result, comp = 2)$value
@@ -210,16 +212,18 @@ tune.spls.bladder <- tune.spls(X1_t, X2_t, ncomp = ncomp,
 
 tune.spls.bladder$choice.keepX
 tune.spls.bladder$choice.keepY
+optimal<-as.data.frame()
+
 # extract optimal number of variables for X dataframe
-optimal$keepX <- tune.spls.bladder$choice.keepX 
+optimal.keepX <- tune.spls.bladder$choice.keepX 
 
 #extract optimal number of variables for Y datafram
-optimal$keepY <- tune.spls.bladder$choice.keepY
-#optimal.keepX <- c(comp1=20, comp2=50)
+optimal.keepY <- tune.spls.bladder$choice.keepY
+
 
 #optimal.keepY <- c(comp1=10, comp2=9)
 
-optimal$ncomp <-  length(optimal.keepX) # extract optimal number of components
+optimal.ncomp <-  length(optimal.keepX) # extract optimal number of components
 
 fname=paste0(output,'/PLS_tune', param_str, '.png')
 png(fname)
@@ -227,18 +231,18 @@ plot(tune.spls.bladder)         # use the correlation measure for tuning
 
 
 
-fname<-paste0('bladder_cancer/settings/optimal', param_str, '.csv') 
-saveRDS(optimal,fname)
-readRDS(file = fname)
+#fname<-paste0('bladder_cancer/settings/optimal', param_str, '.csv') 
+#saveRDS(optimal,fname)
+#readRDS(file = fname)
 
 
 #result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
 #spls.bladder<-result.spls
 
 # use all tuned values from above
-final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal$ncomp, 
-                           keepX = optimal$keepX,
-                           keepY = optimal$keepY,
+final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal.ncomp, 
+                           keepX = optimal.keepX,
+                           keepY = optimal.keepY,
                            mode = "canonical") # explanitory approach being used, 
 
 

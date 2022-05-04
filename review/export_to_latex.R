@@ -5,7 +5,7 @@ library('purrr')
 source('literature_review.R')
 source('utils.R')
 
-
+##### Produces a set of  output files by counting number of studies for different categories
 
 source('literature_review_combined.R')
 # continue from part 3 lit review- prerequisite! 

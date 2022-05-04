@@ -99,14 +99,6 @@ stats$PMID<-as.numeric(stats$PMID)
 #stats_filter<-stats[stats$`Data` %like% 'Proteomics',]
 
 
-#### Split the omics and count number each used 
-#' 1. Split to same sample yes or no
-#' 2 Simplify to lower level 
-#' 3. Plot 
-#' 
-#' 
-
-
 ### Remove reviews, remove rejected articles
 ## GLOBAL FILTER
 stats <- stats %>%
@@ -117,8 +109,6 @@ stats <- stats %>%
 
 #### Create the stacked plot
 
-
-#### Create the stacked plot
 
 library(grid)
 #install.packages('tidyverse')
@@ -156,7 +146,7 @@ new<-group_objectives_method(new, 'objective')
 new['method_orig']<-new['method']
 new<-group_methods(new, 'method')
 
-as.data.frame(new[new$method=='regression',c('PMID', 'method_orig')])
+
 #' TODO: check the rownames given by get frequencies..
 #' TODO: use dplyr instead 
 #' 
@@ -214,8 +204,10 @@ df_to_plot['key_names']<-df_to_plot[x_group]
 
 df_to_plot<-relabel_objectives_short(df_to_plot)
 
-#df_to_plot %>% 
- # group_by(c(Cancer, objective, key_names, Var1)) 
+
+# Convert to short names for the plot
+df_to_plot<-group_methods_to_short(df_to_plot,'Var1' )
+
 
 show_p<-plotbyObjective(df_to_plot, 'Methods', plot_width=9, plot_height=9)
 
@@ -268,9 +260,7 @@ run_sankey(df_to_plot, axis1,axis2, cancer_filter  )
 #install.packages('ggalluvial')
 #install.packages('ggsankey')
 library('ggalluvial')
-library('alluvial')
 
-library('ggsankey')
 
 cancer_filter=c("yes")
 new2<-new %>% 
@@ -282,7 +272,7 @@ new2<-new %>% filter(Cancer %in% cancer_filter)
 
 
 new2$Data<-tolower(trimws(new2$Data))
-new2<-new2 %>% filter(Data %in% tolower(level1))
+new2<-new2 %>% filter(Data %in% tolower(level))
 
 levels(as.factor(new2$Data))
 
@@ -301,6 +291,7 @@ counts<-new2 %>% count(Data, objective)
 if (cancer_filter == 'yes')
   {n_cutoff=1} else {n_cutoff=1}
 
+
 # New implementation with ggalluvial
 axis1='Data'
 axis2='objective'
@@ -314,8 +305,9 @@ counts1 <- new2 %>%
 
 
 
-
-run_sankey(new2, axis1, axis2, cancer_filter  )
+df_to_plot=new2
+run_sankey(new2, axis1, axis2, cancer_filter )
+run_sankey(counts1, axis1, axis2, cancer_filter )
 
 
 

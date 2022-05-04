@@ -18,45 +18,7 @@ library(edgeR)
 library(limma)
 library(Glimma)
 
-transpose_matrix<- function(df.aree){
-    n <- df.aree$Symbol
-    # transpose all but the first column (name)
-    df.aree <- as.data.frame(t(df.aree[,-1]))
-    colnames(df.aree) <- n
-    #df.aree$myfactor <- factor(row.names(df.aree))
-  return(df.aree)
-    
-  }
-
-
-
-preprocess_raw_data<-function(df, cut_n){
-      
-      
-      # first remove all zero entries
-      if (cut_n){ df<-df[,1:cut_n] } 
-  
-      df<- as.data.frame(apply(df, 2, function(x) as.numeric(x)) )
-      ind <- apply(df, 2, function(x) sum(x, na.rm = TRUE)==0) 
-      df<-df[,!ind]
-      
-      return(df)
-    
-      
-
-}
-
-filter_most_var<-function(df,most_var, ng){  # take the most variable entries 
-    if (most_var){
-      n=round(dim(df)[2]/ng)
-      mads<-apply(df,2,mad)
-      df_selected=df[,rev(order(mads))[1:n]]
-      return(df_selected)
-    }else {
-      return(df)
-    }
-}
-
+source('bladder_cancer/preprocessing.R')
 
 
 
@@ -84,8 +46,6 @@ most_var=TRUE
 X1_cut<-preprocess_raw_data(X1_raw, cut_n=27000)
 
 
-ng_p=round(3/2,2)
-ng_g=round(10,2)
 X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
 X1_t_most_var<-filter_most_var(X1_t_cut,most_var,ng_g)
 
@@ -130,6 +90,8 @@ ncomp_p=5
 param_str_g<-paste0( '_edger_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2), 'de')
 param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2),  ', ncomp = ', ncomp_g)
 
+
+# TODO: load from file output_file
 X1_t=t(highly_variable_genes_voom)
 X2_t = t(highly_variable_proteins_voom)
 
@@ -232,6 +194,9 @@ ncomp=2
 param_str<-paste0( '_', most_var, '_', ncomp_g, '_ng_g_', round(1/ng_g,2),'_ncomp_g_', ncomp_p, '_ng_p_', round(1/ng_p,2) )
 
 param_str_plot = paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2), ' ng_p = ' , round(1/ng_p,2), ', ncomp = ', ncomp_g)
+ll<-dim(X1_t)[2]
+
+X1_t<-X1_t[,1:ll-1]
 result.pls <- pls(X1_t, X2_t, ncomp = ncomp, mode='canonical')  # where ncomp is the number of dimensions/components to choose
 perf.pls <- perf(result.pls, validation = "loo",
                              progressBar = FALSE, nrepeat = 10)
@@ -249,24 +214,25 @@ list.keepX <- c(seq(30, 50, 5))
 list.keepY <- c(seq(5,50,5))
 
 
+
 tune.spls.bladder <- tune.spls(as.matrix(X1_t), as.matrix(X2_t), ncomp = ncomp,
                              test.keepX = list.keepX,
                              test.keepY = list.keepY,
-                             nrepeat = 1, folds =4, # use 10 folds
+                             nrepeat = 1, folds =2, # use 10 folds
                              mode = 'canonical', measure = 'cor')
 
 tune.spls.bladder$choice.keepX
 tune.spls.bladder$choice.keepY
 # extract optimal number of variables for X dataframe
-optimal$keepX <- tune.spls.bladder$choice.keepX 
+optimal.keepX <- tune.spls.bladder$choice.keepX 
 
  #extract optimal number of variables for Y datafram
-optimal$keepY <- tune.spls.bladder$choice.keepY
+optimal.keepY <- tune.spls.bladder$choice.keepY
 #optimal.keepX <- c(comp1=20, comp2=50)
 
 #optimal.keepY <- c(comp1=10, comp2=9)
 
-optimal$ncomp <-  length(optimal.keepX) # extract optimal number of components
+optimal.ncomp <-  length(optimal.keepX) # extract optimal number of components
 
 fname=paste0(output,'/PLS_tune', param_str, '.png')
 png(fname)

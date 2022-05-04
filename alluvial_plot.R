@@ -11,7 +11,7 @@ library('alluvial')
 library('ggsankey')
 
 # Switch this to print both
-cancer_filter=c("no")
+cancer_filter=c("yes")
 
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
@@ -78,14 +78,17 @@ g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n
     axis.text.x = element_text(size = 15, face = "bold"),
     axis.title = element_blank(),
     axis.ticks = element_blank(),
-    legend.position = "none"
+    legend.position = "none" 
   ) +
   scale_fill_viridis_d()
+
+
 if (cancer_filter=='no'){
    g<-g+ggtitle(paste0("Other Diseases"))
   }else{
   g<-g+ggtitle(paste0("Cancer"))
   }
+g<-g+    theme(plot.title = element_text(hjust = 0.5))
 
 g
 

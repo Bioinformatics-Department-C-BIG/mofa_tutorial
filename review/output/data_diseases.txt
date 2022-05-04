@@ -1,28 +1,28 @@
 Cancer	Var1	Freq	concat
-no	proteomics - transcriptomics	15	aging, Cardiovascular, Endrocrine, facioscapulohumeral dystrophy, Gastrointestinal, hiv, ischemic stroke, Metabolism, Musculoskeletal, Nervous, obesity, pneumonia, Pulmonary, Urinary, NA
-no	metabolomics - transcriptomics	11	Cardiovascular, Endrocrine, Gastrointestinal, hiv, Metabolism, Musculoskeletal, Nervous, obesity, Pulmonary, toxoplasma, NA
-no	epigenomics - transcriptomics	10	aging, all, Cardiovascular, covid-19, Gastrointestinal, Musculoskeletal, Nervous, pneumonia, sjögren´s syndrome, NA
-no	metabolomics - proteomics	10	Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous, Pulmonary, vogt-koyanagi-harada disease, NA
-no	metabolomics - metagenomics	9	Cardiovascular, Endrocrine, Gastrointestinal, Metabolism, Nervous, obesity, psychological stress, Pulmonary, NA
-no	epigenomics - proteomics	5	Cardiovascular, Gastrointestinal, Nervous, pneumonia, NA
-no	epigenomics - genomics	5	Gastrointestinal, Musculoskeletal, Nervous, peripheral blood, NA
-no	genomics - transcriptomics	4	Gastrointestinal, Musculoskeletal, Nervous, NA
-no	metagenomics - transcriptomics	4	Gastrointestinal, Metabolism, obesity, NA
+no	proteomics - transcriptomics	16	aging, all diseases, Cardiovascular, Endrocrine, facioscapulohumeral dystrophy, Gastrointestinal, hiv, ischemic stroke, Metabolism, Musculoskeletal, Nervous, obesity, pneumonia, Pulmonary, Urinary, NA
+no	metabolomics - transcriptomics	15	all diseases, cancer, Cardiovascular, Endrocrine, Gastrointestinal, hiv, huntington's disease, ibd, Metabolism, Musculoskeletal, Nervous, obesity, Pulmonary, toxoplasma, NA
+no	metabolomics - metagenomics	13	autoimmune diseases, blood pressure, Cardiovascular, cytokine response, Endrocrine, Gastrointestinal, ibd, Metabolism, Nervous, obesity, psychological stress, Pulmonary, NA
+no	epigenomics - transcriptomics	12	aging, all, all diseases, Cardiovascular, covid-19, Gastrointestinal, huntington's disease, Musculoskeletal, Nervous, pneumonia, sjÃ¶grenÂ´s syndrome, NA
+no	metabolomics - proteomics	11	all diseases, Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous, Pulmonary, vogt-koyanagi-harada disease, NA
+no	epigenomics - genomics	6	all diseases, Gastrointestinal, Musculoskeletal, Nervous, peripheral blood, NA
+no	epigenomics - proteomics	6	all diseases, Cardiovascular, Gastrointestinal, Nervous, pneumonia, NA
+no	genomics - transcriptomics	5	all diseases, Gastrointestinal, Musculoskeletal, Nervous, NA
+no	metagenomics - transcriptomics	4	Gastrointestinal, ibd, Metabolism, obesity
+no	epigenomics - metabolomics	3	all diseases, huntington's disease, Musculoskeletal
+no	genomics - metabolomics	3	cytokine response, Musculoskeletal, Nervous
 no	genomics - proteomics	3	Gastrointestinal, Nervous, NA
-no	genomics - metabolomics	3	Musculoskeletal, Nervous, NA
 no	metagenomics - proteomics	2	Gastrointestinal, Metabolism
-no	epigenomics - metabolomics	2	Musculoskeletal, NA
-no	genomics - metagenomics	1	NA
-yes	epigenomics - transcriptomics	9	acute lymphoblastic leukemia, breast tumor, Cancer, chrondrosarcoma, Gastrointestinal, glioblastoma, Pulmonary, Urinary, NA
-yes	genomics - transcriptomics	7	breast tumor, Cancer, glioblastoma, multiple myeloma, Pulmonary, Urinary, NA
-yes	epigenomics - genomics	6	breast tumor, Cancer, glioblastoma, Pulmonary, Urinary, NA
-yes	proteomics - transcriptomics	6	Cancer, Gastrointestinal, Pulmonary, sarcoma, Urinary, NA
-yes	epigenomics - proteomics	5	Cancer, Gastrointestinal, Pulmonary, Urinary, NA
-yes	genomics - proteomics	3	Cancer, Pulmonary, Urinary
-yes	metabolomics - transcriptomics	3	Cancer, diffuse large b-cell lymphoma, Gastrointestinal
-yes	metagenomics - transcriptomics	3	Cancer, Gastrointestinal, NA
-yes	epigenomics - metagenomics	2	Cancer, Gastrointestinal
+no	genomics - metagenomics	1	cytokine response
+yes	epigenomics - genomics	1	Cancer
+yes	epigenomics - metabolomics	1	Cancer
+yes	epigenomics - metagenomics	1	Cancer
+yes	epigenomics - proteomics	1	Cancer
+yes	epigenomics - transcriptomics	1	Cancer
 yes	genomics - metabolomics	1	Cancer
+yes	genomics - proteomics	1	Cancer
+yes	genomics - transcriptomics	1	Cancer
 yes	metabolomics - proteomics	1	Cancer
-yes	epigenomics - metabolomics	1	Gastrointestinal
-yes	metagenomics - proteomics	1	Gastrointestinal
+yes	metabolomics - transcriptomics	1	Cancer
+yes	metagenomics - proteomics	1	Cancer
+yes	metagenomics - transcriptomics	1	Cancer
+yes	proteomics - transcriptomics	1	Cancer

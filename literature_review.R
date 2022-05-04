@@ -15,8 +15,8 @@ if (!require("RColorBrewer")) {
 colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 
 
-level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
-level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs')
+level1<-tolower(c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs'))
+level2<-tolower(c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics', 'miRNAs'))
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -276,7 +276,12 @@ combinations<-setNames(combinations,c('Var1','Freq'))
 combinations <-combinations %>% separate(Var1, c("Omics1","Omics2"), sep = " - ")
 combinations<-combinations[order(combinations$Freq, decreasing = TRUE),]
 
-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
+
+#combinations$Omics1<-factor(combinations$Omics1,levels=level1)
+combinations$Omics1<-factor(combinations$Omics1)
+combinations$Omics2<-factor(combinations$Omics2)
+
+ggplot(combinations)+aes(Omics1,Omics2, Omics1, fill=abs(Freq)) +
   geom_tile()+
   geom_text(aes(label = round(Freq, 2)), size=7)+
   theme(axis.text.x = element_text(size=rel(1.5),angle = 90, vjust = 0.5, hjust=1))+

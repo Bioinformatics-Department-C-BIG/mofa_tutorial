@@ -1,5 +1,9 @@
-
-
+install_phantomjs(version = "2.1.1",
+                  baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/",
+                  force = FALSE)
+library('flextable')
+install.packages('webshot')
+library('webshot')
 
 #### 
 
@@ -33,6 +37,7 @@ all_tools_to_write<-all_tools_to_write[
 ]
 
 
+
 all_tools_to_write$x<-'\\\\'
 
 
@@ -47,7 +52,6 @@ data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', '
 library(RColorBrewer)
 
 
-library('flextable')
 
 
 data$Var1=as.factor(data$Var1)

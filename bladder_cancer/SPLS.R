@@ -1,5 +1,7 @@
 
-#BiocManager::install(c("mixOmics"))
+BiocManager::install(c("edgeR"))
+BiocManager::install(c("Glimma"))
+
 #library(mixOmics)
 #### 
 # Preprocessing 
@@ -11,6 +13,7 @@ library(resample)
 library(mixOmics)
 
 ## NEEDED FOR CPM function in gene preprocessing" 
+#install.packages('gplot')
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -60,9 +63,11 @@ filter_most_var<-function(df,most_var, ng){  # take the most variable entries
 
 ####################################
 #### Preliminary analysis with PCA
+if ( os  == 'Darwin'){
 dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-
+}else{
 dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+}
 output='bladder_cancer/plots/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))

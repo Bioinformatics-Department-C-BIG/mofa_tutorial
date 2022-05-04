@@ -1,8 +1,8 @@
-#if (!requireNamespace("BiocManager"))
-#  install.packages("BiocManager")
-#BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
-
-
+if (!requireNamespace("BiocManager"))
+  install.packages("BiocManager")
+BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
+#install.packages('edgeR')
+BiocManager::install('limma')
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
 
@@ -10,13 +10,15 @@ library(edgeR)
 library(limma)
 library(Glimma)
 library(org.Mm.eg.db)
+
 library(gplots)
 library(RColorBrewer)
 library(NMF)
-
+if ( os  == 'Darwin'){
 dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-
+}else{
 dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+}
 output_1='bladder_cancer/plots/deseq/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
@@ -27,7 +29,7 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
-prot=FALSE
+prot=TRUE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -252,7 +254,7 @@ abline(h=median(v$E),col="blue")
 #### SAVE
 v_most_var<-v$E[select_var_5000,] # and filter!
 if (prot){
-  highly_variable_proteins<-v_most_var
+  highly_variable_proteins_voom<-v_most_var
   write.csv2(highly_variable_proteins_voom,'highly_variable_proteins_normalized_VOOM.csv')
 }else{
   highly_variable_genes<-v_most_var

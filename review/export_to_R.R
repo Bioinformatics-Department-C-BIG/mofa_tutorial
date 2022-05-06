@@ -31,6 +31,8 @@ write.table(all_tools_new2, file = "review/output/tools_objectives_concatenated.
 # Only output the ones that I described
 
 all_tools_to_write<-all_tools[!is.na(all_tools$Refined),]
+#all_tools_to_write<-all_tools[is.na(all_tools$Rejection),]
+
 all_tools_to_write<-all_tools_to_write[
   with(all_tools_to_write, order( Var1,objectives_concat, method_orig,decreasing = TRUE)),
 ]
@@ -59,15 +61,15 @@ library(RColorBrewer)
 data$Var1=as.factor(data$Var1)
 
 ft1=flextable(data) %>% 
-  autofit(add_w = 0.1,  part = c("body", "header"))%>%
-  highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("Var1"))
+  autofit(add_w = 0.1,  part = c("body", "header"))
+  #  highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("Var1"))
 
 ft1 <- set_header_labels(ft1,
                            values = list('name display' = "Name",
                                          'objectives_concat' = "Objectives",
                                          Var1 = "Category", 
                                          'Tool/Method'='Type') )
-
+ft1
 save_as_html( 'Tools'= ft1, 
               path = 'plots/tools_table.html')
 
@@ -76,7 +78,6 @@ save_as_image( ft1,
 
 
 
-data2<-obj_tool_wide[,c('objective', 'Var1', 'no', 'yes')]
 data2<-obj_tool_wide[,c('objective', 'Var1', 'no', 'yes')]
 
 ft2=flextable(data2) %>% 

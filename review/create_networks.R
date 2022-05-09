@@ -12,7 +12,7 @@ library('visNetwork')
 # aggregated or separately? 
 
 ## todo label the size of the nodes df_to_plotby frequency 
-cancer_filter='no'
+cancer_filter='yes'
 comb_freq<- comb_frequencies_by_group %>% filter(Cancer ==cancer_filter)
 single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==cancer_filter)
 
@@ -20,7 +20,7 @@ single_omics_frequencies_filtered<-single_omics_frequencies %>% filter(Cancer ==
 # Add weight as the value of the combination frequency
 edge_list<-data.frame(do.call(rbind, str_split(comb_freq$Var1, ' - ')))
 edge_list$weight<-comb_freq$Freq
-edge_list<-edge_list[edge_list$weight>10, ] 
+#edge_list<-edge_list[edge_list$weight>10, ] 
 edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
 
 # most frequent datasets
@@ -30,7 +30,7 @@ edge_list<-edge_list[order(edge_list$weight, decreasing = TRUE),]
 # edge_list
 
 # Also add the value on the node 
-
+write.csv(edge_list,paste0('edge_list_',cancer_filter,'.csv'), quote=FALSE)
 
 library(igraph)
 
@@ -84,10 +84,9 @@ p<-plot.igraph(net, edge.width=log2(edge_list$weight),
                edge.label= edge_list$weight, color.edge='blue', 
                layout=layout_as_tree, 
                vertex.frame.color='lightblue', 
-               vertex.frame.width=10, 
-               label.family='serif')
+               vertex.frame.width=10)
 
-label.family
+
 
 #vertex.shape='crectangle')
 dev.off()

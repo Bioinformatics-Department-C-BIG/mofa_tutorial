@@ -1,5 +1,7 @@
 
 
+#install.packages('ggforce')
+library(ggforce)
 
 
 
@@ -156,7 +158,6 @@ filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
 }
 
  
-library(ggforce)
 
 
 
@@ -196,10 +197,10 @@ angle=30
 plot_cols=TRUE
 df<-df_to_plot
 
+#[1] "#A6CEE3" "#1F78B4" "#B2DF8A" "#33A02C" "#FB9A99" "#E31A1C" "#FDBF6F"
+#[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
-  
-
   
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.png')
@@ -208,24 +209,48 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
     df['key_names']=df[x_group]
   }
   
-  mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(15)
-
+  #[1] "#A6CEE3" "#1F78B4" "#B2DF8A" "#33A02C" "#FB9A99" "#E31A1C" "#FDBF6F"
+  #[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
+  
   #### plot filter 
+  mycolors=c("epigenomics - transcriptomics" = '#1F78B4', 
+  "epigenomics - genomics" = '#A6CEE3',
+  "genomics - transcriptomics" = '#B2DF8A',
+  "proteomics - transcriptomics" = '#33A02C',
+  "metabolomics - proteomics" = "#E31A1C" ,
+  "metabolomics - transcriptomics" = "#FB9A99", 
+  "metabolomics - metagenomics" = "#FDBF6F")
   
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
-    scale_fill_brewer(palette = 'Paired')+
-    #scale_fill_manual(mycolors)+
     guides(fill = guide_legend(title = legend_t))+
+    labs(x=NULL, y='Number of studies')
+  
+  g=g+ theme(axis.text.x = element_text(size=rel(1.4),angle = angle, vjust = 0.5, hjust=1))+
+    theme(axis.text.y = element_text(size=rel(1.4)))+
     
-    labs(x=NULL, y='Frequency')+
-    
-    theme(axis.text.x = element_text(size=rel(1.5),angle = angle, vjust = 0.5, hjust=1))+
-    theme(axis.text.y = element_text(size=rel(1.5)))+
-    
-    theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))+
     theme(legend.text=element_text(size=rel(1.4)))
-   
+  
+  
+  if (colname == 'method'){
+    print('paired brewer')
+    g=g+ scale_fill_brewer(palette = 'Paired')+
+      theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))
+    
+  }else if (x_group=='disease_group'){
+    g=g+scale_fill_manual(values = mycolors)
+    g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
+  }else{
+    g=g+scale_fill_manual(values = mycolors)+
+      theme(legend.position = 'none')
+      g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
+      
+
+  }
+
+
+
+  
     if ('Cancer' %in% colnames(df_to_plot)){
 
     if (plot_cols){
@@ -248,15 +273,33 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
       ggsave(fname, width = plot_width, height=plot_height)
       
       
-  }
+    }
   
-  
-
 
     return(g)
   
   
 }
+library(gridExtra) 
+install.packages('cowplot')
+library(cowplot) 
+grid.newpage()
+grid.draw(legend)
+
+png("legend.png")
+
+legend<-get_legend(show_p)
+grid.newpage()
+grid.draw(legend)
+dev.off()
+plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
+legend("bottom", legend =c(names(mycolors)), pch=16, 
+       col = c(mycolors))
+mtext("Omics Combinations")
+
+show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
+show_p
+
 
 
 relabel_objectives_short<-function(df_to_plot){

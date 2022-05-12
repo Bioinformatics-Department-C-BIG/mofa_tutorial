@@ -6,7 +6,8 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 source('utils.R')
-
+#install.packages("viridis")  # Install
+library("viridis")           # Load
 
 
 ### Load the package or install if not present
@@ -165,7 +166,7 @@ single_omics_frequencies=freq_to_plot
 #### Create the stacked plot
 
 ggplot(stats[stats$Cancer=='no',])+stat_count(aes(tolower(Disease)))+
-  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 35, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(size=rel(rel_txt),angle = 35, vjust = 0.5, hjust=1))
   
   ### TODO: how many are the total number considred!!??
 
@@ -178,24 +179,26 @@ plotByData<-function(df_by_group, y_group){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL, title=paste0('Combinations with > ',freq_cutoff, ' occurences'))+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
+    theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"), )+
+    scale_color_viridis(option = "D")
     
   ggsave(paste0('plots/byCombinations', as.character(colname), '.png'), width = 8, height=6)
   
 }
 
-plt_txt_size=1.5
+rel_txt=1.5
 plotByData(freq_to_plot, y_group=x_group)
 
 
   ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
-  geom_bar(stat='identity',position='stack')+
+  geom_bar(stat='identity',position='stack',  color='black')+
   labs(x=NULL)+
-  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 25, vjust = 0.5, hjust=1))+
+  theme(axis.text.x = element_text(size=rel(rel_txt),angle = 25, vjust = 0.5, hjust=1))+
   theme(plot.margin=unit(c(1,1,2,1.5),"cm"))+
-  labs(y='Frequency')+
-   scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))
+  labs(y='Number of studies')+
+   scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))+
+    scale_fill_manual(values =viridis(2))
     
 
 ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
@@ -290,16 +293,17 @@ plotGridCombinations<-function(df_by_group){
   
   g<-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
     geom_tile()+
-    geom_text(aes(label = round(Freq, 2)), size=7)+
-    theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 45, vjust = 0.5, hjust=1), 
-                                     axis.text.y = element_text( size=rel(1.5)), 
+    geom_text(aes(label = round(Freq, 2)), size=rel(5))+
+    theme(axis.text.x = element_text(size=rel(rel_txt),angle = 45, vjust = 0.5, hjust=1), 
+                                     axis.text.y = element_text( size=rel(rel_txt)), 
           plot.margin = margin(10, 10, 40, 20))+
     labs(x=NULL, y=NULL)+
     scale_fill_gradient(low = "white", high = "red")+
     guides(fill=guide_legend(title="Frequency"))+
     facet_grid(~Cancer,  labeller = labeller(Cancer=
-                                               c('no'='Other Diseases','yes' ='Cancer')),  
-               scales = 'free', space='free')
+                                               c('no'='Other Diseases','yes' ='Cancer'),size=rel(1.5)),  
+               scales = 'free', space='free')+
+    theme(strip.text.x = element_text(size = rel(1.5)))
   show(g)
   ggsave(paste0('plots/GridPlot', as.character(colname), '.png'), width = 10, height=6)
   

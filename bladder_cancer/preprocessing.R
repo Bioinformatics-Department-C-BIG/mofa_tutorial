@@ -6,9 +6,9 @@ sysinf <- Sys.info()
 #### Preliminary analysis with PCA
 os <- sysinf['sysname']
 if ( os  == 'Darwin'){
-  dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+  dir='bladder_cancer/data/'
 }else if ( os ==   'Windows'){
-  dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
+  dir='bladder_cancer/data/'
 }else{
   dir='/data8TB/efiath/git/mofa/'
 }

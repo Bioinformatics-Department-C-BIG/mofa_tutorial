@@ -1,8 +1,8 @@
-if (!requireNamespace("BiocManager"))
-  install.packages("BiocManager")
-BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
+#if (!requireNamespace("BiocManager"))
+#  install.packages("BiocManager")
+#BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
 #install.packages('edgeR')
-BiocManager::install('limma')
+#BiocManager::install('limma')
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
 
@@ -13,24 +13,25 @@ library(org.Mm.eg.db)
 
 library(gplots)
 library(RColorBrewer)
-library(NMF)
-if ( os  == 'Darwin'){
-dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-}else{
-dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-}
+#library(NMF)
+library(sys)
+library(sys)
+
+
+
+# Run once for proteomics and once for transcriptomics, or change to rn both
+source('bladder_cancer/preprocessing.R')
+
+
 output_1='bladder_cancer/plots/deseq/'
 output_files<-'bladder_cancer/'
 
-X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
-X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
-Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
-prot=TRUE
+prot=FALSE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -81,11 +82,13 @@ y$samples
 
 
 group_all <- paste(Y_raw$Subtype,Y_raw$Grade,sep=".")
-group_all <- factor(group)
+group <- paste(Y_raw$Subtype)
+
 y$samples$group <- group
 
+group_all <- factor(group)
 
-group <- paste(Y_raw$Subtype)
+
 group <- factor(group)
 y$samples$group <- group
 
@@ -122,7 +125,7 @@ y <- y[keep, keep.lib.sizes=FALSE]
 ##### QC: Library size
 
 y$samples$lib.size
-png(paste0(output_de, '_lib_size.png'))
+png(paste0(output_de, '_lib_size.png'), type='cairo')
 barplot(y$samples$lib.size,names=colnames(y),las=2)
 dev.off()
 title("Barplot of library sizes")
@@ -195,10 +198,10 @@ highly_variable_lcpm_most_var <- logcounts[select_var_5000,]
 
 if (prot){
   highly_variable_proteins<-highly_variable_lcpm_most_var
-  write.csv2(highly_variable_proteins,'highly_variable_proteins_normalized.csv')
+  write.csv(highly_variable_proteins,'highly_variable_proteins_normalized.csv')
 }else{
   highly_variable_genes<-highly_variable_lcpm_most_var
-  write.csv2(highly_variable_genes,'highly_variable_genes_normalized.csv')
+  write.csv(highly_variable_genes,'highly_variable_genes_normalized.csv')
   
 }
 head(select_var)
@@ -231,10 +234,10 @@ logcounts_norm <- cpm(y,prior.count=2, log=TRUE)  # take cpm
 highly_variable_lcpm_norm<-logcounts_norm[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-highly_variable_lcpm_norm
-  write.csv2(highly_variable_proteins_voom,paste0(output_files,'highly_variable_proteins_normalized.csv'))
+  write.csv(highly_variable_proteins_voom,paste0(output_files,'highly_variable_proteins_normalized.csv'))
 }else{
   highly_variable_genes_voom<-highly_variable_lcpm_norm
-  write.csv2(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized.csv'))
+  write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized.csv'))
   
 }
 
@@ -268,10 +271,10 @@ abline(h=median(v$E),col="blue")
 v_most_var<-v$E[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-v_most_var
-  write.csv2(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
+  write.csv(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
 }else{
   highly_variable_genes_voom<-v_most_var
-  write.csv2(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
+  write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
   
 }
 
@@ -301,5 +304,5 @@ dev.off()
 # let's highlight the top 100 most DE genes
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
-ggsave(paste0(output_de,'volcano.png'))
+ggsave(paste0(output_de,'volcano.png'), type='cairo')
 

@@ -13,7 +13,6 @@ library(Glimma)
 
 library(gplots)
 library(RColorBrewer)
-#library(NMF)
 library(sys)
 library(sys)
 
@@ -187,7 +186,8 @@ most_var_n=5000
 ng_g
 
 select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
-select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
+if (prot){ng=ng_p}else{ng=ng_g}
+select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng)]
 
 
 # Subset logcounts matrix

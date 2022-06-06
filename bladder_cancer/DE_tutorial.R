@@ -13,7 +13,6 @@ library(org.Mm.eg.db)
 
 library(gplots)
 library(RColorBrewer)
-#library(NMF)
 library(sys)
 library(sys)
 
@@ -31,7 +30,8 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
-prot=FALSE
+
+prot=TRUE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -189,7 +189,8 @@ most_var_n=5000
 ng_g
 
 select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
-select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
+if (prot){ng=ng_p}else{ng=ng_g}
+select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng)]
 
 
 # Subset logcounts matrix

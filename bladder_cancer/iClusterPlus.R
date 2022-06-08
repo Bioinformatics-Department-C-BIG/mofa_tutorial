@@ -8,6 +8,9 @@ library(GenomicRanges)
 library(gplots)
 library(lattice)
 
+settings<-'bladder_cancer/settings/'
+
+
 source('bladder_cancer/DE_tutorial.R')
 #DIABLO
 #data = list(mRNA = X1_t , 
@@ -22,7 +25,7 @@ data = list(mRNA = t(highly_variable_genes_voom),
             proteomics = t(highly_variable_proteins_voom) )
 
 
-param_str_icl<-paste0( 'DE_data','_', most_var, '_ng_g_', round(1/ng_g,2),'_ncomp_g_','_ng_p_', round(1/ng_p,2)  )
+param_str_icl<-paste0(  most_var, '_ng_g_', round(1/ng_g,2),,'_ng_p_', round(1/ng_p,2)  )
 
 
 
@@ -48,7 +51,6 @@ fit.single=iClusterPlus(dt1=as.matrix(data$mRNA),dt2=as.matrix(data$proteomics),
                           type=c("gaussian","gaussian"),
                           lambda=c(0.04,0.61,0.90),K=2,maxiter=10)
 
-settings<-'bladder_cancer/settings/'
 #### MODEL TUNING - k - number of clusters
 ## And save these data
 

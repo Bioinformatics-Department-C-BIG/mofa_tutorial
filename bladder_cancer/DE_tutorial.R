@@ -31,7 +31,7 @@ Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
 
-prot=TRUE
+prot=FALSE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -104,10 +104,10 @@ y$samples$Sex <- factor(paste(Y_raw$Sex))
 myCPM <- cpm(countdata)
 
 head(myCPM)
-thresh <- myCPM > 0.5
+thresh <- myCPM > 1
 head(thresh)
 table(rowSums(thresh))
-keep <- rowSums(thresh) >= 2
+keep <- rowSums(thresh) >= 1*4
 summary(keep)
 
 
@@ -252,13 +252,17 @@ abline(h=0,col="grey")
 abline(h=0,col="grey")
 
 ####### voom transform
+png(paste0(output_de, '_voom.png'), type='cairo')
+
+
 par(mfrow=c(1,1))
 design <- model.matrix(~ 0 + group )
 v <- voom(y,design,plot = TRUE)
 par(mfrow=c(1,1))
 v <- voom(y,design,plot = TRUE)
+dev.off()
 
-
+png(paste0(output_de,'boxplots.png'))
 par(mfrow=c(1,2))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
 ## Let's add a blue horizontal line that corresponds to the median logCPM
@@ -266,7 +270,7 @@ abline(h=median(logcounts),col="blue")
 boxplot(v$E, xlab="", ylab="Log2 counts per million",las=2,main="Voom transformed logCPM")
 ## Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(v$E),col="blue")
-
+dev.off()
 
 #### SAVE
 v_most_var<-v$E[select_var_5000,] # and filter!

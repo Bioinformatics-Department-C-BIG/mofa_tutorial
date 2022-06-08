@@ -9,7 +9,7 @@
 library(edgeR)
 library(limma)
 library(Glimma)
-library(org.Mm.eg.db)
+#library(org.Mm.eg.db)
 
 library(gplots)
 library(RColorBrewer)
@@ -17,8 +17,6 @@ library(sys)
 library(sys)
 
 
-
-# Run once for proteomics and once for transcriptomics, or change to rn both
 source('bladder_cancer/preprocessing.R')
 
 
@@ -31,7 +29,9 @@ Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
 
+
 prot=FALSE
+
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]

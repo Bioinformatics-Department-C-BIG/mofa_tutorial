@@ -55,18 +55,19 @@ fit.single=iClusterPlus(dt1=as.matrix(data$mRNA),dt2=as.matrix(data$proteomics),
 ## And save these data
 
 # RUN THIS ON THE CLUSTER 
-# n.lambda<-89
-# for(k in 1:3){
-#   cv.fit = tune.iClusterPlus(cpus=1,dt1=as.matrix(data$mRNA),dt2=as.matrix(data$proteomics), 
-#                              type=c("gaussian","gaussian"),K=k, n.lambda=n.lambda,
-#                              scale.lambda=c(1,1,1),maxiter=20)
-#   save(cv.fit, file=paste(settings,"cv.fit.k_new_de_data",n.lambda,k,".Rdata",sep=""))
-# }
+n.lambda<-144
+for(k in 1:3){
+  cv.fit = tune.iClusterPlus(cpus=4,dt1=as.matrix(data$mRNA),dt2=as.matrix(data$proteomics), 
+                             type=c("gaussian","gaussian"),K=k, n.lambda=n.lambda,
+                             scale.lambda=c(1,1,1),maxiter=20)
+  save(cv.fit, file=paste(settings,"cv.fit.multi",n.lambda,k,".Rdata",sep=""))
+}
 
 
 
-n.lambda<-13
-# n=2: recomended lambda: n.lambda: 8, 13, 21, 34, 55, 89, 144, 233, 377, 610
+
+
+n.lambda<-34
 for(k in 1:3){
   cv.fit = tune.iClusterPlus(cpus=1,dt1=as.matrix(data$proteomics), 
                              type=c("gaussian"),K=k, n.lambda=n.lambda,
@@ -75,15 +76,13 @@ for(k in 1:3){
 }
 
 
-n.lambda<-89
-# n=2: recomended lambda: n.lambda: 8, 13, 21, 34, 55, 89, 144, 233, 377, 610
-for(k in 1:3){
-  cv.fit = tune.iClusterPlus(cpus=1,dt1=as.matrix(data$mRNA), 
-                             type=c("gaussian"),K=k, n.lambda=n.lambda,
-                             scale.lambda=c(1,1,1),maxiter=20)
-  save(cv.fit, file=paste(settings,"cv.fit.gene",n.lambda,k,".Rdata",sep=""))
-}
 
+for(k in 1:3){
+	  cv.fit = tune.iClusterPlus(cpus=1,dt1=as.matrix(data$mRNA),
+				                                  type=c("gaussian"),K=k, n.lambda=n.lambda,
+								                               scale.lambda=c(1,1,1),maxiter=20)
+ save(cv.fit, file=paste(settings,"cv.fit.gene",n.lambda,k,".Rdata",sep=""))
+}
 
 
 

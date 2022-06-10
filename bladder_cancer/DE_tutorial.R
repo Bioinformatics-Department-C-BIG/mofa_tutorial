@@ -104,7 +104,8 @@ y$samples$Sex <- factor(paste(Y_raw$Sex))
 myCPM <- cpm(countdata)
 
 head(myCPM)
-if (prot){thresh_filt=1000}else{thresh_filt=2}
+hist(y$counts[y$counts<2000])
+if (prot){thresh_filt=300}else{thresh_filt=2}
 thresh <- myCPM > thresh_filt
 head(thresh)
 table(rowSums(thresh))
@@ -261,7 +262,7 @@ par(mfrow=c(1,1))
 v <- voom(y,design,plot = TRUE)
 dev.off()
 
-png(paste0(output_de,'boxplots.png'))
+png(paste0(output_de,'boxplots.png'), type='cairo')
 par(mfrow=c(1,2))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
 ## Let's add a blue horizontal line that corresponds to the median logCPM

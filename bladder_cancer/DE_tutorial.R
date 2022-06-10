@@ -4,7 +4,7 @@
 #install.packages('edgeR')
 #BiocManager::install('limma')
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
-### https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
+
 
 library(edgeR)
 library(limma)
@@ -28,10 +28,7 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
-
-
-prot=TRUE
-
+prot=FALSE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -104,12 +101,11 @@ y$samples$Sex <- factor(paste(Y_raw$Sex))
 myCPM <- cpm(countdata)
 
 head(myCPM)
-hist(y$counts[y$counts<2000])
-if (prot){thresh_filt=300}else{thresh_filt=2}
-thresh <- myCPM > thresh_filt
+
+thresh <- myCPM > 0.5
 head(thresh)
 table(rowSums(thresh))
-keep <- rowSums(thresh) >= 1*4
+keep <- rowSums(thresh) >= 2
 summary(keep)
 
 
@@ -188,12 +184,12 @@ head(var_genes)
 # Get the gene names for the top 5000 most variable genes
 most_var_n=5000
 
-ng_g
 
+print(paste('ng', ng_g, ng_p))
 select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
 if (prot){ng=ng_p}else{ng=ng_g}
 select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng)]
-
+print(length(select_var_5000))
 
 # Subset logcounts matrix
 
@@ -254,15 +250,14 @@ abline(h=0,col="grey")
 abline(h=0,col="grey")
 
 ####### voom transform
-png(paste0(output_de, '_voom.png'), type='cairo')
 par(mfrow=c(1,1))
 design <- model.matrix(~ 0 + group )
 v <- voom(y,design,plot = TRUE)
 par(mfrow=c(1,1))
 v <- voom(y,design,plot = TRUE)
-dev.off()
 
 png(paste0(output_de,'boxplots.png'), type='cairo')
+
 par(mfrow=c(1,2))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
 ## Let's add a blue horizontal line that corresponds to the median logCPM
@@ -270,7 +265,7 @@ abline(h=median(logcounts),col="blue")
 boxplot(v$E, xlab="", ylab="Log2 counts per million",las=2,main="Voom transformed logCPM")
 ## Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(v$E),col="blue")
-dev.off()
+
 
 #### SAVE
 v_most_var<-v$E[select_var_5000,] # and filter!
@@ -310,27 +305,4 @@ dev.off()
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
 ggsave(paste0(output_de,'volcano.png'), type='cairo')
-
-#https://www.bioconductor.org/packages/release/data/experiment/vignettes/RforProteomics/inst/doc/RforProteomics.html
-library("BiocManager")
-BiocManager::install("RforProteomics")
-library('RforProteomics')
-library('vsn')
-### proteins 
-vsn_data<-justvsn(seqdata)
-meanSdPlot(vsn_data)
-
-qntV <- normalise(seqdata, "vsn")
-library(SummarizedExperiment)
-
-se <- SummarizedExperiment(list(counts=as.matrix(seqdata)))
-vsn_data<-justvsn(seqdata)
-hist(log(seqdata))
-
-meanSdPlot(vsn_data)
-
-
-## further analysis
-hist(y$counts[y$counts<2000])
-hist(v$E)
 

@@ -8,9 +8,10 @@ library(ggforce)
 group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
-                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*",  
+                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*", 
+                   ".*consensus*",
                    ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*cluster.*|.*pins.*|.*kernel.*', 
+                   '.*pins.*|.*kernel.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
@@ -22,6 +23,7 @@ group_methods<-function(df, Var1){
                    '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
                    '.*kmeans.*|.*k-means.*'), 
                  c( "ML Classification", 
+                    "ML Clustering", 
                     'JDR - NL',
                     'JDR - LN',
                     'Regression', 
@@ -42,6 +44,12 @@ group_methods<-function(df, Var1){
 
 group_methods_to_short<-function(df, Var1){
   #' Use only before plotting 
+  #' 
+  #'df[Var1]=as.factor(df[Var1])
+  #' @param Var1: name of the column to replace
+  #' @param df: name of the df 
+  #' @return: the whole df 
+  
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x), 
                  tolower(c( "ML Classification", 
@@ -51,27 +59,27 @@ group_methods_to_short<-function(df, Var1){
                     'JDR - LN - Matrix Factorization', 
                     'Network-Based',
                     'Network-Based - Similarity network', 
-                    'JDR - Correlation',
+                    'JDR - LN - Correlation',
                     'Correlation',
                     'JDR - LN - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools'
                  )),
                   c( "ML Classification", 
-                    'JDR - NL',
-                    'JDR - LN',
+                    'jDR - NL',
+                    'jDR - LN',
                     'Regression', 
-                    'JDR - LN - MF', 
+                    'jDR - MF', 
                     'NB',
                     'NB - SN', 
-                    'JDR - correlation',
+                    'jDR - CCA',
                     'Correlation',
-                    'JDR - LN - PLS',
+                    'jDR - PLS',
                     'multiomics pathway analysis',
                     'Other tools'
                   ))}
   )
-  #new_col=as.factor(new_col)
+  #df[Var1]=as.factor(df[Var1])
   return(df)                 
 }
 
@@ -195,10 +203,19 @@ plot_width=8
 plot_height=8
 angle=30
 plot_cols=TRUE
-df<-df_to_plot
+#df<-df_to_plot
 
 #[1] "#A6CEE3" "#1F78B4" "#B2DF8A" "#33A02C" "#FB9A99" "#E31A1C" "#FDBF6F"
 #[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
+text_size=11
+
+mycolors=c("epigenomics - transcriptomics" = '#1F78B4', 
+           "epigenomics - genomics" = '#A6CEE3',
+           "genomics - transcriptomics" = '#B2DF8A',
+           "proteomics - transcriptomics" = '#33A02C',
+           "metabolomics - proteomics" = "#E31A1C" ,
+           "metabolomics - transcriptomics" = "#FB9A99", 
+           "metabolomics - metagenomics" = "#FDBF6F")
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   
@@ -213,23 +230,17 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   #[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
   
   #### plot filter 
-  mycolors=c("epigenomics - transcriptomics" = '#1F78B4', 
-  "epigenomics - genomics" = '#A6CEE3',
-  "genomics - transcriptomics" = '#B2DF8A',
-  "proteomics - transcriptomics" = '#33A02C',
-  "metabolomics - proteomics" = "#E31A1C" ,
-  "metabolomics - transcriptomics" = "#FB9A99", 
-  "metabolomics - metagenomics" = "#FDBF6F")
+ 
   
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
     guides(fill = guide_legend(title = legend_t))+
     labs(x=NULL, y='Number of studies')
   
-  g=g+ theme(axis.text.x = element_text(size=rel(1.4),angle = angle, vjust = 0.5, hjust=1))+
-    theme(axis.text.y = element_text(size=rel(1.4)))+
+  g=g+ theme(axis.text.x = element_text(size=text_size, margin = margin(t = 0,b=0),angle = angle, vjust = 0.5, hjust=1))+
+    theme(axis.text.y = element_text(size=text_size), axis.title.y =element_text(size=text_size),
+    legend.text=element_text(size=text_size))
     
-    theme(legend.text=element_text(size=rel(1.4)))
   
   
   if (colname == 'method'){
@@ -260,7 +271,8 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
              #c('no'=' ','yes' =' ')))+
        #scale_x_discrete(expand = c(0, 0.5))
       g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
-                      labeller(Cancer=c('no'=' ','yes' =' ')))                                                                             
+                      labeller(Cancer=c('no'=' ','yes' =' '))) +
+        theme(strip.text.x = element_text(size = text_size))
 
       ggsave(fname, width = plot_width, height=plot_height)
       
@@ -269,7 +281,10 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
       
         g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
                   c('no'='Other Diseases','yes' ='Cancer')),  
-                       scales = 'free_y')    }
+                       scales = 'free_y')   +
+          theme(strip.text.x = element_text(size = text_size))
+        
+        }
       ggsave(fname, width = plot_width, height=plot_height)
       
       
@@ -309,20 +324,17 @@ relabel_objectives_short<-function(df_to_plot){
   df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
   
   ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-  df_to_plot[ind,]$labels<-'understand \n molecular mechanisms'
-  df_to_plot[ind,]$key_names<-'understand \n molecular mechanisms'
+  df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
+  df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
   
   
   return(df_to_plot)
 }
 
 
-run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter, col){
+run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
   
-  
-  
-  
-  
+
   counts<-df_to_plot %>%
     ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
   

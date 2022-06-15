@@ -281,7 +281,7 @@ cancer_filter=c('no')
 
 df_by_group_data<-df_by_group 
 
-
+text_size=11
 
 
 plotGridCombinations<-function(df_by_group){
@@ -293,17 +293,17 @@ plotGridCombinations<-function(df_by_group){
   
   g<-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
     geom_tile()+
-    geom_text(aes(label = round(Freq, 2)), size=rel(5))+
-    theme(axis.text.x = element_text(size=rel(rel_txt),angle = 45, vjust = 0.5, hjust=1), 
-                                     axis.text.y = element_text( size=rel(rel_txt)), 
+    geom_text(aes(label = round(Freq, 2)), size=rel(6))+
+    theme(axis.text.x = element_text(size=text_size,angle = 45, vjust = 0.5, hjust=1), 
+                                     axis.text.y = element_text( size=text_size), 
           plot.margin = margin(10, 10, 40, 20))+
     labs(x=NULL, y=NULL)+
     scale_fill_gradient(low = "white", high = "red")+
     guides(fill=guide_legend(title="Frequency"))+
     facet_grid(~Cancer,  labeller = labeller(Cancer=
-                                               c('no'='Other Diseases','yes' ='Cancer'),size=rel(1.5)),  
+                                               c('no'='Other Diseases','yes' ='Cancer'),size=text_size),  
                scales = 'free', space='free')+
-    theme(strip.text.x = element_text(size = rel(1.5)))
+    theme(strip.text.x = element_text(size = text_size))
   show(g)
   ggsave(paste0('plots/GridPlot', as.character(colname), '.png'), width = 10, height=6)
   
@@ -463,7 +463,7 @@ df_to_plot<-df_by_group
 
 # Switch here for both 
 x_group<-'objective'
-# x_group<-'disease_group'
+x_group<-'disease_group'
 if (x_group == 'objective'){
   df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
   df_to_plot<-df_most_common

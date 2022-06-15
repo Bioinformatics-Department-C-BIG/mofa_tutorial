@@ -7,8 +7,9 @@
 colname<-'Data'
 library('dplyr')
 library('purrr')
-source('literature_review.R')
 source('utils.R')
+source('literature_review.R')
+
 
 
 # Process; if methylation or histone; add epigenomics!
@@ -175,7 +176,8 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 ######## Plotting - Filter
-df_most_common<-filter_common_groups(df_by_group,freq_cutoff=c(5,5))
+freq_cutoff<-c(5,5)
+df_most_common<-filter_common_groups(df_by_group,freq_cutoff=freq_cutoff)
 # group all the miscellaneous in one category
 most_common_groups<-levels(as.factor(df_most_common$Var1))
 most_common_objectives<-levels(as.factor(df_most_common$objective))
@@ -192,13 +194,14 @@ df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]<-'Othe
 
 # remove most common objective -only for visualization
 df_to_plot<-df_to_plot[(df_to_plot$objective %in% most_common_objectives),]
-df_to_plot<-df_to_plot[!(df_to_plot$objective == 'multiomics pathway analysis'),]
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
 
 df_to_plot<-df_to_plot[(df_to_plot$Var1 %in% most_common_groups),]
 df_to_plot<-df_to_plot[!(df_to_plot$Var1 == 'multiomics pathway analysis'),]
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
 
 
-df_to_plot$Var1<-as.factor(df_to_plot$Var1)
+#df_to_plot$Var1<-factor(df_to_plot$Var1, levels = c()
 df_to_plot=df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
 df_to_plot['key_names']<-df_to_plot[x_group]
 
@@ -207,7 +210,11 @@ df_to_plot<-relabel_objectives_short(df_to_plot)
 
 # Convert to short names for the plot
 df_to_plot<-group_methods_to_short(df_to_plot,'Var1' )
+levels_to_reorder<-levels(as.factor(df_to_plot$Var1))
 
+df_to_plot$Var1 = factor(df_to_plot$Var1, levels=levels_to_reorder[c(11,1,3,6,2,4,5,8,9,7,10)])
+                           
+                    
 
 show_p<-plotbyObjective(df_to_plot, 'Methods', plot_width=9, plot_height=9)
 
@@ -255,7 +262,7 @@ run_sankey(df_to_plot, axis1,axis2, cancer_filter  )
 
 ################ Section 5: ALLUVIAL 
 
-
+### THIS IMPLEMENTATION IS NOT WORKING USE SEPARATE FILE ALLUVIAL PLOT 
 #install.packages('alluvial')
 #install.packages('ggalluvial')
 #install.packages('ggsankey')
@@ -289,8 +296,11 @@ axis2='objective'
 counts<-new2 %>% count(Data, objective)
 
 if (cancer_filter == 'yes')
-  {n_cutoff=1} else {n_cutoff=1}
+  {n_cutoff=freq_cutoff[1]} else {n_cutoff=freq_cutoff[2]}
 
+
+if (cancer_filter == 'yes')
+{n_cutoff=3} else {n_cutoff=3}
 
 # New implementation with ggalluvial
 axis1='Data'

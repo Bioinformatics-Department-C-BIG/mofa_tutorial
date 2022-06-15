@@ -44,12 +44,15 @@ levels(as.factor(new2$Data))
 axis2='objective'
 
 counts<-new2 %>% count(objective, method)
-
-
+new2
+n_cutoff<-1
 
 df<-counts
 counts<-new2 %>% count(objective, method)
-#counts<-counts%>% filter(n>n_cutoff)
+
+
+
+
 
 
 
@@ -57,12 +60,20 @@ counts<-new2 %>% count(objective, method)
 # New implementation with ggalluvial
 axis1='Data'
 axis2="objective"
-counts <- new2 %>% 
-  count( Data, objective) %>% 
+counts1 <- new2 %>% 
+  count( Data, objective) %>%
   mutate(
     col = objective
-  ) %>%
-  ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
+  )
+
+counts1<-counts1%>% 
+  group_by('Data') %>%
+  filter(n>4)
+counts1
+ counts<-counts1 %>% ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
+
+
+
 
  df<-counts
 g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +

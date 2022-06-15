@@ -48,17 +48,32 @@ if (!('Var1' %in% colnames(all_tools_to_write))){
 
 write.table(all_tools_to_write[c('name display','Year', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
-data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method')]
+data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method', 'Citation')]
 data<-data[!(data$Var1 == 'multiomics pathway analysis'),]
-
+data<-group_methods_to_short(data,'Var1')
+data$Var1
 # 
 
 library(RColorBrewer)
 
+colnames(data)<-c("Name",'Year', 'Category', "Objectives",
+                       'Type', 'Reference' )
+
+data_to_write<-data
+levels(as.factor(data_to_write$Category))
+data_to_write$Category = factor(data_to_write$Category, levels=levels_to_reorder[c(11,1,3,6,2,4,5,8,9,7,10)])
+
+
+data_to_write<-with(data_to_write, data_to_write[order(Category),])
+
+new1<-data_to_write[order('Category'),]
+data_to_write$x<-'\\\\'
+write.table(data_to_write, file = "review/output/tools_table_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 
 
-data$Var1=as.factor(data$Var1)
+new1
+
 
 ft1=flextable(data) %>% 
   autofit(add_w = 0.1,  part = c("body", "header"))

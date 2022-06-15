@@ -345,6 +345,7 @@ df_by_group_disease<- df_by_group
 #### do the filtering further down... jump to line 418
 # TODO: make this automatic to create all graphs by a switch
 
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
 
 
 show_p<-plotbyObjective(df_to_plot )
@@ -468,7 +469,7 @@ if (x_group == 'objective'){
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=5
+  plot_width=5.5
   plot_height=9
   plot_cols=FALSE
   
@@ -495,6 +496,8 @@ if (x_group == 'objective'){
 
 # Remove non_cancer
 df_to_plot=  plot_filters(df_to_plot)
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+
 
 show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
 show_p

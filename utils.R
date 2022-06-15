@@ -207,8 +207,6 @@ plot_cols=TRUE
 
 #[1] "#A6CEE3" "#1F78B4" "#B2DF8A" "#33A02C" "#FB9A99" "#E31A1C" "#FDBF6F"
 #[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
-text_size=11
-
 mycolors=c("epigenomics - transcriptomics" = '#1F78B4', 
            "epigenomics - genomics" = '#A6CEE3',
            "genomics - transcriptomics" = '#B2DF8A',
@@ -218,6 +216,7 @@ mycolors=c("epigenomics - transcriptomics" = '#1F78B4',
            "metabolomics - metagenomics" = "#FDBF6F")
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
+  text_size=16
   
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.png')

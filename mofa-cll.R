@@ -235,8 +235,7 @@ print(p)
 
 
 
-
-
+p
 
 
 ##### Predicton of cilincal subgroups 

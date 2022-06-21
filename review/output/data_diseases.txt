@@ -1,7 +1,7 @@
 Cancer	Var1	Freq	concat
 no	proteomics - transcriptomics	16	aging, all diseases, Cardiovascular, Endrocrine, facioscapulohumeral dystrophy, Gastrointestinal, hiv, ischemic stroke, Metabolism, Musculoskeletal, Nervous, obesity, pneumonia, Pulmonary, Urinary, NA
 no	metabolomics - transcriptomics	15	all diseases, cancer, Cardiovascular, Endrocrine, Gastrointestinal, hiv, huntington's disease, ibd, Metabolism, Musculoskeletal, Nervous, obesity, Pulmonary, toxoplasma, NA
-no	metabolomics - metagenomics	13	autoimmune diseases, blood pressure, Cardiovascular, cytokine response, Endrocrine, Gastrointestinal, ibd, Metabolism, Nervous, obesity, psychological stress, Pulmonary, NA
+no	metabolomics - metagenomics	14	autoimmune diseases, blood pressure, Cardiovascular, cytokine response, Endrocrine, Gastrointestinal, ibd, Metabolism, Nervous, obesity, periodontitis, psychological stress, Pulmonary, NA
 no	epigenomics - transcriptomics	12	aging, all, all diseases, Cardiovascular, covid-19, Gastrointestinal, huntington's disease, Musculoskeletal, Nervous, pneumonia, sjögren´s syndrome, NA
 no	metabolomics - proteomics	11	all diseases, Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous, Pulmonary, vogt-koyanagi-harada disease, NA
 no	epigenomics - genomics	6	all diseases, Gastrointestinal, Musculoskeletal, Nervous, peripheral blood, NA

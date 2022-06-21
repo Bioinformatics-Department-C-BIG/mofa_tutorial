@@ -102,12 +102,14 @@ save(file= 'circos.png' )
 #####
 
 # minimal example with margins improved:
-# cimDiablo(MyResult.diablo, margin=c(8,20))
+cimDiablo(MyResult.diablo, margin=c(8,20))
 
 # extended example:
-cimDiablo(MyResult.diablo, color.blocks = c('darkorchid', 'brown1', 'lightgreen'),
-          comp = 1, margin=c(8,20), legend.position = "right")
-
+png(paste0(outdir2,'cim.png'))
+cimDiablo(MyResult.diablo, color.blocks = c('darkorchid', 'brown1', 'lightgreen','yellow' ),
+          comp = 1, margin=c(8,20), legend.position = "right", 
+          )
+dev.off()
 
 
 ###### Plot loadings: visualizes loading weights of each selected variables on each component
@@ -144,12 +146,11 @@ network(MyResult.diablo, blocks = c(1,2,3,4),
 
 dev.off()
 
-cutoff=0.81
+cutoff=0.80
 network(MyResult.diablo, blocks = c(1,3,4),
         color.node = c('darkorchid', 'brown1', 'lightgreen'), 
         lwd.edge = 2,
         cutoff = cutoff, 
         cex.node.name	=0.8,
-        
         save = 'jpeg', name.save = paste0(outdir2, 'DIABLOnetwork_', cutoff))
 

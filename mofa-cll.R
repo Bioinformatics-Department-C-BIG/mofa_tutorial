@@ -13,7 +13,7 @@ browseVignettes("MOFA2")
 BiocManager::install("MOFAdata")
 BiocManager::install('MultiAssayExperiment')
 
-outdir<-'Comparisons/plots/'
+outdir<-'Comparisons/plots/mofa/'
 
 library(MultiAssayExperiment)
 library(MOFA2)
@@ -94,7 +94,7 @@ geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENE
 features_names(MOFAobject_gs)$mRNA<-geneIDs1$SYMBOL
 plot_factor_cor(MOFAobject)
 
-top_genes_to_compare<-map_to_gene(ens_ids)
+
 
 
 # Result 1: Look at all the variances
@@ -136,6 +136,8 @@ correlate_factors_with_covariates(MOFAobject,
 fps<-seq(1:5)
 
 vps<-c("Mutations", "Drugs", 'Methylation', "mRNA")
+
+v_set=c()
 for (i in 1:length(vps)){
   for (ii in 1:length(fps)){
 
@@ -157,22 +159,43 @@ ggsave(paste0(outdir, 'all_weights_', fps[ii],'_',vps[i],'.png'), width = 4, hei
   
   
   ###### Heatmaps 
-  
-  plot_data_heatmap(MOFAobject_gs, 
+jpeg(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.jpeg'))
+jpeg(paste0(outdir, 'heatmap_', 1,'_','mRNA','.jpeg'))
+
+p<-plot_data_heatmap(MOFAobject_gs, 
                     view = 'mRNA', 
                     factor =  1,  
                     features = 25,
                     denoise = TRUE,
                     cluster_rows = FALSE, cluster_cols = FALSE,
-                    show_rownames = TRUE, show_colnames = TRUE,
+                    show_rownames = TRUE, show_colnames = FALSE,
                     scale = "row"
-  )
+)
+  dev.off()
+  #ggsave(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
   
-  ggsave(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+  
+  # top weights
+  # concat all 
+
+ 
   
   }
+  
+ 
+}
+v_set=c()
+for (i in 1:15){
+  weights<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors = i)
+  top_weights<-rownames(weights$mRNA)[order(abs(weights$mRNA), decreasing = TRUE) ][1:15]
+  top_genes_to_compare<-map_to_gene(top_weights)$SYMBOL
+  write.csv(top_genes_to_compare, paste0(outdir, 'top_genes_', fps[ii], '_', vps[ii], '.csv'))
+  print(top_genes_to_compare)
+  # concat all 
+  v_set <- c(v_set, top_genes_to_compare)
 }
 
+write.csv(v_set, paste0(outdir, 'all_genes_top_', total_comps, '.csv'))
 
 ###Plot gene weights for MRNA expression #
 
@@ -185,14 +208,11 @@ MOFAobject_gs<-MOFAobject
 
 
 #   comparison no1: top 30 genes 
-weights<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors = 1)
-rownames(weights$mRNA)
-topn<-30
-top_weights<-rownames(weights$mRNA)[order(abs(weights$mRNA), decreasing = TRUE) ][1:10]
-ens_ids<-top_weights
+fp<-1
 
 
- 
+
+
 utils::data(reactomeGS)
 
 

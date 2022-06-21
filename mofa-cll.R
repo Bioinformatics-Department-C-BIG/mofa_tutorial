@@ -1,11 +1,21 @@
-# if (!requireNamespace("BiocManager", quietly = TRUE))
-#   install.packages("BiocManager")
-# 
-# BiocManager::install("MOFA2")
-# devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
-# browseVignettes("MOFA2")
-# BiocManager::install("MOFAdata")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+#BiocManager::install('EnsDb.Hsapiens.v79')
+library(EnsDb.Hsapiens.v79)
 
+map_to_gene<-function(ens_ids){
+  ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
+}
+
+BiocManager::install("MOFA2")
+devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
+browseVignettes("MOFA2")
+BiocManager::install("MOFAdata")
+BiocManager::install('MultiAssayExperiment')
+
+outdir<-'Comparisons/plots/'
+
+library(MultiAssayExperiment)
 library(MOFA2)
 library(MOFAdata)
 library(data.table)
@@ -13,12 +23,20 @@ library(ggplot2)
 library(tidyverse)
 
 
-utils::data("CLL_data")       
+utils::data("CLL_data")  
+data("CLL_data")
+
+
+
 lapply(CLL_data,dim)
 
 CLL_data$Drugs
 
 CLL_metadata <- fread("ftp://ftp.ebi.ac.uk/pub/databases/mofa/cll_vignette/sample_metadata.txt")
+
+#RENAME TO ENSids 
+
+
 
 MOFAobject <- create_mofa(CLL_data)
 plot_data_overview(MOFAobject)
@@ -47,7 +65,7 @@ MOFAobject <- prepare_mofa(MOFAobject,
 )
 
 ##### slots 
-MOFAobject <- runMOFA(MOFAobject)
+#MOFAobject <- MOFA2::run_mofa(MOFAobject)
 
 MOFAobject <- readRDS(url("http://ftp.ebi.ac.uk/pub/databases/mofa/cll_vignette/MOFA2_CLL.rds"))
 
@@ -63,19 +81,33 @@ dim(MOFAobject@expectations$Z$group1)
 # mrna weight matrix 
 dim(MOFAobject@expectations$W$mRNA)
 
+MOFAobject@features_metadata$feature
+## change names 
 
 samples_metadata(MOFAobject) <- CLL_metadata
+
+MOFAobject_gs<-MOFAobject
+MOFA2::features_names(MOFAobject)
+
+ens_ids<- features_names(MOFAobject)$mRNA
+geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
+features_names(MOFAobject_gs)$mRNA<-geneIDs1$SYMBOL
 plot_factor_cor(MOFAobject)
 
+top_genes_to_compare<-map_to_gene(ens_ids)
 
-plot_factor_cor(MOFAobject)
-plot_variance_explained(MOFAobject, max_r2=15)
+
+# Result 1: Look at all the variances
+
+plot_variance_explained(MOFAobject, max_r2=15, factors = 1:9)
+ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
 
 
 
 
 
 plot_variance_explained(MOFAobject, plot_total = T)[[2]]
+ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 
 
 #### Association 
@@ -101,41 +133,68 @@ correlate_factors_with_covariates(MOFAobject,
 
 ### Plot feature weights 
 ### Feature weights for mutations 
+fps<-seq(1:5)
 
-plot_weights(MOFAobject,
-             view = "Mutations",
-             factor = 1,
+vps<-c("Mutations", "Drugs", 'Methylation', "mRNA")
+for (i in 1:length(vps)){
+  for (ii in 1:length(fps)){
+
+plot_top_weights(MOFAobject_gs,
+             view = vps[i],
+             factor = fps[ii],
              nfeatures = 10,     # Top number of features to highlight
              scale = T           # Scale weights from -1 to 1
 )
+ggsave(paste0(outdir, 'top_weights_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
 
-
-plot_top_weights(MOFAobject,
-                 view = "Mutations",
-                 factor = 1,
-                 nfeatures = 10,     # Top number of features to highlight
-                 scale = T           # Scale weights from -1 to 1
+plot_weights(MOFAobject_gs, 
+             view = vps[i], 
+             factor = fps[ii], 
+             nfeatures = 10
 )
+ggsave(paste0(outdir, 'all_weights_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+
+  
+  
+  ###### Heatmaps 
+  
+  plot_data_heatmap(MOFAobject_gs, 
+                    view = 'mRNA', 
+                    factor =  1,  
+                    features = 25,
+                    denoise = TRUE,
+                    cluster_rows = FALSE, cluster_cols = FALSE,
+                    show_rownames = TRUE, show_colnames = TRUE,
+                    scale = "row"
+  )
+  
+  ggsave(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+  
+  }
+}
 
 
 ###Plot gene weights for MRNA expression #
 
-plot_weights(MOFAobject, 
-             view = "mRNA", 
-             factor = 1, 
-             nfeatures = 10
-)
+
+MOFA2::features_names(MOFAobject)$mRNA
+
+map_names<-rownames(MOFAobject@data$mRNA$group1)
+MOFAobject_gs<-MOFAobject
 
 
+
+#   comparison no1: top 30 genes 
+weights<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors = 1)
+rownames(weights$mRNA)
+topn<-30
+top_weights<-rownames(weights$mRNA)[order(abs(weights$mRNA), decreasing = TRUE) ][1:10]
+ens_ids<-top_weights
+
+
+ 
 utils::data(reactomeGS)
 
-
-plot_weights(MOFAobject, 
-             view = "Mutations", 
-             factor = 3, 
-             nfeatures = 10,
-             abs = F
-)
 
 
 ##### Inspection of combinations of Factors
@@ -156,17 +215,7 @@ print(p)
 
 
 
-###### Heatmaps 
 
-  plot_data_heatmap(MOFAobject, 
-                  view = "mRNA",
-                  factor = 5,  
-                  features = 25,
-                  denoise = TRUE,
-                  cluster_rows = FALSE, cluster_cols = FALSE,
-                  show_rownames = TRUE, show_colnames = FALSE,
-                  scale = "row"
-)
 
 
 

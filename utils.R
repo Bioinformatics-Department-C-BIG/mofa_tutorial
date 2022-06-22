@@ -217,9 +217,11 @@ mycolors=c("epigenomics - transcriptomics" = '#1F78B4',
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   text_size=16
-  
+  text_size_small=12
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.png')
+  fname2=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
+               '.jpeg')
   
   if (!('key_names' %in% colnames(df))){
     df['key_names']=df[x_group]
@@ -238,7 +240,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   
   g=g+ theme(axis.text.x = element_text(size=text_size, margin = margin(t = 0,b=0),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=text_size), axis.title.y =element_text(size=text_size),
-    legend.text=element_text(size=text_size))
+    legend.text=element_text(size=text_size_small))
     
   
   
@@ -274,6 +276,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
         theme(strip.text.x = element_text(size = text_size))
 
       ggsave(fname, width = plot_width, height=plot_height)
+      ggsave(fname, width = plot_width, height=plot_height)
       
     }else{
       print('add rows')
@@ -285,6 +288,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
         
         }
       ggsave(fname, width = plot_width, height=plot_height)
+      ggsave(fname2, width = plot_width, height=plot_height)
       
       
     }

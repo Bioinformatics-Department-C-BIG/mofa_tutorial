@@ -463,13 +463,13 @@ df_to_plot<-df_by_group
 
 # Switch here for both 
 x_group<-'objective'
-x_group<-'disease_group'
+#x_group<-'disease_group'
 if (x_group == 'objective'){
   df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=5.5
+  plot_width=6
   plot_height=9
   plot_cols=FALSE
   

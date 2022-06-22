@@ -73,8 +73,11 @@ plot_variance_explained(MOFAobject, max_r2=15)
 
 
 
+TOP<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors=1, 
+                   as.data.frame =TRUE)
 
 
+TOP[1:100,]
 plot_variance_explained(MOFAobject, plot_total = T)[[2]]
 
 
@@ -87,6 +90,8 @@ correlate_factors_with_covariates(MOFAobject,
                                   plot="log_pval"
 )
 
+
+# todo get top variables!! 
 
 
 #### Factor analysis 
@@ -247,6 +252,7 @@ theme(plot.margin=grid::unit(c(0,0,0,0), "mm"))
 
 names(res.positive)
 
+# ENS ids seems to be required for the enrichment 
 plot_enrichment_heatmap(res.positive)
 ggsave(paste0('Enrichment_heatmap_positive','.png'), width = 9, height=4, dpi=100)
 
@@ -294,4 +300,20 @@ ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
   labs(y="Hazard Ratio", x="") + 
   geom_hline(aes(yintercept=1), linetype="dotted") +
   theme_bw()
+
+
+
+#### MAP TO GENE SYMBOLS FOR PLOTTING 
+ensemblsIDS<-rownames(MOFAobject@data$mRNA$group1)
+symbols <- mapIds(org.Hs.eg.db, keys = ensemblsIDS, keytype = "ENSEMBL", column="SYMBOL")
+
+symbols
+
+#ANOTHER SOLUTION 
+library("biomaRt")
+ensembl = useMart("ensembl",dataset="hsapiens_gene_ensembl")
+symbols2<-getBM(attributes='hgnc_symbol', 
+      filters = 'ensembl_gene_id', 
+      values = ensemblsIDS, 
+      mart = ensembl)
 

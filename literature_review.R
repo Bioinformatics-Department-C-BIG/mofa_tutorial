@@ -281,7 +281,7 @@ cancer_filter=c('no')
 
 df_by_group_data<-df_by_group 
 
-text_size=11
+text_size=16
 
 
 plotGridCombinations<-function(df_by_group){
@@ -305,7 +305,7 @@ plotGridCombinations<-function(df_by_group){
                scales = 'free', space='free')+
     theme(strip.text.x = element_text(size = text_size))
   show(g)
-  ggsave(paste0('plots/GridPlot', as.character(colname), '.png'), width = 10, height=6)
+  ggsave(paste0('plots/GridPlot', as.character(colname), '.jpeg'), width = 10, height=6)
   
 }
 

@@ -1,5 +1,5 @@
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+ # install.packages("BiocManager")
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
 
@@ -7,11 +7,11 @@ map_to_gene<-function(ens_ids){
   ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
 }
 
-BiocManager::install("MOFA2")
-devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
-browseVignettes("MOFA2")
-BiocManager::install("MOFAdata")
-BiocManager::install('MultiAssayExperiment')
+#BiocManager::install("MOFA2")
+#devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
+#browseVignettes("MOFA2")
+#BiocManager::install("MOFAdata")
+#BiocManager::install('MultiAssayExperiment')
 
 outdir<-'Comparisons/plots/mofa/'
 

@@ -213,7 +213,7 @@ df_to_plot<-group_methods_to_short(df_to_plot,'Var1' )
 levels_to_reorder<-levels(as.factor(df_to_plot$Var1))
 
 levels_order=c("Regression" , "Correlation","jDR - LN" , "jDR - PLS", "jDR - CCA", "jDR - MF",  "jDR - NL" ,        
-                "NB","NB - SN", "ML Classification" ,"Other tools")
+                "NB","NB - SN", "ML/DL Classification" ,"Other tools")
 df_to_plot$Var1 = factor(df_to_plot$Var1, levels=levels_order)
                            
                     

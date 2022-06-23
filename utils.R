@@ -22,7 +22,7 @@ group_methods<-function(df, Var1){
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
                    '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
                    '.*kmeans.*|.*k-means.*'), 
-                 c( "ML Classification", 
+                 c( "ML/DL Classification", 
                     "ML Clustering", 
                     'JDR - NL',
                     'JDR - LN',
@@ -52,7 +52,7 @@ group_methods_to_short<-function(df, Var1){
   
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x), 
-                 tolower(c( "ML Classification", 
+                 tolower(c( "ML/DL Classification", 
                     'JDR - NL',
                     'JDR - LN',
                     'Regression', 
@@ -65,7 +65,7 @@ group_methods_to_short<-function(df, Var1){
                     'multiomics pathway analysis',
                     'Other tools'
                  )),
-                  c( "ML Classification", 
+                  c( "ML/DL Classification", 
                     'jDR - NL',
                     'jDR - LN',
                     'Regression', 

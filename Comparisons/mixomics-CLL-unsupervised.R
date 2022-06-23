@@ -1,6 +1,6 @@
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 # install.packages("BiocManager")
-
+outdir3<-'Comparisons/plots/mixomics/unsupervised/'
 #BiocManager::install("org.Hs.eg.db")
 
 CLL_data$mRNA
@@ -13,7 +13,7 @@ outdir2<-'Comparisons/plots/mixomics/'
 #browseVignettes("mixOmics")
 
 library(mixOmics)
-
+# http://mixomics.org/methods/multiblock-spls/
 
 data(liver.toxicity)
 CLL_data
@@ -61,9 +61,8 @@ tokeep<-which(!is.na(CLL_metadata_new_order$IGHV))
 
 X <- list(mRNA = t(CLL_data$mRNA[,tokeep]), 
           drug = t(CLL_data$Drugs[,tokeep]), 
-          meth=t(CLL_data$Methylation[,tokeep]))
-
-          #mut=t(CLL_data$Mutations[,tokeep]))
+          meth=t(CLL_data$Methylation[,tokeep]),
+          mut=t(CLL_data$Mutations[,tokeep]))
 
 ensemblsIDS<-colnames(X$mRNA)
 symbols <- mapIds(org.Hs.eg.db, keys = ensemblsIDS, keytype = "ENSEMBL", column="SYMBOL")
@@ -94,65 +93,31 @@ list.keepX <- list(mRNA = c(16, 17), drug = c(18,5), meth=c(16,16), mut=c(15,15)
 # without mutations
 list.keepX <- list(mRNA = c(15, 17), drug = c(18,5), meth=c(15,5))
 
-total_comps=5
+total_comps=2
 
 names(X)
-MyResult.diablo <- block.splsda(X, Y, keepX=list.keepX,ncomp = total_comps)
+
+### UNSUPERVIED MODEL 
+### try to assopciate all others to the drugs! 
+block.pls.result <- block.spls(X, indY=2, keepX=list.keepX,ncomp = total_comps)
 plotIndiv(MyResult.diablo)
 
-basic.diablo.model<- block.splsda(X, Y, ncomp = total_comps)
-
-##### TUNING 
-# 1. tune the number of components 
+plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE),
+        legend=TRUE, pch=c(16,16,16))
 
 
-perf.diablo = perf(basic.diablo.model, validation = 'Mfold', 
-                   folds = 4, nrepeat = 4) 
-
-png(paste0(outdir2, '_tuning_','.png'))
-plot(perf.diablo) # plot output of tuning
-
-# set the optimal ncomp value
-ncomp = perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"] 
-
-ncomp=2
-total_comps=ncomp
-# show the optimal choice for ncomp for each dist metric
-perf.diablo$choice.ncomp$WeightedVote 
+params_str<-paste0('unsup_',paste(unlist(names(X)), collapse='_'), '_', length(names(X)), '_', total_comps)
 
 
+#plot the contributions of each feature to each dimension
+png(paste0(outdir3,'loadings.png'))
+plotLoadings(block.pls.result, ncomp = 1) 
+dev.off()
 
-### Tune the number of features 
-# set grid of values for each component to test
-test.keepX = list (mRNA = c(6:8, seq(10, 18, 5), seq(20,30,6)), 
-                   meth = c(6:8, seq(10, 18, 5), seq(20,30,6)),
-                   drug = c(6:8, seq(10, 18, 5), seq(20,30,6)))
-                   #mut = c(6:8))
+png(paste0(outdir3,'factor_space.png'))
+plotIndiv(block.pls.result, group = Y) # plot the samples
+dev.off()
 
-# for square matrix filled with 0.1s
-design = matrix(0.1, ncol = length(X), nrow = length(X), 
-                dimnames = list(names(X), names(X)))
-diag(design) = 0 # set diagonal to 0s
-
-design
-
-# run the feature selection tuning
-tune.cll = tune.block.splsda(X = X, Y = Y, ncomp = ncomp, 
-                              test.keepX = test.keepX, design = design,
-                              validation = 'Mfold', folds = 2, nrepeat = 1,
-                              dist = "centroids.dist")
-
-##### Results 
-
-
-list.keepX = tune.cll$choice.keepX # set the optimal values of features to retain
-list.keepX
-
-
-
-####
-
-final.diablo.model = block.splsda(X = X, Y = Y, ncomp = ncomp, 
-                                  keepX = list.keepX, design = design)
-
-MyResult.diablo<-final.diablo.model
+png(paste0(outdir3,'variable.png'))
+plotVar(block.pls.result, legend = TRUE) # plot the variables
+dev.off()

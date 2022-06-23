@@ -94,7 +94,6 @@ list.keepX <- list(mRNA = c(16, 17), drug = c(18,5), meth=c(16,16), mut=c(15,15)
 # without mutations
 list.keepX <- list(mRNA = c(15, 17), drug = c(18,5), meth=c(15,5))
 
-total_comps=5
 
 names(X)
 MyResult.diablo <- block.splsda(X, Y, keepX=list.keepX,ncomp = total_comps)
@@ -155,4 +154,3 @@ list.keepX
 final.diablo.model = block.splsda(X = X, Y = Y, ncomp = ncomp, 
                                   keepX = list.keepX, design = design)
 
-MyResult.diablo<-final.diablo.model

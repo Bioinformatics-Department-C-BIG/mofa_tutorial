@@ -361,6 +361,8 @@ df <- data.frame(
   higher = s[["conf.int"]][,"upper .95"]
 )
 
+jpeg(paste0(outdir, 'hazard_ratio_vs_factors_', 1,'_','mRNA','.jpeg'))
+
 ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
   geom_pointrange( col='#619CFF') + 
   coord_flip() +
@@ -368,7 +370,7 @@ ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
   labs(y="Hazard Ratio", x="") + 
   geom_hline(aes(yintercept=1), linetype="dotted") +
   theme_bw()
-
+dev.off()
 
 
 #### MAP TO GENE SYMBOLS FOR PLOTTING 

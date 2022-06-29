@@ -1,7 +1,8 @@
 
 
 ## Choose here the model to run, supervised or not 
-
+#save( final.diablo.model, file='final_diablo_model.Rdata')
+load('final_diablo_model.Rdata')
 MyResult.diablo<-final.diablo.model
 total_comps=ncomp
 dims_x<-length(names(X))
@@ -37,8 +38,14 @@ plotArrow(MyResult.diablo, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 
 ### Visualize correlations between variables 
-p<-circosPlot(MyResult.diablo, cutoff=0.9)
-save(file= 'circos.png' )
+cutoff=0.7
+png(paste0(outdir2,'circos_plot', params_str, cutoff,'.png'))
+p<-circosPlot(MyResult.diablo, cutoff=cutoff, 
+              size.labels = 1.5, 
+              size.variables = 0.7)
+
+dev.off()
+save(file= paste0(outdir2,'circos.png' ))
 
 
 ##### cimDiablo

@@ -12,6 +12,9 @@ out_dir<-'Comparisons/plots/'
 outdir2<-'Comparisons/plots/mixomics/'
 #browseVignettes("mixOmics")
 
+drug_comps<-read.csv('Comparisons/Drug-compound cll.txt', sep='\t')
+drug_comps$Drug
+
 library(mixOmics)
 
 
@@ -65,6 +68,9 @@ X <- list(mRNA = t(CLL_data$mRNA[,tokeep]),
 
           #mut=t(CLL_data$Mutations[,tokeep]))
 
+
+
+###### RENAME
 ensemblsIDS<-colnames(X$mRNA)
 symbols <- mapIds(org.Hs.eg.db, keys = ensemblsIDS, keytype = "ENSEMBL", column="SYMBOL")
 
@@ -80,6 +86,11 @@ new<-X$mRNA[,-c(ind_to_drop)]
 # remove duplicate names from X genes
 X$mRNA<-new
 
+
+new_drug_names<-rep(drug_comps$Compound, times=1, each=5)
+length(new_drug_names)
+rep(seq(1:5), times=length(drug_comps) )
+length(X$drug[1,])
 # Remove NAs in Y :
 
 

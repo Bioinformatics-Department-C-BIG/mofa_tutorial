@@ -152,7 +152,7 @@ plot_top_weights(MOFAobject_gs,
              nfeatures = 10,     # Top number of features to highlight
              scale = T           # Scale weights from -1 to 1
 )
-ggsave(paste0(outdir, 'top_weights_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+ggsave(paste0(outdir, 'top_weights_', fps[ii],'_',vps[i],'.png'), width = , height=4, dpi=100)
 
 plot_weights(MOFAobject_gs, 
              view = vps[i], 
@@ -164,21 +164,34 @@ ggsave(paste0(outdir, 'all_weights_', fps[ii],'_',vps[i],'.png'), width = 4, hei
   
   
   ###### Heatmaps 
-jpeg(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.jpeg'))
-jpeg(paste0(outdir, 'heatmap_', 1,'_','mRNA','.jpeg'))
+nfs=50
 
+jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','mRNA_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+
+# Plot heatmaps for each factor only for mRNA 
 p<-plot_data_heatmap(MOFAobject_gs, 
                     view = 'mRNA', 
-                    factor =  1,  
-                    features = 25,
+                    factor =  fps[ii],  
+                    features = nfs,
                     denoise = TRUE,
                     cluster_rows = FALSE, cluster_cols = FALSE,
                     show_rownames = TRUE, show_colnames = FALSE,
                     scale = "row"
 )
   dev.off()
-  #ggsave(paste0(outdir, 'heatmap_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
   
+  jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','Drugs_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+  
+  p<-plot_data_heatmap(MOFAobject_gs, 
+                       view = 'Drugs', 
+                       factor =  fps[ii],  
+                       features = nfs,
+                       denoise = TRUE,
+                       cluster_rows = FALSE, cluster_cols = FALSE,
+                       show_rownames = TRUE, show_colnames = FALSE,
+                       scale = "row"
+  )
+  dev.off()
   
   # top weights
   # concat all 
@@ -189,6 +202,9 @@ p<-plot_data_heatmap(MOFAobject_gs,
   
  
 }
+
+
+
 v_set=c()
 for (i in 1:15){
   weights<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors = i)
@@ -218,6 +234,17 @@ fp<-1
 
 
 
+jpeg(paste0(outdir, 'mofa_factor_space', 1,'.jpeg'))
+fps_sel=c(1,4)
+jpeg(paste0(outdir, 'mofa_factor_space', paste0(fps_sel,collapse='_'),'.jpeg'))
+
+plot_factors(MOFAobject, 
+                  factors = fps_sel, 
+                  dot_size = 2.5,
+                  color_by = 'IGHV',
+                  show_missing = T)
+
+dev.off()
 utils::data(reactomeGS)
 
 
@@ -241,7 +268,7 @@ print(p)
 
 
 p
-
+dev.off()
 
 ##### Predicton of cilincal subgroups 
 install.packages('randomForest')
@@ -270,12 +297,12 @@ df$trisomy12 <- NULL
 MOFAobject@samples_metadata$trisomy12.pred <- stats::predict(model.trisomy12, df)
 
 
-OFAobject@samples_metadata$IGHV.pred_logical <- c("True","Predicted")[as.numeric(is.na(MOFAobject@samples_metadata$IGHV))+1]
+MOFAobject@samples_metadata$IGHV.pred_logical <- c("True","Predicted")[as.numeric(is.na(MOFAobject@samples_metadata$IGHV))+1]
 
 p <- plot_factors(MOFAobject, 
                   factors = c(1,3), 
-                  color_by = "IGHV.pred",
-                  shape_by = "IGHV.pred_logical",
+                  color_name = "IGHV.pred",
+                  shape_name = "IGHV.pred_logical",
                   dot_size = 2.5,
                   show_missing = T
 )
@@ -312,9 +339,17 @@ res.negative <- run_enrichment(MOFAobject,
                                sign = "negative"
 )
 
-
+for (ii in 1:10){
+  sign<-res.positive$pval.adj[,ii][which(res.positive$pval.adj[,ii]<0.05)]
+  #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
+  
+  print(length(sign))
+}
 MOFAobject@data$Mutations
-res.negative
+names(res.positive)[which(res.positive$pval.adj<0.05)]
+
+View(res.positive$pval.adj)
+
 
 theme(plot.margin=grid::unit(c(0,0,0,0), "mm"))
 
@@ -322,20 +357,21 @@ names(res.positive)
 
 # ENS ids seems to be required for the enrichment 
 plot_enrichment_heatmap(res.positive)
-ggsave(paste0('Enrichment_heatmap_positive','.png'), width = 9, height=4, dpi=100)
-
+ggsave(paste0(outdir,'Enrichment_heatmap_positive','.png'), width = 9, height=4, dpi=100)
+dev.off()
 
 plot_enrichment_heatmap(res.negative)
-ggsave(paste0('Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=100)
+ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=100)
 
 
-factor_to_plot=9
-plot_enrichment(res.positive, factor = factor_to_plot, max.pathways = 15)
-ggsave(paste0('GSEA_factor_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+factor_to_plot=4
+nfs=20
+plot_enrichment(res.positive, factor = factor_to_plot, max.pathways = nfs)
+ggsave(paste0(outdir,'GSEA_factor_',factor_to_plot, '_', nfs, '.png'), width = 5, height=4, dpi=100)
 
-factor_to_plot=9
-plot_enrichment(res.negative, factor = factor_to_plot, max.pathways = 15)
-ggsave(paste0('GSEA_factor_neg_',factor_to_plot,'.png'), width = 9, height=4, dpi=100)
+
+plot_enrichment(res.negative, factor = factor_to_plot, max.pathways = nfs)
+ggsave(paste0(outdir,'GSEA_factor_neg_',factor_to_plot, '_', nfs,'.png'), width = 5, height=4, dpi=100)
 
 
 ##### ASSOCIATE FACTORS WITH SURVIVAL 

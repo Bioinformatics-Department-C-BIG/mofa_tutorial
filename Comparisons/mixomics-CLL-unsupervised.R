@@ -88,22 +88,23 @@ list.keepX <- list(mRNA = c(15, 17), drug = c(18,5), meth=c(15,5))
 list.keepX <- list(mRNA = c(16, 17), drug = c(18,5), meth=c(16,16), drug=c(15,15))
 
 
-list.keepX <- list(mRNA = c(16, 17), drug = c(18,5), meth=c(16,16), mut=c(15,15))
+list.keepX <- list(mRNA = c(15, 15), drug = c(15,15), meth=c(16,16), mut=c(5,5))
 
 # without mutations
-list.keepX <- list(mRNA = c(15, 17), drug = c(18,5), meth=c(15,5))
+#list.keepX <- list(mRNA = c(15, 17), drug = c(18,5), meth=c(15,5))
 
-total_comps=2
+total_comps=15
 
 names(X)
 
 ### UNSUPERVIED MODEL 
 ### try to assopciate all others to the drugs! 
 block.pls.result <- block.spls(X, indY=2, keepX=list.keepX,ncomp = total_comps)
+MyResult.diablo<-block.pls.result
 plotIndiv(MyResult.diablo)
 
-plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE),
-        legend=TRUE, pch=c(16,16,16))
+plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE, TRUE),
+        legend=TRUE, pch=c(16,16,16, 16))
 
 
 params_str<-paste0('unsup_',paste(unlist(names(X)), collapse='_'), '_', length(names(X)), '_', total_comps)

@@ -38,7 +38,7 @@ plotArrow(MyResult.diablo, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 
 ### Visualize correlations between variables 
-cutoff=0.7
+cutoff=0.82
 png(paste0(outdir2,'circos_plot', params_str, cutoff,'.png'))
 p<-circosPlot(MyResult.diablo, cutoff=cutoff, 
               size.labels = 1.5, 
@@ -86,9 +86,14 @@ cimDiablo(MyResult.diablo, margin=c(8,20))
 
 # extended example:
 color.blocks=c('darkorchid', 'brown1', 'lightgreen','yellow' )[1:dims_x]
-png(paste0(outdir2,'cim_', params_str, '.png'))
-cimDiablo(MyResult.diablo, color.blocks = color.blocks,
-           margin=c(8,20), legend.position = "right" 
+jpeg(paste0(outdir2,'cim_', params_str, '.jpeg'), res=85)
+cimDiablo(MyResult.diablo,
+          transpose = TRUE,
+            
+          color.blocks = color.blocks,
+            #comp=1,
+           margin=c(8,20), 
+          legend.position = "right" 
 )
 dev.off()
 
@@ -150,7 +155,7 @@ network(MyResult.diablo, blocks = blocks,
 
 #dev.off()
 
-cutoff=0.85
+cutoff=0.82
 network(MyResult.diablo, blocks = blocks,
         color.node = c('darkorchid', 'brown1', 'lightgreen'), 
         lwd.edge = 2,

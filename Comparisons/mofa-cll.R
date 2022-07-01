@@ -207,10 +207,11 @@ p<-plot_data_heatmap(MOFAobject_gs,
 
 v_set=c()
 for (i in 1:15){
-  weights<-MOFA2::get_weights(MOFAobject,views = 'mRNA', factors = i)
+  weights<-MOFA2::get_weights(MOFAobject_gs,views = 'mRNA', factors = i)
   top_weights<-rownames(weights$mRNA)[order(abs(weights$mRNA), decreasing = TRUE) ][1:15]
-  top_genes_to_compare<-map_to_gene(top_weights)$SYMBOL
-  write.csv(top_genes_to_compare, paste0(outdir, 'top_genes_', fps[ii], '_', vps[ii], '.csv'))
+  #top_genes_to_compare<-map_to_gene(top_weights)$SYMBOL
+ top_genes_to_compare<-top_weights
+  write.csv(top_genes_to_compare, paste0(outdir, 'top_genes_', i, '_', '.csv'))
   print(top_genes_to_compare)
   # concat all 
   v_set <- c(v_set, top_genes_to_compare)
@@ -224,7 +225,6 @@ write.csv(v_set, paste0(outdir, 'all_genes_top_', total_comps, '.csv'))
 MOFA2::features_names(MOFAobject)$mRNA
 
 map_names<-rownames(MOFAobject@data$mRNA$group1)
-MOFAobject_gs<-MOFAobject
 
 
 

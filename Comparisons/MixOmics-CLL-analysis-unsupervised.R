@@ -2,16 +2,15 @@
 
 ## Choose here the model to run, supervised or not 
 #save( final.diablo.model, file='final_diablo_model.Rdata')
-load('final_diablo_model.Rdata')
-
-MyResult.diablo<-final.diablo.model
-total_comps=ncomp
+#total_comps=ncomp
 dims_x<-length(names(X))
 params_str<-paste0('sup_',paste(unlist(names(X)), collapse='_'), '_', length(names(X)), '_', total_comps)
+outdir2<-outdir3
+
 
 png(paste0 (outdir2, 'feature_plot', params_str,'.png'))
-plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE),
-        legend=TRUE, pch=c(16,16,16))
+plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE, TRUE),
+        legend=TRUE, pch=c(16,16,16,16))
 
 dev.off()
 # print the first component 
@@ -23,19 +22,18 @@ selectVar(MyResult.diablo, block = 'meth', comp = 1)$meth$name
 png(paste0(outdir2,'factor_space_', params_str,'.png'))
 plotIndiv(MyResult.diablo, 
           ind.names = FALSE, 
-          legend=TRUE, cex=c(1,2),
-          title = 'CLL with DIABLO')
+          legend=TRUE, cex=c(1),
+          title = 'CLL with DIABLO',
+          group=Y, 
+          ellipse=TRUE
+            )
 
 dev.off()
 
-# Only show the names of the proteins 
-plotVar(MyResult.diablo, var.names = rep(TRUE, dims_x),
-        legend=TRUE, pch=rep(16,dims_x ))
 
-##### GLoval OVERVIEW of the correlation structure at the componet level 
+##### GLobal OVERVIEW of the correlation structure at the componet level 
 plotDiablo(MyResult.diablo, ncomp = 1)
 
-plotArrow(MyResult.diablo, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 
 ### Visualize correlations between variables 
@@ -64,8 +62,10 @@ dev.off()
 
 #####
 
+
+
 # minimal example with margins improved:
-cimDiablo(MyResult.diablo, margin=c(8,20))
+cim(MyResult.diablo, margin=c(8,20))
 
 # extended example:
 
@@ -79,8 +79,9 @@ plotArrow(MyResult.diablo, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 dev.off()
 
 ### Visualize correlations between variables 
-p<-circosPlot(MyResult.diablo, cutoff=0.9)
-save(file= 'circos.png' )
+circosPlot(MyResult.diablo, 
+           group = Y, 
+           cutoff = 0.8)
 
 
 ##### cimDiablo
@@ -177,7 +178,7 @@ SurvObject <- Surv(CLL_metadata_new_order$TTT, CLL_metadata_new_order$treatedAft
 Z <- get_factors(MOFAobject)[[1]]
 fit <- coxph(SurvObject ~ Z) 
 fit
-MyResult.diablo$loadings
+View(MyResult.diablo$loadings)
 
 ##### Plot hazard ratios 
 s <- summary(fit)

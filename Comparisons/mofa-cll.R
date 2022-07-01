@@ -44,7 +44,7 @@ plot_data_overview(MOFAobject)
 data_opts <- get_default_data_options(MOFAobject)
 
 model_opts <- get_default_model_options(MOFAobject)
-model_opts$num_factors <- 15
+model_opts$num_factors <- 10
 
 model_opts$likelihoods
 
@@ -164,10 +164,10 @@ ggsave(paste0(outdir, 'all_weights_', fps[ii],'_',vps[i],'.png'), width = 4, hei
   
   
   ###### Heatmaps 
-nfs=50
+nfs=20
 
-jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','mRNA_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
-
+jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','mRNA_', 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
+fps[ii]=1
 # Plot heatmaps for each factor only for mRNA 
 p<-plot_data_heatmap(MOFAobject_gs, 
                     view = 'mRNA', 
@@ -176,9 +176,12 @@ p<-plot_data_heatmap(MOFAobject_gs,
                     denoise = TRUE,
                     cluster_rows = FALSE, cluster_cols = FALSE,
                     show_rownames = TRUE, show_colnames = FALSE,
-                    scale = "row"
+                    scale = "row",
+                    fontsize_number = 5
+                    
+                    
 )
-  dev.off()
+dev.off()
   
   jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','Drugs_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
   
@@ -260,15 +263,17 @@ levels(combined_groups)<-c('IGHV-,no tr12', 'IGHV-,tr12', 'IGHV+,no tr12', 'IGHV
 
 fps_sel=c(1,3)
 
-jpeg(paste0(outdir, 'mofa_factor_space', paste0(fps_sel,collapse='_'),'.jpeg'))
+jpeg(paste0(outdir, 'mofa_factor_space_new', paste0(fps_sel,collapse='_'),'.jpeg'), res=150, width = 6, height=5, units='in')
+
+
 
 p<-plot_factors(MOFAobject,
                   factors = fps_sel, 
-                  dot_size = 2.5,
+                  dot_size = 2,
                   color_name = 'IGHV',
                   color_by=combined_groups, 
                   show_missing = T)
-p+theme(text=element_text(size=15))
+p+theme(text=element_text(size=14))
 
 dev.off()
 utils::data(reactomeGS)
@@ -383,21 +388,23 @@ names(res.positive)
 
 # ENS ids seems to be required for the enrichment 
 plot_enrichment_heatmap(res.positive)
-ggsave(paste0(outdir,'Enrichment_heatmap_positive','.png'), width = 9, height=4, dpi=100)
+ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
 dev.off()
 
 plot_enrichment_heatmap(res.negative)
-ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=100)
+ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
 
 
-factor_to_plot=4
-nfs=20
-plot_enrichment(res.positive, factor = factor_to_plot, max.pathways = nfs)
-ggsave(paste0(outdir,'GSEA_factor_',factor_to_plot, '_', nfs, '.png'), width = 5, height=4, dpi=100)
+factor_to_plot=5
+nfs=7
+plot_enrichment(res.positive, factor = factor_to_plot, 
+                max.pathways = nfs)+
+  theme(text=element_text(size=12))
+ggsave(paste0(outdir,'GSEA_factor_',factor_to_plot, '_', nfs, '.jpeg'), width = 5, height=4, dpi=200)
 
 
 plot_enrichment(res.negative, factor = factor_to_plot, max.pathways = nfs)
-ggsave(paste0(outdir,'GSEA_factor_neg_',factor_to_plot, '_', nfs,'.png'), width = 5, height=4, dpi=100)
+ggsave(paste0(outdir,'GSEA_factor_neg_',factor_to_plot, '_', nfs,'.jpeg'), width = 5, height=4, dpi=200)
 
 
 ##### ASSOCIATE FACTORS WITH SURVIVAL 
@@ -423,15 +430,17 @@ df <- data.frame(
   higher = s[["conf.int"]][,"upper .95"]
 )
 
-jpeg(paste0(outdir, 'hazard_ratio_vs_factors_', 1,'_','mRNA','.jpeg'))
+jpeg(paste0(outdir, 'hazard_ratio_vs_factors_', 1,'_','mRNA','.jpeg'), res=120)
 
-ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
-  geom_pointrange( col='#619CFF') + 
+options(digits=2)
+ggplot(df[1:10,], aes(x=factor, y=coef, ymin=lower, ymax=higher, label= format(p, scientific = TRUE))) +
+ geom_pointrange( col='#619CFF') +
+  geom_text(hjust=-2)+
   coord_flip() +
   scale_x_discrete() + 
   labs(y="Hazard Ratio", x="") + 
-  geom_hline(aes(yintercept=1), linetype="dotted") +
-  theme_bw()
+  geom_hline(aes(yintercept=1), linetype="dotted")+
+  theme(text=element_text(size=17))
 dev.off()
 
 

@@ -20,11 +20,13 @@ selectVar(MyResult.diablo, block = 'meth', comp = 1)$meth$name
 
 
 ##### Customize sample plots 
-png(paste0(outdir2,'factor_space_', params_str,'.png'))
+jpeg(paste0(outdir2,'factor_space_', params_str,'.jpeg'), res=105)
 plotIndiv(MyResult.diablo, 
           ind.names = FALSE, 
-          legend=TRUE, cex=c(1,2),
-          title = 'CLL with DIABLO')
+          legend=TRUE, cex=c(1,1),
+          title = 'CLL with DIABLO', 
+          ellipse=TRUE, size.axis = 10, 
+          size.xlabel = 10, size.ylabel = 10)
 
 dev.off()
 
@@ -98,15 +100,16 @@ save(file= 'circos.png' )
 cimDiablo(MyResult.diablo, margin=c(8,20))
 
 # extended example:
-color.blocks=c('darkorchid', 'brown1', 'lightgreen','yellow' )[1:dims_x]
-jpeg(paste0(outdir2,'cim_', params_str, '.jpeg'), res=85)
+#color.blocks=c('darkorchid', 'brown1', 'lightgreen','yellow' )[1:dims_x]
+#jpeg(paste0(outdir2,'cim_', params_str, '.jpeg'), res=80)
 cimDiablo(MyResult.diablo,
           transpose = TRUE,
-            
           color.blocks = color.blocks,
             #comp=1,
-           margin=c(8,20), 
-          legend.position = "right" 
+           #margin=c(8,20), 
+          legend.position = "right", save='jpeg', 
+          name.save=paste0(outdir2,'cim_', params_str)
+            
 )
 dev.off()
 

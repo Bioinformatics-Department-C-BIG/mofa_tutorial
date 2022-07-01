@@ -204,6 +204,20 @@ p<-plot_data_heatmap(MOFAobject_gs,
 }
 
 
+#one eheatmap
+for (ii in 1:5){
+jpeg(paste0(outdir, 'heatmap_',ii,'_','Methylation_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+p<-plot_data_heatmap(MOFAobject_gs, 
+                     view = 'Methylation', 
+                     factor =  ii,  
+                     features = nfs,
+                     denoise = TRUE,
+                     cluster_rows = FALSE, cluster_cols = FALSE,
+                     show_rownames = TRUE, show_colnames = FALSE,
+                     scale = "row"
+)
+dev.off()
+}
 
 v_set=c()
 for (i in 1:15){
@@ -235,14 +249,26 @@ fp<-1
 
 
 jpeg(paste0(outdir, 'mofa_factor_space', 1,'.jpeg'))
-fps_sel=c(1,4)
+
+#VECTOR of 2 groups 
+combined_groups<-factor(paste(MOFAobject@samples_metadata$IGHV,MOFAobject@samples_metadata$trisomy12, sep="_"))
+notnas<-combined_groups %in% c('0_0', '0_1', '1_0', '1_1')
+combined_groups[!notnas]<-NA
+combined_groups<-factor(combined_groups)
+levels(combined_groups)<-c('IGHV-,no tr12', 'IGHV-,tr12', 'IGHV+,no tr12', 'IGHV+,tr12')
+### experiment 1 show ighv and trisomy 12
+
+fps_sel=c(1,3)
+
 jpeg(paste0(outdir, 'mofa_factor_space', paste0(fps_sel,collapse='_'),'.jpeg'))
 
-plot_factors(MOFAobject, 
+p<-plot_factors(MOFAobject,
                   factors = fps_sel, 
                   dot_size = 2.5,
-                  color_by = 'IGHV',
+                  color_name = 'IGHV',
+                  color_by=combined_groups, 
                   show_missing = T)
+p+theme(text=element_text(size=15))
 
 dev.off()
 utils::data(reactomeGS)

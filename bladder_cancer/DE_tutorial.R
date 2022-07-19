@@ -28,7 +28,7 @@ Y_raw$Subtype<-as.factor(Y_raw$Subtype)
 Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
-prot=TRUE
+prot=FALSE
 if (prot){
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -183,12 +183,12 @@ head(var_genes)
 # Get the gene names for the top 5000 most variable genes
 most_var_n=5000
 
-ng_g
 
+print(paste('ng', ng_g, ng_p))
 select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
 if (prot){ng=ng_p}else{ng=ng_g}
 select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng)]
-
+print(length(select_var_5000))
 
 # Subset logcounts matrix
 

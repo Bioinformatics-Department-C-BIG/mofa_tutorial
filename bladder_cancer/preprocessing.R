@@ -68,16 +68,11 @@ most_var=TRUE
 
 
 
-ng_p=round(3/2,2)
-ng_g=round(10,2)
+ng_p=round(5,2)
+ng_g=round(35,2)
 X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
-X1_t_most_var<-filter_most_var(X1_t_cut,most_var,ng_g)
 
 
-X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
-X2_t_most_var<-filter_most_var(X2_t_cut, most_var,ng_p)
 
 
-X1_t_1<-as.data.frame(cpm(X1_t_most_var, log = TRUE) )
-X2_t_1<-as.data.frame(cpm(X2_t_most_var, log = TRUE) )
 

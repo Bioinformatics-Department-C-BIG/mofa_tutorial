@@ -2,7 +2,7 @@ install_phantomjs(version = "2.1.1",
                   baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/",
                   force = FALSE)
 library('flextable')
-#install.packages('webshot')
+install.packages('webshot')
 library('webshot')
 
 #### 
@@ -30,8 +30,8 @@ write.table(all_tools_new2, file = "review/output/tools_objectives_concatenated.
 
 # Only output the ones that I described
 
-all_tools_to_write<-all_tools[!is.na(all_tools$Refined) & is.na(all_tools$Rejection) ,]
-
+all_tools_to_write<-all_tools[!is.na(all_tools$Refined),]
+#all_tools_to_write<-all_tools[is.na(all_tools$Rejection),]
 
 all_tools_to_write<-all_tools_to_write[
   with(all_tools_to_write, order( Var1,objectives_concat, method_orig,decreasing = TRUE)),

@@ -1,7 +1,6 @@
 #install.packages('iCluster')
 library("iCluster")
 
-#BiocManager::install(c("iClusterPlus"))
 library(iClusterPlus)
 
 library(GenomicRanges)
@@ -22,7 +21,6 @@ data = list(mRNA = t(highly_variable_genes_voom),
             proteomics = t(highly_variable_proteins_voom) )
 
 
-param_str_icl<-paste0( 'DE_data','_', most_var, '_ng_g_', round(1/ng_g,2),'_ncomp_g_','_ng_p_', round(1/ng_p,2)  )
 
 
 

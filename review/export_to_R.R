@@ -5,12 +5,15 @@ library('flextable')
 #install.packages('webshot')
 library('webshot')
 
+source('review/export_to_latex.R')
+
 #### 
 
 tool_obj[tool_obj$method_orig=='pls',]
 
 all_tools<-read_excel(paste0(data_int_dir,'/all tools.xlsx'))
-
+all_tools_file<-'D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/all_tools_updated.xlsx'
+all_tools<-read_excel(all_tools_file)
 
 all_tools_new<-as.data.frame(merge(all_tools[c('method_orig')], tool_obj[c('method_orig', 'objectives_concat')], by='method_orig'))
 

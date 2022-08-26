@@ -8,9 +8,9 @@ colname<-'Data'
 library('dplyr')
 library('purrr')
 source('utils.R')
-source('literature_review.R')
 
-
+######## Plotting - Filter
+freq_cutoff<-c(5,5)
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -80,7 +80,7 @@ os <- sysinf['sysname']
 if ( os  == 'Darwin'){
   data_int_dir<-'/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
   }else{
-  data_int_dir<-'E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
+  data_int_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/'
   
 }
 

@@ -8,6 +8,8 @@ library(RColorBrewer)
 source('utils.R')
 #install.packages("viridis")  # Install
 library("viridis")           # Load
+#BiocManager::install('ggforce')
+#install.packages('viridis')
 
 
 ### Load the package or install if not present
@@ -107,7 +109,7 @@ os <- sysinf['sysname']
 if ( os  == 'Darwin'){
   stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
 }else{
-  stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  stats<-read_excel('D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
   }
 
 ###Filters

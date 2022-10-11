@@ -124,3 +124,10 @@ write.table(resources, file = "review/output/resources.txt", sep=' & ', row.name
 
 
 
+t4<-read_excel(paste0(data_int_dir, 'Multiomics Tools Evaluation_2.xlsx'), sheet =3)
+
+t4<-t4[c(1,2,3)]
+t4$x<-'\\\\'
+
+write.table(t4, file = "review/output/t4.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+

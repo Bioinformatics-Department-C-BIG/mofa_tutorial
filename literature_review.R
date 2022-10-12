@@ -236,8 +236,7 @@ get_combs<- function(x, omics_level=level1){
     }
 }
 
-preprocessing_combinations(preprocessing(stats, 'Data'))
-preprocessing_combinations(preprocessing(new, 'Data'))
+
 
 preprocessing_combinations<-function(x){
   #' Create combinations of omics datasets  
@@ -249,7 +248,8 @@ preprocessing_combinations<-function(x){
   combinations<-lapply(x,get_combs, omics_level=level2)
   return(combinations)
 }
-
+preprocessing_combinations(preprocessing(stats, 'Data'))
+preprocessing_combinations(preprocessing(new, 'Data'))
 
 total<-NROW(stats[!is.na(stats$Data),]$PMID)
 

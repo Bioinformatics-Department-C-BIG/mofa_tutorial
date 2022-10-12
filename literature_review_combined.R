@@ -27,7 +27,6 @@ preprocessing<-function(df,colname){
   
 }
 
-comb_frequencies_by_group<-get_combination_frequencies_by_group(stats, 'Data')
 
 
 
@@ -224,8 +223,8 @@ show_p<-plotbyObjective(df_to_plot, 'Methods', plot_width=9, plot_height=9)
 
 show_p
 
-new_concise<-new_concise[!is.na(new_concise['Data']),]
-new_concise<-new[c('Data', 'objective', 'method' )]
+#new_concise<-new_concise[!is.na(new_concise['Data']),]
+#new_concise<-new[c('Data', 'objective', 'method' )]
 
 
 

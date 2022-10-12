@@ -435,12 +435,13 @@ jpeg(paste0(outdir, 'hazard_ratio_vs_factors_', 1,'_','mRNA','.jpeg'), res=120)
 options(digits=2)
 ggplot(df[1:10,], aes(x=factor, y=coef, ymin=lower, ymax=higher, label= format(p, scientific = TRUE))) +
  geom_pointrange( col='#619CFF') +
-  geom_text(hjust=-2)+
+  geom_text(hjust=-1.7)+
   coord_flip() +
   scale_x_discrete() + 
   labs(y="Hazard Ratio", x="") + 
   geom_hline(aes(yintercept=1), linetype="dotted")+
-  theme(text=element_text(size=17))
+  theme(text=element_text( size=17),
+        plot.margin=margin(1,2,1,2,unit='cm') )
 dev.off()
 
 

@@ -106,6 +106,7 @@ paste(unlist(tool_obj$objectives[[1]] ), collapse=', ')
 tool_obj[tool_obj$method_orig=='pls',]
 
 
+# concatenate objectives in one column 
 tool_obj$objectives_concat<-sapply(tool_obj$objectives, function(x){
   paste(unlist(x), collapse=', ')
 }

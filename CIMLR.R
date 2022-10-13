@@ -61,7 +61,7 @@ ranks = CIMLR_Feature_Ranking(A=example$S,X=input_data)
 
 head(ranks$pval)
 
-head(ranks$aggR)
+head(ranks$aggR,80)
 
 
 example$y[["cluster"]]
@@ -73,3 +73,9 @@ plot(example$ydata,
      ylab = "CIMLR component 2",
      pch = 20,
      main="CIMILR 2D visualization for GliomasReduced")
+
+
+
+### Check which features are most important ? 
+rownames(input_data)[head(ranks$aggR,80)]
+

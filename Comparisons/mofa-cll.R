@@ -353,6 +353,11 @@ utils::data(reactomeGS)
 head((reactomeGS))
 
 head(colnames(reactomeGS))
+symbols<-features_names(MOFAobject)$mRNA
+
+ens_ids <- mapIds(org.Hs.eg.db, keys =symbols, keytype = "SYMBOL", column="ENSEMBL")
+features_names(MOFAobject)$mRNA<-ens_ids
+
 
 # GSEA on positive weights, with default options
 res.positive <- run_enrichment(MOFAobject, 

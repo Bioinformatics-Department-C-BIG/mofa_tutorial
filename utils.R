@@ -2,7 +2,7 @@
 
 #install.packages('ggforce')
 library(ggforce)
-
+rel_txt<-1.5
 
 
 group_methods<-function(df, Var1){
@@ -83,6 +83,53 @@ group_methods_to_short<-function(df, Var1){
   return(df)                 
 }
 
+
+
+
+group_methods_to_short_new<-function(df, Var1){
+  #' Use only before plotting 
+  #' 
+  #'df[Var1]=as.factor(df[Var1])
+  #' @param Var1: name of the column to replace
+  #' @param df: name of the df 
+  #' @return: the whole df 
+  
+  df[Var1]<-sapply(df[Var1],function(x){
+    mgsub::mgsub(tolower(x), 
+                 tolower(c( "ML/DL Classification", 
+                            'JDR - NL',
+                            'JDR - LN',
+                            'Regression', 
+                            'Matrix Factorization', 
+                            'Network-Based',
+                            'Network-Based - Similarity network', 
+                            'Kernel-Based',
+                            'Probability-based',
+                            'JDR - LN - Correlation',
+                            'Correlation',
+                            'JDR - LN - Partial least squares',
+                            'multiomics pathway analysis',
+                            'Other tools'
+                 )),
+                 c( "ML/DL Classification", 
+                    'jDR - NL',
+                    'jDR - LN',
+                    'Regression', 
+                    'MF', 
+                    'NB',
+                    'NB - SN',
+                    'KB',
+                    'PR',
+                    'jDR - CCA',
+                    'COR',
+                    'jDR - PLS',
+                    'multiomics pathway analysis',
+                    'Other tools'
+                 ))}
+  )
+  #df[Var1]=as.factor(df[Var1])
+  return(df)                 
+}
 
 
 

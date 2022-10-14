@@ -10,58 +10,72 @@ library('webshot')
 library(dplyr)
 
 library('readxl')
-source('literature_review_combined.R')
+#source('literature_review_combined.R')
 sh1<-read_excel(paste0(data_int_dir,'MultiOmics Tools Evaluation_2.xlsx' ),sheet=1)
-sh1<-sh1[,c(2,5:15)]
+colnames(sh1)
+sh1<-sh1[,c(2,3:17)]
 sh1<-sh1[-c(2),]
 
 
 sh1 <- sh1[!((is.na(sh1[1]=='') | (sh1[1]=='') )),]
+cat_names<-colnames(sh1[,c(7:16)])
 sh1<-data.frame(sh1)
 rownames(sh1)<-sh1$Name
 
-
-method_cats<-sh1
+# Concatenate categories first 
+colnames(sh1)[1]<-'tool'
+method_cats<-sh1[,c(1,7:16)]
 
 # remove empty rownames
-
-colnames(method_cats)[1]<-'tool'
 rownames(method_cats)<-method_cats$tool
 method_cats$tool<-NULL
 method_cats[method_cats=='X']<-1
 method_cats[method_cats!=1]<-0
 method_cats[is.na(method_cats)]<-0
 # now melt 
-method_cats_t<-  add_rownames(method_cats, var='rowname')
+colnames(method_cats)<-cat_names
 
+method_cats_t<-  add_rownames(method_cats, var='tool')
 
 t2<-method_cats_t %>%
-    gather(key, value, -rowname)%>%
+    gather(key, value, -tool)%>%
     filter(value==1) 
 
-
-
-
 t3<-t2 %>%  
-  select(rowname, key)
+  select(tool, key)
 
-t4<-plyr::ddply(t3, .(rowname), colwise(paste), collapse = ", ")
+t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ",\\newline ")
 
-t4
-
-
-
-dd<-method_cats
-method_cats_ordered<-dd[
-  with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5],`Deep.Learning`,   decreasing = TRUE )),
-]
-method_cats_ordered
-method_cats_ordered %>% as.data.frame() %>%
-  add_rownames() %>% 
-  flextable() 
+t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ", ")
 
 
-sh2<-read_excel(paste0(data_int_dir,'MultiOmics Tools Evaluation_2.xlsx' ),sheet=2)
+
+
+
+# Now add back the other info, datasets and objectives 
+sh1_other<-sh1[c('tool', 'Datasets',  'Objectives')]
+to_keep<-sh1$tool[is.na(sh1['Reject'])]
+
+t4_with_info<-merge(t4, sh1_other, by='tool' )
+t4_with_info<-t4_with_info[match(method_cats_t$tool,t4_with_info$tool),]
+t4_with_info<-t4_with_info[t4_with_info$tool %in% to_keep,]
+# TODO: concat these categories with the other al_tools 
+
+
+
+t4_with_info<-as.data.frame(t4_with_info)
+t4_with_info<-t4_with_info[!is.na(t4_with_info$tool),]
+
+t4_with_info_lt<-t4_with_info
+t4_with_info_lt$x<-'\\\\'
+write.table(t4_with_info_lt, file = "review/output/method_categories_concatenated_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+
+
+
+
+
+
+sh2<-read_excel(paste0(data_int_dir,'MultiOmics Tools Evaluation_2.xlsx' ),sheet=3)
 
 sh2<-sh2[c(2,5:10)]
 sh2 <- sh2[!((is.na(sh2[1]=='') | (sh2[1]=='') )),]
@@ -91,6 +105,36 @@ df[is.na(df)]<-' '
 colnames(df)<-c('Non-linear interactions', 'Unequal sizes', 'Missing Data', 'NP problem', 'Heterogeneous Datasets')
 df[df==1]<-as.character('\\checkmark')
 df<-as.data.frame(df)
+df_challenges<-df
+
 df$x<-'\\\\'
 write.table(df, file = "review/output/method_challenges.txt", sep=' & ', row.names = TRUE, quote = FALSE)
+
+#ALIGN ALL TABLES 
+df_challenges<-  add_rownames(df_challenges, var='tool')
+
+
+t4_with_info$tool_lc<-tolower(t4_with_info$tool)
+df_challenges$tool_lc<-tolower(df_challenges$tool)
+
+t_final<-merge(t4_with_info, df_challenges, by='tool_lc' )
+
+t_final$tool<-t_final$tool.x
+t_final<-t_final[!is.na(t_final$tool),]
+t_final<-t_final[match(method_cats_t$tool,t_final$tool),]
+
+t_final<-t_final[,!names(t_final) %in% 
+     c("tool.x", "tool.y", "tool_lc")]
+
+t_final<-t_final%>%
+  select(tool, everything())
+
+
+t_final<-t_final[!is.na(t_final$tool),]
+
+t_final$x<-'\\\\'
+
+write.table(t_final, file = "review/output/method_categories_concatenated__challenges_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
+
+df_challenges$tool
 

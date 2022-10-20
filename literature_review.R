@@ -66,8 +66,8 @@ group_objectives<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*', '.*connect.*'),
+                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms', 'understand molecular mechanisms')))
   return(df)
 }
 
@@ -497,7 +497,7 @@ if (x_group == 'objective'){
 
 
 # Remove non_cancer
-df_to_plot=  plot_filters(df_to_plot)
+# df_to_plot=  plot_filters(df_to_plot)
 df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
 
 

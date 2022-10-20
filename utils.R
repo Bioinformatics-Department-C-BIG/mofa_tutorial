@@ -3,6 +3,7 @@
 #install.packages('ggforce')
 library(ggforce)
 
+# TODO: change functionality, don't replace but add to more than one categories at the
 
 
 group_methods<-function(df, Var1){
@@ -101,7 +102,7 @@ relabel_objectives<-function(obj_col){
                                  "multiomics pathway analysis",
                                  
                                  "drug response prediction"), 
-                     to=c("UN","UN", "CO", "DI", "BM", "SI","PA" ,  "DR"))
+                     to=c("UN","RN", "CO", "DI", "BM", "SI","PA" ,  "DR"))
     return(obj_col)
 }
 
@@ -120,7 +121,7 @@ group_objectives_method<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand.*'),
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
                                   c('diagnosis/prognosis', 'understand molecular mechanisms')))
   return(df)
 }

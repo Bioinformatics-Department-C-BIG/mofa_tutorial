@@ -8,6 +8,7 @@ library('flextable')
 #install.packages('webshot')
 library('webshot')
 library(dplyr)
+library(plyr)
 
 library('readxl')
 #source('literature_review_combined.R')
@@ -32,9 +33,20 @@ method_cats$tool<-NULL
 method_cats[method_cats=='X']<-1
 method_cats[method_cats!=1]<-0
 method_cats[is.na(method_cats)]<-0
+
+
+
+##### Order by each column one after the other 
+
+dd<-method_cats
+method_cats_ordered<-dd[
+  with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
+]
+#
+method_cats_ordered
+
 # now melt 
 colnames(method_cats)<-cat_names
-
 method_cats_t<-  add_rownames(method_cats, var='tool')
 
 t2<-method_cats_t %>%
@@ -53,7 +65,7 @@ t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ", ")
 
 
 # Now add back the other info, datasets and objectives 
-sh1_other<-sh1[c('tool', 'Datasets',  'Objectives')]
+sh1_other<-sh1[c('tool', 'Datasets',  'Objectives' , 'Citations')]
 to_keep<-sh1$tool[is.na(sh1['Reject'])]
 
 t4_with_info<-merge(t4, sh1_other, by='tool' )
@@ -137,4 +149,8 @@ t_final$x<-'\\\\'
 write.table(t_final, file = "review/output/method_categories_concatenated__challenges_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 df_challenges$tool
+
+
+
+method_cats_ordered
 

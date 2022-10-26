@@ -347,26 +347,6 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   
   
 }
-# library(gridExtra) 
-# install.packages('cowplot')
-# library(cowplot) 
-# grid.newpage()
-# grid.draw(legend)
-# 
-# png("legend.png")
-# 
-# legend<-get_legend(show_p)
-# grid.newpage()
-# grid.draw(legend)
-# dev.off()
-# plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
-# legend("bottom", legend =c(names(mycolors)), pch=16, 
-#        col = c(mycolors))
-# mtext("Omics Combinations")
-# 
-# show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
-# show_p
-
 
 
 relabel_objectives_short<-function(df_to_plot){
@@ -415,4 +395,7 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
   ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
   
 }
+
+
+
 

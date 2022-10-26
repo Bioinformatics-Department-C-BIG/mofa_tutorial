@@ -40,7 +40,7 @@ preprocessing<-function(df,colname){
 }
 
 
-
+freq_cutoff<-0
 
 get_frequencies<-function(x){
   
@@ -67,7 +67,7 @@ group_objectives<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],
                    function(x) 
                      mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*', '.*connect.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms', 'understand molecular mechanisms')))
+                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms', 'Extract complex patterns')))
   return(df)
 }
 
@@ -217,7 +217,6 @@ library(tidyverse)
 
 colname<-'Data'
 
-omics_data<-df_by_group[[1]]
 
 
 ####
@@ -267,7 +266,7 @@ df_by_group <- new %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )
-freq_cutoff<-0
+
 df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
@@ -347,10 +346,7 @@ df_by_group_disease<- df_by_group
 #### do the filtering further down... jump to line 418
 # TODO: make this automatic to create all graphs by a switch
 
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
 
-
-show_p<-plotbyObjective(df_to_plot )
 
 df_nested<-df_by_group[,-4] %>% 
   nest(data = disease_group)
@@ -369,7 +365,7 @@ df_nested$concat<-sapply(df_nested$data, function(x){
 df_nested %>% filter()
 df_nested<-df_nested %>% arrange(Cancer, desc(Freq))
 # two lists - most frequest is just not cancer now 
-df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+#df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
 df_nested_filtered<-df_nested %>% filter(Cancer %in% c('yes', 'no'))%>%
                      group_by(Cancer) %>% 
                       slice_max(order_by = Freq, n=5)
@@ -462,23 +458,25 @@ df_to_plot<-df_by_group
 
 ##TODO: MOVE TO FUNCTION
 #overwrite
-
+df_by_group
 # Switch here for both 
 x_group<-'objective'
 #x_group<-'disease_group'
+freq_cutoff_objectives<-c(15,15)
 if (x_group == 'objective'){
-  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
+  df_most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff_objectives )
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
   plot_width=6
   plot_height=9
   plot_cols=FALSE
+  df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
   
 }else if (x_group == 'disease_group' ){
   # select common groups 
   df_by_group<-df_by_group_disease
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(9,6))
+  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(5,5))
   
   df_to_plot<-df_most_common
   # show them all
@@ -491,14 +489,15 @@ if (x_group == 'objective'){
   df_to_plot<-df_to_plot[!df_to_plot['Cancer']=='NA',]
   
   plot_width=9
-  plot_height=5.5
+  plot_height=5
   plot_cols=TRUE
 }
 
 
 # Remove non_cancer
 # df_to_plot=  plot_filters(df_to_plot)
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+
+
 
 
 show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)

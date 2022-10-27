@@ -107,9 +107,9 @@ sysinf <- Sys.info()
 # stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
 os <- sysinf['sysname']
 if ( os  == 'Darwin'){
-  stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge_2.xlsx' )
 }else{
-  stats<-read_excel('D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  stats<-read_excel('D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge_2.xlsx' )
   }
 
 ###Filters
@@ -462,7 +462,7 @@ df_by_group
 # Switch here for both 
 x_group<-'objective'
 #x_group<-'disease_group'
-freq_cutoff_objectives<-c(15,15)
+freq_cutoff_objectives<-c(17,17)
 if (x_group == 'objective'){
   df_most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff_objectives )
   df_to_plot<-df_most_common

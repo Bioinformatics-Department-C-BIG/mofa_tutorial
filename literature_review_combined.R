@@ -84,7 +84,7 @@ if ( os  == 'Darwin'){
 }
 
 
-stats<-read_excel(paste0(data_int_dir,'Multi-omics_merge.xlsx' ))
+stats<-read_excel(paste0(data_int_dir,'Multi-omics_merge_2.xlsx' ))
 
 
 

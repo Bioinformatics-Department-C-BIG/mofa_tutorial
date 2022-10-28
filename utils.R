@@ -27,9 +27,9 @@ group_methods<-function(df, Var1){
                  c( "ML/DL Classification", 
                     "ML Clustering", 
                     'JDR - NL',
-                    'JDR - LN',
+                    'Kernel based',
                     'Regression', 
-                    'JDR - LN - Matrix Factorization', 
+                    'Factor analysis ', 
                     'Network-Based',
                     'Network-Based - Similarity network', 
                     'JDR - LN - Correlation',
@@ -142,11 +142,10 @@ relabel_objectives<-function(obj_col){
   
   obj_col <- mapvalues(obj_col, from=c("understand molecular mechanisms",
                                        "understand regulatory processes",   
-                                 "connect molecular patterns to phenotypic traits",
+                                 "extract patterns",
                                  "diagnosis/prognosis",
                                  "biomarker discovery",
-                                 
-                                 "subtype identification",
+                                 "si",
                                  "multiomics pathway analysis",
                                  
                                  "drug response prediction"), 
@@ -347,37 +346,21 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   
   
 }
-# library(gridExtra) 
-# install.packages('cowplot')
-# library(cowplot) 
-# grid.newpage()
-# grid.draw(legend)
-# 
-# png("legend.png")
-# 
-# legend<-get_legend(show_p)
-# grid.newpage()
-# grid.draw(legend)
-# dev.off()
-# plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
-# legend("bottom", legend =c(names(mycolors)), pch=16, 
-#        col = c(mycolors))
-# mtext("Omics Combinations")
-# 
-# show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
-# show_p
-
 
 
 relabel_objectives_short<-function(df_to_plot){
   df_to_plot$labels<-df_to_plot$key_names
-  ind<-df_to_plot$labels%in% c('connect molecular patterns to phenotypic traits')
-  df_to_plot[ind,]$labels<-'connect molecular patterns to \n phenotypic traits'
-  df_to_plot[ind,]$key_names<-'connect molecular patterns to \n phenotypic traits'
+  ind<-df_to_plot$labels%in% c('extract patterns')
+  df_to_plot[ind,]$labels<-'extract patterns'
+  df_to_plot[ind,]$key_names<-'extract patterns'
   
   ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
   df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
   df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
+  
+  ind<-df_to_plot$labels%in% c('si')
+  df_to_plot[ind,]$labels<-'subtype identification'
+  df_to_plot[ind,]$key_names<-'subtype identification'
   
   
   return(df_to_plot)
@@ -415,4 +398,7 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
   ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
   
 }
+
+
+
 

@@ -24,6 +24,9 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
+remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'drug response prediction', 'other')
+
+
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
   #' Split the column 
@@ -66,8 +69,16 @@ group_objectives<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*', '.*connect.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms', 'understand molecular mechanisms')))
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*',
+                                               '.*understand.*',
+                                               '.*connect.*',
+                                               'multiomics pathway analysis', 'drug response prediction'),
+                                  c('Diagnosis/Prognosis', 
+                                    'understand molecular mechanisms', 
+                                    'understand molecular mechanisms', 
+                                    'other', 
+                                    'other'
+                                    )))
   return(df)
 }
 
@@ -467,7 +478,7 @@ df_to_plot<-df_by_group
 x_group<-'objective'
 #x_group<-'disease_group'
 if (x_group == 'objective'){
-  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
+  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(17,17))
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
@@ -497,8 +508,10 @@ if (x_group == 'objective'){
 
 
 # Remove non_cancer
-# df_to_plot=  plot_filters(df_to_plot)
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+ df_to_plot=  plot_filters(df_to_plot)
+ 
+ df_to_plot<-df_to_plot[df_to_plot$Cancer %in% c('yes', 'no')]
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
 
 
 show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)

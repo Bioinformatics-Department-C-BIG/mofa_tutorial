@@ -264,10 +264,10 @@ mycolors=c("epigenomics - transcriptomics" = '#1F78B4',
            "metabolomics - metagenomics" = "#FDBF6F")
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
-  text_size=16
+  text_size=14
   text_size_small=12
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
-               '.png')
+               '.jpeg')
   fname2=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.jpeg')
   
@@ -283,9 +283,14 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   
   g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
+    coord_flip()+
+  
     guides(fill = guide_legend(title = legend_t))+
     labs(x=NULL, y='Number of studies')
   
+  
+  
+  # text size related options
   g=g+ theme(axis.text.x = element_text(size=text_size, margin = margin(t = 0,b=0),angle = angle, vjust = 0.5, hjust=1))+
     theme(axis.text.y = element_text(size=text_size), axis.title.y =element_text(size=text_size),
     legend.text=element_text(size=text_size_small))
@@ -308,21 +313,22 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
 
   }
 
-
-
-  
     if ('Cancer' %in% colnames(df_to_plot)){
 
     if (plot_cols){
       print('add columns')
+      # Add the two plots for cancer and not cancer in a row
       
-      #g<-g+facet_wrap(vars(Cancer),  scales = 'free',  labeller = labeller(Cancer=
-             #c('no'=' ','yes' =' ')))+
-       #scale_x_discrete(expand = c(0, 0.5))
-      g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
-                      labeller(Cancer=c('no'=' ','yes' =' '))) +
-        theme(strip.text.x = element_text(size = text_size))
-
+      g<-g+facet_wrap(vars(Cancer),  scales = 'free_x',  labeller = labeller(Cancer=
+             c('no'=' ','yes' =' ')))+
+        theme(strip.text.y = element_text(size = text_size))+
+      
+        #scale_x_discrete(expand = c(0, 0.5))
+      # g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
+      #               labeller(Cancer=c('no'=' ','yes' =' '))) +
+      #  theme(strip.text.x = element_text(size = text_size))
+        # geom_text(aes(y = pos, label = label), size = 2) 
+        
       ggsave(fname, width = plot_width, height=plot_height)
       ggsave(fname, width = plot_width, height=plot_height)
       
@@ -351,8 +357,8 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
 relabel_objectives_short<-function(df_to_plot){
   df_to_plot$labels<-df_to_plot$key_names
   ind<-df_to_plot$labels%in% c('extract patterns')
-  df_to_plot[ind,]$labels<-'extract patterns'
-  df_to_plot[ind,]$key_names<-'extract patterns'
+  df_to_plot[ind,]$labels<-'detect molecular patterns'
+  df_to_plot[ind,]$key_names<-'detect molecular patterns'
   
   ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
   df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
@@ -362,6 +368,9 @@ relabel_objectives_short<-function(df_to_plot){
   df_to_plot[ind,]$labels<-'subtype identification'
   df_to_plot[ind,]$key_names<-'subtype identification'
   
+  ind<-df_to_plot$labels%in% c('understand regulatory processes')
+  df_to_plot[ind,]$labels<-'understand regulatory\n processes'
+  df_to_plot[ind,]$key_names<-'understand regulatory\n processes'
   
   return(df_to_plot)
 }

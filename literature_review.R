@@ -468,14 +468,19 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
 # non cancer: 10,7, cancer: 7,3,
+# add percentages to the plots 
+library(plyr)
+df<-df_by_group
+#df = ddply(df, .(objective), transform, 
+#           percent = Freq/sum(Freq) * 100)
 
-df_to_plot<-df_by_group
-
-
+# Format the labels and calculate their positions
+#df = ddply(df, .(objective), transform, pos = (cumsum(Freq) - 0.5 * Freq))
+#df$label = paste0(sprintf("%.0f", df$percent), "%")
 
 ##TODO: MOVE TO FUNCTION
 #overwrite
-df_by_group
+df_by_group<-df
 # Switch here for both 
 x_group<-'objective'
 #x_group<-'disease_group'
@@ -486,9 +491,9 @@ if (x_group == 'objective'){
   df_to_plot<-df_most_common
   df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=6
-  plot_height=9
-  plot_cols=FALSE
+  plot_width=9
+  plot_height=4
+  plot_cols=TRUE
   df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
   
 }else if (x_group == 'disease_group' ){

@@ -261,7 +261,8 @@ mycolors=c("epigenomics - transcriptomics" = '#1F78B4',
            "proteomics - transcriptomics" = '#33A02C',
            "metabolomics - proteomics" = "#E31A1C" ,
            "metabolomics - transcriptomics" = "#FB9A99", 
-           "metabolomics - metagenomics" = "#FDBF6F")
+           "metabolomics - metagenomics" = "#FDBF6F", 
+           "other" = "#808080")
 
 plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
   text_size=14
@@ -321,17 +322,20 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
       
       g<-g+facet_wrap(vars(Cancer),  scales = 'free_x',  labeller = labeller(Cancer=
              c('no'=' ','yes' =' ')))+
-        theme(strip.text.y = element_text(size = text_size))+
+        theme(strip.text.y = element_text(size = text_size))
       
         #scale_x_discrete(expand = c(0, 0.5))
       # g<-g+ facet_row(vars(Cancer), scales = 'free',space='free',labeller=
       #               labeller(Cancer=c('no'=' ','yes' =' '))) +
-      #  theme(strip.text.x = element_text(size = text_size))
-        # geom_text(aes(y = pos, label = label), size = 2) 
+        
+        
+        # add the percentage labels 
+        g<-g+ geom_text(aes( label=ifelse(percent>12,paste0(sprintf("%.0f", percent),"%"),'')), 
+                           position=position_stack(vjust=0.5), size = 2) 
+        
         
       ggsave(fname, width = plot_width, height=plot_height)
-      ggsave(fname, width = plot_width, height=plot_height)
-      
+
     }else{
       print('add rows')
       

@@ -24,7 +24,7 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
-remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other')
+remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'drug response prediction', 'other')
 
 
 # Process; if methylation or histone; add epigenomics!
@@ -77,7 +77,6 @@ group_objectives<-function(df, Var1){
                                     'downstream')))
   return(df)
 }
-
 
 
 #TODO: make a function to check if there is methylomics
@@ -442,12 +441,22 @@ new<-group_objectives(new, 'objective')
 #' 
 #' 
 # x group is the objective
+# df_by_group holds by objective and dataset the frequency it appears 
 df_by_group<-new %>%
   group_by_at(c(x_group, 'Cancer')) %>%
   group_modify(~ preprocessing(.x, colname)  %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )  
+
+
+# find most common groups and re group!! 
+freq_cutoff_objectives<-c(17,17)
+df_most_common<-filter_common_groups(df_by_group, freq_cutoff = freq_cutoff_objectives )
+common_combs<-unique(df_most_common$Var1)
+df_by_group$Var1<-as.character(df_by_group$Var1)
+df_by_group[!(df_by_group$Var1 %in% common_combs), 'Var1']<-'other'
+
 
 
 
@@ -457,39 +466,64 @@ df_by_group<-as.data.frame(as.matrix(df_by_group))
 df_by_group['key_names']<-df_by_group[x_group]
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
+library(dplyr)
+df_by_group %>%
+  group_by(objective, Cancer,Var1 )
+
+df_by_group[, sum(Freq), by = list]
+
+
 
 # non cancer: 10,7, cancer: 7,3,
 # add percentages to the plots 
-
-
-
 df<-df_by_group
-library(plyr)
+
 add_percentage<-function(df){
   df = plyr::ddply(df, .(objective, Cancer), transform, 
-                   percent = Freq/sum(Freq) * 100)
-  
+             percent = Freq/sum(Freq) * 100)
+
+# Format the labels and calculate their positions
+  df = plyr::ddply(df, .(objective, Cancer), transform, pos = (cumsum(Freq) - 0.5 * Freq))
+  df$label = paste0(sprintf("%.0f", df$percent), "%")
   return(df)
-}
+  }
 
 ##TODO: MOVE TO FUNCTION
 #overwrite
-
+df_by_group<-df
 # Switch here for both 
 x_group<-'objective'
 #x_group<-'disease_group'
-freq_cutoff_objectives<-c(10,10)
 if (x_group == 'objective'){
 
-  df_most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff_objectives )
+  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = freq_cutoff_objectives )
+  common_combs<-unique(df_most_common$Var1)
+  
   df_to_plot<-df_most_common
-  df_to_plot<-relabel_objectives_short(df_to_plot)
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
+  
+  
+  # label all datasets to other
+  df_to_plot[!(df_to_plot$Var1 %in% common_combs), 'Var1']<-'other'
+  
+  #df_to_plot<-
+   #attempt to group the datasets variable... 
+  # library(dplyr)
+  #  df_to_plot %>% group_by(objective, Cancer,Var1) %>%
+  #  summarise(across(Freq2=sum(Freq)), .groups = 'drop') %>%
+  #    as.data.frame()
+
+  
+  # final formatting for the plots only! 
+  df_to_plot['key_names']<-df_to_plot[x_group]
+  df_to_plot<-relabel_objectives_short(df_to_plot)
+  
   plot_width=9
-  plot_height=6
+  plot_height=4
   plot_cols=TRUE
-  df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery', 'downstream', 'molecular interactions')),]
-  df_to_plot<- add_percentage(df_to_plot)
+  # df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+  
+  df_to_plot<-add_percentage(df_to_plot)
   
   
 }else if (x_group == 'disease_group' ){
@@ -516,7 +550,7 @@ if (x_group == 'objective'){
 # Remove non_cancer
 
 df_to_plot<-df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
+#<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
 # df_to_plot=  plot_filters(df_to_plot)
 
 

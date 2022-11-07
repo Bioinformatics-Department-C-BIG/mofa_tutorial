@@ -90,10 +90,15 @@ topx<-names(variances[order(variances, decreasing = TRUE)])[1:(length(variances)
 vsn_mat <- vsn_mat[topx, ]
 NROW(vsn_mat)
 
+
+
 # Just plot to see the result of vsn
 hist(variances)
 dev.off()
 boxplot(vsn_mat)
 
+colnames(vsn_mat)<-Y_raw$Sample
 highly_variable_proteins_mofa<-vsn_mat
+
 write.csv(highly_variable_proteins_mofa,'highly_variable_proteins_mofa.csv')
+

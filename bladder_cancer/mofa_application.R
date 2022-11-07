@@ -44,6 +44,9 @@ data$mRNA<-data$mRNA[-which(is.na(ens_ids)),]
 
 hist(data$mRNA)
 hist(data$proteomics)
+colnames(data$mRNA)<-Y_raw$Sample
+colnames(data$proteomics)<-Y_raw$Sample
+
 data$proteomics
 sapply(data$mRNA, as.numeric)
 

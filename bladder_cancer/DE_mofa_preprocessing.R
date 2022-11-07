@@ -29,19 +29,40 @@ Y_raw$Grade<-as.factor(Y_raw$Grade)
 Y_raw$TURB.stage<-as.factor(Y_raw$TURB.stage)
 
 prot=FALSE
+
+
 if (prot){
+  lowest_thresh<-10
+  params.remove_low_threshold<-15
+  params.ng<-2
+}else{
+  lowest_thresh<-10
+  params.remove_low_threshold<-10
+  params.ng<-5
+  
+
+}
+
+
+
+if (prot){
+  
   seqdata <- read.delim(paste0(dir,'Proteomics_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
   
   
   seqdata<- t(X2_t_cut) ; rownames(seqdata)<-colnames(X2_t_cut)
   no_name<-which(is.na(seqdata[1]))
+  
+  
 #### Format
 if (length(no_name)>0){
   seqdata<-seqdata[,-no_name]}
   countdata<-seqdata
   
   output_de=paste0(output_1, 'prot')
+  
+  
 }else{
   seqdata <- read.delim(paste0(dir,'RNAseq_BladderCancer.csv' ), sep=',', stringsAsFactors = FALSE)
   countdata <- seqdata[,-1]
@@ -102,10 +123,13 @@ myCPM <- cpm(countdata)
 
 head(myCPM)
 
-thresh <- myCPM > 0.5
+
+
+thresh <- myCPM > lowest_thresh
 head(thresh)
 table(rowSums(thresh))
-keep <- rowSums(thresh) >= 2
+
+keep <- rowSums(thresh) >= params.remove_low_threshold
 summary(keep)
 
 
@@ -122,7 +146,6 @@ y <- y[keep, keep.lib.sizes=FALSE]
 
 ##### QC: Library size
 
-y$samples$lib.size
 png(paste0(output_de, '_lib_size.png'), type='cairo')
 barplot(y$samples$lib.size,names=colnames(y),las=2)
 dev.off()
@@ -134,7 +157,10 @@ title("Barplot of library sizes")
 # Get log2 counts per million so we can examine count data
 
 logcounts <- cpm(y,log=TRUE)
-logcounts
+if (prot){
+  logcounts<-log(y$counts)
+}
+hist(logcounts)
 
 # Check distributions of samples using boxplots
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
@@ -149,7 +175,7 @@ barplot(y$samples$lib.size,names=colnames(y),las=2)
 plotMDS(y)
 labels <- paste(Y_raw$Sample, Y_raw$Subtype, Y_raw$Grade)
 
-
+NROW(y)
 # We specify the option to let us plot two plots side-by-sde
 par(mfrow=c(1,2))
 # Let's set up colour schemes for CellType
@@ -180,136 +206,31 @@ labels <- paste(Y_raw$TURB.stage, Y_raw$Subtype,  Y_raw$Grade)
 
 ###hierarchical clustering
 
+
 # We estimate the variance for each row in the logcounts matrix
-var_genes <- apply(logcounts, 1, var)
-head(var_genes)
 
-# Get the gene names for the top 5000 most variable genes
-most_var_n=5000
+all_variances <- apply(logcounts, 1, var)
+
+select_most_variable <- names(sort(all_variances, decreasing=TRUE))[1:(length(all_variances)/  params.ng)]
+
+highly_variable_mofa<-logcounts[select_most_variable,]
 
 
-print(paste('ng', ng_g, ng_p))
-select_var <- names(sort(var_genes, decreasing=TRUE))[1:500]
-if (prot){ng=ng_p}else{ng=ng_g}
-select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng)]
-print(length(select_var_5000))
+#highly_variable_mofa<-highly_variable_mofa[highly_variable_mofa>2,]
+hist(highly_variable_mofa)
+  
 
-# Subset logcounts matrix
-
-highly_variable_lcpm_most_var <- logcounts[select_var_5000,]
+hist(highly_variable_mofa)
 
 if (prot){
-  highly_variable_proteins<-highly_variable_lcpm_most_var
-  write.csv(highly_variable_proteins,'highly_variable_proteins_normalized.csv')
+  highly_variable_proteins_mofa<-highly_variable_mofa
+  write.csv(highly_variable_proteins_mofa,'highly_variable_proteins_mofa.csv')
 }else{
-  highly_variable_genes<-highly_variable_lcpm_most_var
-  write.csv(highly_variable_genes,'highly_variable_genes_normalized.csv')
-  
-}
-head(select_var)
-
-dim(as.data.frame(highly_variable_lcpm_most_var))
-highly_variable_lcpm <- logcounts[select_var,]
-dim(highly_variable_lcpm)
-
-## Get some nicer colours
-mypalette <- brewer.pal(11,"RdYlBu")
-morecols <- colorRampPalette(mypalette)
-# Set up colour vector for celltype variable
-col.cell <- c("purple","orange")[Y_raw$Subtype]
-
-dev.off()
-# Plot the heatmap
-heatmap.2(highly_variable_lcpm,col=rev(morecols(50)),trace="none", 
-          main="Top 500 most variable genes across samples",
-          ColSideColors=col.cell,scale="row", 
-          labCol=group)
-
-
-
-
-## normalization
-# Apply normalisation to DGEList object
-y <- calcNormFactors(y)# normalize
-logcounts_norm <- cpm(y,prior.count=2, log=TRUE)  # take cpm
-
-highly_variable_lcpm_norm<-logcounts_norm[select_var_5000,] # and filter!
-if (prot){
-  highly_variable_proteins_voom<-highly_variable_lcpm_norm
-  write.csv(highly_variable_proteins_voom,paste0(output_files,'highly_variable_proteins_normalized.csv'))
-}else{
-  highly_variable_genes_voom<-highly_variable_lcpm_norm
-  write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized.csv'))
-  
+  highly_variable_genes_mofa<-highly_variable_mofa
+  write.csv(highly_variable_genes_mofa,'highly_variable_genes_mofa.csv')
 }
 
-
-y$samples
-
-par(mfrow=c(1,2))
-#plotMD(logcounts,column = 7)
-abline(h=0,col="grey")
-#plotMD(logcounts,column = 11)
-abline(h=0,col="grey")
-
-####### voom transform
-par(mfrow=c(1,1))
-design <- model.matrix(~ 0 + group )
-v <- voom(y,design,plot = TRUE)
-par(mfrow=c(1,1))
-v <- voom(y,design,plot = TRUE)
-
-png(paste0(output_de,'boxplots.png'), type='cairo')
-
-par(mfrow=c(1,2))
-boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
-## Let's add a blue horizontal line that corresponds to the median logCPM
-abline(h=median(logcounts),col="blue")
-boxplot(v$E, xlab="", ylab="Log2 counts per million",las=2,main="Voom transformed logCPM")
-## Let's add a blue horizontal line that corresponds to the median logCPM
-abline(h=median(v$E),col="blue")
-
-
-#### SAVE
-v_most_var<-v$E[select_var_5000,] # and filter!
-if (prot){
-  highly_variable_proteins_voom<-v_most_var
-  write.csv(highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
-}else{
-  highly_variable_genes_voom<-v_most_var
-  write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
-  
-}
-
-
-fit <- lmFit(v)
-names(fit)
-fit$design
-#cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
-cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1-groupNPS3,levels=design)
-
-fit.cont <- contrasts.fit(fit, cont.matrix)
-fit.cont <- eBayes(fit.cont)
-summa.fit <- decideTests(fit.cont)
-summary(summa.fit)
-library(ggplot2)
-
-
-  ### write out results 
-# We want to highlight the significant genes. We can get this from decideTests.
-par(mfrow=c(1,2))
-plotMD(fit.cont,coef=1,status=summa.fit[,"B.NPS3vsNPS1"], 
-       values = c(-1, 1), hl.col=c("blue","red"))
-dev.off()
-
-# For the volcano plot we have to specify how many of the top genes to highlight.
-# We can also specify that we want to plot the gene symbol for the highlighted genes.
-# let's highlight the top 100 most DE genes
-volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
-            main="B.NPS3vsNPS1")
-
-
-
-
-ggsave(paste0(output_de,'volcano.png'), type='cairo')
+hist(highly_variable_proteins_mofa)
+hist(highly_variable_genes_mofa)
+NROW(highly_variable_genes_mofa)
 

@@ -7,6 +7,53 @@ library(ggforce)
 rel_txt<-1.5
 
 
+
+relabel_tools<-function(Var1){
+  
+  # This function groups instances of tools that are the same as others. 
+  # The relabel has to exist in the matrix with tools and categories
+  Var1<-sapply(Var1,function(x){
+    mgsub::mgsub(tolower(x),  
+                 c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*", 
+                   ".*consensus*",
+                   ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
+                   '.*pins.*|.*kernel.*', 
+                   '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
+                   '.*mofa.*',
+                   '.*factor.*|.*decomposition.*|.*partitioning.*|.*pca.*|.*diverse.*', 
+                   '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
+                   '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
+                   '.*nemo.*',
+                   '.*cca.*|.*smccnet.*|.*canonical correlation.*',
+                   '.*correlation.*', 
+                   '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
+                   '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
+                   '.*metaboanalyst.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
+                   '.*kmeans.*|.*k-means.*'), 
+                 c( "ML/DL Classification", 
+                    "ML Clustering", 
+                    'pathcnn',
+                    'cimlr',
+                    'Regression',
+                    'mofa',
+                    'fa ', 
+                    'interaction_nets',
+                    'snf', 
+                    'nemo',
+                    'cca',
+                    'Correlation',
+                    'pls',
+                    'multiomics pathway analysis',
+                    'Other tools', 
+                    'ML - DR'
+                 ))}
+  )
+  #new_col=as.factor(new_col)
+  return(Var1)                 
+}
+
+
+
 group_methods<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
@@ -18,6 +65,7 @@ group_methods<-function(df, Var1){
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
+                   '.*lra cluster*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
@@ -32,6 +80,7 @@ group_methods<-function(df, Var1){
                     'Factor analysis ', 
                     'Network-Based',
                     'Network-Based - Similarity network', 
+                    'Similarity based',
                     'JDR - LN - Correlation',
                     'Correlation',
                     'JDR - LN - Partial least squares',
@@ -43,6 +92,9 @@ group_methods<-function(df, Var1){
   #new_col=as.factor(new_col)
   return(df)                 
 }
+
+
+
 
 group_methods_to_short<-function(df, Var1){
   #' Use only before plotting 
@@ -149,7 +201,7 @@ relabel_objectives<-function(obj_col){
                                  "multiomics pathway analysis",
                                  
                                  "drug response prediction"), 
-                     to=c("UN","RN", "CO", "DI", "BM", "SI","PA" ,  "DR"))
+                     to=c("UN","RN", "CO", "DI", "BM", "SI","PA" ,"DR"))
     return(obj_col)
 }
 

@@ -6,10 +6,8 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 source('utils.R')
-#install.packages("viridis")  # Install
 library("viridis")           # Load
-#BiocManager::install('ggforce')
-#install.packages('viridis')
+
 
 
 ### Load the package or install if not present
@@ -464,7 +462,7 @@ df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
 df<-df_by_group
-library(plyr)
+
 add_percentage<-function(df){
   df = plyr::ddply(df, .(objective, Cancer), transform, 
                    percent = Freq/sum(Freq) * 100)

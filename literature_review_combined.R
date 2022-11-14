@@ -144,7 +144,25 @@ new[colname] <-apply(new[colname], 1, function(x) trimws(tolower(x)))
 new<-group_objectives_method(new, 'objective')
 # make a backup of the original entries 
 new['method_orig']<-new['method']
+unique(as.data.frame(new['method_orig']))
+
 new<-group_methods(new, 'method')
+as.data.frame(new[c('method_orig', 'method')])
+
+######
+# 1. Obtain the method categories for each tool 
+# 2. Split them into multiple rows (same as we split the datasets)
+
+t4<-read.csv('review/output/tools_categories.csv', row.names = 1)
+
+# first group into variations of the same tool!
+new$method_orig_grouped<-relabel_tools(new$method_orig)
+new$method_orig_grouped
+new$method_orig_grouped[match(tolower(new$method_orig_grouped),tolower(t4$tool) )]
+
+
+
+
 
 
 #' TODO: check the rownames given by get frequencies..
@@ -317,8 +335,8 @@ counts1 <- new2 %>%
 
 
 df_to_plot=new2
-run_sankey(new2, axis1, axis2, cancer_filter )
-run_sankey(counts1, axis1, axis2, cancer_filter )
+###run_sankey(new2, axis1, axis2, cancer_filter )
+#run_sankey(counts1, axis1, axis2, cancer_filter )
 
 
 

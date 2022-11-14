@@ -10,6 +10,8 @@
 ./bladder_cancer/settings/*
 
 */*.png
+*.png
+*.jpeg
 
 # Session Data files
 .RData
@@ -22,6 +24,7 @@
 bladder_cancer/plots/*
 bladder_cancer/settings/*
 mds/*
+*.png
 plots/*
 plots/*
 plots/barplot_byGroupobjective_method.png

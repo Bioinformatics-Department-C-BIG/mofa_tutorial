@@ -25,7 +25,7 @@ rownames(sh1)<-sh1$Name
 
 # Concatenate categories first 
 colnames(sh1)[1]<-'tool'
-method_cats<-sh1[,c(1,7:16)]
+method_cats<-sh1[,c(1,8:16)]
 
 # remove empty rownames
 rownames(method_cats)<-method_cats$tool
@@ -45,10 +45,11 @@ method_cats_ordered<-dd[
 #
 method_cats_ordered
 
-# now melt 
+# now melt  
 colnames(method_cats)<-cat_names
 method_cats_t<-  add_rownames(method_cats, var='tool')
 
+# add the categories in one row
 t2<-method_cats_t %>%
     gather(key, value, -tool)%>%
     filter(value==1) 
@@ -60,7 +61,8 @@ t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ",\\newline ")
 
 t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ", ")
 
-
+# Print tools and cats in one row!!
+write.csv(t4, 'review/output/tools_categories.csv')
 
 
 
@@ -101,7 +103,7 @@ sh2$Name<-NULL
 sh2_chr<-sapply(sh2, as.character)
 row.names(sh2_chr)<-row.names(sh2)
 sh2$Ch1...Nonlinear.interactions[startsWith('X*',sh2$Ch1...Nonlinear.interactions)]
-sh2_chr[which(startsWith(sh2_chr,'X', trim=TRUE))]<-1
+sh2_chr[which(startsWith(sh2_chr,'X'))]<-1
 
 sh2_chr[sh2_chr!=1]<-NA
 
@@ -151,6 +153,30 @@ write.table(t_final, file = "review/output/method_categories_concatenated__chall
 df_challenges$tool
 
 
-
+t_final
 method_cats_ordered
+
+
+#####
+
+# make it pretty!
+
+ft3=flextable(t_final) %>% 
+  autofit(add_w = 0.1,  part = c("body", "header"))
+ highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("no", "yes"), source=c("Var1"))
+ft3<-hline(ft3, i =5 )
+ft3<-set_header_labels(ft3, Var1 = 'Omics pair', Freq='Frequency', concat = 'Disease' ) 
+ft3
+
+
+
+
+
+
+
+
+
+
+
+
 

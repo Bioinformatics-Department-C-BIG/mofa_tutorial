@@ -3,6 +3,8 @@
 #BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
 #install.packages('edgeR')
 #BiocManager::install('limma')
+#BiocManager::install('Glimma')
+
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
 
@@ -268,13 +270,17 @@ abline(h=median(v$E),col="blue")
 
 
 #### SAVE
+v_all<-v$E
 v_most_var<-v$E[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-v_most_var
   write.csv(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
-}else{
+  write.csv(  v_all, paste0(output_files,'highly_variable_proteins_normalized_VOOM_full.csv'))
+  
+  }else{
   highly_variable_genes_voom<-v_most_var
   write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
+  write.csv(v_all,paste0(output_files,'highly_variable_genes_normalized_VOOM_full.csv'))
   
 }
 

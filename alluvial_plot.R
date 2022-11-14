@@ -4,14 +4,16 @@
 
 #install.packages('alluvial')
 #install.packages('ggalluvial')
-#install.packages('ggsankey')
+install.packages('ggsankey')
 library('ggalluvial')
 library('alluvial')
 
-library('ggsankey')
+#library('ggsankey')
+library('dplyr')
+library('tidyr')
 
 # Switch this to print both
-cancer_filter=c("yes")
+cancer_filter=c("no")
 
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
@@ -43,9 +45,10 @@ levels(as.factor(new2$Data))
 
 axis2='objective'
 
-counts<-new2 %>% count(objective, method)
+counts<-new2 %>%
+  count(objective, method)
 new2
-n_cutoff<-1
+n_cutoff<-2
 
 df<-counts
 counts<-new2 %>% count(objective, method)
@@ -61,26 +64,27 @@ counts<-new2 %>% count(objective, method)
 axis1='Data'
 axis2="objective"
 counts1 <- new2 %>% 
-  count( Data, objective) %>%
+  group_by_at(c('Data', 'objective')) %>%
+  count(c('Data', 'objective')) %>%
   mutate(
     col = objective
   )
 
 counts1<-counts1%>% 
   group_by('Data') %>%
-  filter(n>4)
+  filter(n>n_cutoff)
 counts1
  counts<-counts1 %>% ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
 
 
-
-
+ counts$key_names<-counts$col
+ counts<-relabel_objectives_short(counts)
+ counts$col<- counts$key_names
+ 
  df<-counts
 g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
-  # geom_lode(width = 1/6) +
   geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
             curve_type = "cubic") +
-  # geom_alluvium(aes(fill = stratum)) +
   geom_stratum(color = "grey", width = 1/6) + 
   geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
   theme(

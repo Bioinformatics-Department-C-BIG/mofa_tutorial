@@ -134,7 +134,10 @@ title("Barplot of library sizes")
 ######## boxplots
 # count data is not normally distributed
 # Get log2 counts per million so we can examine count data
+
 logcounts <- cpm(y,log=TRUE)
+logcounts
+
 # Check distributions of samples using boxplots
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
@@ -277,7 +280,7 @@ if (prot){
   write.csv(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
   write.csv(  v_all, paste0(output_files,'highly_variable_proteins_normalized_VOOM_full.csv'))
   
-  }else{
+}else{
   highly_variable_genes_voom<-v_most_var
   write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
   write.csv(v_all,paste0(output_files,'highly_variable_genes_normalized_VOOM_full.csv'))
@@ -310,5 +313,9 @@ dev.off()
 # let's highlight the top 100 most DE genes
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
+
+
+
+
 ggsave(paste0(output_de,'volcano.png'), type='cairo')
 

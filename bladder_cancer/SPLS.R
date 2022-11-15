@@ -2,7 +2,7 @@
 BiocManager::install(c("edgeR"))
 BiocManager::install(c("Glimma"))
 
-#library(mixOmics)
+library(mixOmics)
 #### 
 # Preprocessing 
 
@@ -37,53 +37,8 @@ X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 
-X1_t_raw<-transpose_matrix(X1_raw)
-X2_t_raw<-transpose_matrix(X2_raw)
-
-most_var=TRUE
-
-
-X1_cut<-preprocess_raw_data(X1_raw, cut_n=27000)
-
-
-X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
-X1_t_most_var<-filter_most_var(X1_t_cut,most_var,ng_g)
-
-
-X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
-X2_t_most_var<-filter_most_var(X2_t_cut, most_var,ng_p)
-
-
-X1_t_1<-as.data.frame(cpm(X1_t_most_var, log = TRUE) )
-X2_t_1<-as.data.frame(cpm(X2_t_most_var, log = TRUE) )
-
-
-#X2_t_un<-as.data.frame(highly_variable_proteins)
-#X2_t<-as.data.frame(t(X2_t_un))
-
-
-##### bring data processed by deseq2
-#select_var_5000 <- names(sort(var_genes, decreasing=TRUE))[1:(length(var_genes)/ng_g)]
-#head(select_var)
-# Subset logcounts matrix
-#highly_variable_lcpm_most_var <- logcounts[select_var_5000,]
-
-#X1_t_un<-as.data.frame(highly_variable_genes)
-#X1_t<-as.data.frame(t(X1_t_un))
-#rownames(X1_t)<-seq(1:16)
-#rownames(X2_t)<-seq(1:16)
-
-
-# question: should I normalize the data? use broad institute recomendations in protigy? 
-
-
-Y_raw$Subtype<-as.factor(Y_raw$Subtype)
-################
-#### Preprocessing -transpose
-
-### Preprocessing select the msot variable genes by the Median absolute deviation
-
-
+X1_t=t(highly_variable_genes_mofa)
+X2_t = t(highly_variable_proteins_mofa)
 
 ncomp_g=5
 ncomp_p=5
@@ -91,14 +46,10 @@ param_str_g<-paste0( '_edger_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2),
 param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2),  ', ncomp = ', ncomp_g)
 
 
-# TODO: load from file output_file
-X1_t=t(highly_variable_genes_voom)
-X2_t = t(highly_variable_proteins_voom)
-
 
 pca.gene <- pca(X1_t, ncomp = ncomp_g, center = TRUE, scale = TRUE)
 
-
+param_str_g='50'
 png(paste0(output, 'pca_gene_percent', param_str_g, '.png'))
 plot(pca.gene)
 dev.off()
@@ -249,9 +200,9 @@ readRDS(file = fname)
 #spls.bladder<-result.spls
 
 # use all tuned values from above
-final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal$ncomp, 
-                         keepX = optimal$keepX,
-                         keepY = optimal$keepY,
+final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal.ncomp, 
+                         keepX = optimal.keepX,
+                         keepY = optimal.keepY,
                          mode = "canonical") # explanitory approach being used, 
 
 

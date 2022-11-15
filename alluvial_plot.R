@@ -29,6 +29,7 @@ if (axis2 == 'disease_group'){
 new2<-new2 %>% filter( (!!sym(axis2)) %in% most_common_objectives)
 new2<-new2 %>% filter( ! (!!sym(axis2)) %in% c('multiomics pathway analysis', 'biomarker discovery'))
 
+new2<-group_objectives(new2, 'objective')
 
 new2<-new2[!is.na(new2[axis2]),]
 new2<-new2[!is.na(new2[axis1]),]

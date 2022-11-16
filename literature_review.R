@@ -201,6 +201,10 @@ rel_txt=1.5
 plotByData(freq_to_plot, y_group=x_group)
 
 
+
+pal_npg("nrc", alpha = 0.9)(10)
+
+freq_to_plot<-freq_to_plot[!is.na(freq_to_plot$Cancer),]
   ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
   geom_bar(stat='identity',position='stack',  color='black')+
@@ -209,10 +213,10 @@ plotByData(freq_to_plot, y_group=x_group)
   theme(plot.margin=unit(c(1,1,2,1.5),"cm"))+
   labs(y='Number of studies')+
    scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))+
-    scale_fill_manual(values =viridis(2))
+    scale_fill_manual(values =c('#F39B7FE5', '#8491B4E5'))
     
 
-ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
+  ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
 
 
 
@@ -527,8 +531,8 @@ if (x_group == 'objective'){
   
   df_to_plot<- add_percentage(df_to_plot)
   
-  plot_width=9
-  plot_height=4
+  plot_width=11
+  plot_height=4.5
   plot_cols=TRUE
   stack_horiz=TRUE
   xangle=0
@@ -575,6 +579,9 @@ show_p
 
 # df_to_plot[df_to_plot$disease_group=='Metabolism',]
 
+# df_to_plot[df_to_plot$disease_group=='Metabolism',]
+
+length(most_common_pairs)
 
 
 

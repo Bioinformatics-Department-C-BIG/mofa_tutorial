@@ -261,24 +261,23 @@ group_disease<-function(df, Var1){
 
 
 ### Only keep the most common combinations!! 
-filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17), x_group ){
+filter_common_groups<-function(df_by_group,freq_cutoff = c(5,5), x_group ){
   #' Returns the most common groups 
   #' freq_cutoff[1]: y-axis, freq_cutoff[2]: x-axis variables
   #' @return most_common_pairs, most_common_groups
   df_most_common<-df_by_group %>%
     group_by(Var1)  %>%
     summarise( Freq=sum(Freq) , .groups='drop') %>%
-    filter(Freq>freq_cutoff[1]) %>%
     as.data.frame()
-  
-  most_common_pairs<-df_most_common['Var1']
+  sel<-order(df_most_common$Freq, decreasing = TRUE)[1:8]
+  most_common_pairs<-df_most_common[,'Var1'][sel]
   
   df_most_common<-df_by_group %>%
     group_by_at(x_group)  %>%
     summarise( Freq=sum(Freq) , .groups='drop') %>%
-    filter(Freq>freq_cutoff[2]) %>%
     as.data.frame()
-  most_common_groups<-df_most_common[x_group]
+  sel<-order(df_most_common$Freq, decreasing = TRUE)[1:8]
+  most_common_groups<-df_most_common[,x_group][sel]
   
   return(list(most_common_pairs, most_common_groups))
 }
@@ -397,7 +396,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
   }else{
       #theme(legend.position = 'none')
     g=g+scale_fill_manual(values = mycolors)
-      g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
+      g = g +theme(plot.margin=unit(c(1,1.5,1,2),"cm"))
       
 
   }

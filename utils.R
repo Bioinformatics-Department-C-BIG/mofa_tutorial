@@ -2,6 +2,11 @@
 
 #install.packages('ggforce')
 library(ggforce)
+library("scales")
+#install.packages('ggsci')
+library("ggsci")
+
+
 
 # TODO: change functionality, don't replace but add to more than one categories at the
 rel_txt<-1.5
@@ -229,14 +234,15 @@ group_objectives_method<-function(df, Var1){
 group_disease<-function(df, Var1){
   df[Var1]<-sapply(df[Var1],function(x){
     mgsub::mgsub(tolower(x),  
-                c(".*alzheimer.*|.*amyotrophic.*|.*anxiety*|.*depressi.*|.*parkinson.*|.*autism.*|.*multiple sclerosis.*|.*epilepsy.*",
-                  '.*cardio.*|.*heart.*|.*coronary.*|.*valve.*|.*atrial.*',
-                  '.*bowel.*|.*hep.*|.*liver.*|.*nafld.*|.*crohn.*', 
-                  '.*arthritis.*|.*osteo.*|.*fasioscapulo.*', 
+                c(".*alzheimer.*|.*amyotrophic.*|.*anxiety*|.*huntington.*|.*depressi.*|.*parkinson.*|.*autism.*|.*multiple sclerosis.*|.*epilepsy.*",
+                  '.*cardio.*|.*heart.*|.*coronary.*|.*valve.*|.*atrial.*|.*stroke.*|.*blood pressure.*',
+                  '.*bowel.*|.*hep.*|.*liver.*|.*nafld.*|.*crohn.*|.*ibd.*', 
+                  '.*arthritis.*|.*osteo.*|.*facioscapulo.*', 
                   '.*diabetes.*', 
-                  '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*|.*cigarette.*|.*traffic.*',
+                  '.*pulmonar.*|.*lung.*|.*copd.*|.*smoking.*|.*pneumonia.*|.*cigarette.*|.*covid.*|.*traffic.*',
                   '.*metabolic.*|.*insulin.*|.*fasting.*',
-                  '.*bladder.*|.*kidney.*|.*renal.*'),
+                  '.*bladder.*|.*kidney.*|.*renal.*', 
+                  '.*immune.*|.*sjögren.*|.*vogt.*|.*hiv.*|.*cytokine.*'),
                 c('Nervous', 
                   'Cardiovascular',
                   'Gastrointestinal', 
@@ -244,7 +250,8 @@ group_disease<-function(df, Var1){
                   'Endrocrine', 
                   'Pulmonary', 
                   'Metabolism', 
-                  'Urinary' ))}
+                  'Urinary', 
+                  'Immune'))}
    
   )
   #new_col=as.factor(new_col)
@@ -254,15 +261,26 @@ group_disease<-function(df, Var1){
 
 
 ### Only keep the most common combinations!! 
-filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17) ){
+filter_common_groups<-function(df_by_group,freq_cutoff = c(17,17), x_group ){
   #' Returns the most common groups 
   #' freq_cutoff[1]: y-axis, freq_cutoff[2]: x-axis variables
+  #' @return most_common_pairs, most_common_groups
   df_most_common<-df_by_group %>%
-    group_by(Var1, Cancer)  %>%
-    filter( sum(Freq) >= freq_cutoff[1]) %>%
+    group_by(Var1)  %>%
+    summarise( Freq=sum(Freq) , .groups='drop') %>%
+    filter(Freq>freq_cutoff[1]) %>%
+    as.data.frame()
+  
+  most_common_pairs<-df_most_common['Var1']
+  
+  df_most_common<-df_by_group %>%
     group_by_at(x_group)  %>%
-    filter( sum(Freq) >= freq_cutoff[2])
-  return(df_most_common)
+    summarise( Freq=sum(Freq) , .groups='drop') %>%
+    filter(Freq>freq_cutoff[2]) %>%
+    as.data.frame()
+  most_common_groups<-df_most_common[x_group]
+  
+  return(list(most_common_pairs, most_common_groups))
 }
 
  
@@ -307,17 +325,31 @@ plot_cols=TRUE
 
 #[1] "#A6CEE3" "#1F78B4" "#B2DF8A" "#33A02C" "#FB9A99" "#E31A1C" "#FDBF6F"
 #[8] "#FF7F00"  "#CAB2D6" "#6A3D9A" "#FFFF99" "#B15928"
-mycolors=c("epigenomics - transcriptomics" = '#1F78B4', 
-           "epigenomics - genomics" = '#A6CEE3',
-           "genomics - transcriptomics" = '#B2DF8A',
-           "proteomics - transcriptomics" = '#33A02C',
-           "metabolomics - proteomics" = "#E31A1C" ,
-           "metabolomics - transcriptomics" = "#FB9A99", 
-           "metabolomics - metagenomics" = "#FDBF6F", 
+mycolors=c("epigenomics - transcriptomics" = '#3C5488FF', 
+           "epigenomics - genomics" = '#4DBBD5FF',
+           "genomics - transcriptomics" = '#91D1C2FF',
+           "epigenomics - proteomics" = '#8491B4FF',
+           "proteomics - transcriptomics" = '#00A087FF',
+           "metabolomics - proteomics" = "#F39B7FFF" ,
+           "metabolomics - transcriptomics" = "#B09C85FF", 
+           "metabolomics - metagenomics" = "#7E6148FF", 
            "other" = "#808080")
 
-plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_height=8, angle=30, plot_cols=FALSE){ 
-  text_size=14
+mycolors=c("E - T" = '#3C5488FF', 
+           "E - G" = '#4DBBD5FF',
+           "G - T" = '#91D1C2FF',
+           "E - P" = '#8491B4FF',
+           "P - T" = '#00A087FF',
+           "M - P" = "#F39B7FFF" ,
+           "M - T" = "#B09C85FF", 
+           "M - Mg" = "#7E6148FF", 
+           "other" = "#808080")
+
+
+
+plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, 
+                          plot_height=8, xangle=0, plot_cols=FALSE, stack_horiz=FALSE){ 
+  text_size=12
   text_size_small=12
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.jpeg')
@@ -333,22 +365,26 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
   
   #### plot filter 
  
+  df$y = df$Freq
+  df$y = df$percent
+  #g<-ggplot(df, aes(x=reorder(key_names, -y, sum), y=y, fill=Var1))+
+  g<-ggplot(df, aes(x=reorder(key_names, -y, sum), y=y, fill=Var1))+
   
-  g<-ggplot(df, aes(x=reorder(key_names, -Freq, sum), y=Freq, fill=Var1))+
     geom_bar(stat='identity',position='stack', color='black')+
-    coord_flip()+
-  
     guides(fill = guide_legend(title = legend_t))+
-    labs(x=NULL, y='Number of studies')
+    labs(x=NULL, y='percentage of total omics combinations')
+  
+  if (stack_horiz){  g<-g+   coord_flip()}
+
   
   
   
   # text size related options
-  g=g+ theme(axis.text.x = element_text(size=text_size, margin = margin(t = 0,b=0),angle = angle, vjust = 0.5, hjust=1))+
+  #,
+  g=g+ theme(axis.text.x = element_text(size=text_size, margin = margin(t = 0,b=0), vjust = 0.5,  angle = xangle,hjust=1))+
     theme(axis.text.y = element_text(size=text_size), axis.title.y =element_text(size=text_size),
     legend.text=element_text(size=text_size_small))
     
-  
   
   if (colname == 'method'){
     print('paired brewer')
@@ -359,8 +395,8 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
     g=g+scale_fill_manual(values = mycolors)
     g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
   }else{
-    g=g+scale_fill_manual(values = mycolors)+
-      theme(legend.position = 'none')
+      #theme(legend.position = 'none')
+    g=g+scale_fill_manual(values = mycolors)
       g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
       
 
@@ -373,7 +409,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
       # Add the two plots for cancer and not cancer in a row
       
       g<-g+facet_wrap(vars(Cancer),  scales = 'free_x',  labeller = labeller(Cancer=
-             c('no'=' ','yes' =' ')))+
+             c('no'='Other Diseases','yes' ='Cancer')))+
         theme(strip.text.y = element_text(size = text_size))
       
         #scale_x_discrete(expand = c(0, 0.5))
@@ -383,7 +419,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8, plot_
         
         # add the percentage labels 
         g<-g+ geom_text(aes( label=ifelse(percent>12,paste0(sprintf("%.0f", percent),"%"),'')), 
-                           position=position_stack(vjust=0.5), size = 2) 
+                         position=position_stack(vjust=0.5), size = 2) 
         
         
       ggsave(fname, width = plot_width, height=plot_height)
@@ -431,6 +467,42 @@ relabel_objectives_short<-function(df_to_plot){
   return(df_to_plot)
 }
 
+relabel_omics_short<-function(x_data){
+  #' Use only before plotting 
+  #' 
+  #'df[Var1]=as.factor(df[Var1])
+  #' @param Var1: name of the column to replace
+  #' @param df: name of the df 
+  #' @return: the whole df 
+  
+  x_data<-sapply(x_data,function(x){
+    mgsub::mgsub(tolower(x), 
+                # metagenomics should be relabelled first
+                   c("metabolomics - metagenomics",
+                     "epigenomics - transcriptomics", 
+                   "epigenomics - genomics",
+                   "genomics - transcriptomics", 
+                   "genomics - proteomics",
+                   "epigenomics - proteomics" ,
+                   "proteomics - transcriptomics", 
+                   "metabolomics - proteomics" ,
+                   "metabolomics - transcriptomics"),
+                   c('M - Mg' ,
+                  'E - T',
+                    'E - G',
+                    'G - T',
+                    'G - P',
+                    'E - P',
+                    'P - T',
+                    'M - P',
+                    'M - T'
+                    )
+  )})
+  return(x_data)                 
+}
+
+
+
 
 run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
   
@@ -451,7 +523,7 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
     theme(
       panel.background = element_blank(),
       axis.text.y = element_blank(),
-      axis.text.x = element_text(size = 15, face = "bold"),
+      axis.text.x = element_text(size = 12, face = "bold"),
       axis.title = element_blank(),
       axis.ticks = element_blank(),
       legend.position = "none"
@@ -463,7 +535,6 @@ run_sankey<-function(df_to_plot,axis1, axis2,cancer_filter){
   ggsave(paste0('plots/ggalluvial', as.character(paste0(axis1, axis2)),'_', cancer_filter, '.png'), width = 7, height=6)
   
 }
-
 
 
 

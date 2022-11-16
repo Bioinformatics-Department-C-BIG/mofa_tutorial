@@ -22,7 +22,10 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
-remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other')
+remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other', 
+                     'molecular interactions', 'understand molecular mechanisms', 
+                     'downstream', 
+                     'drug repurposing', 'missing data')
 
 
 # Process; if methylation or histone; add epigenomics!
@@ -70,7 +73,7 @@ group_objectives<-function(df, Var1){
                      mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*',
                                                '.*connect.*',
                                                'multiomics pathway analysis'),
-                                  c('Diagnosis/Prognosis', 
+                                  c('diagnosis/ prognosis', 
                                     'Extract complex patterns', 
                                     'downstream')))
   return(df)
@@ -452,20 +455,18 @@ df_by_group<-new %>%
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-df_by_group['key_names']<-df_by_group[x_group]
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
-# non cancer: 10,7, cancer: 7,3,
-# add percentages to the plots 
 
 
-
-df<-df_by_group
+    
 
 add_percentage<-function(df){
-  df = plyr::ddply(df, .(objective, Cancer), transform, 
-                   percent = Freq/sum(Freq) * 100)
+  
+  df<-df %>%
+    group_by_at(c(x_group, 'Cancer')) %>%
+    mutate(percent=Freq/sum(Freq)*100)
   
   return(df)
 }
@@ -475,55 +476,104 @@ add_percentage<-function(df){
 
 # Switch here for both 
 x_group<-'objective'
-#x_group<-'disease_group'
-freq_cutoff_objectives<-c(10,10)
-if (x_group == 'objective'){
+# x_group<-'disease_group'
+freq_cutoff<-c(20,17)
 
-  df_most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff_objectives )
-  df_to_plot<-df_most_common
+ if (x_group=='disease_group'){
+  df_by_group<-df_by_group_disease
+  freq_cutoff<-c(20,7)
+  
+  
+}
+  
+  
+
+
+###### Group the not common combinations together and label as none
+most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff, x_group=x_group)
+most_common_pairs<-unlist(most_common[[1]])
+most_common_groups<-unlist(most_common[[2]])
+most_common_pairs
+most_common_groups; length(most_common_groups)
+freq_cutoff_objectives<-c(5,5)
+df_filt<-df_by_group
+df_filt$Var1<-as.factor(df_filt$Var1)
+
+levels(df_filt$Var1)[!(levels(df_filt$Var1) %in% most_common_pairs)]<-'other'
+## Regroup and sum the frequency  combinations after renaming
+df_filt<-df_filt %>% 
+  group_by_at(c(x_group, 'Cancer', 'Var1')) %>%
+  summarise(Freq=sum(Freq), .groups = 'drop') %>% 
+  as.data.frame() 
+
+# put the other category last! 
+new_l<-levels(df_filt$Var1);
+new_l<-c(  'other',new_l[-which(new_l=='other')])
+df_filt$Var1<-factor(df_filt$Var1, levels=new_l)
+df_filt['key_names']<-df_filt[x_group]
+
+# Remove low frequency groups
+df_filt<-df_filt[(df_filt[,x_group] %in% c(most_common_groups)),]
+
+if (x_group == 'objective'){
+  
+  df_to_plot<-df_filt
   df_to_plot<-relabel_objectives_short(df_to_plot)
+  df_to_plot$Var1<-relabel_omics_short(df_to_plot$Var1)
+  
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=9
-  plot_height=6
-  plot_cols=TRUE
-  df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery', 'downstream', 'molecular interactions')),]
+
+  df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
+  
   df_to_plot<- add_percentage(df_to_plot)
   
+  plot_width=9
+  plot_height=4
+  plot_cols=TRUE
+  stack_horiz=TRUE
+  xangle=0
   
-}else if (x_group == 'disease_group' ){
+  }else if (x_group == 'disease_group' ){
   # select common groups 
-  df_by_group<-df_by_group_disease
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(5,5))
-  
-  df_to_plot<-df_most_common
+
+  df_to_plot<-df_filt
   # show them all
   #df_to_plot<-df_by_group
+  
+  df_to_plot$Var1<-relabel_omics_short(df_to_plot$Var1)
   
   # remove cancer
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='all diseases',]
   
   df_to_plot<-df_to_plot[!df_to_plot['Cancer']=='NA',]
+  df_to_plot<- add_percentage(df_to_plot)
   
-  plot_width=9
-  plot_height=5
+  
+  
+  plot_width=7
+  plot_height=6
   plot_cols=TRUE
+  stack_horiz=FALSE
+  xangle=30
+  
+  
 }
 
 
 # Remove non_cancer
 
 df_to_plot<-df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
 # df_to_plot=  plot_filters(df_to_plot)
 
 
 
 
-show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
+show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols,
+                        stack_horiz = stack_horiz, xangle=xangle)
 show_p
 
-
+# df_to_plot[df_to_plot$disease_group=='Metabolism',]
 
 
 

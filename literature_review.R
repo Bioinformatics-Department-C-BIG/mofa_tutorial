@@ -550,8 +550,8 @@ if (x_group == 'objective'){
   
   
   
-  plot_width=11
-  plot_height=6
+  plot_width=10
+  plot_height=5
   plot_cols=FALSE
   stack_horiz=TRUE
 

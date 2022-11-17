@@ -407,11 +407,6 @@ stats_expanded<-expand_ObjeMeth(stats)
 stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 stats_fil<-stats_expanded
 
-#stats_fil$disease_group<-group_disease(stats_fil$Disease)
-
-#change here to select by objective or by method 
-# TODO: MAKE this one variable to choose method or objective
-
 
 
 
@@ -480,12 +475,12 @@ add_percentage<-function(df){
 
 # Switch here for both 
 x_group<-'objective'
-# x_group<-'disease_group'
-freq_cutoff<-c(20,17)
+x_group<-'disease_group'
+top_n<-c(8,8)
 
  if (x_group=='disease_group'){
   df_by_group<-df_by_group_disease
-  freq_cutoff<-c(20,7)
+  top_n<-c(8,11)
   
   
 }
@@ -494,7 +489,7 @@ freq_cutoff<-c(20,17)
 
 
 ###### Group the not common combinations together and label as none
-most_common<-filter_common_groups(df_by_group, freq_cutoff =freq_cutoff, x_group=x_group)
+most_common<-filter_common_groups(df_by_group, top_n =top_n, x_group=x_group)
 most_common_pairs<-unlist(most_common[[1]])
 most_common_groups<-unlist(most_common[[2]])
 most_common_pairs
@@ -531,8 +526,8 @@ if (x_group == 'objective'){
   
   df_to_plot<- add_percentage(df_to_plot)
   
-  plot_width=11
-  plot_height=4.5
+  plot_width=12
+  plot_height=4
   plot_cols=TRUE
   stack_horiz=TRUE
   xangle=0
@@ -555,12 +550,11 @@ if (x_group == 'objective'){
   
   
   
-  plot_width=7
+  plot_width=11
   plot_height=6
-  plot_cols=TRUE
-  stack_horiz=FALSE
-  xangle=30
-  
+  plot_cols=FALSE
+  stack_horiz=TRUE
+
   
 }
 
@@ -574,10 +568,8 @@ df_to_plot<-df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
 
 
 show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols,
-                        stack_horiz = stack_horiz, xangle=xangle)
+                        stack_horiz = stack_horiz)
 show_p
-
-# df_to_plot[df_to_plot$disease_group=='Metabolism',]
 
 # df_to_plot[df_to_plot$disease_group=='Metabolism',]
 

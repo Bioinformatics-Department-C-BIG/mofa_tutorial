@@ -276,7 +276,7 @@ filter_common_groups<-function(df_by_group,freq_cutoff = c(5,5), x_group ){
     group_by_at(x_group)  %>%
     summarise( Freq=sum(Freq) , .groups='drop') %>%
     as.data.frame()
-  sel<-order(df_most_common$Freq, decreasing = TRUE)[1:8]
+  sel<-order(df_most_common$Freq, decreasing = TRUE)[1:10]
   most_common_groups<-df_most_common[,x_group][sel]
   
   return(list(most_common_pairs, most_common_groups))
@@ -390,9 +390,9 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
     g=g+ scale_fill_brewer(palette = 'Paired')+
       theme(plot.margin=unit(c(1,1,1.8,2.2),"cm"))
     
-  }else if (x_group=='disease_group'){
-    g=g+scale_fill_manual(values = mycolors)
-    g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
+    #}else if (x_group=='disease_group'){
+    #g=g+scale_fill_manual(values = mycolors)
+    #g = g +theme(plot.margin=unit(c(1,1.8,4,2.2),"cm"))
   }else{
       #theme(legend.position = 'none')
     g=g+scale_fill_manual(values = mycolors)
@@ -417,21 +417,20 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
         
         
         # add the percentage labels 
-        g<-g+ geom_text(aes( label=ifelse(percent>12,paste0(sprintf("%.0f", percent),"%"),'')), 
-                         position=position_stack(vjust=0.5), size = 2) 
-        
-        
-      ggsave(fname, width = plot_width, height=plot_height)
-
+      
     }else{
       print('add rows')
       
         g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
                   c('no'='Other Diseases','yes' ='Cancer')),  
-                       scales = 'free_y')   +
+                       scales = 'free')   +
           theme(strip.text.x = element_text(size = text_size))
         
-        }
+    }
+      
+      g<-g+ geom_text(aes( label=ifelse(percent>12,paste0(sprintf("%.0f", percent),"%"),'')), 
+                      position=position_stack(vjust=0.5), size = 3) 
+      
       ggsave(fname, width = plot_width, height=plot_height)
       ggsave(fname2, width = plot_width, height=plot_height)
       

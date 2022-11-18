@@ -60,17 +60,17 @@ group_methods<-function(df, Var1){
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*", 
                    ".*consensus*",
                    ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*pins.*|.*kernel.*', 
+                   '.*kernel.*|.*cimlr.*|.*rmkl.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
+                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*|.*lra cluster*|.*icluster.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
-                   '.*lra cluster*',
+                   '.*pins.*|.*nemo.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
-                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
+                   '.*metaboanalyst.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
                    '.*kmeans.*|.*k-means.*'), 
                  c( "ML/DL Classification", 
                     "ML Clustering", 
@@ -81,9 +81,9 @@ group_methods<-function(df, Var1){
                     'Network-Based',
                     'Network-Based - Similarity network', 
                     'Similarity based',
-                    'JDR - LN - Correlation',
+                    'JDR - Correlation',
                     'Correlation',
-                    'JDR - LN - Partial least squares',
+                    'JDR - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools', 
                     'ML - DR'
@@ -108,27 +108,31 @@ group_methods_to_short<-function(df, Var1){
     mgsub::mgsub(tolower(x), 
                  tolower(c( "ML/DL Classification", 
                     'JDR - NL',
+                    'Kernel based',
                     'JDR - LN',
                     'Regression', 
-                    'JDR - LN - Matrix Factorization', 
+                    'Factor analysis', 
                     'Network-Based',
                     'Network-Based - Similarity network', 
-                    'JDR - LN - Correlation',
+                    'Similarity based',
+                    'JDR - Correlation',
                     'Correlation',
-                    'JDR - LN - Partial least squares',
+                    'JDR - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools'
                  )),
-                  c( "ML/DL Classification", 
+                  c( "ML/DL (early)", 
                     'jDR - NL',
+                    'KB', 
                     'jDR - LN',
                     'Regression', 
-                    'jDR - MF', 
+                    'FA', 
                     'NB',
                     'NB - SN', 
-                    'jDR - CCA',
+                    'SIM',
+                    'CCA',
                     'Correlation',
-                    'jDR - PLS',
+                    'PLS',
                     'multiomics pathway analysis',
                     'Other tools'
                   ))}
@@ -416,9 +420,9 @@ relabel_objectives_short<-function(df_to_plot){
   df_to_plot[ind,]$labels<-'detect molecular patterns'
   df_to_plot[ind,]$key_names<-'detect molecular patterns'
   
-  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-  df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
-  df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
+  #  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
+  #  df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
+  # df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
   
   ind<-df_to_plot$labels%in% c('si')
   df_to_plot[ind,]$labels<-'subtype identification'

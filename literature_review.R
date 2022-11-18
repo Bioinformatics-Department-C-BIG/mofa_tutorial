@@ -22,7 +22,8 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
-remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other')
+remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other', 'understand molecular mechanisms', 
+                     'molecular interactions', 'downstream')
 
 
 # Process; if methylation or histone; add epigenomics!

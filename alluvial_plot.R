@@ -18,7 +18,7 @@ cancer_filter=c("no")
 new2<-new %>% 
   mutate(Data=strsplit(Data, ',|\r|\n' ) )%>%
   unnest(Data) 
-
+new2$objective
 # for data-disease run literature_review, for objective run combined
 axis1='Data'
 axis2='objective'
@@ -26,7 +26,7 @@ axis2='objective'
 if (axis2 == 'disease_group'){
   new2$disease_group<-group_disease(new2, 'Disease')$Disease
   new2<-new2[new2$disease_group %in% df_most_common_disease$disease_group,]}
-new2<-new2 %>% filter( (!!sym(axis2)) %in% most_common_objectives)
+new2<-new2 %>% filter( (!!sym(axis2)) %in% most_common_groups)
 new2<-new2 %>% filter( ! (!!sym(axis2)) %in% c('multiomics pathway analysis', 'biomarker discovery'))
 
 new2<-group_objectives(new2, 'objective')
@@ -57,6 +57,20 @@ counts<-new2 %>% count(objective, method)
 
 
 
+##### Count most common objective
+unique_ids<-new2 %>% 
+  group_by_at('objective') %>%
+  count('PMID')
+NROW(unique_ids)
+
+
+
+# Count unique objective-study pairs 
+new2 %>% 
+  group_by_at(c('objective', 'PMID')) %>%
+  count(c('objective', 'PMID'))%>%
+  group_by_at(c('objective')) %>%
+  count('PMID')
 
 
 
@@ -64,26 +78,42 @@ counts<-new2 %>% count(objective, method)
 # New implementation with ggalluvial
 axis1='Data'
 axis2="objective"
+
+
+
 counts1 <- new2 %>% 
   group_by_at(c('Data', 'objective')) %>%
   count(c('Data', 'objective')) %>%
   mutate(
-    col = objective
-  )
+     col = objective
+  )%>%
+  as.data.frame()
+n_cutoff=5
 
-counts1<-counts1%>% 
-  group_by('Data') %>%
-  filter(n>n_cutoff)
+#Choose top omics only 
+omics_freqs= as.data.frame(aggregate(counts1$freq, list(counts1$Data), FUN=sum) )
+top_omics<-omics_freqs[order(omics_freqs$x, decreasing = TRUE),1][1:4]
+counts1=counts1[counts1$Data %in% top_omics,]
+counts1
+
+# Rename the objectives 
+
+counts1$key_names<-counts1$objective
+counts1<-relabel_objectives_short(counts1)
+counts1$objective<- counts1$key_names
+counts1$labels<-NULL
+counts1$col=counts1$objective
+  
+
+counts1<-counts1[!(counts1$objective %in% remove_objectives),]
+
+
 counts1
  counts<-counts1 %>% ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))
 
 
- counts$key_names<-counts$col
- counts<-relabel_objectives_short(counts)
- counts$col<- counts$key_names
- 
  df<-counts
-g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = n)) +
+g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = freq)) +
   geom_flow(aes(fill = col), width = 1/6, color = "darkgray",
             curve_type = "cubic") +
   geom_stratum(color = "grey", width = 1/6) + 

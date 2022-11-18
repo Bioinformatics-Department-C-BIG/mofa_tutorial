@@ -19,13 +19,13 @@ sh1<-sh1[-c(2),]
 
 
 sh1 <- sh1[!((is.na(sh1[1]=='') | (sh1[1]=='') )),]
-cat_names<-colnames(sh1[,c(7:16)])
+cat_names<-colnames(sh1[,c(8:12,14:16)])
 sh1<-data.frame(sh1)
 rownames(sh1)<-sh1$Name
 
 # Concatenate categories first 
 colnames(sh1)[1]<-'tool'
-method_cats<-sh1[,c(1,8:16)]
+method_cats<-sh1[,c(1,8:12,14:16)]
 
 # remove empty rownames
 rownames(method_cats)<-method_cats$tool

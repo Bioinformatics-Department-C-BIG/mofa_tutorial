@@ -193,7 +193,7 @@ df_by_group$perc<-as.numeric(df_by_group$Freq)/(NROW(new))*100
 
 
 ######## Plotting - Filter
-freq_cutoff<-c(5,5)
+freq_cutoff<-c(2,2)
 df_most_common<-filter_common_groups(df_by_group,freq_cutoff=freq_cutoff)
 # group all the miscellaneous in one category
 most_common_groups<-levels(as.factor(df_most_common$Var1))
@@ -211,11 +211,11 @@ df_to_plot$objective[!(df_to_plot$objective %in% most_common_objectives)]<-'Othe
 
 # remove most common objective -only for visualization
 df_to_plot<-df_to_plot[(df_to_plot$objective %in% most_common_objectives),]
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
 
 df_to_plot<-df_to_plot[(df_to_plot$Var1 %in% most_common_groups),]
 df_to_plot<-df_to_plot[!(df_to_plot$Var1 == 'multiomics pathway analysis'),]
-df_to_plot<-df_to_plot[!(df_to_plot$objective %in% c('multiomics pathway analysis', 'biomarker discovery')),]
+df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
 
 
 #df_to_plot$Var1<-factor(df_to_plot$Var1, levels = c()
@@ -229,8 +229,8 @@ df_to_plot<-relabel_objectives_short(df_to_plot)
 df_to_plot<-group_methods_to_short(df_to_plot,'Var1' )
 levels_to_reorder<-levels(as.factor(df_to_plot$Var1))
 
-levels_order=c("Regression" , "Correlation","jDR - LN" , "jDR - PLS", "jDR - CCA", "jDR - MF",  "jDR - NL" ,        
-                "NB","NB - SN", "ML/DL Classification" ,"Other tools")
+levels_order=c("Regression" , "Correlation","jDR - LN" ,   "PLS", "CCA", "FA", 'KB', 'SIM',  "jDR - NL" ,        
+                "NB","NB - SN", "ML/DL (early)" ,"Other tools")
 df_to_plot$Var1 = factor(df_to_plot$Var1, levels=levels_order)
                            
                     

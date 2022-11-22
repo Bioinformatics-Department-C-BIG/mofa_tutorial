@@ -475,7 +475,7 @@ add_percentage<-function(df){
 
 # Switch here for both 
 x_group<-'objective'
-x_group<-'disease_group'
+# x_group<-'disease_group'
 top_n<-c(8,8)
 
  if (x_group=='disease_group'){

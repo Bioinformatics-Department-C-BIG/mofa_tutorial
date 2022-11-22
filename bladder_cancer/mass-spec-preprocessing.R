@@ -68,32 +68,22 @@ data$ID<-data$name
 data$name
 data$ID
 data$ID# Make SummarizedExperiment
-columns=seq(1:16)
+data_columns=seq(1:16)
 exp_design = data.frame(label=Y_raw$Sample,condition=Y_raw$Sample, replicate=rep(1, 16))
-se <- make_se(data, columns,exp_design)
+se <- make_se(data, data_columns,exp_design)
+boxplot(log(data[1:16]))
+
+
 
 # Filter and normalize
-
-
 normalized_data<-normalize_vsn(se)
- meanSdPlot(normalized_data)
- 
-
+meanSdPlot(normalized_data)
 boxplot(normalized_data)
-
 vsn_mat<-assays(normalized_data)[[1]]
 
 
-##### Select most variable genes
-variances <- apply(vsn_mat, 1, var)
-topx<-names(variances[order(variances, decreasing = TRUE)])[1:(length(variances)/4)]
-vsn_mat <- vsn_mat[topx, ]
-NROW(vsn_mat)
-
-
-
+vsn_mat<-select_most_variable(vsn_mat, 0.25)
 # Just plot to see the result of vsn
-hist(variances)
 dev.off()
 boxplot(vsn_mat)
 

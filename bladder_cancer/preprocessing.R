@@ -81,3 +81,19 @@ X2_t_most_var<-filter_most_var(X2_t_cut, most_var,ng_p)
 X1_t_1<-as.data.frame(cpm(X1_t_most_var, log = TRUE) )
 X2_t_1<-as.data.frame(cpm(X2_t_most_var, log = TRUE) )
 
+
+
+##### Select most variable genes
+select_most_variable<-function(vsn_mat,q){
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:  round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat)
+  return(vsn_mat)
+}
+
+

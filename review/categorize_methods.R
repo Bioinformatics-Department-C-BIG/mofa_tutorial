@@ -116,7 +116,7 @@ sh2_chr %>% as.data.frame() %>%
 sh2_chr_latex=sh2_chr
 df<- sh2_chr_latex[,-c(5)]
 df[is.na(df)]<-' '
-colnames(df)<-c('Non-linear interactions', 'Unequal sizes', 'Missing Data', 'NP problem', 'Heterogeneous Datasets')
+colnames(df)<-c('Non-linear interactions', 'Unequal sizes', 'Missing Data', 'NP problem', 'Heterog. Datasets')
 df[df==1]<-as.character('\\checkmark')
 df<-as.data.frame(df)
 df_challenges<-df

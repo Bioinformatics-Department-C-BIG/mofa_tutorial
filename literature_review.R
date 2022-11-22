@@ -22,6 +22,7 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
 
+
 remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other', 
                      'molecular interactions', 'understand molecular mechanisms', 
                      'downstream', 
@@ -435,7 +436,7 @@ new<-group_objectives(new, 'objective')
 
 
 
-
+new[c('objective')]
 
 #' TODO: check the rownames given by get frequencies..
 #' TODO: use dplyr instead 
@@ -475,7 +476,7 @@ add_percentage<-function(df){
 
 # Switch here for both 
 x_group<-'objective'
-# x_group<-'disease_group'
+#x_group<-'disease_group'
 top_n<-c(8,8)
 
  if (x_group=='disease_group'){
@@ -527,7 +528,7 @@ if (x_group == 'objective'){
   df_to_plot<- add_percentage(df_to_plot)
   
   plot_width=12
-  plot_height=4
+  plot_height=3.5
   plot_cols=TRUE
   stack_horiz=TRUE
   xangle=0
@@ -550,8 +551,8 @@ if (x_group == 'objective'){
   
   
   
-  plot_width=10
-  plot_height=5
+  plot_width=8
+  plot_height=3.5
   plot_cols=FALSE
   stack_horiz=TRUE
 

@@ -65,17 +65,17 @@ group_methods<-function(df, Var1){
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*", 
                    ".*consensus*",
                    ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*pins.*|.*kernel.*', 
+                   '.*kernel.*|.*cimlr.*|.*rmkl.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
-                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*', 
+                   '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*|.*lra cluster*|.*icluster.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
-                   '.*lra cluster*',
+                   '.*pins.*|.*nemo.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
                    '.*ipa.*|.*activepathways.*|.*pathwaypca.*|.*panther.*|.*david.*|.*gsea.*|.*enrichment.*',
-                   '.*metaboanalyst.*|.*nemo.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
+                   '.*metaboanalyst.*|.*adas.*|.*movics.*|.*mousse.*|.*timeg.*|.*miodin.*|.*ioda.*', 
                    '.*kmeans.*|.*k-means.*'), 
                  c( "ML/DL Classification", 
                     "ML Clustering", 
@@ -86,9 +86,9 @@ group_methods<-function(df, Var1){
                     'Network-Based',
                     'Network-Based - Similarity network', 
                     'Similarity based',
-                    'JDR - LN - Correlation',
+                    'JDR - Correlation',
                     'Correlation',
-                    'JDR - LN - Partial least squares',
+                    'JDR - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools', 
                     'ML - DR'
@@ -113,27 +113,31 @@ group_methods_to_short<-function(df, Var1){
     mgsub::mgsub(tolower(x), 
                  tolower(c( "ML/DL Classification", 
                     'JDR - NL',
+                    'Kernel based',
                     'JDR - LN',
                     'Regression', 
-                    'JDR - LN - Matrix Factorization', 
+                    'Factor analysis', 
                     'Network-Based',
                     'Network-Based - Similarity network', 
-                    'JDR - LN - Correlation',
+                    'Similarity based',
+                    'JDR - Correlation',
                     'Correlation',
-                    'JDR - LN - Partial least squares',
+                    'JDR - Partial least squares',
                     'multiomics pathway analysis',
                     'Other tools'
                  )),
-                  c( "ML/DL Classification", 
+                  c( "ML/DL (early)", 
                     'jDR - NL',
+                    'KB', 
                     'jDR - LN',
                     'Regression', 
-                    'jDR - MF', 
+                    'FA', 
                     'NB',
                     'NB - SN', 
-                    'jDR - CCA',
+                    'SIM',
+                    'CCA',
                     'Correlation',
-                    'jDR - PLS',
+                    'PLS',
                     'multiomics pathway analysis',
                     'Other tools'
                   ))}
@@ -282,7 +286,9 @@ filter_common_groups<-function(df_by_group,top_n = c(8,10), x_group ){
   return(list(most_common_pairs, most_common_groups))
 }
 
- 
+
+
+
 
 
 
@@ -388,7 +394,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
   if (colname == 'method'){
     print('paired brewer')
     g=g+ scale_fill_brewer(palette = 'Paired')+
-      theme(plot.margin=unit(c(1,1,1,1.8),"cm"))
+      theme(plot.margin=unit(c(1,1,1,1.5),"cm"))
     
     #}else if (x_group=='disease_group'){
     #g=g+scale_fill_manual(values = mycolors)
@@ -396,7 +402,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
   }else{
       #theme(legend.position = 'none')
     g=g+scale_fill_manual(values = mycolors)
-      g = g +theme(plot.margin=unit(c(1,1,1,1.8),"cm"))
+      g = g +theme(plot.margin=unit(c(1,1,1,1.5),"cm"))
       
 
   }
@@ -421,14 +427,14 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
     }else{
       print('add rows')
       
-        g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
-                  c('no'='Other Diseases','yes' ='Cancer')),  
-                       scales = 'free')   +
-          theme(strip.text.x = element_text(size = text_size))
+      # g<-g+ facet_wrap( ~Cancer, ncol = 1,  labeller = labeller(Cancer=
+      #           c('no'='Other Diseases','yes' ='Cancer')),  
+      #                 scales = 'free_x')   +
+      #     theme(strip.text.x = element_text(size = text_size))
         
     }
       
-      g<-g+ geom_text(aes( label=ifelse(percent>12,paste0(sprintf("%.0f", percent),"%"),'')), 
+      g<-g+ geom_text(aes( label=ifelse(percent>8,paste0(sprintf("%.0f", percent)),'')), 
                       position=position_stack(vjust=0.5), size = 3) 
       
       ggsave(fname, width = plot_width, height=plot_height)
@@ -450,9 +456,9 @@ relabel_objectives_short<-function(df_to_plot){
   df_to_plot[ind,]$labels<-'detect molecular patterns'
   df_to_plot[ind,]$key_names<-'detect molecular patterns'
   
-  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
-  df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
-  df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
+  #  ind<-df_to_plot$labels%in% c('understand molecular mechanisms')
+  #  df_to_plot[ind,]$labels<-'understand  molecular\n mechanisms'
+  # df_to_plot[ind,]$key_names<-'understand  molecular\n mechanisms'
   
   ind<-df_to_plot$labels%in% c('si')
   df_to_plot[ind,]$labels<-'subtype identification'

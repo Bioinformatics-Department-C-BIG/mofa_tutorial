@@ -7,7 +7,9 @@ library('webshot')
 
 source('review/export_to_latex.R')
 
-#### 
+
+
+##### Run this after export_to_latex 
 
 tool_obj[tool_obj$method_orig=='pls',]
 

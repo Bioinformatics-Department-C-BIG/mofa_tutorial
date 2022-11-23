@@ -1,10 +1,11 @@
 
 ################ Section 5: ALLUVIAL 
-
+# This depends on inheriting the data frame 'new' from literature_review.R
+# Run it with the appropriate x_group before this script. 
 
 #install.packages('alluvial')
 #install.packages('ggalluvial')
-install.packages('ggsankey')
+#install.packages('ggsankey')
 library('ggalluvial')
 library('alluvial')
 
@@ -27,8 +28,7 @@ if (axis2 == 'disease_group'){
   new2$disease_group<-group_disease(new2, 'Disease')$Disease
   new2<-new2[new2$disease_group %in% df_most_common_disease$disease_group,]}
 new2<-new2 %>% filter( (!!sym(axis2)) %in% most_common_groups)
-new2<-new2 %>% filter( ! (!!sym(axis2)) %in% c('multiomics pathway analysis', 'biomarker discovery'))
-
+new2<-new2 %>% filter( ! (!!sym(axis2)) %in% remove_objectives)
 new2<-group_objectives(new2, 'objective')
 
 new2<-new2[!is.na(new2[axis2]),]
@@ -52,7 +52,8 @@ new2
 n_cutoff<-2
 
 df<-counts
-counts<-new2 %>% count(objective, method)
+counts<-new2 %>% 
+  count(objective, method)
 
 
 
@@ -107,6 +108,11 @@ counts1$col=counts1$objective
 
 counts1<-counts1[!(counts1$objective %in% remove_objectives),]
 
+
+# Updated to filter groups as before
+counts1<-counts1%>% 
+  group_by('Data') %>%
+  #filter(n>n_cutoff)
 
 counts1
  counts<-counts1 %>% ggalluvial::to_lodes_form(key = type, axes = c(axis1, axis2))

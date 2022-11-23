@@ -42,9 +42,10 @@ dd<-method_cats
 method_cats_ordered<-dd[
   with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
 ]
-#remove similarity
-method_cats_ordered<-method_cats_ordered[c(1,3:8)]
+
+method_cats_ordered<-method_cats_ordered[,c(1,3:7)]
 method_cats_ordered
+
 # now melt  
 colnames(method_cats)<-cat_names
 method_cats_t<-  add_rownames(method_cats, var='tool')

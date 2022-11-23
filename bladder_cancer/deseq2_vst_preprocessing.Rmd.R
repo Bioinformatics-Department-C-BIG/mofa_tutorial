@@ -16,6 +16,7 @@ if (!require("pacman")) install.packages("pacman")
 
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source('bladder_cancer/preprocessing.R')
+source('bladder_cancer/preprocessing.R')
 
 
 output_1='bladder_cancer/plots/deseq/'
@@ -87,11 +88,9 @@ abline(h=median(vsd_mat),col="blue")
 title("Boxplots of logCPMs (after vst)")
 
 
+vsd_mat<-select_most_variable(vsd_mat, 0.25)
 ##### Select most variable genes
-variances <- apply(vsd_mat, 1, var)
-topx<-names(variances[order(variances, decreasing = TRUE)])[1:(length(variances)/4)]
-vsd_mat <- vsd_mat[topx, ]
-NROW(vsd_mat)
+
 
 hist(variances)
 dev.off()

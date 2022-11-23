@@ -121,7 +121,7 @@ g<-ggplot(data = df, aes(x = type, stratum = stratum, alluvium = alluvium, y = f
   theme(
     panel.background = element_blank(),
     axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 15, face = "bold"),
+    axis.text.x = element_text(size = 16, face = "bold"),
     axis.title = element_blank(),
     axis.ticks = element_blank(),
     legend.position = "none" 

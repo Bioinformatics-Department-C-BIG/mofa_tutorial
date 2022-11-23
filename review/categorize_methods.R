@@ -42,9 +42,9 @@ dd<-method_cats
 method_cats_ordered<-dd[
   with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
 ]
-#
+#remove similarity
+method_cats_ordered<-method_cats_ordered[c(1,3:8)]
 method_cats_ordered
-
 # now melt  
 colnames(method_cats)<-cat_names
 method_cats_t<-  add_rownames(method_cats, var='tool')
@@ -164,7 +164,6 @@ method_cats_ordered
 ft3=flextable(t_final) %>% 
   autofit(add_w = 0.1,  part = c("body", "header"))
  highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("no", "yes"), source=c("Var1"))
-ft3<-hline(ft3, i =5 )
 ft3<-set_header_labels(ft3, Var1 = 'Omics pair', Freq='Frequency', concat = 'Disease' ) 
 ft3
 

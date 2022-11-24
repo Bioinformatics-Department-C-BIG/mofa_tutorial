@@ -8,7 +8,8 @@ library('flextable')
 #install.packages('webshot')
 library('webshot')
 library(dplyr)
-library(plyr)
+library(tidyr)
+
 
 library('readxl')
 #source('literature_review_combined.R')
@@ -19,13 +20,13 @@ sh1<-sh1[-c(2),]
 
 
 sh1 <- sh1[!((is.na(sh1[1]=='') | (sh1[1]=='') )),]
-cat_names<-colnames(sh1[,c(8:12,14:16)])
+cat_names<-colnames(sh1[,c(8:16)])
 sh1<-data.frame(sh1)
 rownames(sh1)<-sh1$Name
 
 # Concatenate categories first 
 colnames(sh1)[1]<-'tool'
-method_cats<-sh1[,c(1,8:12,14:16)]
+method_cats<-sh1[,c(1,8:16)]
 
 # remove empty rownames
 rownames(method_cats)<-method_cats$tool
@@ -42,16 +43,17 @@ dd<-method_cats
 method_cats_ordered<-dd[
   with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
 ]
-
-method_cats_ordered<-method_cats_ordered[,c(1,3:7)]
+cat_names
+sel_obj<-which(colnames(method_cats_ordered) %in% c('FA',  "NB",  "KB",  "PR",  "JDR", "COR" ,"REG" ))
+method_cats_ordered<-method_cats_ordered[,sel_obj]
 method_cats_ordered
 
 # now melt  
-colnames(method_cats)<-cat_names
-method_cats_t<-  add_rownames(method_cats, var='tool')
+#colnames(method_cats_ordered)<-cat_names
+method_cats_ordered<-  add_rownames(method_cats_ordered, var='tool')
 
 # add the categories in one row
-t2<-method_cats_t %>%
+t2<-method_cats_ordered %>%
     gather(key, value, -tool)%>%
     filter(value==1) 
 
@@ -64,7 +66,7 @@ t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ", ")
 
 # Print tools and cats in one row!!
 write.csv(t4, 'review/output/tools_categories.csv')
-
+t4
 
 
 # Now add back the other info, datasets and objectives 
@@ -164,7 +166,6 @@ method_cats_ordered
 
 ft3=flextable(t_final) %>% 
   autofit(add_w = 0.1,  part = c("body", "header"))
- highlight(color=scales::col_factor(palette = "Paired", domain = NULL, alpha = 0.2), j=c("no", "yes"), source=c("Var1"))
 ft3<-set_header_labels(ft3, Var1 = 'Omics pair', Freq='Frequency', concat = 'Disease' ) 
 ft3
 

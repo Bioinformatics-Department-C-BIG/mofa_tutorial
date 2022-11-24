@@ -150,6 +150,11 @@ stats <- stats %>%
 stats$same_sample<-as.factor(tolower(stats$same_sample))
 stats$Cancer<-as.factor(tolower(stats$Cancer))
 
+#' remove nas - careful check and fill in if you forgot to add cancer status 
+stats[is.na(stats$Cancer),'PMID']
+
+
+
 x_group<-'Cancer'
 
 get_frequencies_by_group<-function(stats,colname){
@@ -202,21 +207,21 @@ rel_txt=1.5
 plotByData(freq_to_plot, y_group=x_group)
 
 
-
+freq_to_plot<-freq_to_plot[!is.na(freq_to_plot$Cancer),]
 pal_npg("nrc", alpha = 0.9)(10)
 
 freq_to_plot<-freq_to_plot[!is.na(freq_to_plot$Cancer),]
-  ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
+  p<- ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
-  geom_bar(stat='identity',position='stack',  color='black')+
+  geom_bar(stat='identity',position='dodge',  color='black')+
   labs(x=NULL)+
   theme(axis.text.x = element_text(size=rel(rel_txt),angle = 25, vjust = 0.5, hjust=1))+
   theme(plot.margin=unit(c(1,1,2,1.5),"cm"))+
-  labs(y='Number of studies')+
+  labs(y='Frequency')+
    scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))+
     scale_fill_manual(values =c('#F39B7FE5', '#8491B4E5'))
     
-
+show(p)
   ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
 
 
@@ -323,7 +328,7 @@ plotGridCombinations<-function(df_by_group){
   ggsave(paste0('plots/GridPlot', as.character(colname), '.jpeg'), width = 10, height=6)
   
 }
-
+df_by_group_data<-df_by_group_data[!is.na(df_by_group_data$Cancer),]
 plotGridCombinations(df_by_group_data)
 
 

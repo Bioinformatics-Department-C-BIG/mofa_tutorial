@@ -6,6 +6,9 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 source('utils.R')
+install.packages('svglite')
+library('svglite')
+
 library("viridis")           # Load
 
 
@@ -325,7 +328,9 @@ plotGridCombinations<-function(df_by_group){
                scales = 'free', space='free')+
     theme(strip.text.x = element_text(size = text_size))
   show(g)
-  ggsave(paste0('plots/GridPlot', as.character(colname), '.jpeg'), width = 10, height=6)
+  # ggsave(paste0('plots/GridPlot', as.character(colname), '.jpeg'), width = 10, height=6)
+  ggsave(paste0('plots/GridPlot', as.character(colname), '.svg'), device='svg', width = 10, height=6, dpi = 300)
+  
   
 }
 df_by_group_data<-df_by_group_data[!is.na(df_by_group_data$Cancer),]

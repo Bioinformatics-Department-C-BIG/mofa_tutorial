@@ -12,7 +12,6 @@ library("ggsci")
 rel_txt<-1.5
 
 
-
 relabel_tools<-function(Var1){
   
   # This function groups instances of tools that are the same as others. 
@@ -65,12 +64,11 @@ group_methods<-function(df, Var1){
                  c(".*learning.*|.*decision.*|.*boost.*|.*support vector.*|.*svm.*|.*random forest.*|.*tcnn.*|.*classifier.*", 
                    ".*consensus*",
                    ".*autoencoder.*|.*pathcnn.*|.*umap.*|.*tsne.*|.*deep.*.|*neural.*|.*graph convolutional network.*|.*cdrscan.*|.*deepomix.*",
-                   '.*kernel.*|.*cimlr.*|.*rmkl.*', 
+                   '.*kernel.*|.*cimlr.*|.*rmkl.*|.*pins.*|.*nemo.*', 
                    '.*regression.*|.*linear model.*|.*multivar.*|.*lasso.*|.*elastic net.*',
                    '.*factor.*|.*decomposition.*|.*mofa.*|.*intnmf.*|.*partitioning.*|.*pca.*|.*diverse.*|.*pathme.*|.*lra cluster*|.*icluster.*', 
                    '.*netwo.*|.*piumet.*|.*omics integrator.*|.*inet.*|.*nem-tar.*',
                    '.*snf.*|.*coni.*|.*netdx.*|.*paradigm.*',
-                   '.*pins.*|.*nemo.*',
                    '.*cca.*|.*smccnet.*|.*canonical correlation.*',
                    '.*correlation.*', 
                    '.*partial least.*|.*diablo.*|.*pls.*|.*pls-da.*', 
@@ -84,8 +82,7 @@ group_methods<-function(df, Var1){
                     'Regression', 
                     'Factor analysis ', 
                     'Network-Based',
-                    'Network-Based - Similarity network', 
-                    'Similarity based',
+                    'Network-Based - Similarity network',
                     'JDR - Correlation',
                     'Correlation',
                     'JDR - Partial least squares',
@@ -359,7 +356,7 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
   fname=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
                '.jpeg')
   fname2=paste0('plots/barplot_byGroup', as.character(x_group), '_', colname,  
-               '.jpeg')
+               '.svg')
   
   if (!('key_names' %in% colnames(df))){
     df['key_names']=df[x_group]
@@ -437,8 +434,9 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
       g<-g+ geom_text(aes( label=ifelse(percent>8,paste0(sprintf("%.0f", percent)),'')), 
                       position=position_stack(vjust=0.5), size = 3) 
       
+      svg(fname2,width = plot_width, height=plot_height)
       ggsave(fname, width = plot_width, height=plot_height)
-      ggsave(fname2, width = plot_width, height=plot_height)
+      #ggsave(fname2, width = plot_width, height=plot_height, device = 'svg')
       
       
     }

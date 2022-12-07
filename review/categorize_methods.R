@@ -7,6 +7,7 @@ library(reshape2)
 library('flextable')
 #install.packages('webshot')
 library('webshot')
+library(plyr)
 library(dplyr)
 library(tidyr)
 
@@ -15,18 +16,20 @@ library('readxl')
 #source('literature_review_combined.R')
 sh1<-read_excel(paste0(data_int_dir,'MultiOmics Tools Evaluation_2.xlsx' ),sheet=1)
 colnames(sh1)
-sh1<-sh1[,c(2,3:17)]
+max_col=length(colnames(sh1))
+
+sh1<-sh1[,c(2,3:max_col)]
 sh1<-sh1[-c(2),]
 
 
 sh1 <- sh1[!((is.na(sh1[1]=='') | (sh1[1]=='') )),]
-cat_names<-colnames(sh1[,c(8:16)])
+cat_names<-colnames(sh1[,c(8:max_col-1)])
 sh1<-data.frame(sh1)
 rownames(sh1)<-sh1$Name
 
 # Concatenate categories first 
 colnames(sh1)[1]<-'tool'
-method_cats<-sh1[,c(1,8:16)]
+method_cats<-sh1[,c(1,8:max_col-1)]
 
 # remove empty rownames
 rownames(method_cats)<-method_cats$tool
@@ -44,9 +47,9 @@ method_cats_ordered<-dd[
   with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
 ]
 cat_names
-sel_obj<-which(colnames(method_cats_ordered) %in% c('FA',  "NB",  "KB",  "PR",  "JDR", "COR" ,"REG" ))
+sel_obj<-which(colnames(method_cats_ordered) %in% c('FA',  "NB",  "KB",  "PR",  "jDR", "COR" ,"REG", 'DL' ))
 method_cats_ordered<-method_cats_ordered[,sel_obj]
-method_cats_ordered
+head(method_cats_ordered)
 
 # now melt  
 #colnames(method_cats_ordered)<-cat_names
@@ -60,7 +63,6 @@ t2<-method_cats_ordered %>%
 t3<-t2 %>%  
   select(tool, key)
 
-t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ",\\newline ")
 
 t4<-plyr::ddply(t3, .(tool), colwise(paste), collapse = ", ")
 
@@ -74,9 +76,11 @@ sh1_other<-sh1[c('tool', 'Datasets',  'Objectives' , 'Citations')]
 to_keep<-sh1$tool[is.na(sh1['Reject'])]
 
 t4_with_info<-merge(t4, sh1_other, by='tool' )
-t4_with_info<-t4_with_info[match(method_cats_t$tool,t4_with_info$tool),]
+
+t4_with_info<-t4_with_info[match(method_cats_ordered$tool,t4_with_info$tool),]
 t4_with_info<-t4_with_info[t4_with_info$tool %in% to_keep,]
 # TODO: concat these categories with the other al_tools 
+
 
 
 
@@ -138,7 +142,7 @@ t_final<-merge(t4_with_info, df_challenges, by='tool_lc' )
 
 t_final$tool<-t_final$tool.x
 t_final<-t_final[!is.na(t_final$tool),]
-t_final<-t_final[match(method_cats_t$tool,t_final$tool),]
+t_final<-t_final[match(method_cats_ordered$tool,t_final$tool),]
 
 t_final<-t_final[,!names(t_final) %in% 
      c("tool.x", "tool.y", "tool_lc")]
@@ -150,6 +154,8 @@ t_final<-t_final%>%
 t_final<-t_final[!is.na(t_final$tool),]
 
 t_final$x<-'\\\\'
+
+t_final
 
 write.table(t_final, file = "review/output/method_categories_concatenated__challenges_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
@@ -168,6 +174,7 @@ ft3=flextable(t_final) %>%
   autofit(add_w = 0.1,  part = c("body", "header"))
 ft3<-set_header_labels(ft3, Var1 = 'Omics pair', Freq='Frequency', concat = 'Disease' ) 
 ft3
+
 
 
 

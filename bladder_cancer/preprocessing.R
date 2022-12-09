@@ -5,6 +5,7 @@ sysinf <- Sys.info()
 ####################################
 #### Preliminary analysis with PCA
 os <- sysinf['sysname']
+getwd()
 if ( os  == 'Darwin'){
   dir='bladder_cancer/data/'
 }else if ( os ==   'Windows'){

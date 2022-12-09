@@ -1,4 +1,6 @@
 
+#BiocManager::install('DEP')
+
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -10,7 +12,6 @@ library(sys)
 library(sys)
 library("vsn")
 library("DEP")
-#BiocManager::install('DEP')
 
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
@@ -78,17 +79,21 @@ boxplot(log(data[1:16]))
 # Filter and normalize
 normalized_data<-normalize_vsn(se)
 meanSdPlot(normalized_data)
-boxplot(normalized_data)
+
+# Check plot after vsn
 vsn_mat<-assays(normalized_data)[[1]]
+boxplot(vsn_mat)
 
 
+# Select the top most variable proteins
 vsn_mat<-select_most_variable(vsn_mat, 0.25)
 # Just plot to see the result of vsn
-dev.off()
 boxplot(vsn_mat)
 
 colnames(vsn_mat)<-Y_raw$Sample
 highly_variable_proteins_mofa<-vsn_mat
 
 write.csv(highly_variable_proteins_mofa,'highly_variable_proteins_mofa.csv')
+write.csv(highly_variable_proteins_mofa,'bladder_cancer/highly_variable_proteins_mofa.csv')
 
+write.table(t(highly_variable_proteins_mofa), 'bladder_cancer/highly_variable_proteins_mofa_t.txt', row.names = FALSE, sep='\t')

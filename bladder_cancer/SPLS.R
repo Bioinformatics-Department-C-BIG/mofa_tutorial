@@ -1,6 +1,6 @@
 
-BiocManager::install(c("edgeR"))
-BiocManager::install(c("Glimma"))
+#BiocManager::install(c("edgeR"))
+#BiocManager::install(c("Glimma"))
 
 library(mixOmics)
 #### 
@@ -21,15 +21,6 @@ library(Glimma)
 source('bladder_cancer/preprocessing.R')
 
 
-
-
-####################################
-#### Preliminary analysis with PCA
-if ( os  == 'Darwin'){
-dir='/Users/efiathieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-}else{
-dir='E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Projects/Bladder cancer/'
-}
 output='bladder_cancer/plots/'
 
 X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
@@ -37,13 +28,15 @@ X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
 Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 
+
+
 X1_t=t(highly_variable_genes_mofa)
 X2_t = t(highly_variable_proteins_mofa)
 
 ncomp_g=5
 ncomp_p=5
-param_str_g<-paste0( '_edger_', most_var, '_', ncomp_g, '_ng_', round(1/ng_g,2), 'de')
-param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2),  ', ncomp = ', ncomp_g)
+param_str_g<-paste0( '_edger_', most_var, '_', ncomp_g, '_ng_', ng_g, 'de')
+param_str_g_plot<-paste( 'most var = ', most_var, ', ng =', ng_g,  ', ncomp = ', ncomp_g)
 
 
 
@@ -73,6 +66,8 @@ write.csv(pc_genes1, paste0(output,'Vars_genes',param_str_g, '_1_X','.csv'))
 write.csv(pc_genes2, paste0(output,'Vars_genes',param_str_g, '_2_X','.csv'))
 
 
+
+# Correlation image map 
 cim(spca.result, xlab = "genes", ylab = "Samples", save='png', 
     name.save =paste0(output,'cim_genes', param_str_g), 
     title = paste0(param_str_g_plot) ) 
@@ -83,7 +78,8 @@ dev.off()
 
 # Inspect row data
 #X1_t[,rownames(pc_genes)[1:3]]
-
+ng_p=25
+ng_p=25
 
 param_str_p<-paste0( '_edger_', most_var, '_', ncomp_p, '_ng_p', round(1/ng_p,2),'de')
 param_str_p_plot<-paste( 'most var = ', most_var, ', ng_p =', round(1/ng_p,2),', ncomp = ', ncomp_g)
@@ -142,9 +138,11 @@ cim(spca.result,xlab = "proteins", ylab = "Samples",
 #PLS # calclate the q2 criterion used in simca-p 
 ### TUNING
 ncomp=2
-param_str<-paste0( '_', most_var, '_', ncomp_g, '_ng_g_', round(1/ng_g,2),'_ncomp_g_', ncomp_p, '_ng_p_', round(1/ng_p,2) )
+ng_p=25
+ng_p=25
+param_str<-paste0( '_', most_var, '_', ncomp_g, '_ng_g_', ng_g,'_ncomp_g_', ncomp_p, '_ng_p_', ng_p )
 
-param_str_plot = paste( 'most var = ', most_var, ', ng =', round(1/ng_g,2), ' ng_p = ' , round(1/ng_p,2), ', ncomp = ', ncomp_g)
+param_str_plot = paste( 'most var = ', most_var, ', ng =', ng_g, ' ng_p = ' ,ng_p, ', ncomp = ', ncomp_g)
 ll<-dim(X1_t)[2]
 
 X1_t<-X1_t[,1:ll-1]
@@ -192,7 +190,7 @@ plot(tune.spls.bladder)         # use the correlation measure for tuning
 
 
 fname<-paste0('bladder_cancer/settings/optimal', param_str, '.csv') 
-saveRDS(optimal,fname)
+saveRDS(tune.spls.bladder,fname)
 readRDS(file = fname)
 
 
@@ -200,10 +198,11 @@ readRDS(file = fname)
 #spls.bladder<-result.spls
 
 # use all tuned values from above
+##### Run exploratory without y
 final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal.ncomp, 
                          keepX = optimal.keepX,
                          keepY = optimal.keepY,
-                         mode = "canonical") # explanitory approach being used, 
+                         mode = "canonical") # exploratory approach being used, 
 
 
 plotIndiv(final.spls.bladder, ind.names = TRUE, 
@@ -218,13 +217,35 @@ plotIndiv(final.spls.bladder, ind.names = TRUE,
 
 # SPLS
 ncomp = 5
-result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
+# With tuning for the components  using the Q2 criterion: what is it? 
+
+
+result.spls <- spls(X1_t, X2_t, ncomp = ncomp, 
+                    keepX = optimal.keepX,
+                    keepY = optimal.keepY,
+                    mode = 'regression')
+
 tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
-                  criterion = 'all', progressBar = FALSE)
+                  criterion = 'all', progressBar = FALSE, nrepeat=3)
+
+# rerun with 2 comps
+ncomp=2
+
+result.spls <- spls(X1_t, X2_t, ncomp = ncomp, 
+                    keepX = optimal.keepX,
+                    keepY = optimal.keepY,
+                    mode = 'regression')
+
+fname<-paste0(output,'/Q2', param_str, '.png');png(fname)
+
+plot(tune.spls, criterion = 'Q2.total')
+dev.off()
+#based on q2  One dimension is sufficient
+
 
 props<-as.character(unlist(optimal.keepY))
-fname<-paste0(output,'/PLS_clustering', param_str, props, '.png')
-png(fname)
+fname<-paste0(output,'/PLS', param_str, '.png');png(fname)
+
 plotIndiv(result.spls, ind.names = TRUE,
           rep.space = "XY-variate", # plot in Y-variate subspace,
           cex = c(7,7),
@@ -232,15 +253,19 @@ plotIndiv(result.spls, ind.names = TRUE,
           legend = TRUE)
 dev.off()
 
-
-plotArrow(final.spls.bladder, ind.names = FALSE,
+fname<-paste0(output,'/arrows', param_str, '.png');png(fname)
+plotArrow(result.spls, ind.names = FALSE,
           group = Y_raw$Subtype, # colour by time group
           col.per.group = color.mixo(1:2),
           legend.title = 'Time.Group')
 
+dev.off()
+# todo what is connected?? 
+
+
 #########variable plots
 png(paste0(output,'/PLS_correlation_circle', param_str, props, '.png'))
-plotVar(final.spls.bladder , cex = c(5,5), var.names = c(TRUE, TRUE),
+plotVar(result.spls , cex = c(5,5), var.names = c(TRUE, TRUE),
         title=paste0('Correlation Circle Plot',param_str), 
         )
 dev.off()
@@ -256,9 +281,11 @@ final.spls.bladder$names$colnames$X[common_ind]<-
 
 #X11() # To open a new window for Rstudio
 #try comp 1 or 2 
+# the first comp is the most informative based on the q2 plot
 comp=1
-network(final.spls.bladder, comp = comp,
-        cutoff = 0.8, # only show connections with a correlation above 0.7
+cutoff=0.75
+network(result.spls, comp = comp,
+        cutoff = cutoff, # only show connections with a correlation above 0.7
         shape.node = c("rectangle", "circle"),
         color.node = c("cyan", "pink"),
         color.edge = color.edge,
@@ -270,15 +297,15 @@ network(final.spls.bladder, comp = comp,
 ###### correlation plot
 comp=c(1,2)
 png(paste0(output,'/PLS_cim',  props, param_str, '_comp_', as.character(unlist(comp)), '.png'))
-cim(final.spls.bladder, comp = comp, xlab = "proteins", ylab = "genes",
+cim(result.spls, comp = comp, xlab = "proteins", ylab = "genes",
     row.cex=1.5, col.cex = 1.5, margins=c(8,8))
 dev.off()
 
 
 #####save important features
 saveRDS(final.spls.bladder, paste0(output,'final_spls', param_str, '.RDS'))
-sel_vars_1=selectVar(final.spls.bladder, comp=1)
-sel_vars_2=selectVar(final.spls.bladder, comp=2)
+sel_vars_1=selectVar(result.spls, comp=1)
+sel_vars_2=selectVar(result.spls, comp=2)
 
 write.csv(sel_vars_1$X, paste0(output,'Vars',param_str, '_1_X','.csv'))
 write.csv(sel_vars_1$Y, paste0(output,'Vars',param_str, '_1_Y','.csv'))

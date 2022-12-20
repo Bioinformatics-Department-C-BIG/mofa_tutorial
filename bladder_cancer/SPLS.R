@@ -19,6 +19,8 @@ library(limma)
 library(Glimma)
 
 source('bladder_cancer/preprocessing.R')
+source('bladder_cancer/mass-spec-preprocessing.R')
+source('bladder_cancer/deseq2_vst_preprocessing.R')
 
 
 output='bladder_cancer/plots/'
@@ -29,9 +31,12 @@ Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 
 
-
+highly_variable_genes_mofa =  read.csv( paste0('bladder_cancer/highly_variable_genes_mofa.csv'), row.names = 1) 
+highly_variable_proteins_mofa = read.csv( paste0('bladder_cancer/highly_variable_proteins_mofa.csv'), row.names=1) 
 X1_t=t(highly_variable_genes_mofa)
 X2_t = t(highly_variable_proteins_mofa)
+
+
 
 ncomp_g=5
 ncomp_p=5
@@ -71,6 +76,7 @@ write.csv(pc_genes2, paste0(output,'Vars_genes',param_str_g, '_2_X','.csv'))
 cim(spca.result, xlab = "genes", ylab = "Samples", save='png', 
     name.save =paste0(output,'cim_genes', param_str_g), 
     title = paste0(param_str_g_plot) ) 
+
 
 png(paste0(output, 'pca_genes.png'))
 plotVar(spca.result, cex=c(5))
@@ -158,20 +164,24 @@ dev.off()
 
 ########## Tune number of features
 # set range of test values for number of variables to use from X dataframe
-list.keepX <- c(seq(30, 50, 5))
+list.keepX <- c(seq(30, 60, 5))
 # set range of test values for number of variables to use from Y dataframe
 list.keepY <- c(seq(5,50,5))
 
 
+# either reimport or retune
+fname_tuning<-paste0('bladder_cancer/settings/optimal', param_str) 
 
-tune.spls.bladder <- tune.spls(as.matrix(X1_t), as.matrix(X2_t), ncomp = ncomp,
-                             test.keepX = list.keepX,
-                             test.keepY = list.keepY,
-                             nrepeat = 1, folds =2, # use 10 folds
-                             mode = 'canonical', measure = 'cor')
+tune.spls.bladder<-readRDS(file = fname_tuning)
+# tune.spls.bladder <- tune.spls(as.matrix(X1_t), as.matrix(X2_t), ncomp = ncomp,
+#                              test.keepX = list.keepX,
+#                              test.keepY = list.keepY,
+#                              nrepeat = 5, folds =10, # use 10 folds
+#                              mode = 'canonical', measure = 'cor')
 
 tune.spls.bladder$choice.keepX
 tune.spls.bladder$choice.keepY
+plot(tune.spls.bladder)
 # extract optimal number of variables for X dataframe
 optimal.keepX <- tune.spls.bladder$choice.keepX 
 
@@ -183,15 +193,14 @@ optimal.keepY <- tune.spls.bladder$choice.keepY
 
 optimal.ncomp <-  length(optimal.keepX) # extract optimal number of components
 
-fname=paste0(output,'/PLS_tune', param_str, '.png')
+fname=paste0(output,'/PLS_tune_canonical', param_str, '.png')
 png(fname)
 plot(tune.spls.bladder)         # use the correlation measure for tuning
+dev.off()
 
 
-
-fname<-paste0('bladder_cancer/settings/optimal', param_str, '.csv') 
 saveRDS(tune.spls.bladder,fname)
-readRDS(file = fname)
+tune.spls.bladder<-readRDS(file = fname)
 
 
 #result.spls <- spls(X1_t, X2_t, ncomp = ncomp, keepX = c(rep(10, ncomp)), mode = 'regression')
@@ -208,7 +217,8 @@ final.spls.bladder <- spls(X1_t, X2_t, ncomp = optimal.ncomp,
 plotIndiv(final.spls.bladder, ind.names = TRUE, 
           rep.space = "XY-variate", # plot in averaged subspace
           group = Y_raw$Subtype, # colour by time group
-          col.per.group = color.mixo(1:2),                      # by dose group
+          col.per.group = color.mixo(1:2), 
+          # by dose group
           legend = TRUE, legend.title = 'Time', 
           legend.title.pch = 'Proteomic subtypes', 
           title = param_str_plot)
@@ -216,17 +226,17 @@ plotIndiv(final.spls.bladder, ind.names = TRUE,
 
 
 # SPLS
-ncomp = 5
+ncomp = 2
+##### TUNE for the number of components 
 # With tuning for the components  using the Q2 criterion: what is it? 
-
 
 result.spls <- spls(X1_t, X2_t, ncomp = ncomp, 
                     keepX = optimal.keepX,
                     keepY = optimal.keepY,
-                    mode = 'regression')
+                    mode = 'canonical')
 
 tune.spls <- perf(result.spls, validation = 'Mfold', folds = 10,
-                  criterion = 'all', progressBar = FALSE, nrepeat=3)
+  criterion = 'all', progressBar = FALSE, nrepeat=3)
 
 # rerun with 2 comps
 ncomp=2
@@ -234,7 +244,7 @@ ncomp=2
 result.spls <- spls(X1_t, X2_t, ncomp = ncomp, 
                     keepX = optimal.keepX,
                     keepY = optimal.keepY,
-                    mode = 'regression')
+                    mode = 'canonical')
 
 fname<-paste0(output,'/Q2', param_str, '.png');png(fname)
 
@@ -283,7 +293,9 @@ final.spls.bladder$names$colnames$X[common_ind]<-
 #try comp 1 or 2 
 # the first comp is the most informative based on the q2 plot
 comp=1
-cutoff=0.75
+cutoff=0.6
+# IN order to create networks we might want to keep a larger number of keep.X, keep.Y
+# retune? 
 network(result.spls, comp = comp,
         cutoff = cutoff, # only show connections with a correlation above 0.7
         shape.node = c("rectangle", "circle"),
@@ -291,6 +303,19 @@ network(result.spls, comp = comp,
         color.edge = color.edge,
         save = 'png', # save as a png to the current working directory
         name.save = paste0(output,'sPLS Bladder Cancer Network Plot', param_str))
+
+correlation_net<-network(result.spls, comp = comp,
+        cutoff = cutoff, # only show connections with a correlation above 0.7
+        shape.node = c("rectangle", "circle"),
+        color.node = c("cyan", "pink"),
+        color.edge = color.edge)
+
+
+
+library(igraph)
+
+write.graph(correlation_net$gR, file = "network.gml", format = "gml")
+
 
 
 
@@ -302,7 +327,7 @@ cim(result.spls, comp = comp, xlab = "proteins", ylab = "genes",
 dev.off()
 
 
-#####save important features
+##### save important features
 saveRDS(final.spls.bladder, paste0(output,'final_spls', param_str, '.RDS'))
 sel_vars_1=selectVar(result.spls, comp=1)
 sel_vars_2=selectVar(result.spls, comp=2)
@@ -315,13 +340,11 @@ write.csv(sel_vars_2$Y, paste0(output,'Vars',param_str, '_2_Y','.csv'))
 selectVar(final.spls.bladder, comp = 2)$Y
 
 
+##### Create new matrix with subsetted features 
+sel_vars_1$X$name
+genes_sel_features<-X1_t[, sel_vars_1$X$name]
+proteins_sel_features<-X2_t[, sel_vars_1$Y$name]
 
 
 
-
-
-### ENRICHR 
-
-install.packages("enrichR")
-library(enrichR)
 

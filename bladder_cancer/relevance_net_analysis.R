@@ -8,3 +8,6 @@ is_bipartite(cor_net)
 plot(cor_net, 
      arrow.mode=0,
      vertex.size=20)
+
+
+## Make a projection to monopartite

@@ -44,7 +44,7 @@ method_cats_ordered<-dd[
   with(dd, order(dd[,1], dd[,2], dd[,3], dd[,4], dd[,5], dd[,6], dd[,7], decreasing = TRUE )),
 ]
 cat_names
-sel_obj<-which(colnames(method_cats_ordered) %in% c('FA',  "NB",  "KB",  "PR",  "JDR", "COR" ,"REG" ))
+sel_obj<-which(colnames(method_cats_ordered) %in% c('FA',  "NB",  "KB",  "PR",  "jDR", "COR" ,"REG" ))
 method_cats_ordered<-method_cats_ordered[,sel_obj]
 method_cats_ordered
 

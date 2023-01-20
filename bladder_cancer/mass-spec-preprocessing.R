@@ -97,3 +97,4 @@ write.csv(highly_variable_proteins_mofa,'highly_variable_proteins_mofa.csv')
 write.csv(highly_variable_proteins_mofa,'bladder_cancer/highly_variable_proteins_mofa.csv')
 
 write.table(t(highly_variable_proteins_mofa), 'bladder_cancer/highly_variable_proteins_mofa_t.txt', row.names = FALSE, sep='\t')
+

@@ -53,6 +53,7 @@ sample_info<-Y_raw
 
 
 # remove low expression 
+# TODO: I probably should not be doing this for proteins!!
 raw_counts<-countdata
 idx <- edgeR::filterByExpr(raw_counts[,1:ncol(raw_counts)], group = sample_info$Group)
 raw_counts <- raw_counts[idx, ]
@@ -86,7 +87,7 @@ boxplot(vsn_mat)
 
 
 # Select the top most variable proteins
-vsn_mat<-select_most_variable(vsn_mat, 0.25)
+vsn_mat<-selectMostVariable(vsn_mat, 0.7)
 # Just plot to see the result of vsn
 boxplot(vsn_mat)
 

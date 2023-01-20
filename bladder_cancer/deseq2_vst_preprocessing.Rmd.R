@@ -11,6 +11,9 @@ library(sys)
 library(DESeq2)
 library("vsn")
 
+library("SummarizedExperiment")
+
+
 if (!require("pacman")) install.packages("pacman")
 #BiocManager::install("vsn")
 
@@ -87,14 +90,14 @@ meanSdPlot(vsd)
 
 # Check the effect of vst before and after
 # Check distributions of samples using boxplots
-boxplot(log(assay(dds)), xlab="", ylab="Log2 counts ",las=2)
+boxplot(log10(assay(dds)), xlab="", ylab="Log2 counts ",las=2)
 
 # Let's add a blue horizontal line that corresponds to the median logCPM
-abline(h=median(log(assay(dds))),col="blue")
+abline(h=median(log10(assay(dds))),col="blue")
 title("Boxplots of logCPMs (unnormalised)")
 
 # Check distributions of samples using boxplots
-boxplot(vsd_mat, xlab="", ylab="Log2 counts ",las=2)
+boxplot(vsd_mat, xlab="", ylab="vst(counts) ",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(vsd_mat),col="blue")
 title("Boxplots of logCPMs (after vst)")

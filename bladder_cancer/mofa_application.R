@@ -94,6 +94,6 @@ ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, d
 
 
 ###
-
+get_weights(MOFAobject)
 
 

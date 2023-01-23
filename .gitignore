@@ -306,3 +306,4 @@ bladder_cancer/iCluster/proteinDE_data_TRUE_ng_g_0.1_ncomp_g__ng_p_0.67_k_2heatm
 *.png
 *.Rdata
 review/output/data_diseases.txt
+mofa.RDS

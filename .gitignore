@@ -11,7 +11,7 @@
 
 */*.png
 *.png
-*.jpeg
+./*.jpeg
 
 # Session Data files
 .RData

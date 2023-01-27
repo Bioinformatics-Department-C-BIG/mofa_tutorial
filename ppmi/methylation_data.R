@@ -23,7 +23,6 @@ colnames(ppmi_methyl)
 stats<-table(ppmi_methyl[c('PATNO', 'EVENT_ID' )])
 colnames(stats)
 stats2<-as.data.frame(stats)
-table(stats2$)
 summary(stats)
 
 stats2$Freq<-as.numeric(stats2$EVENT_ID)
@@ -31,15 +30,40 @@ ppmi_methyl %>%
   group_by(EVENT_ID) %>% 
   summarise(n_distinct(PATNO))
 
-methyl_BL<-ppmi_methyl[ppmi_methyl$EVENT_ID=='BL',]$PATNO
+
 # PATIENTS IDs with methylation data in baseline! 
 methyl_BL
 
 
 # which ones overlap? 
 ## Proteomics
+files<-list.files(path='ppmi/data/', pattern='Targeted___untargeted_MS-based_proteomics_of_urine_in_PD',
+                    full.names = TRUE)
+ppmi_prot<-read.csv('Targeted___untargeted_MS-based_proteomics_of_urine_in_PD*.csv')
+read_all<-lapply(files, read.csv)
+
+all_frames<-lapply(read_all, as.data.frame)
+all_frames2<-bind_rows(all_frames)
+
+ppmi_prot=all_frames2
+
+prot_BL<-ppmi_prot[ppmi_prot$CLINICAL_EVENT=='BL',]$PATNO
+
+pat_ids<-unique(ppmi_prot$PATNO)
+
+NROW(intersect(prot_BL, methyl_BL))
 
 
+
+###INTERSECT for each visit 
+
+events<-unique(ppmi_methyl$EVENT_ID)
+
+sapply(events, function(event_id){
+  methyl_visit<-ppmi_methyl[ppmi_methyl$EVENT_ID==event_id,]$PATNO
+  prot_visit<-ppmi_prot[ppmi_prot$CLINICAL_EVENT==event_id,]$PATNO
+  NROW(intersect(methyl_visit, prot_visit))
+})
 
 
 ### RNAs ids

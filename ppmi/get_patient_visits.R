@@ -5,6 +5,14 @@ BiocManager::install('minfiData')
 library(data.table)
 library(minfi)
 library(minfiData)
+## RGsetEx: RGChannelSet, 622,399 features
+MsetEx <- preprocessRaw(RGsetEx)
+## MsetEx: MethylSet, 485,512 features
+GMsetEx <- mapToGenome(MsetEx)
+## GMsetEx: GenomicMethylSet, 485,512 features
+
+baseDir <- system.file("extdata", package = "minfiData")
+list.files(baseDir)
 
 library(dplyr)
 ppmi_methyl<-read.csv('ppmi/ppmi_data/methylation/ppmi_140_link_list_20210607.csv')
@@ -81,11 +89,11 @@ sapply(events, function(event_id){
 ### bind with more features not needed for now - we are extracting aptients 
 
 
-files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/plasma/', pattern='*_NPX*',
+prot_files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/plasma/', pattern='*_NPX*',
                   full.names = TRUE)
 
 
-ppmi_prot<-read.csv(files[[1]])
+ppmi_prot<-read.csv(prot_files[[1]])
 
 prot_BL<-ppmi_prot[ppmi_prot$EVENT_ID=='BL',]$PATNO
 prot_BL
@@ -113,13 +121,10 @@ library(stringr)
 mirnas<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/all_quantification_matrix_raw.csv/quantification_matrix_raw.final_ids.csv', sep = '\t')
 
 names<-colnames(as.data.frame(mirnas))[-1]
-as.character(names[1])
-nn<-as.character(names[2])
 names_split<-sapply(names,function(x) {
                       unlist(strsplit(x,split='\\.'))}
                                   )
-names
-names<-names[-1]
+
 
 
 names_split<- strsplit(names,split='\\.')
@@ -140,8 +145,9 @@ rnaseq_files<-read.csv('ppmi/ppmi_data/rnaseq/rna_seq_files.txt', row.names = NU
 stats_df_rnaseq<-as.data.frame.matrix(table(rnaseq_files))
 dim(stats_df_rnaseq)
 stats_df_rnaseq$PATNO<-rownames(stats_df_rnaseq)
-
-
+s_df<-stats_df_rnaseq
+patients_visit_inter<-s_df[s_df$BL>0 & s_df$V04>0  & s_df$V08>0,]
+nrow(patients_visit_inter)
 
 
 ### MERGE

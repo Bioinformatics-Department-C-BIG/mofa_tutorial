@@ -11,9 +11,9 @@ mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantific
 
 names<-colnames(mirnas_rpmmm)[-1]
 
-names_split<- strsplit(names,split='\\.')
-visit<-sapply(names_split, '[[', 4)
-bl_visits<-visit=='BL'
+#names_split<- strsplit(names,split='\\.')
+#visit<-sapply(names_split, '[[', 4)
+#bl_visits<-visit=='BL'
 
 
 mirnas_BL<-select(mirnas_rpmmm,contains("BL"))
@@ -28,7 +28,10 @@ colnames(mirnas_BL)<-PATNO
 rownames(mirnas_BL)<-mirnas_rpmmm$miRNA
 
 length((mirnas_BL))
-colnames(mirnas_BL)
+tail(colnames(mirnas_BL), 400)
+rownames(mirnas_BL)
+
+
 
 
 ##### PROTEOMICS
@@ -71,16 +74,28 @@ prot_bl_2<-as.data.frame(subset(prot_bl_2,
 
 hist(prot_bl_matrix$NPX)
 
+
+## make a wide matrix with patient in columns 
 prot_bl_tbl<-as.data.table(prot_bl_matrix)
-new_d<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO,
+prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO,
                          value.var ='NPX', fun.aggregate = mean)
 
 
-prot_bl_2_t<-t(prot_bl_2)
+rownames(prot_bl_wide)<-prot_bl_wide$ASSAY
+prot_bl_wide$ASSAY<-NULL
+row.names(prot_bl_wide)
+
+fwrite(prot_bl_wide, paste0(output_files, 'proteomics_bl.csv'), row.names = TRUE)
+
+
+#prot_bl_2_t<-t(prot_bl_2)p
 # MAKE THE FIRST ROW colname
-colnames(prot_bl_2_t)<-prot_bl_2_t[1,]
-prot_bl_2_t<-prot_bl_2_t[-1,]
+#colnames(prot_bl_2_t)<-prot_bl_2_t[1,]
+#prot_bl_2_t<-prot_bl_2_t[-1,]
   ## TODO: drop worst duplicates with most missing values  
+
+
+
 
 
 

@@ -5,10 +5,7 @@ BiocManager::install('minfiData')
 library(data.table)
 library(minfi)
 library(minfiData)
-## RGsetEx: RGChannelSet, 622,399 features
-MsetEx <- preprocessRaw(RGsetEx)
-## MsetEx: MethylSet, 485,512 features
-GMsetEx <- mapToGenome(MsetEx)
+
 ## GMsetEx: GenomicMethylSet, 485,512 features
 
 baseDir <- system.file("extdata", package = "minfiData")
@@ -174,6 +171,10 @@ patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 &
                                     merged_stats$BL_r>0 &
                                      merged_stats$V04_p>0 & merged_stats$V04_m>0 &
                                      merged_stats$V04_r>0 ,]
+
+
+patients_visit_inter<-merged_stats[merged_stats$BL_m,]
+
 
 NROW(patients_visit_inter)
 

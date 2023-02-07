@@ -5,8 +5,9 @@ BiocManager::install('minfiData')
 library(data.table)
 library(minfi)
 library(minfiData)
-
 library(dplyr)
+library(stringr)
+
 ppmi_methyl<-read.csv('ppmi/ppmi_data/methylation/ppmi_140_link_list_20210607.csv')
 unique_patients<-unique(ppmi_methyl$PATNO)
 summary(ppmi_methyl)
@@ -105,22 +106,18 @@ stats_df$PATNO<-patient_number
 stats_df_olink<-stats_df
 
 
-install.packages('stringr')
-library(stringr)
+
 
 ## miRNAs ids 
 
 mirnas<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/all_quantification_matrix_raw.csv/quantification_matrix_raw.final_ids.csv', sep = '\t')
 
 names<-colnames(as.data.frame(mirnas))[-1]
-as.character(names[1])
+
 nn<-as.character(names[2])
 names_split<-sapply(names,function(x) {
                       unlist(strsplit(x,split='\\.'))}
                                   )
-names
-names<-names[-1]
-
 
 names_split<- strsplit(names,split='\\.')
 patient_number<-sapply(names_split, '[[', 3)
@@ -164,12 +161,30 @@ dim(merged_2)
 
 ### RNAs ids
 merged_stats<-merged_2
+
+
 patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 & 
                                     merged_stats$BL_r>0 &
                                      merged_stats$V04_p>0 & merged_stats$V04_m>0 &
-                                     merged_stats$V04_r>0 ,]
+                                     merged_stats$V04_r>0 &
+                                     merged_stats$V06_p>0 & merged_stats$V06_m>0 &
+                                     merged_stats$V06_r>0,]
 
-NROW(patients_visit_inter)
+
+
+patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 & 
+                                     merged_stats$BL_r>0 
+                                    ,]
+
+
+
+patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 &
+                                     merged_stats$V04_m>0 & merged_stats$V04_p>0 & 
+                                     merged_stats$V06_m>0 & merged_stats$V06_p>0 
+                                     
+                                    ,]
+
+NROW(unique(patients_visit_inter$PATNO))
 
 
 

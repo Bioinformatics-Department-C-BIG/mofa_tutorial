@@ -105,7 +105,7 @@ plotPCA(vsd, "Sample") + labs(color='Sample') + ggtitle("Batch effect")
 
 ##### Store the most variable genes only for MOFA 
 # Select most variable genes
-highly_variable_genes_mofa<-selectMostVariable(vsd_mat, 0.8)
+highly_variable_genes_mofa<-selectMostVariable(vsd_mat, 0.9)
 dim(highly_variable_genes_mofa)
 
 

@@ -4,58 +4,111 @@
 
 ##### 
 
+outdir='ppmi/plots/'
+output_files<- 'ppmi/output/'
 
-
+if (csf){
+  outdir=paste0(outdir, '/csf/')
+}  else if(untargeted){
+  outdir=paste0(outdir, '/untargeted/')
+  
+  
+}
+print(outdir)
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
 
 
-#MOFAobject@samples_metadata$Grade<-as.factor(MOFAobject@samples_metadata$Grade)
+MOFAobject@samples_metadata$NP1ANXS<-as.factor(MOFAobject@samples_metadata$NP1ANXS)
 MOFAobject@samples_metadata$Grade
-colnames(MOFAobject@samples_metadata)
+colnames(MOFAobject@samples_metadata)[20:35]
 
 
 stats<-apply(MOFAobject@samples_metadata, 2,table )
+sapply(stats,var)>0
 
+non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+
+NROW(non_na_vars)
 #### Covariance of factors with metadata 
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c('INFODT.x','NUPSOURC',"NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
+                                  covariates = c('INFODT.x','INFODT.y' ,'NUPSOURC',"NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
                                   plot = "log_pval",
                                   
 )
 
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = c("NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
-                                  plot = "log_pval",
+                                  plot = "log_pval"
+                                 
                                   
 )
 dev.off()
 
+png(paste0(outdir, 'factors_covariates1','.png'), width = 400, height=400)
+
+
+## plot only factors that correlate? 
+jpeg(paste0(outdir, 'factors_covariates1','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c('INFODT.x','SCAU1','SCAU2',"SCAU3", "SCAU4", "SCAU5", "SCAU6",  "SCAU7", "SCAU8", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
-                                  plot = "log_pval",
+                                  covariates = names(non_na_vars), 
+                                  plot = "log_pval"
                                   
 )
-ggsave(paste0(outdir, 'factors_covariates','.png'), width = 4, height=4, dpi=100)
+dev.off()
 
 
-view='miRNA'; factor=2
-all_weights<-MOFA2::get_weights(MOFAobject,views = view, factors=factor, 
-                        as.data.frame =TRUE)
+covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
+                                                         covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:70, 90:124)], 
+                                                         plot = "log_pval",
+                                                         return_data = TRUE
+)
 
-### get the top highly weighted variables - absolute value
-top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),][1:10,]
-write.table(top,paste0(outdir, 'top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
+                                  covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:70, 90:124)], 
+                                  plot = "log_pval",
+                                  return_data = TRUE
+)
+write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 
-   plot_variance_explained(MOFAobject, plot_total = T)[[2]]
-ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
+jpeg(paste0(outdir, 'factors_covariates','.jpeg'), width = 2000, height=800, res = 200)
+correlate_factors_with_covariates(MOFAobject,
+                                  covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:65, 90:124)], 
+                                  plot = "log_pval"
+)
+dev.off()
 
+view='proteomics'; factor=6
 
+vps=2
+fps= MOFAobject@dimensions$K
+
+views<-c('proteomics', 'miRNA')
+for (i in seq(1:vps)){
+  for (ii in seq(1:fps)){
+    view=views[i]
+    factor=ii
+    print(view, factor)
+    all_weights<-MOFA2::get_weights(MOFAobject,views = view, factors=factor, 
+                            as.data.frame =TRUE)
+    
+    ### get the top highly weighted variables - absolute value
+    top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),][1:10,]
+    write.table(top,paste0(outdir, 'top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+    
+
+  }
+  }
+  
+  plot_variance_explained(MOFAobject, plot_total = T)[[2]]
+  ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 #install.packages('psych')
 
 plot_factors(MOFAobject, 
-             factors = c(1,2), 
-             dot_size = 2.5
+             factors = c(3,8), 
+             dot_size = 2.5, 
+             color_by = 'NP3BRADY'
+             
 )
 
 plot_weights(MOFAobject,
@@ -73,16 +126,16 @@ plot_weights(MOFAobject,
 #Conclusion here:# factor 1 correlates with grade
 
 p<-plot_factor(MOFAobject, 
-            factors = 1, 
-            color_by = "EORTC.risk",
+            factors = 3, 
+            color_by = "NP3BRADY",
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE
 )
 p
 plot_factor(MOFAobject, 
-            factors = 1, 
-            color_by = "Subtype",
+            factors = 4, 
+            color_by = "NP3BRADY",
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE
@@ -90,7 +143,7 @@ plot_factor(MOFAobject,
 
 plot_factor(MOFAobject, 
             factors = 1, 
-            color_by = "Subtype",
+            color_by = "NP3BRADY",
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE
@@ -99,8 +152,8 @@ plot_factor(MOFAobject,
 # Factor 2 associates with proteomic Subtype 
 
 plot_factor(MOFAobject, 
-            factors = 2, 
-            color_by = "Subtype",
+            factors = c(3,8), 
+            color_by = "NP3BRADY",
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE
@@ -116,14 +169,13 @@ v_set=c()
 fps<-seq(1:3)
 
 view='miRNA'
-factor=3
+factor=8
 plot_top_weights(MOFAobject,
                  view = view,
                  factor = factor,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
-dev.off()
 ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
 
 
@@ -194,14 +246,14 @@ for (i in 1:length(vps)){
 
 
 
-
+# plot heatmaps by view and 
 
 
 
 plot_data_heatmap(MOFAobject, 
                   view = "proteomics",
                   factor = 1,  
-                  features = 30,
+                  features = 200,
                   cluster_rows = FALSE, cluster_cols = TRUE,
                   show_rownames = TRUE, show_colnames = FALSE,
                   scale = "row"
@@ -218,7 +270,7 @@ plot_data_heatmap(MOFAobject,
 
 plot_data_heatmap(MOFAobject, 
                   view = "miRNA",
-                  factor = 3,  
+                  factor = 2,  
                   features = 30,
                   cluster_rows = FALSE, cluster_cols = TRUE,
                   show_rownames = TRUE, show_colnames = FALSE,
@@ -228,7 +280,7 @@ plot_data_heatmap(MOFAobject,
 plot_data_heatmap(MOFAobject, 
                   view = "proteomics",
                   factor = 3,  
-                  features = 30,
+                  features = 100,
                   cluster_rows = FALSE, cluster_cols = TRUE,
                   show_rownames = TRUE, show_colnames = FALSE,
                   scale = "row"
@@ -240,8 +292,8 @@ plot_data_heatmap(MOFAobject,
 
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
-                  color_by = "EORTC.risk",
-                  shape_by = "Grade",
+                  color_by = "NP3BRADY",
+                  shape_by = "NP3BRADY",
                   dot_size = 2.5,
                   show_missing = T
 )

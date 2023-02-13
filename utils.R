@@ -434,9 +434,10 @@ plotbyObjective<-function(df, legend_t="Omics combinations", plot_width=8,
       g<-g+ geom_text(aes( label=ifelse(percent>8,paste0(sprintf("%.0f", percent)),'')), 
                       position=position_stack(vjust=0.5), size = 3) 
       
-      svg(fname2,width = plot_width, height=plot_height)
-      ggsave(fname, width = plot_width, height=plot_height)
-      #ggsave(fname2, width = plot_width, height=plot_height, device = 'svg')
+      # svg(fname2,width = plot_width, height=plot_height)
+      # dev.off()
+      #ggsave(fname, width = plot_width, height=plot_height, dpi=300)
+      ggsave(fname2, width = plot_width, height=plot_height, device = 'svg')
       
       
     }

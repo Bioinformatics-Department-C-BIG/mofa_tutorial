@@ -5,12 +5,9 @@
 
 input_data<-('ppmi/ppmi_data/')
 clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Age_at_visit.csv'))
-demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
-
 
 
 # todo: add more motor mds-updrs
-motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
 motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
 motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III.csv'))
 
@@ -38,7 +35,7 @@ motor_assess_BL<-merge(motor_assess_BL, motor_assess_III_BL, by='PATNO')
 motor_assess %>% 
     summarise(n_distinct(unlist(across(PATNO:EVENT_ID))))
 
-
+motor_assess_III_dt$NHY
 
 motor_assess_III_dt<-as.data.table(motor_assess_III)
 NROW(motor_assess_III_dt[, .N, by = c('PATNO', 'EVENT_ID')])
@@ -78,5 +75,6 @@ write.csv2(combined_bl,'combined_bl.csv', row.names = FALSE)
 # females would be NA
 combined_bl$SCAU23
 
-combined_bl$
+combined_bl$SEX
+
 

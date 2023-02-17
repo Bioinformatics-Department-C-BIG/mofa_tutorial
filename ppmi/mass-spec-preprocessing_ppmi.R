@@ -30,8 +30,9 @@ if (csf){
 }  else if(untargeted){
   outdir=paste0(outdir, '/untargeted/')
   
+} else if(plasma){
+  outdir=paste0(outdir, '/plasma/')
 }
-
 
 
 #### read in proteomics 

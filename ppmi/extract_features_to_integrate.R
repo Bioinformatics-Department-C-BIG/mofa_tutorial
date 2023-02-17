@@ -5,6 +5,35 @@ library(data.table)
 library(stringr)
 
 
+rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
+rnas<-read.csv2('ppmi/ppmi_data/rnaseq/BL.csv', sep = ',')
+output_files='ppmi/output/'
+
+
+rownames(rnas)<-rnas$Geneid
+rnas$Geneid<-NULL
+
+names<-colnames(rnas)[-1]
+
+rnas_BL<-select(rnas,contains("BL"))
+rownames(rnas_BL)
+
+### Split the names 
+names_split<- strsplit(names(rnas_BL),split='\\.')
+PATNO<-sapply(names_split, '[[', 2)
+length(unique(PATNO))
+
+length(PATNO)
+dim(rnas_BL)
+print(PATNO)
+colnames(rnas_BL)<-PATNO
+
+write.csv2(rnas_BL, paste0(output_files, 'rnas_bl.csv'), row.names = TRUE)
+
+
+
+
+
 #### Read in the mirnas 
 mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv', sep = '\t')
 mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
@@ -35,7 +64,7 @@ rownames(mirnas_BL)
 
 library(tidyr)
 ##### PROTEOMICS - OLINK
-csf=1
+csf=0
 output_files<-'ppmi/output/csf/'
 if (csf){
   prot_files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/csf/', pattern='*_NPX*',

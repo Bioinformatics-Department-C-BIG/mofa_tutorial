@@ -3,20 +3,25 @@
 
 
 ##### 
+### this one depends on mofa application to inherit: 
+### 1. MOFAobject, 2. factors, 
+# 3. clinical variables
+# 4. outdirs 
+# 5. csf/plasma/untargeted flags
 
-outdir='ppmi/plots/'
-output_files<- 'ppmi/output/'
+outdir
 
-if (csf){
-  outdir=paste0(outdir, '/csf/')
-}  else if(untargeted){
-  outdir=paste0(outdir, '/untargeted/')
-  
-  
-}
+
 print(outdir)
+
+plot_factor_cor(MOFAobject)
+ggsave(paste0(outdir, 'factor_cor','.png'), width = 4, height=4, dpi=100)
+
+
+
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
+
 
 
 MOFAobject@samples_metadata$NP1ANXS<-as.factor(MOFAobject@samples_metadata$NP1ANXS)
@@ -45,11 +50,20 @@ correlate_factors_with_covariates(MOFAobject,
 )
 dev.off()
 
-png(paste0(outdir, 'factors_covariates1','.png'), width = 400, height=400)
 
 
 ## plot only factors that correlate? 
-jpeg(paste0(outdir, 'factors_covariates1','.jpeg'), width = 2000, height=700, res=150)
+cors<-correlate_factors_with_covariates(MOFAobject,
+                                  covariates = names(non_na_vars), 
+                                  plot = "log_pval", 
+                                  return_data = TRUE
+                                  
+)
+ids_to_plot<-which(apply(cors, 2, sum)>0)
+
+
+
+jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars), 
                                   plot = "log_pval"
@@ -57,6 +71,16 @@ correlate_factors_with_covariates(MOFAobject,
 )
 dev.off()
 
+
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = 2000, height=700, res=150)
+correlate_factors_with_covariates(MOFAobject,
+                                  covariates = names(non_na_vars)[ids_to_plot], 
+                                  plot = "log_pval"
+                                  
+)
+dev.off()
+
+### filter only the ones that are correlated 
 
 covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
                                                          covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:70, 90:124)], 
@@ -80,12 +104,13 @@ dev.off()
 
 view='proteomics'; factor=6
 
-vps=2
-fps= MOFAobject@dimensions$K
-
-views<-c('proteomics', 'miRNA')
-for (i in seq(1:vps)){
-  for (ii in seq(1:fps)){
+vps=length(MOFAobject@dimensions$D)
+fps= as.numeric(MOFAobject@dimensions$K)
+fps
+views<-names(MOFAobject@dimensions$D)
+views
+for (i in seq(1,vps)){
+  for (ii in seq(1,fps)){
     view=views[i]
     factor=ii
     print(view, factor)
@@ -104,12 +129,30 @@ for (i in seq(1:vps)){
   ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 #install.packages('psych')
 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 plot_factors(MOFAobject, 
              factors = c(3,8), 
              dot_size = 2.5, 
              color_by = 'NP3BRADY'
              
 )
+
+
+##### Plot molecular signatures in the input data
+
+
 
 plot_weights(MOFAobject,
              view = "miRNA",
@@ -149,24 +192,50 @@ plot_factor(MOFAobject,
             show_missing = FALSE
 )
 
+
+
 # Factor 2 associates with proteomic Subtype 
 
+color_by<-'NHY';fs<-c(4,8)
+color_by<-'NP3TOT';fs<-c(1,4)
+
+
 plot_factor(MOFAobject, 
-            factors = c(3,8), 
-            color_by = "NP3BRADY",
+            factors = fs, 
+            color_by = color_by,
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE
 )
+fss<-paste(fs,sep='_',collapse='-')
+ggsave(paste0(outdir, 'plot_factor_variate_violin',fss,color_by,'.png'), width = 4, height=4, dpi=100)
+
+#### plot 2 factors 
+##### TODO: Plot only significant covariates  here
+
+color_by<-'NHY'
+fs<-c(4,8)
+
+color_by<-'NHY';fs<-c(1,8)
+color_by<-'NP3TOT';fs<-c(1,8)
+
+plot_factors(MOFAobject, 
+            factors = fs, 
+            color_by = color_by,
+            show_missing = FALSE
+)
+fss<-paste(fs,sep='_',collapse='-')
+FNAME<-paste0(outdir, 'plot_factors_variate_2D',fss,color_by,'.png')
+FNAME
+color_by
+ggsave(FNAME, width = 4, height=4, dpi=100)
+
+
 
 ##### plot weights 
-fps<-seq(1:5)
-
-vps<-c("proteomics" ,"miRNA")
 
 v_set=c()
 v_set=c()
-fps<-seq(1:3)
 
 view='miRNA'
 factor=8
@@ -179,39 +248,39 @@ plot_top_weights(MOFAobject,
 ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
 
 
-
-for (i in 1:length(vps)){
-  for (ii in 1:length(fps)){
-    
+fps=8
+for (i in 1:vps){
+  for (ii in 1:fps){
+    print(c(i,ii))
     plot_top_weights(MOFAobject,
-                     view = vps[i],
-                     factor = fps[ii],
+                     view = views[i],
+                     factor = ii,
                      nfeatures = 10,     # Top number of features to highlight
                      scale = T           # Scale weights from -1 to 1
     )
-    ggsave(paste0(outdir, 'top_weights_', fps[ii],'_',vps[i],'.png'), width = , height=4, dpi=100)
+    ggsave(paste0(outdir, 'top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
     
     plot_weights(MOFAobject, 
-                 view = vps[i], 
-                 factor = fps[ii], 
+                 view = views[i], 
+                 factor = ii, 
                  nfeatures = 10
     )
-    ggsave(paste0(outdir, 'all_weights_', fps[ii],'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+    ggsave(paste0(outdir, 'all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
     
     
     
     ###### Heatmaps 
-    nfs=20
-    
-    jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','miRNA_', 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
+    nfs=40
+    print('heatmap')
+    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     fps[ii]=1
     # Plot heatmaps for each factor only for miRNA 
     p<-plot_data_heatmap(MOFAobject, 
-                         view = vps[i], 
-                         factor =  fps[ii],  
+                         view = views[i], 
+                         factor =  ii,  
                          features = nfs,
                          denoise = TRUE,
-                         cluster_rows = FALSE, cluster_cols = FALSE,
+                         cluster_rows = TRUE, cluster_cols = FALSE,
                          show_rownames = TRUE, show_colnames = FALSE,
                          scale = "row",
                          fontsize_number = 5
@@ -220,11 +289,11 @@ for (i in 1:length(vps)){
     )
     dev.off()
     
-    jpeg(paste0(outdir, 'heatmap_',fps[ii],'_','Drugs_', 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
     
     p<-plot_data_heatmap(MOFAobject, 
-                         view = vps[i], 
-                         factor =  fps[ii],  
+                         view = views[i], 
+                         factor =  ii,  
                          features = nfs,
                          denoise = TRUE,
                          cluster_rows = FALSE, cluster_cols = FALSE,

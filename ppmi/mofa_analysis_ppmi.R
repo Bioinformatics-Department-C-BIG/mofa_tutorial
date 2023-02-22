@@ -1,7 +1,8 @@
 
 #install.packages('psych')
 
-
+#install.packages("remotes")
+#remotes::install_github("bioFAM/MOFAdata")
 ##### 
 ### this one depends on mofa application to inherit: 
 ### 1. MOFAobject, 2. factors, 
@@ -12,13 +13,16 @@
 outdir
 
 
+
 print(outdir)
+dev.off()
 
+jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
-ggsave(paste0(outdir, 'factor_cor','.png'), width = 4, height=4, dpi=100)
+dev.off()
 
 
-
+calculate_variance_explained(MOFAobject)
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
 
@@ -389,17 +393,31 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 
 ###### GSEA 
-library(MOFAdata)
 
+#BiocManager::install('AnnotationHub')
+
+if (is.null(df_wide4)){
+  source('enrichment.R')
+  }
+#library(AnnotationHub)
+#ah = AnnotationHub()
+
+
+library('MOFAdata')
 utils::data(reactomeGS)
 
 head((reactomeGS))
 
-features_names(MOFAobject)$miRNA
+
+features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
+       function(x) {stringr::str_remove(x, '\\..*')}
+)
+
+
 # GSEA on positive weights, with default options
 res.positive <- run_enrichment(MOFAobject, 
                                feature.sets = reactomeGS, 
-                               view = "miRNA",
+                               view = "RNA",
                                sign = "positive"
 )
 
@@ -407,33 +425,79 @@ res.positive <- run_enrichment(MOFAobject,
 
 # GSEA on negative weights, with default options
 res.negative <- run_enrichment(MOFAobject, 
-                               feature.sets = reactomeGS, 
-                               view = "miRNA",
+                               feature.sets = df_wide4, 
+                               view = "RNA",
                                sign = "negative"
 )
 
-for (ii in 1:4){
+
+res.positive <- run_enrichment(MOFAobject, 
+                               feature.sets = df_wide4, 
+                               view = "RNA",
+                               sign = "positive"
+)
+
+
+
+
+for (ii in 1:N_FACTORS){
   sign<-res.positive$pval.adj[,ii][which(res.positive$pval.adj[,ii]<0.05)]
   #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
+  sign2<-sign[order(sign)]
   
   print(length(sign))
+  print(sign2[1:10])
 }
-names(res.positive)[which(res.positive$pval.adj<0.05)]
-
-View(res.positive$pval.adj)
 
 
-theme(plot.margin=grid::unit(c(0,0,0,0), "mm"))
+# change to negative and positive
+results_enrich<-res.positive$pval.adj
 
-names(res.positive)
+all_fs_enrichment<-apply(results_enrich, 2 , function(x) {
+  sign<-x[x<0.005]
+  sign2<-sign[order(sign)]
+  lns<-10
+  end<-if (length(sign2)<lns) {end=length(sign2)
+  }else{
+    end=lns
+  }
+  
+  print(sign2[1:end])
+  }
+)
+
+write.csv(unlist(all_fs_enrichment, use.names = TRUE),paste0(outdir,'enrichment_positive_pvals.csv' ))
+
+# Make enrichment plots for all factors 
+# threshold on p value to zoom in 
+jpeg(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
+
+plot_enrichment_heatmap(res.positive, 
+                        alpha=0.5, cap=0.0005)
 dev.off()
-# ENS ids seems to be required for the enrichment 
-plot_enrichment_heatmap(res.positive)
-ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
-dev.off()
 
-plot_enrichment_heatmap(res.negative)
-ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
+plot_enrichment_heatmap(res.positive[, 2], 
+                        alpha=0.5, cap=0.0005)
+
+#ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
+
+
+jpeg(paste0(outdir,'Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
+
+plot_enrichment_heatmap(res.negative, 
+                        alpha=0.5, cap=0.0005)
+dev.off()
+#ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
+
+
+F3<-res.positive$pval.adj[,'Factor3']
+SIG<-F3[F3<0.05]
+SIG[order(SIG)][1:20]
+
+F3<-res.negative$pval.adj[,'Factor6']
+SIG<-F3[F3<0.05]
+SIG[order(SIG)][1:10]
+
 
 
 # Positive Factor 1: Hypoxia, oxygen dependent etc.
@@ -495,7 +559,7 @@ round(importance(model.EORTC.risk), 2)
 df <- as.data.frame(get_factors(MOFAobject, factors=c(3,4))[[1]])
 
 # Train the model for IGHV
-y_predict='EORTC.risk'
+y_predict='NHY'
 df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
 model.y <- randomForest(y ~ .,data= df, ntree=10)
 df$y <- NULL # important 

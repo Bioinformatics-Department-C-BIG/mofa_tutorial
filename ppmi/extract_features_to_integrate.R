@@ -5,8 +5,13 @@ library(data.table)
 library(stringr)
 
 
-rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
-rnas<-read.csv2('ppmi/ppmi_data/rnaseq/BL.csv', sep = ',')
+#rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
+#### too many files so we separate each time points 
+##### Maybe do them one by one in a function
+
+
+VISIT='BL'
+rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 output_files='ppmi/output/'
 
 
@@ -15,7 +20,7 @@ rnas$Geneid<-NULL
 
 names<-colnames(rnas)[-1]
 
-rnas_BL<-select(rnas,contains("BL"))
+rnas_BL<-select(rnas,contains(VISIT))
 rownames(rnas_BL)
 
 ### Split the names 
@@ -28,7 +33,7 @@ dim(rnas_BL)
 print(PATNO)
 colnames(rnas_BL)<-PATNO
 
-write.csv2(rnas_BL, paste0(output_files, 'rnas_bl.csv'), row.names = TRUE)
+write.csv2(rnas_BL, paste0(output_files, 'rnas_', VISIT, '.csv'), row.names = TRUE)
 
 
 
@@ -45,7 +50,7 @@ names<-colnames(mirnas_rpmmm)[-1]
 #bl_visits<-visit=='BL'
 
 
-mirnas_BL<-select(mirnas_rpmmm,contains("BL"))
+mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
 mirnas_BL
 
 
@@ -61,24 +66,22 @@ tail(colnames(mirnas_BL), 400)
 rownames(mirnas_BL)
 
 
+write.csv2(mirnas_BL, paste0(output_files, 'mirnas_', VISIT, '.csv'), row.names = TRUE)
+
+
 
 library(tidyr)
 ##### PROTEOMICS - OLINK
-csf=0
-output_files<-'ppmi/output/csf/'
-if (csf){
-  prot_files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/csf/', pattern='*_NPX*',
+
+TISSUE='CSF'
+#TISSUE='Plasma'
+VISIT='BL'
+output_files<-'ppmi/output/'
+
+prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
                          full.names = TRUE)
-  outname<-'proteomics_csf_bl.csv'
-  outname2<-'proteomics_csf_bl_no_log.csv'
-  
-}else {
-  
-  prot_files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/plasma/', pattern='*_NPX*',
-                         full.names = TRUE)
-  outname<-'proteomics_bl.csv'
-  outname2<-'proteomics_bl_no_log.csv'
-}
+outname<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE,  '.csv')
+outname2<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE,  '_no_log.csv')
 
 
 prot_files
@@ -96,7 +99,7 @@ ppmi_prot<-ppmi_prot %>% mutate(across('PATNO', str_replace,
                             'PPMI-', ''
                             ))
 ## Filter baseline
-prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID=='BL',]
+prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
 
 ## Remove unecessary columns 
 prot_bl_matrix<-as.data.frame(subset(prot_bl,
@@ -127,8 +130,8 @@ prot_bl_wide_unlog<-as.data.frame(sapply(prot_bl_wide, function(x){2**(as.numeri
 
 
 ## Write output both log and not logged
-fwrite(prot_bl_wide, paste0(output_files, outname), row.names = TRUE)
-fwrite(prot_bl_wide_unlog, paste0(output_files, outname2), row.names = TRUE)
+fwrite(prot_bl_wide, paste0(outname), row.names = TRUE)
+fwrite(prot_bl_wide_unlog, paste0(outname2), row.names = TRUE)
 
 
 df<-prot_bl_wide_unlog[prot_bl_wide_unlog<10]
@@ -138,6 +141,9 @@ hist(as.numeric(as.matrix(df)))
 
 
 ##### PROTEOMICS - URINE MS/MS
+
+
+
 prot_files<-list.files(path='ppmi/ppmi_data/proteomics/untargeted/', pattern='*',
                        full.names = TRUE)
 outname<-'proteomics_untargeted.csv'

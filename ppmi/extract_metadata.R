@@ -64,11 +64,6 @@ combined_bl<-combined[combined$EVENT_ID=='BL',]
 ## add demographics with suffix if common? 
 
 
-NROW(unique(combined_bl$PATNO))
-
-combined
-
-
 
 write.csv2(combined_bl,'combined_bl.csv', row.names = FALSE)
 

@@ -17,8 +17,7 @@ library("SummarizedExperiment")
 ## Output directory
 
 output_1='ppmi/output/'
-output_files<-'ppmi/output/'
-output_files<-'ppmi/output/'
+output_files_orig<-'ppmi/output/'
 
 output_de=paste0(output_1, 'gene')
 source('bladder_cancer/preprocessing.R')
@@ -28,23 +27,50 @@ source('bladder_cancer/preprocessing.R')
 ##### Load required data 
 # TODO: input all the visits 
 
+MIN_COUNT_G=100
+MIN_COUNT_M=10
+TOP_GN=0.20
+TOP_MN=0.50
+
+
+g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
+m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 
 
 #### Remove low expression 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
-  raw_counts<-as.data.frame(mirnas_BL)
-  param_str<-'mirnas'
-  min.count=100
-  most_var=0.8
+   mirnas_file<-paste0(output_files, 'mirnas_',VISIT,  '.csv')
+   mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
+  
+    raw_counts<-as.data.frame(mirnas_BL)
+
+  # if we filter too much we get normalization problems 
+  min.count=MIN_COUNT_M
+  most_var=TOP_MN
+  param_str_m<-paste0('mirnas_', m_params)
+  highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+  
   
 }else{
+  rnas_file<-paste0(output_files, 'rnas_', VISIT, '.csv')
+  rnas_BL<-as.matrix(fread(rnas_file, header=TRUE), rownames=1)
+ 
   raw_counts<-as.data.frame(rnas_BL)
-  param_str<-'rnas'
-  min.count=150
-  most_var=0.05
+    # this is defined later but filter here if possible to speed up
+  # TODO: fix and input common samples as a parameter
+  raw_counts<-raw_counts %>% select(common_samples)
+
+  min.count=MIN_COUNT_G
+  most_var=TOP_PN
+  param_str_g<-paste0('rnas_', g_params )
+  highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
+  
+  
   
 }
+
+
 Sample<-colnames(raw_counts)
 sample_info<-DataFrame(Sample=Sample)
 
@@ -95,24 +121,25 @@ vsd <- varianceStabilizingTransformation(dds)
 
 vsd_mat <- assay(vsd)
 colnames(vsd_mat)<-vsd$Sample
-vsd_mat
-meanSdPlot(vsd_mat)
+
+meanSdPlot(vsd)
 
 
 ##### Checks
 # Check the effect of vst before and after
+par(mfrow=c(1,3))
 # Check distributions of samples using boxplots
-boxplot(log10(assay(dds)[,1:30]), xlab="", ylab="Log2 counts ",las=2)
+boxplot(log2(assay(dds)[,1:30]), xlab="", ylab="Log2 counts ",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(log10(assay(dds))),col="blue")
 title("Boxplots of logCPMs (unnormalised)")
+boxplot(log10(raw_counts)[,1:30], xlab="", ylab="Log10 counts ",las=2)
 
 # Check distributions of samples using boxplots
 boxplot(vsd_mat[,1:30], xlab="", ylab="vst(counts) ",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(vsd_mat),col="blue")
 title("Boxplots of logCPMs (after vst)")
-
 
 ## ASSESS BATCH
 ### Assess batch effect
@@ -125,12 +152,31 @@ highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
 dim(highly_variable_genes_mofa)
 
 
-write.csv(highly_variable_genes_mofa, paste0(output_files, param_str,'_highly_variable_genes_mofa.csv'), col.names = TRUE)
-write.table(t(vsd_mat), paste0(output_files,param_str,'_highly_variable_genes_mofa_t.txt'), row.names = FALSE, sep = '\t')
+boxplot(highly_variable_genes_mofa[,1:30], xlab="", ylab="vst(counts) ",las=2)
+
+
+write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
+
 
 dim(highly_variable_genes_mofa)
 
 # Check that the distribution is approximately normal
+dev.off()
+
+par(mfrow=c(1,1))
 hist(highly_variable_genes_mofa)
 
+par(mfrow=c(2,1))
+
+
+
+### SANITY CHECK: Just plot one gene before and after to ensure the mapping looks correct 
+df=highly_variable_genes_mofa
+idx=30
+plot(df[idx,1:20]) 
+gname<-rownames(df)[idx]
+title(gname)
+df=raw_counts
+plot(df[gname, 1:20])
+title(gname)
 

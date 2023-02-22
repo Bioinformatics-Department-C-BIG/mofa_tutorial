@@ -13,6 +13,7 @@ library(data.table)
 library(ggplot2)
 library(tidyverse)
 library(ggplot2)
+library(ggpubr)
 
 
 
@@ -29,35 +30,74 @@ combined_bl<-read.csv2('combined_bl.csv')
 #install.packages('psych')
 
 
-# prerequisites: mass spec preprocessing and desq2 preprocessing
-csf=1;untargeted=0;plasma=0;
-N_FACTORS=8
 
-
-outdir='ppmi/plots/'
+outdir_orig='ppmi/plots/'
 output_files<- 'ppmi/output/'
 
+# prerequisites: mass spec preprocessing and desq2 preprocessing
+N_FACTORS=10
+VISIT='BL'
+TISSUE='Plasma';
+
+TISSUE='CSF'; 
+
+TOP_PN=0.50
+TOP_GN=0.20 # 0.20
+TOP_MN=0.50
+
+
+MIN_COUNT_G=100
+MIN_COUNT_M=10
+#TISSUE='untargeted'
+
+
+p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_')
+g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
+m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
+mofa_params<-paste0(N_FACTORS )
+#
+
+
+highly_variable_proteins_outfile = paste0(output_files, p_params , 'highly_variable_proteins_mofa.csv')
 fname<-paste0(output_files, 'proteomics_bl.csv')
-if (csf){
-  
-  outdir=paste0(outdir, 'csf/', N_FACTORS , '/')
-  output_files_prot=paste0(output_files, '/csf/')
-  fname<-paste0(output_files_prot, 'proteomics_csf_bl.csv')
-  
-  
-}  else if(untargeted){
-  outdir=paste0(outdir, 'untargeted/', N_FACTORS , '/')
-  output_files_prot=paste0(output_files, '/untargeted/')
-  fname<-paste0(output_files_prot, 'untargeted_prot_bl.csv')
-  
-}  else if(plasma){
-  outdir=paste0(outdir, 'plasma/', N_FACTORS , '/')
-  output_files_prot=paste0(output_files, '/plasma/')
-  fname<-paste0(output_files_prot, 'proteomics_bl.csv')
-  
-}
+
+
+highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params,'_highly_variable_genes_mofa.csv')
+highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly_variable_genes_mofa.csv')
+
+
+
+
+outdir = paste0(outdir_orig, 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params  , '/');outdir
+dir.create(outdir, showWarnings = FALSE)
+fname<-paste0(output_files, 'proteomics_', VISIT, '_',TISSUE, '.csv')
+fname
+
+
+#if (TISSUE== csf){
+#  
+#  outdir=paste0(outdir_orig, 'csf/', N_FACTORS , '/')
+#  output_files_prot=paste0(output_files, '/csf/')
+#  fname<-paste0(output_files_prot, 'proteomics_csf_bl.csv')
+#  
+#  
+#}  else if(untargeted){
+#  outdir=paste0(outdir_orig, 'untargeted/', N_FACTORS , '/')
+#  output_files_prot=paste0(output_files, '/untargeted/')
+#  fname<-paste0(output_files_prot, 'untargeted_prot_bl.csv')
+#  
+#}  else if(plasma){
+#  outdir=paste0(outdir_orig, 'plasma/', N_FACTORS , '/')
+#  output_files_prot=paste0(output_files, '/plasma/')
+#  fname<-paste0(output_files_prot, 'proteomics_bl.csv')
+#  
+#}
+
+
+
+
+
 outdir
-output_files_prot
 ##### Create MOFA object 
 
 ##### Handle duplicates 
@@ -69,48 +109,55 @@ colnames(prot_bl_wide)[1]<-'protein'
 
 proteomics<-as.data.frame(prot_bl_wide, row.names=prot_bl_wide$protein)
 rownames(proteomics)<-proteomics$protein
+
 proteomics$protein<-NULL
 hist(as.numeric(as.matrix(proteomics)))
 
 
 # Extract highly variable proteins and genes 
-highly_variable_proteins_mofa<-selectMostVariable(proteomics, 0.3)
+highly_variable_proteins_mofa<-selectMostVariable(proteomics, 0.15)
+dim(highly_variable_proteins_mofa)
 #highly_variable_proteins_mofa<-proteomics
 
+###### Option 2: preprocessing from VSN: Load from file 
+### 1. Load proteins 
 
-
-
-
-###### Option 2 preprocessing from VSN: Load from file 
-
-in_file<-paste0(output_files_prot, 'highly_variable_proteins_mofa.csv' )
+in_file<-highly_variable_proteins_outfile
 
 highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 
+
+
+
+
+### Start loading mofa data
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
 dim(proteomics)
-# change to rna
-highly_variable_genes_mofa<-fread(paste0(output_files, 'mirnas_highly_variable_genes_mofa.csv'),header=TRUE)
-colnames(highly_variable_genes_mofa)[1]<-'mirnas'
-rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$mirnas
+
+
+##### Load mirnas + RNAs 
+highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
+colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
+rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
 
 # or input to vst or put as is normalized
 
-miRNA<-highly_variable_genes_mofa[, mirnas:=NULL]
-rownames(miRNA)
+miRNA<-highly_variable_mirnas_mofa[, mirnas:=NULL]
+head(rownames(miRNA))
 
 
 
-##### RNA seq: 
 
-highly_variable_genes_mofa<-fread(paste0(output_files, 'rnas_highly_variable_genes_mofa.csv'),header=TRUE)
+##### Load RNA seq: 
+
+highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
 colnames(highly_variable_genes_mofa)[1]<-'rnas'
 rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
 
 # or input to vst or put as is normalized
 
 RNA<-highly_variable_genes_mofa[, rnas:=NULL]
-rownames(RNA)
+head(rownames(RNA))
 
 
 
@@ -120,22 +167,20 @@ rownames(RNA)
 library(ggplot2)
 miRNAm<-melt(miRNA)
 proteomicsm<-melt(proteomics)
-
+par(mfrow=c(1,3))
 RNAm<-melt(RNA)
 
-ggplot(miRNAm, aes(x=value))+ geom_histogram()
-ggsave(paste0(outdir, 'mirnas_hist.png' ))
+p1<-ggplot(miRNAm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+p2<-ggplot(RNAm, aes(x=value))+ geom_histogram()+ labs(title='rnas')
+p3<-ggplot(proteomicsm, aes(x=value))+ geom_histogram()+ labs(title='proteins')
+ggsave(paste0(outdir, 'data_histograms.jpeg' ), width = 10, height=8)
 
-ggplot(RNAm, aes(x=value))+ geom_histogram()
-ggsave(paste0(outdir, 'rnas_hist.png' ))
-
-ggplot(proteomicsm, aes(x=value))+ geom_histogram()
-ggsave(paste0(outdir, 'proteins_hist.png' ))
-
-
+dev.off()
 dim(highly_variable_proteins_mofa)
 
 dim(proteomics)
+
+##### Filter samples that have all modalities present!
 
 common_samples<-intersect(colnames(miRNA), colnames(proteomics))
 common_samples<-intersect(common_samples,combined_bl$PATNO)
@@ -192,21 +237,17 @@ colnames(prot_filt)
 
 NCOL(miRNA_filt)
 
-hist(data$miRNA)
-hist(data$proteomics)
-dev.off()
 
 ######
 # Add metadata
 combined_bl$X<-NULL
 match( common_samples, combined_bl$PATNO)
 metadata_filt<-combined_bl[match( common_samples, combined_bl$PATNO), ]
-
-metadata_filt$PATNO
 NROW(unique(metadata_filt$PATNO))
 
 
-#### model opts 
+##### Setup MOFA model 
+## model opts 
 # SET factor values 
 MOFAobject <- create_mofa(data)
 model_opts <- get_default_model_options(MOFAobject)
@@ -224,9 +265,9 @@ ggsave(paste0(outdir, 'data_overview.jpeg'))
 
 ##### run the model 
 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(output,'mofa_ppmi.hdf5'))
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
-#pre_trained<-load_model(paste0(output, 'mofa_ppmi.hdf5'))
+#pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
 #MOFAobject<-pre_trained
 ###
 
@@ -237,12 +278,13 @@ plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 
 
-
-
+MOFAobject@training_stats
 ######
 # Check model metadata
 metadata_filt$sample<-as.character(metadata_filt$PATNO)
 samples_metadata(MOFAobject)<-metadata_filt
-samples_metadata(MOFAobject)
+#samples_metadata(MOFAobject)
 
+
+outdir
 

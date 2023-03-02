@@ -2,6 +2,7 @@
 
 
 # 1. Subject characteristics 
+library(data.table)
 
 input_data<-('ppmi/ppmi_data/')
 clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Age_at_visit.csv'))
@@ -14,21 +15,21 @@ motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MD
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
 
 
-
+VISIT='V06'
 ### Eventually merge both by visit and patient
-clinical_BL<-clinical[clinical$EVENT_ID=='BL',]
+clinical_BL<-clinical[clinical$EVENT_ID==VISIT,]
 length(unique(clinical_BL$PATNO))
 
 
-motor_assess_BL<-motor_assess[motor_assess$EVENT_ID=='BL',]
-motor_assess_III_BL<-motor_assess_III[motor_assess_III$EVENT_ID=='BL',]
+motor_assess_BL<-motor_assess[motor_assess$EVENT_ID==VISIT,]
+motor_assess_III_BL<-motor_assess_III[motor_assess_III$EVENT_ID==VISIT,]
 
 NROW(motor_assess_BL$PATNO)
 
 NROW(unique(motor_assess_BL$PATNO))
 
 
-non_motor_BL<-non_motor[non_motor$EVENT_ID=='BL',]
+non_motor_BL<-non_motor[non_motor$EVENT_ID==VISIT,]
 
 motor_assess_BL<-merge(motor_assess_BL, motor_assess_III_BL, by='PATNO')
 
@@ -59,13 +60,13 @@ demographics_2<-subset(demographics, select = -c(EVENT_ID))
 combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
 
-combined_bl<-combined[combined$EVENT_ID=='BL',]
+combined_bl<-combined[combined$EVENT_ID==VISIT,]
 
 ## add demographics with suffix if common? 
 
 
 
-write.csv2(combined_bl,'combined_bl.csv', row.names = FALSE)
+write.csv2(combined_bl,paste0('combined_', VISIT,  '.csv'), row.names = FALSE)
 
 # females would be NA
 combined_bl$SCAU23

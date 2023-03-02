@@ -13,7 +13,8 @@ library("vsn")
 
 library("SummarizedExperiment")
 
-
+library(data.table)
+library(dplyr)
 ## Output directory
 
 output_1='ppmi/output/'
@@ -29,16 +30,16 @@ source('bladder_cancer/preprocessing.R')
 
 MIN_COUNT_G=100
 MIN_COUNT_M=10
-TOP_GN=0.20
-TOP_MN=0.50
-
+TOP_GN=0.10
+TOP_MN=0.25
+VISIT='BL'
 
 g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 
 
 #### Remove low expression 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_',VISIT,  '.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -59,10 +60,10 @@ if (process_mirnas){
   raw_counts<-as.data.frame(rnas_BL)
     # this is defined later but filter here if possible to speed up
   # TODO: fix and input common samples as a parameter
-  raw_counts<-raw_counts %>% select(common_samples)
+ raw_counts<-raw_counts %>% select(common_samples)
 
   min.count=MIN_COUNT_G
-  most_var=TOP_PN
+  most_var=TOP_GN
   param_str_g<-paste0('rnas_', g_params )
   highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
   

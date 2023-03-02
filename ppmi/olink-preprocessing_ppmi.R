@@ -10,6 +10,7 @@ library(gplots)
 library(RColorBrewer)
 library(sys)
 library(sys)
+library(ggplot2)
 library("vsn")
 library("DEP")
 library("data.table")
@@ -33,8 +34,10 @@ param_str<-paste0(top_n)
 
 TISSUE='CSF'
 TISSUE='Plasma'
-VISIT='BL'
 
+VISIT='V06'
+
+VISIT='BL'
 
 #### read in proteomics 
 p_params_in<- paste0(VISIT, '_', TISSUE)

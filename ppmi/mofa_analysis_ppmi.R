@@ -10,8 +10,13 @@
 # 4. outdirs 
 # 5. csf/plasma/untargeted flags
 
-outdir
 
+#source('enrichment.R')
+library(ggplot2)
+gs_file
+
+outdir
+#VISIT='BL'
 
 
 print(outdir)
@@ -396,9 +401,8 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 #BiocManager::install('AnnotationHub')
 
-if (is.null(df_wide4)){
-  source('enrichment.R')
-  }
+source('enrichment.R')
+  
 #library(AnnotationHub)
 #ah = AnnotationHub()
 
@@ -407,6 +411,14 @@ library('MOFAdata')
 utils::data(reactomeGS)
 
 head((reactomeGS))
+
+
+
+subcategory<- 'CP:KEGG'
+subcategory<- 'GO:BP'
+
+gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
 
 
 features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
@@ -425,14 +437,15 @@ res.positive <- run_enrichment(MOFAobject,
 
 # GSEA on negative weights, with default options
 res.negative <- run_enrichment(MOFAobject, 
-                               feature.sets = df_wide4, 
+                               feature.sets = gs, 
                                view = "RNA",
                                sign = "negative"
 )
 
 
+
 res.positive <- run_enrichment(MOFAobject, 
-                               feature.sets = df_wide4, 
+                               feature.sets = gs, 
                                view = "RNA",
                                sign = "positive"
 )
@@ -444,29 +457,69 @@ for (ii in 1:N_FACTORS){
   sign<-res.positive$pval.adj[,ii][which(res.positive$pval.adj[,ii]<0.05)]
   #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
   sign2<-sign[order(sign)]
+  outname<-paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_f_', ii, '.csv' )  
+  write.csv(sign2,outname)
   
-  print(length(sign))
-  print(sign2[1:10])
+  
+  sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.05)]
+  #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
+  sign2<-sign[order(sign)]
+  outname<-paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_f_', ii, '.csv' )  
+  write.csv(sign2,outname)
+  
+  
 }
 
 
+  
+  
+  
 # change to negative and positive
-results_enrich<-res.positive$pval.adj
 
-all_fs_enrichment<-apply(results_enrich, 2 , function(x) {
+extract_order_significant<-function(x) {
   sign<-x[x<0.005]
   sign2<-sign[order(sign)]
-  lns<-10
-  end<-if (length(sign2)<lns) {end=length(sign2)
-  }else{
-    end=lns
-  }
-  
-  print(sign2[1:end])
-  }
-)
+  print(sign2)
+}
 
-write.csv(unlist(all_fs_enrichment, use.names = TRUE),paste0(outdir,'enrichment_positive_pvals.csv' ))
+
+stack_list<-function(i,enrichment_list) {
+  x=enrichment_list[[i]]
+  if (length(x)){
+    tmp<-as.data.frame(x)
+    tmp$path<-rownames(tmp)
+    rownames(tmp)<-NULL
+    f<-names(all_fs_enrichment)[[i]]
+    colnames(tmp)<-'pvals'
+    tmp$factor=f
+    return(tmp)}}
+
+
+
+results_enrich<-res.positive$pval.adj
+all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+
+all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+all_fs_merged<-do.call(rbind, all_fs_unlisted )
+dim(all_fs_merged)
+
+
+
+
+write.csv(unlist(all_fs_enrichment, use.names = TRUE),paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals', out_params, '.csv' ))
+write.csv(all_fs_merged,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
+
+
+
+results_enrich<-res.negative$pval.adj
+all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+all_fs_merged<-do.call(rbind, all_fs_unlisted )
+dim(all_fs_merged)
+
+write.csv(unlist(all_fs_enrichment, use.names = TRUE),paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals', out_params, '.csv' ))
+write.csv(all_fs_merged,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
+
 
 # Make enrichment plots for all factors 
 # threshold on p value to zoom in 
@@ -576,13 +629,7 @@ round(importance(model.y), 2)
 
 
 
-### Plot predictions 
-
-
-
-
-
-
+### Plot predictions
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
                   color_by = "EORTC.risk.pred",

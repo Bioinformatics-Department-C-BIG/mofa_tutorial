@@ -1,6 +1,10 @@
 
-install.packages('minfi')
-BiocManager::install('minfiData')
+#install.packages('minfi')
+#BiocManager::install('minfiData')
+
+
+
+# Script to assess all datasets 
 
 library(data.table)
 library(minfi)
@@ -177,7 +181,13 @@ patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 &
                                      merged_stats$V04_p>0 & merged_stats$V04_m>0 &
                                      merged_stats$V04_r>0 ,]
 
-NROW(patients_visit_inter)
+patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 & 
+                                     merged_stats$BL_r>0 &
+                                     merged_stats$V06_p>0 & merged_stats$V06_m>0 &
+                                     merged_stats$V06_r>0 ,]
+
+
+NROW(unique(patients_visit_inter$PATNO))
 
 
 

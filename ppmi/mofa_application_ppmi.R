@@ -15,14 +15,15 @@ library(tidyverse)
 library(ggplot2)
 library(ggpubr)
 
+library(dplyr)
 
-
+outdir_orig='ppmi/plots/'
+output_files<- 'ppmi/output/'
 
 source('bladder_cancer/preprocessing.R')
+#source('preprocessing.R')
 source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
-
-combined_bl<-read.csv2('combined_bl.csv')
 
 
 ### preprocessing 
@@ -31,24 +32,32 @@ combined_bl<-read.csv2('combined_bl.csv')
 
 
 
-outdir_orig='ppmi/plots/'
-output_files<- 'ppmi/output/'
+
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 N_FACTORS=10
+
+
+VISIT='V06'
+
 VISIT='BL'
-TISSUE='Plasma';
 
 TISSUE='CSF'; 
+TISSUE='Plasma';
 
-TOP_PN=0.50
-TOP_GN=0.20 # 0.20
+
+TOP_PN=0.90
+TOP_GN=0.10# 0.20
 TOP_MN=0.50
 
 
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 #TISSUE='untargeted'
+
+
+combined_bl<-read.csv2(paste0('combined_', VISIT,  '.csv'))
+
 
 
 p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_')
@@ -67,8 +76,9 @@ highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly
 
 
 
+out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params )
+outdir = paste0(outdir_orig,out_params , '/');outdir
 
-outdir = paste0(outdir_orig, 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params  , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 fname<-paste0(output_files, 'proteomics_', VISIT, '_',TISSUE, '.csv')
 fname
@@ -159,7 +169,7 @@ rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
 RNA<-highly_variable_genes_mofa[, rnas:=NULL]
 head(rownames(RNA))
 
-
+dim(RNA)
 
 
 ##### duplicates 
@@ -171,9 +181,13 @@ par(mfrow=c(1,3))
 RNAm<-melt(RNA)
 
 p1<-ggplot(miRNAm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+ggsave(paste0(outdir, 'data_histograms_mirnas.jpeg' ), width = 10, height=8)
+
 p2<-ggplot(RNAm, aes(x=value))+ geom_histogram()+ labs(title='rnas')
+ggsave(paste0(outdir, 'data_histograms_rnas.jpeg' ), width = 10, height=8)
+
 p3<-ggplot(proteomicsm, aes(x=value))+ geom_histogram()+ labs(title='proteins')
-ggsave(paste0(outdir, 'data_histograms.jpeg' ), width = 10, height=8)
+ggsave(paste0(outdir, 'data_histograms_proteins.jpeg' ), width = 10, height=8)
 
 dev.off()
 dim(highly_variable_proteins_mofa)
@@ -219,9 +233,9 @@ mat<-as.matrix(miRNA_filt)
 
 
 ### INPUT TO MOFA
-unique(rownames(miRNA_filt))
-rownames(miRNA_filt)
-rownames(prot_filt)
+head(unique(rownames(miRNA_filt)))
+head(rownames(miRNA_filt))
+head(rownames(prot_filt))
 
 data = list(proteomics = as.matrix(prot_filt, rownames=rownames(prot_filt)),
             miRNA=as.matrix(miRNA_filt, rownames=rownames(miRNA_filt)), 
@@ -278,13 +292,13 @@ plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 
 
-MOFAobject@training_stats
+#MOFAobject@training_stats
 ######
 # Check model metadata
 metadata_filt$sample<-as.character(metadata_filt$PATNO)
 samples_metadata(MOFAobject)<-metadata_filt
 #samples_metadata(MOFAobject)
+MOFAobject
 
-
-outdir
+#outdir
 

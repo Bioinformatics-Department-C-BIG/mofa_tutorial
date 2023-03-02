@@ -10,7 +10,7 @@ library(stringr)
 ##### Maybe do them one by one in a function
 
 
-VISIT='BL'
+VISIT='V06'
 rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 output_files='ppmi/output/'
 
@@ -49,7 +49,7 @@ names<-colnames(mirnas_rpmmm)[-1]
 #visit<-sapply(names_split, '[[', 4)
 #bl_visits<-visit=='BL'
 
-
+VISIT='V06'
 mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
 mirnas_BL
 
@@ -74,8 +74,8 @@ library(tidyr)
 ##### PROTEOMICS - OLINK
 
 TISSUE='CSF'
-#TISSUE='Plasma'
-VISIT='BL'
+TISSUE='Plasma'
+VISIT='V06'
 output_files<-'ppmi/output/'
 
 prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',

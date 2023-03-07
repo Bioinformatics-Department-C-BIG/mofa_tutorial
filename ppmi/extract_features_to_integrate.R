@@ -10,7 +10,9 @@ library(stringr)
 ##### Maybe do them one by one in a function
 
 
-VISIT='V06'
+VISIT='V08'
+VISIT='BL'
+
 rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 output_files='ppmi/output/'
 
@@ -49,7 +51,9 @@ names<-colnames(mirnas_rpmmm)[-1]
 #visit<-sapply(names_split, '[[', 4)
 #bl_visits<-visit=='BL'
 
-VISIT='V06'
+VISIT='V08'
+VISIT='BL'
+
 mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
 mirnas_BL
 
@@ -75,7 +79,9 @@ library(tidyr)
 
 TISSUE='CSF'
 TISSUE='Plasma'
-VISIT='V06'
+VISIT='V08'
+VISIT='BL'
+
 output_files<-'ppmi/output/'
 
 prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
@@ -95,9 +101,13 @@ all_frames2<-bind_rows(all_frames)
 ppmi_prot=all_frames2
 
 ### remove PPMI- suffix from PATNO column 
-ppmi_prot<-ppmi_prot %>% mutate(across('PATNO', str_replace, 
-                            'PPMI-', ''
-                            ))
+ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
+
+
+#ppmi_prot<-as.data.frame(ppmi_prot) %>% 
+ #               mutate(across('PATNO', str_replace, 
+  #                          'PPMI-', ''
+   #                         ))
 ## Filter baseline
 prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
 
@@ -178,11 +188,11 @@ hist(prot_bl_matrix$TESTVALUE)
 ## Reshape: Make a wide matrix with patient in columns 
 prot_bl_tbl<-as.data.table(prot_bl_matrix)
 # is there are duplicated this will return counts that are double 
-check_dups<-data.table::dcast(prot_bl_tbl,  TESTNAME ~ PATNO,
-                                value.var ='TESTVALUE')
-subset(check_dups, select=-c(TESTNAME, PATNO))
+#check_dups<-data.table::dcast(prot_bl_tbl,  TESTNAME ~ PATNO,
+  #                              value.var ='TESTVALUE')
+#subset(check_dups, select=-c(TESTNAME, PATNO))
 
-hist(as.data.frame(subset(check_dups, -c(TESTNAME))))
+#hist(as.data.frame(subset(check_dups, -c(TESTNAME))))
 prot_bl_wide<-data.table::dcast(prot_bl_tbl,  TESTNAME ~ PATNO,
                                 value.var ='TESTVALUE', fun.aggregate = mean)
 

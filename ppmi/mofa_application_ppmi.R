@@ -36,27 +36,23 @@ source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 N_FACTORS=10
-
-
-VISIT='V06'
-
 VISIT='BL'
-
+VISIT='V08'
+VISIT='BL'
 TISSUE='CSF'; 
 TISSUE='Plasma';
-
 
 TOP_PN=0.90
 TOP_GN=0.10# 0.20
 TOP_MN=0.50
 
-
 MIN_COUNT_G=100
 MIN_COUNT_M=10
+
 #TISSUE='untargeted'
 
-
-combined_bl<-read.csv2(paste0('combined_', VISIT,  '.csv'))
+metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
+combined_bl<-read.csv2(metadata_output)
 
 
 
@@ -82,26 +78,6 @@ outdir = paste0(outdir_orig,out_params , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 fname<-paste0(output_files, 'proteomics_', VISIT, '_',TISSUE, '.csv')
 fname
-
-
-#if (TISSUE== csf){
-#  
-#  outdir=paste0(outdir_orig, 'csf/', N_FACTORS , '/')
-#  output_files_prot=paste0(output_files, '/csf/')
-#  fname<-paste0(output_files_prot, 'proteomics_csf_bl.csv')
-#  
-#  
-#}  else if(untargeted){
-#  outdir=paste0(outdir_orig, 'untargeted/', N_FACTORS , '/')
-#  output_files_prot=paste0(output_files, '/untargeted/')
-#  fname<-paste0(output_files_prot, 'untargeted_prot_bl.csv')
-#  
-#}  else if(plasma){
-#  outdir=paste0(outdir_orig, 'plasma/', N_FACTORS , '/')
-#  output_files_prot=paste0(output_files, '/plasma/')
-#  fname<-paste0(output_files_prot, 'proteomics_bl.csv')
-#  
-#}
 
 
 
@@ -152,9 +128,9 @@ rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
 
 # or input to vst or put as is normalized
 
-miRNA<-highly_variable_mirnas_mofa[, mirnas:=NULL]
+miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
+rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
 head(rownames(miRNA))
-
 
 
 
@@ -166,7 +142,8 @@ rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
 
 # or input to vst or put as is normalized
 
-RNA<-highly_variable_genes_mofa[, rnas:=NULL]
+RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
+rownames(RNA)<-rownames(highly_variable_genes_mofa)
 head(rownames(RNA))
 
 dim(RNA)
@@ -205,14 +182,27 @@ common_samples
 
 
 #### Filter samples that are common in all three
-which(colnames(miRNA) %in% common_samples)
+ids<-rownames(miRNA)
+miRNA<-as.data.frame(miRNA)
+miRNA_filt<-miRNA[which(colnames(miRNA) %in% common_samples)]
+miRNA_filt<-miRNA_filt[ ,common_samples]
+rownames(miRNA_filt)
+#miRNA_filt<-miRNA %>% select(common_samples)
 
-NROW(unique(common_samples))
-miRNA_filt<-miRNA  %>% select(common_samples)
+
 ### Select creates the new matrix with the same order 
-prot_filt<-as.data.table(proteomics) %>% select(common_samples)
+prot_filt<-proteomics[which(colnames(proteomics) %in% common_samples)]
+prot_filt<-prot_filt[, common_samples]
 
-RNA_filt<-as.data.table(RNA) %>% select(common_samples)
+
+RNA_filt<-RNA[which(colnames(RNA) %in% common_samples)]
+RNA_filt<-RNA_filt[, common_samples]
+
+rownames(RNA_filt)
+#RNA_filt<-as.data.table(RNA) %>% select(common_samples)
+
+
+
 
 
 rownames(prot_filt)<-rownames(proteomics)
@@ -234,12 +224,12 @@ mat<-as.matrix(miRNA_filt)
 
 ### INPUT TO MOFA
 head(unique(rownames(miRNA_filt)))
-head(rownames(miRNA_filt))
+head(rownames(RNA_filt))
 head(rownames(prot_filt))
 
-data = list(proteomics = as.matrix(prot_filt, rownames=rownames(prot_filt)),
-            miRNA=as.matrix(miRNA_filt, rownames=rownames(miRNA_filt)), 
-            RNA=as.matrix(RNA_filt, rownames=rownames(RNA_filt)) )
+data = list(proteomics = as.matrix(prot_filt),
+            miRNA=as.matrix(miRNA_filt), 
+            RNA=as.matrix(RNA_filt) )
 
 
 
@@ -278,11 +268,17 @@ ggsave(paste0(outdir, 'data_overview.jpeg'))
 
 
 ##### run the model 
+mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
+if (file.exists(mofa_file)){
+  pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
+  MOFAobject<-pre_trained
+  
+  
+}else {
+  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+  
+}
 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
-
-#pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
-#MOFAobject<-pre_trained
 ###
 
 
@@ -300,5 +296,5 @@ samples_metadata(MOFAobject)<-metadata_filt
 #samples_metadata(MOFAobject)
 MOFAobject
 
-#outdir
+
 

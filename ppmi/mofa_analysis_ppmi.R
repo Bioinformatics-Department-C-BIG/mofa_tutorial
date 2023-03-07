@@ -13,10 +13,8 @@
 
 #source('enrichment.R')
 library(ggplot2)
-gs_file
 
-outdir
-#VISIT='BL'
+
 
 
 print(outdir)
@@ -118,6 +116,31 @@ fps= as.numeric(MOFAobject@dimensions$K)
 fps
 views<-names(MOFAobject@dimensions$D)
 views
+
+
+##### WRITE ALL weights for each factor in one file 
+
+for (i in seq(1,vps)){
+  view=views[i]
+  all_weights<-MOFA2::get_weights(MOFAobject,views = view, 
+                                  as.data.frame =TRUE)  
+  # threshold each? 
+  T=0.3
+  all_weights_filt<-all_weights[abs(all_weights$value)>T,]
+  dim(all_weights_filt)
+  write.table(all_weights_filt,paste0(outdir, 'top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
+  ens_ids<-gsub('\\..*', '', all_weights_filt$feature)
+  write.csv(ens_ids,paste0(outdir, 'top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt'),
+            row.names = FALSE, quote=FALSE)
+  print(view)
+  print(dim(all_weights_filt))
+  print(dim(all_weights))
+  
+  }
+
+
+
+
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     view=views[i]
@@ -127,12 +150,13 @@ for (i in seq(1,vps)){
                             as.data.frame =TRUE)
     
     ### get the top highly weighted variables - absolute value
-    top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),][1:10,]
+    top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
     write.table(top,paste0(outdir, 'top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
     
 
   }
   }
+
   
   plot_variance_explained(MOFAobject, plot_total = T)[[2]]
   ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
@@ -140,6 +164,11 @@ for (i in seq(1,vps)){
 
   
   
+#### Get all weights and put it in one file
+  #1. Collate in a list  - order significant
+  #2. Stack the lists - 
+  
+
   
   
   
@@ -415,6 +444,8 @@ head((reactomeGS))
 
 
 subcategory<- 'CP:KEGG'
+
+subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 
 gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
@@ -452,45 +483,33 @@ res.positive <- run_enrichment(MOFAobject,
 
 
 
-
-for (ii in 1:N_FACTORS){
-  sign<-res.positive$pval.adj[,ii][which(res.positive$pval.adj[,ii]<0.05)]
-  #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
-  sign2<-sign[order(sign)]
-  outname<-paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_f_', ii, '.csv' )  
-  write.csv(sign2,outname)
-  
-  
-  sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.05)]
-  #sign<-res.negative$pval.adj[,ii][which(res.negative$pval.adj[,ii]<0.005)]
-  sign2<-sign[order(sign)]
-  outname<-paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_f_', ii, '.csv' )  
-  write.csv(sign2,outname)
-  
-  
-}
-
-
   
   
   
 # change to negative and positive
 
 extract_order_significant<-function(x) {
-  sign<-x[x<0.005]
+  # extracy most significant and order 
+  T=0.005
+  sign<-x[x<T]
   sign2<-sign[order(sign)]
   print(sign2)
 }
 
-
+enrichment_list=all_fs_enrichment
 stack_list<-function(i,enrichment_list) {
+  
+  # Take a list of dataframes and stack them 
+  # Add a column called factor which extracts the list counter 
+  
   x=enrichment_list[[i]]
   if (length(x)){
     tmp<-as.data.frame(x)
     tmp$path<-rownames(tmp)
-    rownames(tmp)<-NULL
-    f<-names(all_fs_enrichment)[[i]]
     colnames(tmp)<-'pvals'
+    
+    rownames(tmp)<-NULL
+    f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
     tmp$factor=f
     return(tmp)}}
 
@@ -521,6 +540,9 @@ write.csv(unlist(all_fs_enrichment, use.names = TRUE),paste0(outdir,gsub('\\:', 
 write.csv(all_fs_merged,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
 
 
+
+
+
 # Make enrichment plots for all factors 
 # threshold on p value to zoom in 
 jpeg(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
@@ -529,7 +551,7 @@ plot_enrichment_heatmap(res.positive,
                         alpha=0.5, cap=0.0005)
 dev.off()
 
-plot_enrichment_heatmap(res.positive[, 2], 
+plot_enrichment_heatmap(res.positive$sigPathways, 
                         alpha=0.5, cap=0.0005)
 
 #ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)

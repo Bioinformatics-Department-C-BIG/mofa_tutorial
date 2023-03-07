@@ -31,15 +31,17 @@ source('bladder_cancer/preprocessing.R')
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 TOP_GN=0.10
-TOP_MN=0.25
+TOP_MN=0.50
+VISIT='V08'
 VISIT='BL'
+
 
 g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 
 
 #### Remove low expression 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_',VISIT,  '.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -60,7 +62,7 @@ if (process_mirnas){
   raw_counts<-as.data.frame(rnas_BL)
     # this is defined later but filter here if possible to speed up
   # TODO: fix and input common samples as a parameter
- raw_counts<-raw_counts %>% select(common_samples)
+# raw_counts<-raw_counts %>% select(common_samples)
 
   min.count=MIN_COUNT_G
   most_var=TOP_GN
@@ -113,7 +115,6 @@ dds <- DESeqDataSetFromMatrix(
 # Compute normalization factors and vst 
 
 dds <- estimateSizeFactors(dds,)
-sizeFactors(dds)
 # Variance stabilization transformation
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
@@ -123,7 +124,7 @@ vsd <- varianceStabilizingTransformation(dds)
 vsd_mat <- assay(vsd)
 colnames(vsd_mat)<-vsd$Sample
 
-meanSdPlot(vsd)
+meanSdPlot(vsd_mat)
 
 
 ##### Checks
@@ -164,10 +165,8 @@ dim(highly_variable_genes_mofa)
 # Check that the distribution is approximately normal
 dev.off()
 
-par(mfrow=c(1,1))
 hist(highly_variable_genes_mofa)
 
-par(mfrow=c(2,1))
 
 
 

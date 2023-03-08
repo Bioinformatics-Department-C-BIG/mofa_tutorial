@@ -22,7 +22,7 @@ output_files<- 'ppmi/output/'
 
 source('bladder_cancer/preprocessing.R')
 #source('preprocessing.R')
-source('ppmi/deseq2_vst_preprocessing_mirnas.R')
+#source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
 
 

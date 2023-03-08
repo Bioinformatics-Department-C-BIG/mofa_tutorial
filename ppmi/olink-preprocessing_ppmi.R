@@ -26,16 +26,18 @@ output_1='ppmi/plots/'
 output_files<-'ppmi/output/'
 
 
-TOP_PN<-0.50
+TOP_PN<-0.90
 
-param_str<-paste0(top_n)
+param_str<-paste0(TOP_PN)
 
 
 
 TISSUE='CSF'
 TISSUE='Plasma'
 
-VISIT='V06'
+
+VISIT='BL'
+VISIT='V08'
 
 VISIT='BL'
 

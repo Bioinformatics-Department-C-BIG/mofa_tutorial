@@ -14,14 +14,12 @@ library(ggplot2)
 
 #combined$PATNO = as.factor(combined$PATNO )
 
-combined$PATNO=as.factor(combined$PATNO)
-ggplot(combined, aes(y=NP3TOT, x=EVENT_ID, fill=PATNO))+
-  geom_line(aes(color=as.factor(PATNO) ))
 
 
 
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY')
-
+table(combined$PAG_NAME_M3)
+View(combined[combined$PATNO=='3710',])
 
 
 ### First filter by combined_filt\
@@ -29,29 +27,55 @@ scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY')
 
 combined_filt<-combined[combined$PATNO %in% common_samples[1:100], ]
 
-combined_filt$REC_ID.x
-combined_filt$line_group = with(combined_filt,paste(EVENT_ID,PATNO,PAG_NAME.x, PAG_NAME.y, sep='_' ))
 
-y=scales[5]
+# inspect patients
+View(combined_filt[combined_filt$PATNO=='3710',])
+
+
+table(combined_filt$PAG_NAME_M3)
+combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+combined_filt$line_group
+
+
+
+# FILTER OUT non visits
+combined_filt<-combined_filt[grepl('V',combined_filt$EVENT_ID  ) | grepl('BL',combined_filt$EVENT_ID  ), ]
+
+
+# REMOVE OUTLIERS FOR plot consistency
+combined_filt<-combined_filt %>% 
+  filter(NHY!=101) %>%
+  filter(PAG_NAME_M3=='NUPDRS3')
+
+
+#View(combined_filt[combined_filt$PATNO=='3710',])
+
+
+
+
+
+
+
+y=scales[1]
 outl<-max(combined_filt[y], na.rm=TRUE)
-which[combined_filt[y]]
-group='PATNO'
+group='line_group'
 x='EVENT_ID'
-inst=''
-combined_filt<-combined_filt%>% select(c( y, x, group, scales, 'line_group' ))
-
-combined_filt$PATNO=as.factor(combined_filt$PATNO)
-
-
-combined_filt[c('NHY', x)]
-
-combined_filt<-combined_filt[!(combined_filt$NHY==101),]
+shape='PAG_NAME_M3'
+combined_to_plot<-combined_filt%>% select(c( y, x, group,
+                                          scales, 'line_group', 'PATNO' , 'PAG_NAME_M3'))
 
 
-ggplot(combined_filt, aes_string( x=x, color='line_group', group='line_group'))+
-geom_point(aes_string(y=y,color=group))+
+
+
+
+
+
+ggplot(combined_to_plot, aes_string( x=x, color='line_group', group='line_group'))+
+geom_point(aes_string(y=y,color=group, shape=shape))+
   geom_line(aes_string(y=y,col=group, group=group))+
     theme(legend.position="none")
+
+ggsave(paste0(outdir_orig,'metadata/',y,'.jpeg' ))
   #geom_smooth(aes_string())
  # scale_y_continuous(limits = c(0, 7))
          

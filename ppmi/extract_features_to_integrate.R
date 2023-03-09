@@ -81,13 +81,31 @@ TISSUE='CSF'
 TISSUE='Plasma'
 VISIT='V08'
 VISIT='BL'
+NORMALIZED=TRUE
 
 output_files<-'ppmi/output/'
 
 prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
                          full.names = TRUE)
-outname<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE,  '.csv')
-outname2<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE,  '_no_log.csv')
+
+if (NORMALIZED){
+  prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+                         full.names = TRUE)
+  
+  pv='NPX'
+}else{
+  
+  prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
+                         full.names = TRUE)
+  pv='COUNT' # Value of the protein level 
+  
+}
+
+
+
+prot_files
+outname<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_',NORMALIZED,  '.csv')
+outname2<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
 
 
 prot_files
@@ -98,6 +116,7 @@ prot_files
 read_all<-lapply(prot_files, read.csv)
 all_frames<-lapply(read_all, as.data.frame)
 all_frames2<-bind_rows(all_frames)
+all_frames2<-do.call(rbind, all_frames)
 ppmi_prot=all_frames2
 
 ### remove PPMI- suffix from PATNO column 
@@ -115,17 +134,21 @@ prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
 prot_bl_matrix<-as.data.frame(subset(prot_bl,
                     select=-c(LOD, update_stamp, OLINKID, UNIPROT, MISSINGFREQ,
                               PANEL, EVENT_ID, PLATEID, INDEX, PANEL_LOT_NR)))
-## Extract QC pass only 
-prot_bl_matrix<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
 
-hist(prot_bl_matrix$NPX)
+prot_bl_matrix<-as.data.frame(subset(prot_bl,
+                           select=-c( update_stamp, OLINKID, UNIPROT,
+                                               PANEL, EVENT_ID, PLATEID)))
+## Extract QC pass only 
+                                                                                                                                                                                                                                                   prot_bl_matrix<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
+
+hist(prot_bl_matrix[,pv])
 
 
 
 ## Reshape: Make a wide matrix with patient in columns 
 prot_bl_tbl<-as.data.table(prot_bl_matrix)
 prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO,
-                         value.var ='NPX', fun.aggregate = mean)
+                         value.var =pv, fun.aggregate = mean)
 
 
 prot_bl_wide<-as.data.frame(prot_bl_wide)

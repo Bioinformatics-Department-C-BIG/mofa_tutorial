@@ -49,17 +49,21 @@ TOP_MN=0.50
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 
+NORMALIZED=TRUE
 #TISSUE='untargeted'
 
-metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
-combined_bl<-read.csv2(metadata_output)
+metadata_output<-paste0(output_files, 'combined.csv')
+combined<-read.csv2(metadata_output)
+combined_bl<-combined[combined$EVENT_ID==VISIT,]
+combined_bl$PATNO
 
 
 
-p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_')
+p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
 g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 mofa_params<-paste0(N_FACTORS )
+
 #
 
 
@@ -90,20 +94,7 @@ outdir
 #proteomics<-proteomics[,!duplicated(colnames(proteomics),fromLast=TRUE)]
 output_files
 
-prot_bl_wide<-fread(fname, header=TRUE)
-colnames(prot_bl_wide)[1]<-'protein'
 
-proteomics<-as.data.frame(prot_bl_wide, row.names=prot_bl_wide$protein)
-rownames(proteomics)<-proteomics$protein
-
-proteomics$protein<-NULL
-hist(as.numeric(as.matrix(proteomics)))
-
-
-# Extract highly variable proteins and genes 
-highly_variable_proteins_mofa<-selectMostVariable(proteomics, 0.15)
-dim(highly_variable_proteins_mofa)
-#highly_variable_proteins_mofa<-proteomics
 
 ###### Option 2: preprocessing from VSN: Load from file 
 ### 1. Load proteins 

@@ -40,22 +40,31 @@ VISIT='BL'
 VISIT='V08'
 
 VISIT='BL'
+NORMALIZED=TRUE
 
 #### read in proteomics 
-p_params_in<- paste0(VISIT, '_', TISSUE)
-p_params_out<- paste0(VISIT, '_', TISSUE, '_', TOP_PN)
+p_params_in<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED)
+p_params_out<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED)
 
 
+if (NORMALIZED){
+  in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
+  
+  
+}else{
+  in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
 
-in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
+  
+  
+}
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 
-
-  
-  
+# Read in 
 prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
 proteomics<-prot_bl_wide_unlog
+  
+
 
 
 # Remove rows with 90% NA 
@@ -63,10 +72,11 @@ df<-proteomics
 proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
 dim(df); dim(proteomics)
 
+
 ### filter here before editing more 
+## filter out rows with very low min count
 df<-proteomics; dim(df)
 min.count= quantile(df, na.rm = TRUE, 0.1)
-min.count
 min.count= min(df, na.rm = TRUE)
 dim(df)
 keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))

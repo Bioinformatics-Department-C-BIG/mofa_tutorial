@@ -3,42 +3,64 @@
 library(dplyr)
 library(data.table)
 library(stringr)
-
+setwd('~/git/mofa_tutorial/')
 
 #rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
 #### too many files so we separate each time points 
 ##### Maybe do them one by one in a function
 
-
-VISIT='V08'
-VISIT='BL'
-
-rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 output_files='ppmi/output/'
 
 
-rownames(rnas)<-rnas$Geneid
-rnas$Geneid<-NULL
+VISIT='V08'
+VISIT='BL'
+visits<-c('BL', 'V04', 'V06', 'V08')
 
-names<-colnames(rnas)[-1]
+for (VISIT in visits){
+  rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
+  rownames(rnas)<-rnas$Geneid
+  rnas$Geneid<-NULL
+  names<-colnames(rnas)[-1]
+  
+  rnas_BL<-select(rnas,contains(VISIT))
+  
+  ### Split the names to extract patient number
+  names_split<- strsplit(names(rnas_BL),split='\\.')
+  PATNO<-sapply(names_split, '[[', 2)
+  length(unique(PATNO))
+  
+  dim(rnas_BL)
+  colnames(rnas_BL)<-PATNO
+  
+  write.csv2(rnas_BL, paste0(output_files, 'rnas_', VISIT, '.csv'), row.names = TRUE)
+  
+}
 
-rnas_BL<-select(rnas,contains(VISIT))
-rownames(rnas_BL)
 
-### Split the names 
-names_split<- strsplit(names(rnas_BL),split='\\.')
-PATNO<-sapply(names_split, '[[', 2)
-length(unique(PATNO))
+# Also merge all RNA files  for all visits together 
+#rna_all_visits<-sapply(visits, function(VISIT){
+#  read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'),
+#            sep = ',')}
+#        )
 
-length(PATNO)
-dim(rnas_BL)
-print(PATNO)
-colnames(rnas_BL)<-PATNO
+rna_all_visits_list<-sapply(visits, 
+                            
+      function(VISIT){
+    ### RNA visits all 
+  rnas_file = paste0(output_files, 'rnas_', VISIT, '.csv')
+    rnas<-as.matrix(fread(rnas_file, header=TRUE), 
+              rownames=1)
+    # PATNO_VISIT column index 
+    colnames(rnas)<-paste0(colnames(rnas), '_', VISIT)
+    return(rnas)
+    
+}
+  
+)
+# bind all visits for all patients together with underscore PATNO_VISIT
+rna_all_visits<-do.call(cbind,rna_all_visits_list )
 
-write.csv2(rnas_BL, paste0(output_files, 'rnas_', VISIT, '.csv'), row.names = TRUE)
-
-
-
+write.csv2(rna_all_visits, paste0(output_files, 'rnas_all_visits.csv'), row.names = TRUE)
 
 
 #### Read in the mirnas 

@@ -53,7 +53,7 @@ settings<-'bladder_cancer/settings/'
 ## And save these data
 
 # RUN THIS ON THE CLUSTER 
-n.lambda<-144
+n.lambda<-233
 for(k in 1:3){
   cv.fit = tune.iClusterPlus(cpus=4,dt1=as.matrix(data$mRNA),dt2=as.matrix(data$proteomics), 
                             type=c("gaussian","gaussian"),K=k, n.lambda=n.lambda,

@@ -37,9 +37,10 @@ TISSUE='Plasma'
 
 
 VISIT='BL'
-VISIT='V08'
 
 VISIT='BL'
+VISIT='V06'
+
 NORMALIZED=TRUE
 
 #### read in proteomics 
@@ -97,6 +98,9 @@ data$name
 data$ID
 data$ID# Make SummarizedExperiment
 data_columns=seq(1:dim(proteomics)[2])
+
+
+
 data_columns
 
 sample<-colnames(proteomics)

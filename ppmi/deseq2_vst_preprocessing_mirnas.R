@@ -32,9 +32,9 @@ MIN_COUNT_G=100
 MIN_COUNT_M=10
 TOP_GN=0.10
 TOP_MN=0.50
-VISIT='V08'
-VISIT='BL'
 
+VISIT='BL'
+VISIT='V04'
 
 g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
@@ -124,7 +124,7 @@ vsd <- varianceStabilizingTransformation(dds)
 vsd_mat <- assay(vsd)
 colnames(vsd_mat)<-vsd$Sample
 
-meanSdPlot(vsd_mat)
+meanSdPlot(vsd)
 
 
 ##### Checks

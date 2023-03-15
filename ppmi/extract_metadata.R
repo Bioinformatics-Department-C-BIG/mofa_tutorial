@@ -7,25 +7,45 @@ library(data.table)
 input_data<-('ppmi/ppmi_data/')
 output_files<-'ppmi/output/'
 
-all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
-cl_1<-lapply(all_files, read.csv)
+#all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
 
-all_files<-list.files(paste0(input_data, 'characteristics/_Subject_Characteristics/'), full.names = TRUE)
-cl_2<-lapply(all_files, read.csv)
+#cl_1<-lapply(all_files, read.csv)
+# only add the ones with event id 
 
-
-all_files<-list.files(paste0(input_data, 'Study_Enrollment/'), full.names = TRUE)
-cl_3<-lapply(all_files, read.csv)
+#new_cl1<-cl_1[grepl('EVENT', cl_1 )]
 
 
-
-all_files<-list.files(paste0(input_data, 'ppmi_online/'), full.names = TRUE)
-cl_4<-lapply(all_files, read.csv)
+#cl1_merged<-Reduce(function(x, y) merge(x, y, all=TRUE, by=c('PATNO','EVENT_ID')), new_cl1)  
 
 
-lapply(all_files, grep, pattern='')
+#all_files<-list.files(paste0(input_data, 'characteristics/_Subject_Characteristics/'), full.names = TRUE)
+#subject_characteristics<-lapply(all_files, read.csv)
+
+
+#all_files<-list.files(paste0(input_data, 'Study_Enrollment/'), full.names = TRUE)
+#cl_3<-lapply(all_files, read.csv)
+
+
+#all_files<-list.files(paste0(input_data, 'Study_Enrollment/'), full.names = TRUE)
+#cl_3<-lapply(all_files, read.csv)
+
+
+
+#all_files<-list.files(paste0(input_data, 'ppmi_online/'), full.names = TRUE)
+#cl_4<-lapply(all_files, read.csv)
+
+
+# these do not have event id
+# TODO: genetic consensus
+ps<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Participant_Status.csv'))
+#<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus'))
+
+
 
 clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Age_at_visit.csv'))
+demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
+
+
 # todo: add more motor mds-updrs
 motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
 motor_assess_II<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS_UPDRS_Part_II__Patient_Questionnaire.csv'))
@@ -33,6 +53,7 @@ motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MD
 motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_IV__Motor_Complications.csv'))
 
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
+non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
 
 
 VISIT='BL'
@@ -41,12 +62,21 @@ VISIT='BL'
 ### Eventually merge both by visit and patient
 
 
-motor_assess_all<-merge(motor_assess, motor_assess_III, by=c('PATNO','EVENT_ID'),  suffixes = c("", '_M3'),  all=TRUE); unique(motor_assess_all$PATNO)
+motor_assess_all<-merge(motor_assess, motor_assess_III, by=c('PATNO','EVENT_ID'),  suffixes = c("_M1", '_M3'),  all=TRUE); unique(motor_assess_all$PATNO)
 motor_assess_all<-merge(motor_assess_all, motor_assess_II,by=c('PATNO','EVENT_ID'),suffixes = c("", '_M2'), all=TRUE) ;unique(motor_assess_all$PATNO)
 motor_assess_all<-merge(motor_assess_all, motor_assess_IV,by=c('PATNO','EVENT_ID'),suffixes = c("", '_M4'), all=TRUE) ;unique(motor_assess_all$PATNO)
 
-combined<-merge(motor_assess_all, non_motor, by=c('PATNO','EVENT_ID'), all=TRUE)
-combined<-merge(combined, clinical,by=c('PATNO','EVENT_ID'), all=TRUE)
+combined<-merge(motor_assess_all, non_motor, by=c('PATNO','EVENT_ID'), suffixes = c("", '_SC'),  all=TRUE)
+combined<-merge(combined, clinical,by=c('PATNO','EVENT_ID'),suffixes = c("", 'cl'), all=TRUE)
+
+# everything was collected at screeninh phase 
+combined<-merge(combined, demographics,by=c('PATNO'),suffixes = c("", 'd'), all=TRUE)
+
+combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
+dim(combined)
+combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
+dim(combined)
+
 
 unique(motor_assess_all$PATNO)
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
@@ -61,12 +91,16 @@ combined_bl<-combined[combined$EVENT_ID==VISIT,]
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
+combined$COHORT_DEFINITION
+View(combined[combined$PATNO=='4125',])
 
-combined
+
 
 # females would be NA
 
+MOFAobject@samples_metadata$PATNO
 
+demographics[which(demographics$PATNO==3386),]
 
-
+demographics$PATNO
 

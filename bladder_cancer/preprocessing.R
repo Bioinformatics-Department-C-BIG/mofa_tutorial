@@ -5,6 +5,7 @@ sysinf <- Sys.info()
 ####################################
 #### Preliminary analysis with PCA
 os <- sysinf['sysname']
+getwd()
 if ( os  == 'Darwin'){
   dir='bladder_cancer/data/'
 }else if ( os ==   'Windows'){
@@ -74,5 +75,21 @@ X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
 
 
 
+
+
+
+
+##### Select most variable genes
+select_most_variable<-function(vsn_mat,q){
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:  round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat)
+  return(vsn_mat)
+}
 
 

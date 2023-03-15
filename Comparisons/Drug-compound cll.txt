@@ -1,0 +1,65 @@
+Drug	Compound						
+D_001	navitoclax	"BCL2,BCL-XL,BCL-W"			Selleck	Chemicals	
+D_002	ibrutinib	BTK	Selleck	Chemicals			
+D_003	idelalisib	PI3K	delta	Selleck	Chemicals		
+D_004	SNS-032	CDK2/7/9	Selleck	Chemicals			
+D_006	fludarabine	Purine	analogue	Selleck	Chemicals		
+D_007	vorinostat	HDAC	I/IIa/IIb/IV	Selleck	Chemicals		
+D_008	bortezomib	Proteasome	Selleck	Chemicals			
+D_010	nutlin-3	MDM2	Selleck	Chemicals			
+D_011	enzastaurin	PKC	Selleck	Chemicals			
+D_012	selumetinib	MEK1/2	Selleck	Chemicals			
+D_013	afatinib	"EGFR,"	ERBB2	Selleck	Chemicals		
+D_015	MK-1775	WEE1	Selleck	Chemicals			
+D_017	AT13387	HSP90	Selleck	Chemicals			
+D_020	AZD7762	CHK1/2	Selleck	Chemicals			
+D_021	rigosertib	PLK	Selleck	Chemicals			
+D_023	ralimetinib	p38	MAPK	Selleck	Chemicals		
+D_024	SGI-1776	PIM	Selleck	Chemicals			
+D_025	NSC 74859	STAT		Selleck	Chemicals		
+D_029	TAE684	ALK	Selleck	Chemicals			
+D_030	MK-2206	AKT1/2	(PKB)	Selleck	Chemicals		
+D_032	NU7441	DNAPK	Selleck	Chemicals			
+D_033	tipifarnib	Farnesyltransferase	(FNTA)	Selleck	Chemicals		
+D_034	chaetocin	Lysine-specific	histone	methyltransferase			
+D_035	saracatinib	"SRC,"	ABL1	Selleck	Chemicals		
+D_036	tamatinib	SYK	Selleck	Chemicals			
+D_039	thapsigargin	Sarco/endoplasmic	reticulum	Ca2+	ATPase	(SERCA)	
+D_040	YM155	Survivin	Selleck	Chemicals			
+D_041	BAY 11/1/7085	NFkB		Enzo	Life	Sciences	
+D_043	SGX-523	MET	Selleck	Chemicals			
+D_045	KU-60019	ATM	Selleck	Chemicals			
+D_048	orlistat	LPL	Cayman	Chemicals			
+D_049	chaetoglobosin	A	Actin	Enzo	Life	Sciences	
+D_050	dasatinib	"ABL1,"	"KIT,"	"LYN,"	"PDGFRA,"		
+D_053	sunitinib	"VEGFR,"	"PDGFRA/B,"	"FLT3,"			
+D_054	gefitinib	EGFR	Selleck	Chemicals			
+D_056	actinomycin	D	RNA	synthesis	Sigma-Aldrich		
+D_060	cephaeline	40S	ribosomal	subunit	Sigma-Aldrich		
+D_063	everolimus	mTOR	Selleck	Chemicals			
+D_066	arsenic	trioxide	Sigma-Aldrich				
+D_067	rotenone	Electron	transport	chain	in	mitochondria	
+D_071	KX2-391	SRC	Selleck	Chemicals			
+D_074	VE-821	ATR	Selleck	Chemicals			
+D_075	rabusertib	CHK1	Selleck	Chemicals			
+D_077	SCH 900776	"CHK1,"	CDK2		Selleck	Chemicals	
+D_078	PF 477736	"CHK1,"	CHK2		Selleck	Chemicals	
+D_079	spebrutinib	BTK	Celgene				
+D_081	venetoclax	BCL2	Selleck	Chemicals			
+D_082	duvelisib	PI3K	"gamma,"	PI3K	delta	Selleck	Chemicals
+D_083	encorafenib	BRAF	Novartis				
+D_084	ruxolitinib	JAK1/2/3	Selleck	Chemicals			
+D_127	SD07	ROS	Academic	cooperation			
+D_141	SD51	ROS	Academic	cooperation			
+D_149	MIS-43	ROS	Academic	cooperation			
+D_159	doxorubicine	DNA	"intercalation,"	Topoisomerase			
+D_162	BML-277	CHK2	Sigma-Aldrich				
+D_163	CCT241533	CHK2	MedChem	Express			
+D_164	BX912	PDK1	Selleck	Chemicals			
+D_165	silmitasertib	CK2	Selleck	Chemicals			
+D_166	PRT062607	HCl	SYK	Selleck	Chemicals		
+D_167	UCN-01	PKC	MK2	CHK1	Sigma-Aldrich		
+D_168	sotrastaurin	PKC	Selleck	Chemicals			
+D_169	tofacitinib	JAK3	Selleck	Chemicals			
+D_172	BIX02188	MEK5	Selleck	Chemicals			
+D_CHK	BML-277 + rabusertib						

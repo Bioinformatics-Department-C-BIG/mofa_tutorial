@@ -1,16 +1,21 @@
-install_phantomjs(version = "2.1.1",
-                  baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/",
-                  force = FALSE)
+#install_phantomjs(version = "2.1.1",
+#                  baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/",
+#                  force = FALSE)
 library('flextable')
-install.packages('webshot')
+#install.packages('webshot')
 library('webshot')
 
-#### 
+source('review/export_to_latex.R')
+
+
+
+##### Run this after export_to_latex 
 
 tool_obj[tool_obj$method_orig=='pls',]
 
 all_tools<-read_excel(paste0(data_int_dir,'/all tools.xlsx'))
-
+all_tools_file<-'D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/all_tools_updated.xlsx'
+all_tools<-read_excel(all_tools_file)
 
 all_tools_new<-as.data.frame(merge(all_tools[c('method_orig')], tool_obj[c('method_orig', 'objectives_concat')], by='method_orig'))
 
@@ -30,8 +35,10 @@ write.table(all_tools_new2, file = "review/output/tools_objectives_concatenated.
 
 # Only output the ones that I described
 
+all_tools_to_write<-all_tools[!is.na(all_tools$Refined) & is.na(all_tools$Rejection) ,]
 all_tools_to_write<-all_tools[!is.na(all_tools$Refined),]
-#all_tools_to_write<-all_tools[is.na(all_tools$Rejection),]
+
+
 
 all_tools_to_write<-all_tools_to_write[
   with(all_tools_to_write, order( Var1,objectives_concat, method_orig,decreasing = TRUE)),
@@ -48,17 +55,32 @@ if (!('Var1' %in% colnames(all_tools_to_write))){
 
 write.table(all_tools_to_write[c('name display','Year', 'Var1','objectives_concat','Tool/Method' ,'x' )], file = "review/output/tools_objectives_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
-data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method')]
+data<-all_tools_to_write[c('name display', 'Year', 'Var1','objectives_concat', 'Tool/Method', 'Citation')]
 data<-data[!(data$Var1 == 'multiomics pathway analysis'),]
-
+data<-group_methods_to_short(data,'Var1')
+data$Var1
 # 
 
 library(RColorBrewer)
 
+colnames(data)<-c("Name",'Year', 'Category', "Objectives",
+                       'Type', 'Reference' )
+
+data_to_write<-data
+levels(as.factor(data_to_write$Category))
+data_to_write$Category = factor(data_to_write$Category, levels=levels_to_reorder[c(11,1,3,6,2,4,5,8,9,7,10)])
+
+
+data_to_write<-with(data_to_write, data_to_write[order(Category),])
+
+new1<-data_to_write[order('Category'),]
+data_to_write$x<-'\\\\'
+write.table(data_to_write, file = "review/output/tools_table_latex.txt", sep=' & ', row.names = FALSE, quote = FALSE)
 
 
 
-data$Var1=as.factor(data$Var1)
+new1
+
 
 ft1=flextable(data) %>% 
   autofit(add_w = 0.1,  part = c("body", "header"))

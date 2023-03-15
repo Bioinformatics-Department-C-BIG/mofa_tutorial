@@ -6,6 +6,10 @@ library('dplyr')
 library('purrr')
 library(RColorBrewer)
 source('utils.R')
+install.packages('svglite')
+library('svglite')
+
+library("viridis")           # Load
 
 
 
@@ -20,6 +24,13 @@ colors=colorRampPalette(brewer.pal(9,"Blues"))(7)
 
 level1<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Lipidomics', 'Metagenomics', 'miRNAs')
 level2<-c('Transcriptomics', 'Genomics','Epigenomics', 'Proteomics', 'Metabolomics', 'Metagenomics')
+
+
+remove_objectives<-c('multiomics pathway analysis', 'biomarker discovery', 'other', 
+                     'molecular interactions', 'understand molecular mechanisms', 
+                     'downstream', 
+                     'drug repurposing', 'missing data')
+
 
 # Process; if methylation or histone; add epigenomics!
 preprocessing<-function(df,colname){
@@ -37,7 +48,7 @@ preprocessing<-function(df,colname){
 }
 
 
-
+freq_cutoff<-0
 
 get_frequencies<-function(x){
   
@@ -63,10 +74,15 @@ group_objectives<-function(df, Var1){
   #'These groups are for objective - method
   df[Var1]<-sapply(df[Var1],
                    function(x) 
-                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*','.*understand molecular.*'),
-                                  c('Diagnosis/Prognosis', 'understand molecular mechanisms')))
+                     mgsub::mgsub(tolower(x),c('.*diagnosis.*|*prognosis*',
+                                               '.*connect.*',
+                                               'multiomics pathway analysis'),
+                                  c('diagnosis/ prognosis', 
+                                    'Extract complex patterns', 
+                                    'downstream')))
   return(df)
 }
+
 
 
 #TODO: make a function to check if there is methylomics
@@ -104,9 +120,9 @@ sysinf <- Sys.info()
 # stats<-read_excel('H:/My Drive/PHD 2020/Literature/Data Integration/Multi-omics_not cancer_merge.xlsx' )
 os <- sysinf['sysname']
 if ( os  == 'Darwin'){
-  stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  stats<-read_excel('/Users/efiathieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge_2.xlsx' )
 }else{
-  stats<-read_excel('E:/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge.xlsx' )
+  stats<-read_excel('D:/DATADRIVE/Efi Athieniti/Documents/Google Drive/PHD 2020/Literature/Data Integration/Multi-omics_merge_2.xlsx' )
   }
 
 ###Filters
@@ -137,6 +153,11 @@ stats <- stats %>%
 stats$same_sample<-as.factor(tolower(stats$same_sample))
 stats$Cancer<-as.factor(tolower(stats$Cancer))
 
+#' remove nas - careful check and fill in if you forgot to add cancer status 
+stats[is.na(stats$Cancer),'PMID']
+
+
+
 x_group<-'Cancer'
 
 get_frequencies_by_group<-function(stats,colname){
@@ -165,7 +186,7 @@ single_omics_frequencies=freq_to_plot
 #### Create the stacked plot
 
 ggplot(stats[stats$Cancer=='no',])+stat_count(aes(tolower(Disease)))+
-  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 35, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(size=rel(rel_txt),angle = 35, vjust = 0.5, hjust=1))
   
   ### TODO: how many are the total number considred!!??
 
@@ -178,27 +199,33 @@ plotByData<-function(df_by_group, y_group){
     geom_bar(stat='identity',position='stack')+
     labs(x=NULL, title=paste0('Combinations with > ',freq_cutoff, ' occurences'))+
     theme(axis.text.x = element_text(size=rel(1.3),angle = 35, vjust = 0.5, hjust=1))+
-    theme(plot.margin=unit(c(1,1,1.7,2.5),"cm"))
+    theme(plot.margin=unit(c(1,1,1.7,2.5),"cm") )+
+    scale_color_viridis(option = "D")
     
   ggsave(paste0('plots/byCombinations', as.character(colname), '.png'), width = 8, height=6)
   
 }
 
-plt_txt_size=1.5
+rel_txt=1.5
 plotByData(freq_to_plot, y_group=x_group)
 
 
-  ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
+freq_to_plot<-freq_to_plot[!is.na(freq_to_plot$Cancer),]
+pal_npg("nrc", alpha = 0.9)(10)
+
+freq_to_plot<-freq_to_plot[!is.na(freq_to_plot$Cancer),]
+  p<- ggplot(freq_to_plot, aes(x=reorder(Var1, -Freq, sum), y=Freq))+
          aes_string(fill=x_group)+
-  geom_bar(stat='identity',position='stack')+
+  geom_bar(stat='identity',position='dodge',  color='black')+
   labs(x=NULL)+
-  theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 25, vjust = 0.5, hjust=1))+
+  theme(axis.text.x = element_text(size=rel(rel_txt),angle = 25, vjust = 0.5, hjust=1))+
   theme(plot.margin=unit(c(1,1,2,1.5),"cm"))+
   labs(y='Frequency')+
-   scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))
+   scale_fill_discrete(name = " ", labels = c("Other Diseases", "Cancer"))+
+    scale_fill_manual(values =c('#F39B7FE5', '#8491B4E5'))
     
-
-ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
+show(p)
+  ggsave(paste0('plots/SingleOmicsby', as.character(colname), '.png'), width = 6, height = 5)
 
 
 
@@ -212,7 +239,6 @@ library(tidyverse)
 
 colname<-'Data'
 
-omics_data<-df_by_group[[1]]
 
 
 ####
@@ -231,8 +257,7 @@ get_combs<- function(x, omics_level=level1){
     }
 }
 
-preprocessing_combinations(preprocessing(stats, 'Data'))
-preprocessing_combinations(preprocessing(new, 'Data'))
+
 
 preprocessing_combinations<-function(x){
   #' Create combinations of omics datasets  
@@ -244,7 +269,8 @@ preprocessing_combinations<-function(x){
   combinations<-lapply(x,get_combs, omics_level=level2)
   return(combinations)
 }
-
+preprocessing_combinations(preprocessing(stats, 'Data'))
+preprocessing_combinations(preprocessing(new, 'Data'))
 
 total<-NROW(stats[!is.na(stats$Data),]$PMID)
 
@@ -262,7 +288,7 @@ df_by_group <- new %>%
               preprocessing_combinations %>%
               get_frequencies() 
   )
-freq_cutoff<-0
+
 df_by_group_filtered<-df_by_group %>% 
   group_by(Var1)  %>% 
   filter( sum(Freq) >= freq_cutoff) 
@@ -278,7 +304,7 @@ cancer_filter=c('no')
 
 df_by_group_data<-df_by_group 
 
-
+text_size=16
 
 
 plotGridCombinations<-function(df_by_group){
@@ -290,21 +316,24 @@ plotGridCombinations<-function(df_by_group){
   
   g<-ggplot(combinations)+aes(Omics1, Omics2, fill=abs(Freq)) +
     geom_tile()+
-    geom_text(aes(label = round(Freq, 2)), size=7)+
-    theme(axis.text.x = element_text(size=rel(plt_txt_size),angle = 45, vjust = 0.5, hjust=1), 
-                                     axis.text.y = element_text( size=rel(1.5)), 
+    geom_text(aes(label = round(Freq, 2)), size=rel(6))+
+    theme(axis.text.x = element_text(size=text_size,angle = 45, vjust = 0.5, hjust=1), 
+                                     axis.text.y = element_text( size=text_size), 
           plot.margin = margin(10, 10, 40, 20))+
     labs(x=NULL, y=NULL)+
     scale_fill_gradient(low = "white", high = "red")+
     guides(fill=guide_legend(title="Frequency"))+
     facet_grid(~Cancer,  labeller = labeller(Cancer=
-                                               c('no'='Other Diseases','yes' ='Cancer')),  
-               scales = 'free', space='free')
+                                               c('no'='Other Diseases','yes' ='Cancer'),size=text_size),  
+               scales = 'free', space='free')+
+    theme(strip.text.x = element_text(size = text_size))
   show(g)
-  ggsave(paste0('plots/GridPlot', as.character(colname), '.png'), width = 10, height=6)
+  # ggsave(paste0('plots/GridPlot', as.character(colname), '.jpeg'), width = 10, height=6)
+  ggsave(paste0('plots/GridPlot', as.character(colname), '.svg'), device='svg', width = 10, height=6, dpi = 300)
+  
   
 }
-
+df_by_group_data<-df_by_group_data[!is.na(df_by_group_data$Cancer),]
 plotGridCombinations(df_by_group_data)
 
 
@@ -343,8 +372,6 @@ df_by_group_disease<- df_by_group
 
 
 
-show_p<-plotbyObjective(df_to_plot )
-
 df_nested<-df_by_group[,-4] %>% 
   nest(data = disease_group)
 # size of tibbles shows frequencies
@@ -362,7 +389,7 @@ df_nested$concat<-sapply(df_nested$data, function(x){
 df_nested %>% filter()
 df_nested<-df_nested %>% arrange(Cancer, desc(Freq))
 # two lists - most frequest is just not cancer now 
-df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
+#df_nested_filtered<- df_nested %>% filter(Var1 %in% most_frequent$Var1[1:7])
 df_nested_filtered<-df_nested %>% filter(Cancer %in% c('yes', 'no'))%>%
                      group_by(Cancer) %>% 
                       slice_max(order_by = Freq, n=5)
@@ -390,11 +417,6 @@ stats_expanded<-expand_ObjeMeth(stats)
 
 stats_fil<-stats_expanded[stats_expanded$Cancer == cancer_filter,]
 stats_fil<-stats_expanded
-
-#stats_fil$disease_group<-group_disease(stats_fil$Disease)
-
-#change here to select by objective or by method 
-# TODO: MAKE this one variable to choose method or objective
 
 
 
@@ -424,7 +446,7 @@ new<-group_objectives(new, 'objective')
 
 
 
-
+new[c('objective')]
 
 #' TODO: check the rownames given by get frequencies..
 #' TODO: use dplyr instead 
@@ -443,60 +465,126 @@ df_by_group<-new %>%
 
 # Attach the key names back to the dataframe 
 df_by_group<-as.data.frame(as.matrix(df_by_group))
-df_by_group['key_names']<-df_by_group[x_group]
 df_by_group$Freq<-as.numeric(df_by_group$Freq)
 
 
-# non cancer: 10,7, cancer: 7,3,
-
-df_to_plot<-df_by_group
 
 
+    
+
+add_percentage<-function(df){
+  
+  df<-df %>%
+    group_by_at(c(x_group, 'Cancer')) %>%
+    mutate(percent=Freq/sum(Freq)*100)
+  
+  return(df)
+}
 
 ##TODO: MOVE TO FUNCTION
 #overwrite
 
 # Switch here for both 
 x_group<-'objective'
-# x_group<-'disease_group'
-if (x_group == 'objective'){
-  df_most_common<-filter_common_groups(df_by_group, freq_cutoff = c(25,25))
-  df_to_plot<-df_most_common
-  df_to_plot<-relabel_objectives_short(df_to_plot)
-  df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
-  plot_width=5
-  plot_height=9
-  plot_cols=FALSE
-  
-}else if (x_group == 'disease_group' ){
-  # select common groups 
+#x_group<-'disease_group'
+top_n<-c(8,8)
+
+ if (x_group=='disease_group'){
   df_by_group<-df_by_group_disease
-  df_most_common<-filter_common_groups(df_by_group,  freq_cutoff = c(9,6))
+  top_n<-c(8,11)
   
-  df_to_plot<-df_most_common
+  
+}
+  
+  
+
+
+###### Group the not common combinations together and label as none
+most_common<-filter_common_groups(df_by_group, top_n =top_n, x_group=x_group)
+most_common_pairs<-unlist(most_common[[1]])
+most_common_groups<-unlist(most_common[[2]])
+most_common_pairs
+most_common_groups; length(most_common_groups)
+freq_cutoff_objectives<-c(5,5)
+df_filt<-df_by_group
+df_filt$Var1<-as.factor(df_filt$Var1)
+
+levels(df_filt$Var1)[!(levels(df_filt$Var1) %in% most_common_pairs)]<-'other'
+## Regroup and sum the frequency  combinations after renaming
+df_filt<-df_filt %>% 
+  group_by_at(c(x_group, 'Cancer', 'Var1')) %>%
+  summarise(Freq=sum(Freq), .groups = 'drop') %>% 
+  as.data.frame() 
+
+# put the other category last! 
+new_l<-levels(df_filt$Var1);
+new_l<-c(  'other',new_l[-which(new_l=='other')])
+df_filt$Var1<-factor(df_filt$Var1, levels=new_l)
+df_filt['key_names']<-df_filt[x_group]
+
+# Remove low frequency groups
+df_filt<-df_filt[(df_filt[,x_group] %in% c(most_common_groups)),]
+
+if (x_group == 'objective'){
+  
+  df_to_plot<-df_filt
+  df_to_plot<-relabel_objectives_short(df_to_plot)
+  df_to_plot$Var1<-relabel_omics_short(df_to_plot$Var1)
+  
+  df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
+
+  df_to_plot<-df_to_plot[!(df_to_plot$objective %in% remove_objectives),]
+  
+  df_to_plot<- add_percentage(df_to_plot)
+  
+  plot_width=12
+  plot_height=3.5
+  plot_cols=TRUE
+  stack_horiz=TRUE
+  xangle=0
+  
+  }else if (x_group == 'disease_group' ){
+  # select common groups 
+
+  df_to_plot<-df_filt
   # show them all
   #df_to_plot<-df_by_group
+  
+  df_to_plot$Var1<-relabel_omics_short(df_to_plot$Var1)
   
   # remove cancer
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='NA',]
   df_to_plot<-df_to_plot[!df_to_plot[x_group]=='all diseases',]
   
   df_to_plot<-df_to_plot[!df_to_plot['Cancer']=='NA',]
+  df_to_plot<- add_percentage(df_to_plot)
   
-  plot_width=9
-  plot_height=5.5
-  plot_cols=TRUE
+  
+  
+  plot_width=8
+  plot_height=3.5
+  plot_cols=FALSE
+  stack_horiz=TRUE
+
+  
 }
 
 
 # Remove non_cancer
-df_to_plot=  plot_filters(df_to_plot)
 
-show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols)
+df_to_plot<-df_to_plot[df_to_plot$Cancer %in% c('yes', 'no'),]
+# df_to_plot=  plot_filters(df_to_plot)
+
+
+
+
+show_p<-plotbyObjective(df_to_plot, plot_width=plot_width, plot_height = plot_height, plot_cols = plot_cols,
+                        stack_horiz = stack_horiz)
 show_p
 
+# df_to_plot[df_to_plot$disease_group=='Metabolism',]
 
-
+length(most_common_pairs)
 
 
 

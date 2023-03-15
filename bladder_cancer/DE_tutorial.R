@@ -3,6 +3,8 @@
 #BiocManager::install(c("limma", "edgeR", "Glimma", "org.Mm.eg.db", "gplots", "RColorBrewer", "NMF", "BiasedUrn"))
 #install.packages('edgeR')
 #BiocManager::install('limma')
+#BiocManager::install('Glimma')
+
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
 
@@ -101,6 +103,7 @@ y$samples$Sex <- factor(paste(Y_raw$Sex))
 myCPM <- cpm(countdata)
 
 head(myCPM)
+
 thresh <- myCPM > 0.5
 head(thresh)
 table(rowSums(thresh))
@@ -131,7 +134,10 @@ title("Barplot of library sizes")
 ######## boxplots
 # count data is not normally distributed
 # Get log2 counts per million so we can examine count data
+
 logcounts <- cpm(y,log=TRUE)
+logcounts
+
 # Check distributions of samples using boxplots
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
@@ -255,6 +261,7 @@ v <- voom(y,design,plot = TRUE)
 par(mfrow=c(1,1))
 v <- voom(y,design,plot = TRUE)
 
+png(paste0(output_de,'boxplots.png'), type='cairo')
 
 par(mfrow=c(1,2))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
@@ -266,13 +273,17 @@ abline(h=median(v$E),col="blue")
 
 
 #### SAVE
+v_all<-v$E
 v_most_var<-v$E[select_var_5000,] # and filter!
 if (prot){
   highly_variable_proteins_voom<-v_most_var
   write.csv(  highly_variable_proteins_voom, paste0(output_files,'highly_variable_proteins_normalized_VOOM.csv'))
+  write.csv(  v_all, paste0(output_files,'highly_variable_proteins_normalized_VOOM_full.csv'))
+  
 }else{
   highly_variable_genes_voom<-v_most_var
   write.csv(highly_variable_genes_voom,paste0(output_files,'highly_variable_genes_normalized_VOOM.csv'))
+  write.csv(v_all,paste0(output_files,'highly_variable_genes_normalized_VOOM_full.csv'))
   
 }
 
@@ -302,5 +313,9 @@ dev.off()
 # let's highlight the top 100 most DE genes
 volcanoplot(fit.cont,coef=1,highlight=20,names=rownames(fit.cont$coefficients),
             main="B.NPS3vsNPS1")
+
+
+
+
 ggsave(paste0(output_de,'volcano.png'), type='cairo')
 

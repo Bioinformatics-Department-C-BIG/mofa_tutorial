@@ -36,9 +36,21 @@ source('bladder_cancer/preprocessing.R')
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 N_FACTORS=10
+
+
+VISIT='V06'
+
+VISIT='V06'
 VISIT='BL'
+VISIT='V04'
+
+VISIT='BL'
+VISIT='V06'
 VISIT='V08'
+
+
 VISIT='BL'
+
 TISSUE='CSF'; 
 TISSUE='Plasma';
 
@@ -48,14 +60,20 @@ TOP_MN=0.50
 
 MIN_COUNT_G=100
 MIN_COUNT_M=10
+FULL_SET=TRUE
+VISIT_COMPARE='BL'
 
 NORMALIZED=TRUE
+
+# cohort 1 =prodromal 
+sel_coh <- c(1)
+sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
+sel_coh_s
 #TISSUE='untargeted'
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined[combined$EVENT_ID==VISIT,]
-combined_bl$PATNO
 
 
 
@@ -76,12 +94,19 @@ highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly
 
 
 
-out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params )
+out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_full_', FULL_SET, '_coh_', sel_coh_s )
 outdir = paste0(outdir_orig,out_params , '/');outdir
 
 dir.create(outdir, showWarnings = FALSE)
 fname<-paste0(output_files, 'proteomics_', VISIT, '_',TISSUE, '.csv')
 fname
+
+
+
+#### FILTER SAMPLES 
+if (!FULL_SET){
+  common_samples_with_visit=read.csv(paste0(output_files,'BL_V08.txt' ))
+}
 
 
 
@@ -164,32 +189,52 @@ dim(proteomics)
 
 ##### Filter samples that have all modalities present!
 
+
 common_samples<-intersect(colnames(miRNA), colnames(proteomics))
 common_samples<-intersect(common_samples,combined_bl$PATNO)
 common_samples<-intersect(common_samples,colnames(RNA))
 
+
+######
+# Add metadata
+combined_bl$X<-NULL
+sel_coh<-c(1)
+metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO),]
+only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% c(1,4))]
+only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% sel_coh)]
+
+
+common_samples<-only_pd
+metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO),]
+# Rewrite to add only pd
+#metadata_filt[c('COHORT', 'COHORT_DEFINITION')]
+
+metadata_filt$PATNO
+
+write.csv(common_samples,paste0(output_files,out_params, '_common_samples.txt'), 
+          row.names = FALSE, quote=FALSE )
 
 common_samples
 
 
 #### Filter samples that are common in all three
 ids<-rownames(miRNA)
-miRNA<-as.data.frame(miRNA)
-miRNA_filt<-miRNA[which(colnames(miRNA) %in% common_samples)]
-miRNA_filt<-miRNA_filt[ ,common_samples]
-rownames(miRNA_filt)
-#miRNA_filt<-miRNA %>% select(common_samples)
+miRNA<-as.data.frame(miRNA); dim(miRNA)
+miRNA_filt<-miRNA[,match(common_samples, colnames(miRNA)) ]
+dim(miRNA_filt)
+#miRNA_filt<-miRNA_filt[ ,common_samples]
 
 
 ### Select creates the new matrix with the same order 
-prot_filt<-proteomics[which(colnames(proteomics) %in% common_samples)]
-prot_filt<-prot_filt[, common_samples]
+prot_filt<-proteomics[,match(common_samples, colnames(proteomics))]
+dim(prot_filt)
+
+# use match to get column too
+RNA_filt<-RNA[,match(common_samples, colnames(RNA)) ]
+dim(prot_filt)
 
 
-RNA_filt<-RNA[which(colnames(RNA) %in% common_samples)]
-RNA_filt<-RNA_filt[, common_samples]
-
-rownames(RNA_filt)
+head(rownames(RNA_filt))
 #RNA_filt<-as.data.table(RNA) %>% select(common_samples)
 
 
@@ -199,6 +244,8 @@ rownames(RNA_filt)
 rownames(prot_filt)<-rownames(proteomics)
 dim(miRNA_filt)
 dim(prot_filt)
+colnames(miRNA_filt)
+colnames(RNA_filt)
 
 
 ## how to analyze and normalize olink? 
@@ -232,13 +279,6 @@ colnames(prot_filt)
 
 NCOL(miRNA_filt)
 
-
-######
-# Add metadata
-combined_bl$X<-NULL
-match( common_samples, combined_bl$PATNO)
-metadata_filt<-combined_bl[match( common_samples, combined_bl$PATNO), ]
-NROW(unique(metadata_filt$PATNO))
 
 
 ##### Setup MOFA model 
@@ -284,8 +324,9 @@ ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, d
 # Check model metadata
 metadata_filt$sample<-as.character(metadata_filt$PATNO)
 samples_metadata(MOFAobject)<-metadata_filt
+NROW(metadata_filt)
 #samples_metadata(MOFAobject)
 MOFAobject
 
-
+metadata_filt
 

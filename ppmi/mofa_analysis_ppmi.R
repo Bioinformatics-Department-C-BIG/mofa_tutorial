@@ -29,10 +29,8 @@ calculate_variance_explained(MOFAobject)
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
 
+MOFAobject@samples_metadata$SEX
 
-
-MOFAobject@samples_metadata$NP1ANXS<-as.factor(MOFAobject@samples_metadata$NP1ANXS)
-MOFAobject@samples_metadata$Grade
 colnames(MOFAobject@samples_metadata)[20:35]
 
 
@@ -174,19 +172,83 @@ for (i in seq(1,vps)){
   
   
   
+### wHICH VARIABLES correlate with which factors 
+pos_cors<-cors>0  # which have more than two factors positive 
+positive_cors<-cors[,colSums(pos_cors)>1]
+  
+for (i in 1:dim(positive_cors)[2]){
+  
+
+  names<-colnames(positive_cors)
+  x_cors<-positive_cors[,i]
+  pos_factors<-names(which(x_cors>0))
+  
+  # Order by 
+  pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
+  print(paste(i, pos_factors))
+  
+  fs<-c(pos_factors[1],pos_factors[2])
+  color_by<-names[i]
+  print(color_by)
+ 
+  
+  plot_factors(MOFAobject, 
+               factors = fs, 
+               color_by=color_by,
+               show_missing = FALSE
+  )
+  
+  fss<-paste(fs,sep='_',collapse='-')
+  dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
+  
+  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,color_by,'.png')
+  
+  
+  ggsave(FNAME, width = 4, height=4, dpi=100)
   
   
   
   
   
   
+  
+
+}
+
+MOFAobject@samples_metadata$COHORT_DEFINITION
+
+# here find the view for which the variability of the factor maximum
+plot_data_scatter(MOFAobject, 
+                  view = "RNA",
+                  factor = fs[1],  
+                  features = 4,
+                  sign = "positive",
+                  color_by = color_by
+) + labs(y="Drug response (cell viability)")
+
+
+
+
 plot_factors(MOFAobject, 
-             factors = c(3,8), 
-             dot_size = 2.5, 
-             color_by = 'NP3BRADY'
-             
+             factors = fs, 
+             show_missing = FALSE
 )
 
+
+plot_factors(MOFAobject, 
+             factors = c('Factor1', 'Factor2'), 
+             color_by = color_by,
+             show_missing = FALSE
+)
+
+# Plot top variables with top factors?  
+plot_factors(MOFAobject, 
+             factors = c(3,4), 
+             dot_size = 2.5, 
+             color_by = 'NHY'
+             
+)
+dev.off()
 
 ##### Plot molecular signatures in the input data
 
@@ -430,10 +492,9 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 #BiocManager::install('AnnotationHub')
 
-source('enrichment.R')
+#source('enrichment.R')
   
 #library(AnnotationHub)
-#ah = AnnotationHub()
 
 
 library('MOFAdata')
@@ -449,6 +510,7 @@ subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 
 gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+
 gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
 
 
@@ -659,4 +721,7 @@ p <- plot_factors(MOFAobject,
                   dot_size = 2.5,
                   show_missing = T
 )
+
+
+MOFAobject@samples_metadata$COHORT_DEFINITION
 

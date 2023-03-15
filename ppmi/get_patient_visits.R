@@ -96,14 +96,8 @@ prot_files<-list.files(path='ppmi/ppmi_data/proteomics/targeted_olink/plasma/', 
 
 ppmi_prot<-read.csv(prot_files[[1]])
 
-prot_BL<-ppmi_prot[ppmi_prot$EVENT_ID=='BL',]$PATNO
-prot_BL
-unique(prot_BL)
 stats_df<-as.data.frame.matrix(table(ppmi_prot[c('PATNO', 'EVENT_ID' )]))
-
-patients_visit_inter<-stats_df[stats_df$BL>1 & stats_df$V04>1  & stats_df$V08>1,]
-NROW(patients_visit_inter)
-rownames(stats_df)
+View(ppmi_prot)
 
 names_split<-sapply(rownames(stats_df),function(x) {
   unlist(strsplit(x,split='\\-'))}
@@ -111,44 +105,54 @@ names_split<-sapply(rownames(stats_df),function(x) {
 patient_number<-sapply(names_split, '[[', 2)
 stats_df$PATNO<-patient_number
 
-stats_df_olink<-stats_df
+stats_df_olink_orig<-stats_df
 
+cols<-colnames(stats_df_olink)
+library(dplyr)
+stats_df_olink_orig<-stats_df_olink_orig %>% 
+  mutate(across(!PATNO,  ~1 * (. != 0)))
+  
 
 
 ## miRNAs ids 
+mirnas_file<-'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/all_quantification_matrix_raw.csv/quantification_matrix_raw.final_ids.csv'
+mirnas<-read.csv2(mirnas_file, sep = '\t')
 
-mirnas<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/all_quantification_matrix_raw.csv/quantification_matrix_raw.final_ids.csv', sep = '\t')
+
 
 names<-colnames(as.data.frame(mirnas))[-1]
 names_split<-sapply(names,function(x) {
                       unlist(strsplit(x,split='\\.'))}
                                   )
 
-
-
+mirnas_ids<-read.table(mirnas_file, head=TRUE,nrows=1, sep='\t')
+names<-colnames(as.data.frame(mirnas_ids))[-1]
+names
 names_split<- strsplit(names,split='\\.')
 patient_number<-sapply(names_split, '[[', 3)
 visit<-sapply(names_split, '[[', 4)
 visit
 
-head(stats_df_olink)
+
 mirnas_patno<-as.data.frame(cbind(patient_number,visit))
 
-stats_df_mirnas<-as.data.frame.matrix(table(mirnas_patno))
-stats_df_mirnas$PATNO<-rownames(stats_df_mirnas)
+stats_df_mirnas_orig<-as.data.frame.matrix(table(mirnas_patno))
+stats_df_mirnas_orig$PATNO<-rownames(stats_df_mirnas)
+
 
 
 ### rnaseq
-rnaseq_files<-read.csv('ppmi/ppmi_data/rnaseq/rna_seq_files.txt', row.names = NULL, sep=' ')
+rnaseq_files<-read.table('ppmi/ppmi_data/rnaseq/rna_seq_files.txt', row.names = NULL, sep=' ')
+rnaseq_files_IR3<-read.table('ppmi/ppmi_data/rnaseq/IR3_rna_seq_files_ids_sorted.txt', row.names = NULL, sep=' ')
+rnaseq_files<-rbind(rnaseq_files,rnaseq_files_IR3 )
 
-stats_df_rnaseq<-as.data.frame.matrix(table(rnaseq_files))
-dim(stats_df_rnaseq)
-stats_df_rnaseq$PATNO<-rownames(stats_df_rnaseq)
-s_df<-stats_df_rnaseq
+
+stats_df_rnaseq_orig<-as.data.frame.matrix(table(rnaseq_files))
+stats_df_rnaseq_orig$PATNO<-rownames(stats_df_rnaseq_orig)
+s_df<-stats_df_rnaseq_orig
 patients_visit_inter<-s_df[s_df$BL>0 & s_df$V04>0  & s_df$V08>0,]
-nrow(patients_visit_inter)
 
-
+NROW(patients_visit_inter)
 ### MERGE
 
 library(dplyr)
@@ -156,9 +160,11 @@ library(dplyr)
 stats_df_rnaseq$PATNO<-rownames(stats_df_rnaseq)
 
 stats_df_olink$PATNO
-stats_df_olink<-stats_df_olink %>% rename_at(vars(-PATNO), ~ paste0(., '_p'))
-stats_df_mirnas<-stats_df_mirnas %>% rename_at(vars(-PATNO), ~ paste0(., '_m'))
-stats_df_rnaseq<-stats_df_rnaseq %>% rename_at(vars(-PATNO), ~ paste0(., '_r'))
+stats_df_olink<-stats_df_olink_orig %>% rename_at(vars(-PATNO), ~ paste0(., '_p'))
+stats_df_mirnas<-stats_df_mirnas_orig %>% rename_at(vars(-PATNO), ~ paste0(., '_m'))
+stats_df_rnaseq<-stats_df_rnaseq_orig %>% rename_at(vars(-PATNO), ~ paste0(., '_r'))
+
+
 
 
 colnames(stats_df_rnaseq)
@@ -168,32 +174,18 @@ dim(merged_2)
 
 
 ### RNAs ids
+
+# Find groups of patients with intersections 
 merged_stats<-merged_2
-patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 & 
-                                    merged_stats$BL_r>0 &
-                                     merged_stats$V04_p>0 & merged_stats$V04_m>0 &
-                                     merged_stats$V04_r>0 ,]
-
-patients_visit_inter
-patients_visit_inter<-merged_stats[merged_stats$BL_p>0 & merged_stats$BL_m>0 &
-                                     merged_stats$V04_p>0 & merged_stats$V04_m>0 &
-                                     merged_stats$V08_p>0 & merged_stats$V08_m>0 &
-                                     merged_stats$V08_r>0,]
+cols<-c('BL_p', 'BL_r', 'BL_m', 'V04_p', 'V04_r', 'V04_m')
+cols<-c('BL_p', 'BL_r', 'BL_m', 'V06_p', 'V06_r', 'V06_m')
+cols<-c('BL_p', 'BL_r', 'BL_m', 'V08_p', 'V08_r', 'V08_m')
+cols<-c('BL_p', 'BL_r', 'BL_m', 'V04_p', 'V04_r', 'V04_m', 'V06_p', 'V06_r', 'V06_m')
+cols<-c('BL_p', 'BL_r', 'BL_m', 'V04_p', 'V04_r', 'V04_m', 'V08_p', 'V08_r', 'V08_m')
 
 
-merged_stats<-merged_2
-patients_visit_inter<-merged_stats[ merged_stats$V06_p>0 & merged_stats$V06_m>0 &
-                                     merged_stats$V06_r>0 ,]
 
-NROW(unique(patients_visit_inter$PATNO))
-
-patients_visit_inter$PATNO
-
-
-patients_visit_inter<-merged_stats[merged_stats$BL_m,]
-
-
-NROW(patients_visit_inter)
-
-
+subgroup<-merged_stats[, c('PATNO', cols)]
+subgroup[subgroup==0]<-NA
+NROW(subgroup[complete.cases(subgroup),])
 

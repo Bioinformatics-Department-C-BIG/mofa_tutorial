@@ -12,6 +12,7 @@ library(stringr)
 
 VISIT='V08'
 VISIT='BL'
+VISIT='V04'
 
 rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 output_files='ppmi/output/'
@@ -53,11 +54,12 @@ names<-colnames(mirnas_rpmmm)[-1]
 
 VISIT='V08'
 VISIT='BL'
-
+VISIT='V04'
+VISIT='V06'
 mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
 mirnas_BL
 
-
+mirnas_rpmmm$
 names_split<- strsplit(names(mirnas_BL),split='\\.')
 
 PATNO<-sapply(names_split, '[[', 3)
@@ -79,8 +81,11 @@ library(tidyr)
 
 TISSUE='CSF'
 TISSUE='Plasma'
-VISIT='V08'
+
 VISIT='BL'
+VISIT='V08'
+VISIT='V04'
+VISIT='V06'
 NORMALIZED=TRUE
 
 output_files<-'ppmi/output/'

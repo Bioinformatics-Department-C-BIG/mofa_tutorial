@@ -43,6 +43,22 @@ preprocess_raw_data<-function(df, cut_n){
   
 }
 
+selectMostVariable<-function(vsn_mat,q){
+  #' selects rows ie. genes must be rows
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var, na.rm=TRUE)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat);dim(vsn_mat)
+  if (is.null(topx)){print('Warning: zero most variable features returned')}
+  return(vsn_mat)
+
+  }
+
+
 filter_most_var<-function(df,most_var, ng){  # take the most variable entries 
   if (most_var){
     n=round(dim(df)[2]/ng)
@@ -64,37 +80,16 @@ Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 X1_t_raw<-transpose_matrix(X1_raw)
 X2_t_raw<-transpose_matrix(X2_raw)
 
+
 most_var=TRUE
-
-
-
-
-ng_p=round(5,2)
-ng_g=round(35,2)
 X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
-X1_t_most_var<-filter_most_var(X1_t_cut,most_var,ng_g)
-
-
 X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
-X2_t_most_var<-filter_most_var(X2_t_cut, most_var,ng_p)
-
-
-X1_t_1<-as.data.frame(cpm(X1_t_most_var, log = TRUE) )
-X2_t_1<-as.data.frame(cpm(X2_t_most_var, log = TRUE) )
 
 
 
+ng_p=70
+ng_g=25
+
+
+q=0.7
 ##### Select most variable genes
-select_most_variable<-function(vsn_mat,q){
-  #' Selects top q most variable genes
-  #' Ideally take vsn transformed dataset!
-  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
-  #' q: top q genes/
-  variances <- apply(vsn_mat, 1, var)
-  topx<-names(variances[order(variances, decreasing = TRUE)])[1:  round(length(variances)*q, digits=0)]
-  vsn_mat <- vsn_mat[topx, ]
-  NROW(vsn_mat)
-  return(vsn_mat)
-}
-
-

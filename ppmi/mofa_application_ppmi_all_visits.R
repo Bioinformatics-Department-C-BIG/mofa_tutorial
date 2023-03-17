@@ -56,7 +56,7 @@ VISIT='V08'
 VISIT='BL'
 
 
-VISIT='V06'
+VISIT='V04'
 
 TISSUE='Plasma';
 TISSUE='CSF'; 
@@ -77,6 +77,8 @@ sel_coh <- c(1)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
+
+
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
@@ -205,7 +207,7 @@ common_samples<-intersect(common_samples,colnames(RNA))
 ######
 # Add metadata
 combined_bl$X<-NULL
-sel_coh<-c(1)
+
 metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO),]
 only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% c(1,4))]
 only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% sel_coh)]
@@ -291,7 +293,7 @@ NCOL(miRNA_filt)
 ##### Setup MOFA model 
 ## model opts 
 # SET factor values 
-MOFAobject <- create_mofa(data)
+MOFAobject <- create_mofa(data, groups= metadata_filt$COHORT)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- N_FACTORS
 model_opts

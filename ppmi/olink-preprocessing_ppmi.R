@@ -15,15 +15,16 @@ library("vsn")
 library("DEP")
 library("data.table")
 library("SummarizedExperiment")
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
-source('bladder_cancer/preprocessing.R')
+source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-
-output_1='ppmi/plots/'
-output_files<-'ppmi/output/'
+os_dir
+output_1=paste0(os_dir,'ppmi/plots/')
+output_files<-paste0(os_dir,'ppmi/output/')
 
 
 TOP_PN<-0.90
@@ -34,12 +35,13 @@ param_str<-paste0(TOP_PN)
 
 TISSUE='CSF'
 TISSUE='Plasma'
+TISSUE='CSF'
 
 
 VISIT='BL'
 
 VISIT='BL'
-VISIT='V06'
+VISIT='BL'
 
 NORMALIZED=TRUE
 

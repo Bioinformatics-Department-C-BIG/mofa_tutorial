@@ -1,10 +1,10 @@
 
-
+# TODO: extract all visits at once, then separate them later on for your analysus
 library(dplyr)
 library(data.table)
 library(stringr)
-setwd('~/git/mofa_tutorial/')
-
+source(paste0(script_dir,'/setup_os.R'))
+os_dir='os_dir'
 #rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
 #### too many files so we separate each time points 
 ##### Maybe do them one by one in a function
@@ -15,7 +15,7 @@ output_files='ppmi/output/'
 VISIT='V08'
 VISIT='BL'
 visits<-c('BL', 'V04', 'V06', 'V08')
-
+getwd()
 for (VISIT in visits){
   rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
   rownames(rnas)<-rnas$Geneid
@@ -96,102 +96,143 @@ write.csv2(mirnas_BL, paste0(output_files, 'mirnas_', VISIT, '.csv'), row.names 
 
 
 
+
+names<-colnames(mirnas_rpmmm)[-1]
+
+
+######### ADD all visits
+## TODO: remove the code above and make separate files from the bigger one 
+VISIT='V08'
+VISIT='BL'
+
+mirnas_all_visits<-mirnas_rpmmm
+mirnas_df<-mirnas_rpmmm[-1]
+#cbind(mirnas_df[,1],mirnas_rpmmm[,2])
+# split column names 
+names_split<- strsplit(names(mirnas_df),split='\\.')
+names_split_df<-do.call(rbind, names_split)
+
+dim(names_split_df);length(colnames(mirnas_df))
+PATNO<-names_split_df[,3]
+VISIT<-names_split_df[,4]
+PATNO_VISIT<-paste0(PATNO, '_', VISIT); length(PATNO_VISIT); length(unique(PATNO_VISIT))
+length(unique(paste0(PATNO, '_', VISIT)))
+colnames(mirnas_df)<-PATNO_VISIT
+length(unique(colnames(mirnas_df))); length(PATNO_VISIT)
+rownames(mirnas_df)<-mirnas_rpmmm$miRNA; head(rownames(mirnas_df)); head(mirnas_df)
+
+
+### TODO: which are the duplicates? can we delete them? 
+length((mirnas_df))
+tail(colnames(mirnas_df))
+rownames(mirnas_df)
+dim(mirnas_df)
+length(colnames(rna_all_visits)); 
+length(unique(colnames(rna_all_visits)))
+write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
+
+
+
 library(tidyr)
 ##### PROTEOMICS - OLINK
 
-TISSUE='CSF'
+
 TISSUE='Plasma'
 VISIT='V08'
 VISIT='BL'
+VISIT='V04'
+TISSUE='CSF'
 NORMALIZED=TRUE
 
 output_files<-'ppmi/output/'
-
-prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
-                         full.names = TRUE)
-
-if (NORMALIZED){
-  prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
-                         full.names = TRUE)
-  
-  pv='NPX'
-}else{
-  
-  prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
-                         full.names = TRUE)
-  pv='COUNT' # Value of the protein level 
-  
+setwd(os_dir)
+Visits=c('BL', 'V04', 'V06', 'V08')
+for (VISIT in Visits){
+      prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+                               full.names = TRUE)
+      
+      if (NORMALIZED){
+        prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+                               full.names = TRUE)
+        
+        pv='NPX'
+      }else{
+        
+        prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
+                               full.names = TRUE)
+        pv='COUNT' # Value of the protein level 
+        
+      }
+      
+      
+      
+      prot_files
+      outname<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_',NORMALIZED,  '.csv')
+      outname2<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
+      
+      
+      prot_files
+      
+      
+      
+      # Merge the 4 datasets together 
+      read_all<-lapply(prot_files, read.csv)
+      all_frames<-lapply(read_all, as.data.frame)
+      all_frames2<-bind_rows(all_frames)
+      all_frames2<-do.call(rbind, all_frames)
+      ppmi_prot=all_frames2
+      
+      ### remove PPMI- suffix from PATNO column 
+      ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
+      
+      
+      #ppmi_prot<-as.data.frame(ppmi_prot) %>% 
+       #               mutate(across('PATNO', str_replace, 
+        #                          'PPMI-', ''
+         #                         ))
+      ## Filter baseline
+      prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
+      
+      ## Remove unecessary columns 
+      prot_bl_matrix<-as.data.frame(subset(prot_bl,
+                          select=-c(LOD, update_stamp, OLINKID, UNIPROT, MISSINGFREQ,
+                                    PANEL, EVENT_ID, PLATEID, INDEX, PANEL_LOT_NR)))
+      
+      prot_bl_matrix<-as.data.frame(subset(prot_bl,
+                                 select=-c( update_stamp, OLINKID, UNIPROT,
+                                                     PANEL, EVENT_ID, PLATEID)))
+      ## Extract QC pass only 
+                                                                                                                                                                                                                                                         prot_bl_matrix<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
+      
+      hist(prot_bl_matrix[,pv])
+      
+      
+      
+      ## Reshape: Make a wide matrix with patient in columns 
+      prot_bl_tbl<-as.data.table(prot_bl_matrix)
+      prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO,
+                               value.var =pv, fun.aggregate = mean)
+      
+      
+      prot_bl_wide<-as.data.frame(prot_bl_wide)
+      rownames(prot_bl_wide)<-prot_bl_wide$ASSAY
+      prot_bl_wide$ASSAY<-NULL
+      row.names(prot_bl_wide)
+      
+      
+      ## Remove the log normalization
+      prot_bl_wide_unlog<-as.data.frame(sapply(prot_bl_wide, function(x){2**(as.numeric(x))}),
+                                          row.names =row.names(prot_bl_wide) )
+      
+      
+      ## Write output both log and not logged
+      fwrite(prot_bl_wide, paste0(outname), row.names = TRUE)
+      fwrite(prot_bl_wide_unlog, paste0(outname2), row.names = TRUE)
+      
+      
+      df<-prot_bl_wide_unlog[prot_bl_wide_unlog<10]
+      hist(as.numeric(as.matrix(df)))
 }
-
-
-
-prot_files
-outname<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_',NORMALIZED,  '.csv')
-outname2<-paste0(output_files, 'proteomics_',  VISIT, '_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
-
-
-prot_files
-
-
-
-# Merge the 4 datasets together 
-read_all<-lapply(prot_files, read.csv)
-all_frames<-lapply(read_all, as.data.frame)
-all_frames2<-bind_rows(all_frames)
-all_frames2<-do.call(rbind, all_frames)
-ppmi_prot=all_frames2
-
-### remove PPMI- suffix from PATNO column 
-ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
-
-
-#ppmi_prot<-as.data.frame(ppmi_prot) %>% 
- #               mutate(across('PATNO', str_replace, 
-  #                          'PPMI-', ''
-   #                         ))
-## Filter baseline
-prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
-
-## Remove unecessary columns 
-prot_bl_matrix<-as.data.frame(subset(prot_bl,
-                    select=-c(LOD, update_stamp, OLINKID, UNIPROT, MISSINGFREQ,
-                              PANEL, EVENT_ID, PLATEID, INDEX, PANEL_LOT_NR)))
-
-prot_bl_matrix<-as.data.frame(subset(prot_bl,
-                           select=-c( update_stamp, OLINKID, UNIPROT,
-                                               PANEL, EVENT_ID, PLATEID)))
-## Extract QC pass only 
-                                                                                                                                                                                                                                                   prot_bl_matrix<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
-
-hist(prot_bl_matrix[,pv])
-
-
-
-## Reshape: Make a wide matrix with patient in columns 
-prot_bl_tbl<-as.data.table(prot_bl_matrix)
-prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO,
-                         value.var =pv, fun.aggregate = mean)
-
-
-prot_bl_wide<-as.data.frame(prot_bl_wide)
-rownames(prot_bl_wide)<-prot_bl_wide$ASSAY
-prot_bl_wide$ASSAY<-NULL
-row.names(prot_bl_wide)
-
-
-## Remove the log normalization
-prot_bl_wide_unlog<-as.data.frame(sapply(prot_bl_wide, function(x){2**(as.numeric(x))}),
-                                    row.names =row.names(prot_bl_wide) )
-
-
-## Write output both log and not logged
-fwrite(prot_bl_wide, paste0(outname), row.names = TRUE)
-fwrite(prot_bl_wide_unlog, paste0(outname2), row.names = TRUE)
-
-
-df<-prot_bl_wide_unlog[prot_bl_wide_unlog<10]
-hist(as.numeric(as.matrix(df)))
-
 
 
 

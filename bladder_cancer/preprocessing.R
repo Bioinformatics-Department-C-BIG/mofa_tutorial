@@ -56,22 +56,22 @@ filter_most_var<-function(df,most_var, ng){  # take the most variable entries
 
 
 
-X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
-X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
-Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
+#X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
+#X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
+#Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 
-X1_t_raw<-transpose_matrix(X1_raw)
-X2_t_raw<-transpose_matrix(X2_raw)
+#X1_t_raw<-transpose_matrix(X1_raw)
+#X2_t_raw<-transpose_matrix(X2_raw)
 
-most_var=TRUE
-
-
+#most_var=TRUE
 
 
-ng_p=round(5,2)
-ng_g=round(35,2)
-X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
+
+
+#ng_p=round(5,2)
+#ng_g=round(35,2)
+# X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
 
 
 
@@ -80,7 +80,7 @@ X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
 
 
 ##### Select most variable genes
-select_most_variable<-function(vsn_mat,q){
+selectMostVariable<-function(vsn_mat,q){
   #' Selects top q most variable genes
   #' Ideally take vsn transformed dataset!
   #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform

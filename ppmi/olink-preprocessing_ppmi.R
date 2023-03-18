@@ -155,18 +155,7 @@ dim(normalized_data)
 
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
-
-highly_variable_proteins_mofa2<-selectMostVariable(vsn_mat, TOP_PN)
-
-
-variances<-rowVars(vsn_mat, na.rm = TRUE)
-maxn<-round(length(variances)*TOP_PN)
-to_sel<-rownames(vsn_mat)[order(variances, decreasing=TRUE)][1:maxn]
-rownames(vsn_mat[to_sel,])
-var(vsn_mat['NPPB',], na.rm=TRUE)
-highly_variable_proteins_mofa=vsn_mat[to_sel,]
-
-highly_variable_proteins_mofa2
+highly_variable_proteins_mofa=selectMostVariable2(vsn_mat, TOP_PN)
 
 dim(highly_variable_proteins_mofa)
 rownames(highly_variable_proteins_mofa)

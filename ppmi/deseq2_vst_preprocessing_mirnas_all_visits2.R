@@ -21,7 +21,7 @@ output_1='ppmi/output/'
 output_files_orig<-'ppmi/output/'
 
 output_de=paste0(output_1, 'gene')
-source('bladder_cancer/preprocessing.R')
+source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 # TODO: move the pre-processing script to utils
 
 

@@ -93,3 +93,17 @@ selectMostVariable<-function(vsn_mat,q){
 }
 
 
+
+
+selectMostVariable<-function(vsn_mat,TOP_N ){
+  
+  ### FIXED 
+  variances<-rowVars(vsn_mat, na.rm = TRUE)
+  maxn<-round(length(variances)*TOP_N)
+  to_sel<-rownames(vsn_mat)[order(variances, decreasing=TRUE)][1:maxn]
+  rownames(vsn_mat[to_sel,])
+  highly_variable_proteins_mofa=vsn_mat[to_sel,]
+  return(highly_variable_proteins_mofa)
+}
+
+

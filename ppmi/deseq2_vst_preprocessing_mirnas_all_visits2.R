@@ -41,9 +41,9 @@ m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_')
 
 
 #### Remove low expression 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
-   mirnas_file<-paste0(output_files, 'mirnas_',VISIT,  '.csv')
+   mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
   
     raw_counts<-as.data.frame(mirnas_BL)
@@ -73,7 +73,7 @@ if (process_mirnas){
   
 }
 
-
+raw_counts<-raw_counts[!duplicated(colnames(raw_counts), fromLast=TRUE)]
 Sample<-colnames(raw_counts)
 sample_info<-DataFrame(Sample=Sample)
 
@@ -171,6 +171,7 @@ hist(highly_variable_genes_mofa)
 
 ### SANITY CHECK: Just plot one gene before and after to ensure the mapping looks correct 
 df=highly_variable_genes_mofa
+par(mfrow=c(2,1))
 idx=30
 plot(df[idx,1:20]) 
 gname<-rownames(df)[idx]

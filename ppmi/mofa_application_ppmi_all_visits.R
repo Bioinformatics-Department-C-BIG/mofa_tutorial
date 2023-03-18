@@ -41,23 +41,6 @@ source('bladder_cancer/preprocessing.R')
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 N_FACTORS=10
 
-
-
-
-VISIT='V06'
-VISIT='BL'
-VISIT='V04'
-
-VISIT='BL'
-VISIT='V06'
-VISIT='V08'
-
-
-VISIT='BL'
-
-
-VISIT='V04'
-
 TISSUE='Plasma';
 TISSUE='CSF'; 
 
@@ -73,7 +56,7 @@ VISIT_COMPARE='BL'
 NORMALIZED=TRUE
 
 # cohort 1 =prodromal 
-sel_coh <- c(1)
+sel_coh <- c(2)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -81,33 +64,30 @@ sel_coh_s
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
+
 combined<-read.csv2(metadata_output)
-combined_bl<-combined[combined$EVENT_ID==VISIT,]
+combined_bl<-combined
+combined_bl$PATNO_EVENT_ID<-paste0(combined_bl$PATNO, '_',combined_bl$EVENT_ID)
 
 
-
-p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
-g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
+p_params<- paste0( TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+g_params<-paste0( TOP_GN, '_', MIN_COUNT_G, '_')
+m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_') 
 mofa_params<-paste0(N_FACTORS )
 
 #
 
 
 highly_variable_proteins_outfile = paste0(output_files, p_params , 'highly_variable_proteins_mofa.csv')
-fname<-paste0(output_files, 'proteomics_bl.csv')
-
-
 highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params,'_highly_variable_genes_mofa.csv')
 highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly_variable_genes_mofa.csv')
-
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_full_', FULL_SET, '_coh_', sel_coh_s )
 outdir = paste0(outdir_orig,out_params , '/');outdir
 
 dir.create(outdir, showWarnings = FALSE)
-fname<-paste0(output_files, 'proteomics_', VISIT, '_',TISSUE, '.csv')
+fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
 fname
 
 
@@ -134,7 +114,6 @@ output_files
 ### 1. Load proteins 
 
 in_file<-highly_variable_proteins_outfile
-
 highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 
 
@@ -151,8 +130,11 @@ highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
 colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
 rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
 
-# or input to vst or put as is normalized
+colnames(highly_variable_mirnas_mofa)
+colnames(highly_variable_genes_mofa)
 
+highly_variable_mirnas_outfile
+# EITHER input to vst or put as is normalized
 miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
 rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
 head(rownames(miRNA))
@@ -200,21 +182,20 @@ dim(proteomics)
 
 
 common_samples<-intersect(colnames(miRNA), colnames(proteomics))
-common_samples<-intersect(common_samples,combined_bl$PATNO)
+common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID)
 common_samples<-intersect(common_samples,colnames(RNA))
-
+common_samples
 
 ######
 # Add metadata
-combined_bl$X<-NULL
-
-metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO),]
-only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% c(1,4))]
-only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% sel_coh)]
 
 
-common_samples<-only_pd
-metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO),]
+metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO_EVENT_ID),]
+only_pd<-metadata_filt$PATNO_EVENT_ID[which(metadata_filt$COHORT %in% sel_coh)]
+
+
+common_samples<-only_pd;common_samples
+metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO_EVENT_ID),]
 # Rewrite to add only pd
 #metadata_filt[c('COHORT', 'COHORT_DEFINITION')]
 
@@ -253,8 +234,8 @@ head(rownames(RNA_filt))
 rownames(prot_filt)<-rownames(proteomics)
 dim(miRNA_filt)
 dim(prot_filt)
-colnames(miRNA_filt)
-colnames(RNA_filt)
+#colnames(miRNA_filt)
+#colnames(RNA_filt)
 
 
 ## how to analyze and normalize olink? 
@@ -284,7 +265,7 @@ data = list(proteomics = as.matrix(prot_filt),
 ###  REMOVE NON ens ids 
 
 order_cols<-colnames(miRNA_filt)
-colnames(prot_filt)
+head(cbind(colnames(prot_filt),colnames(RNA_filt), colnames(miRNA_filt)  ))
 
 NCOL(miRNA_filt)
 
@@ -293,7 +274,7 @@ NCOL(miRNA_filt)
 ##### Setup MOFA model 
 ## model opts 
 # SET factor values 
-MOFAobject <- create_mofa(data, groups= metadata_filt$COHORT)
+MOFAobject <- create_mofa(data, groups= metadata_filt$EVENT_ID, sample=metadata_filt$PATNO)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- N_FACTORS
 model_opts
@@ -331,11 +312,12 @@ ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, d
 #MOFAobject@training_stats
 ######
 # Check model metadata
-metadata_filt$sample<-as.character(metadata_filt$PATNO)
-samples_metadata(MOFAobject)<-metadata_filt
-NROW(metadata_filt)
-#samples_metadata(MOFAobject)
-MOFAobject
+metadata_filt$sample<-as.character(metadata_filt$PATNO_EVENT_ID)
 
-metadata_filt
+sm<-samples_metadata(MOFAobject)
+samples_metadata(MOFAobject)$PATNO_EVENT_ID=paste0(sm$sample)
+nnw<-merge(samples_metadata(MOFAobject), metadata_filt, by=c('sample'))
+samples_metadata(MOFAobject)<-nnw
+NROW(samples_metadata(MOFAobject))
+
 

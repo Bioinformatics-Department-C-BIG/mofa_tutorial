@@ -1,6 +1,6 @@
 
 #BiocManager::install('DEP')
-
+## TODO: change all scripts to be agnostic of visit until mofa
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -22,9 +22,8 @@ if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-os_dir
-output_1=paste0(os_dir,'ppmi/plots/')
-output_files<-paste0(os_dir,'ppmi/output/')
+output_1=paste0('ppmi/plots/')
+output_files<-paste0('ppmi/output/')
 
 
 TOP_PN<-0.90
@@ -46,8 +45,8 @@ VISIT='BL'
 NORMALIZED=TRUE
 
 #### read in proteomics 
-p_params_in<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED)
-p_params_out<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED)
+p_params_in<- paste0( TISSUE, '_', NORMALIZED)
+p_params_out<- paste0(TISSUE, '_', TOP_PN, '_', NORMALIZED)
 
 
 if (NORMALIZED){
@@ -57,8 +56,7 @@ if (NORMALIZED){
 }else{
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
 
-  
-  
+
 }
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')

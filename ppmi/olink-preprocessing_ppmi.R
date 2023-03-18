@@ -26,14 +26,14 @@ output_1=paste0('ppmi/plots/')
 output_files<-paste0('ppmi/output/')
 
 
-TOP_PN<-0.90
+TOP_PN<-0.7
 
 param_str<-paste0(TOP_PN)
 
 
 
 TISSUE='CSF'
-TISSUE='Plasma'
+
 TISSUE='CSF'
 
 
@@ -41,7 +41,7 @@ VISIT='BL'
 
 VISIT='BL'
 VISIT='BL'
-
+TISSUE='Plasma'
 NORMALIZED=TRUE
 
 #### read in proteomics 
@@ -117,7 +117,8 @@ se <- make_se(data, data_columns,exp_design)
 is.nan(as.matrix(data))
 boxplot(log(data[1:16]))
 
-
+assays(se)[[1]][1]
+data_columns
 interm<-as.matrix(assays(se)[[1]])
 
 is.nan(as.matrix(interm))
@@ -145,15 +146,28 @@ vsn_mat<-assays(normalized_data)[[1]]
 
 
 #vsn_mat<-normalized_data
-
-
+head(rownames(vsn_mat))
+head(colnames(vsn_mat))
 hist(vsn_mat)
 
 boxplot(vsn_mat[,1:30])
 dim(normalized_data)
 
 # Select the top most variable proteins
-highly_variable_proteins_mofa<-selectMostVariable(vsn_mat, TOP_PN)
+## TODO: fix the bug in selectMostVariable
+
+highly_variable_proteins_mofa2<-selectMostVariable(vsn_mat, TOP_PN)
+
+
+variances<-rowVars(vsn_mat, na.rm = TRUE)
+maxn<-round(length(variances)*TOP_PN)
+to_sel<-rownames(vsn_mat)[order(variances, decreasing=TRUE)][1:maxn]
+rownames(vsn_mat[to_sel,])
+var(vsn_mat['NPPB',], na.rm=TRUE)
+highly_variable_proteins_mofa=vsn_mat[to_sel,]
+
+highly_variable_proteins_mofa2
+
 dim(highly_variable_proteins_mofa)
 rownames(highly_variable_proteins_mofa)
 # Just plot to see the result of vsn

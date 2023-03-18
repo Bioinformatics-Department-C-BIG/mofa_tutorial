@@ -139,11 +139,12 @@ library(tidyr)
 ##### PROTEOMICS - OLINK
 
 
-TISSUE='Plasma'
 VISIT='V08'
 VISIT='BL'
 VISIT='V04'
 TISSUE='CSF'
+TISSUE='Plasma'
+
 NORMALIZED=TRUE
 
 output_files<-'ppmi/output/'

@@ -10,13 +10,12 @@
 # 4. outdirs 
 # 5. csf/plasma/untargeted flags
 
-
 #source('enrichment.R')
 library(ggplot2)
 dev.off()
 MOFAobject@features_metadata
 features_names(MOFAobject, view='RNA')
-getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol' ,mart=ensembl )
+getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
 
 
 
@@ -154,7 +153,7 @@ for (i in seq(1,vps)){
     
     ### get the top highly weighted variables - absolute value
     top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
-    write.table(top,paste0(outdir, 'top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+    write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
     
 
   }
@@ -362,7 +361,7 @@ plot_top_weights(MOFAobject,
                  scale = T           # Scale weights from -1 to 1
 )
 ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
-
+dir.create(paste0(outdir, 'top_weights/'))
 
 fps=8
 for (i in 1:vps){
@@ -374,20 +373,21 @@ for (i in 1:vps){
                      nfeatures = 10,     # Top number of features to highlight
                      scale = T           # Scale weights from -1 to 1
     )
-    ggsave(paste0(outdir, 'top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
+    ggsave(paste0(outdir, 'top_weights/top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
     
     plot_weights(MOFAobject, 
                  view = views[i], 
                  factor = ii, 
-                 nfeatures = 10
+                 nfeatures = 30
     )
-    ggsave(paste0(outdir, 'all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+    ggsave(paste0(outdir, 'top_weights/all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
     
     
     
     ###### Heatmaps 
-    nfs=40
+    nfs=20
     print('heatmap')
+    dir.create(paste0(outdir, '/heatmap/'))
     jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     fps[ii]=1
     # Plot heatmaps for each factor only for miRNA 
@@ -406,7 +406,7 @@ for (i in 1:vps){
     )
     dev.off()
     
-    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+    jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
     
     p<-plot_data_heatmap(MOFAobject, 
                          view = views[i], 
@@ -585,7 +585,7 @@ subcategory<- 'CP:KEGG'
 gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
 
 gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-
+rownames(gs)
 
 features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
        function(x) {stringr::str_remove(x, '\\..*')}
@@ -657,12 +657,11 @@ all_fs_merged1<-do.call(rbind, all_fs_unlisted )
 
 write.csv(all_fs_merged1,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
 
-
+all_fs_merged1
 results_enrich<-res.negative$pval.adj
 all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
 all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
 all_fs_merged2<-do.call(rbind, all_fs_unlisted )
-dim(all_fs_merged)
 
 write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
 
@@ -671,7 +670,8 @@ write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichme
 
 all_fs_merged1[str_detect(all_fs_merged1[,2], 'PARKINSON'),'factor']
 all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
-
+all_fs_merged1
+all_fs_merged2
 
 
 
@@ -787,12 +787,16 @@ round(importance(model.y), 2)
 ### Plot predictions
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
-                  color_by = "EORTC.risk.pred",
-                  shape_by = "EORTC.risk.pred_logical",
+                  color_by = "NHY",
+                  shape_by = "NHY",
                   dot_size = 2.5,
                   show_missing = T
 )
 
 
-MOFAobject@samples_metadata$COHORT_DEFINITION
+cbind(MOFAobject@samples_metadata$sample,MOFAobject@samples_metadata$COHORT_DEFINITION)
+MOFAobject@samples_metadata[MOFAobject@samples_metadata$PATNO=='3156',]
+
+
+
 

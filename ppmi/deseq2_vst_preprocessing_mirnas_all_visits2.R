@@ -1,4 +1,8 @@
 
+
+#### This script performs filter by expression, size factor estimation and vsn on the whole matrix of 
+#### RNAs or miRNAS 
+#### parameters: MIN_COUNT_M, MIN_COUNT_G define the parameters for filtering out genes with low counts 
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -28,11 +32,10 @@ source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 ##### Load required data 
 # TODO: input all the visits 
 
+
+
 MIN_COUNT_G=100
 MIN_COUNT_M=10
-TOP_GN=0.10
-TOP_MN=0.50
-
 VISIT='BL'
 VISIT='V04'
 
@@ -41,17 +44,18 @@ m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_')
 
 
 #### Remove low expression 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
-  
-    raw_counts<-as.data.frame(mirnas_BL)
+   
+   raw_counts<-as.data.frame(mirnas_BL)
 
   # if we filter too much we get normalization problems 
   min.count=MIN_COUNT_M
   most_var=TOP_MN
   param_str_m<-paste0('mirnas_', m_params)
+  vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'mirnas_', MIN_COUNT_M, '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
   
   
@@ -67,6 +71,7 @@ if (process_mirnas){
   min.count=MIN_COUNT_G
   most_var=TOP_GN
   param_str_g<-paste0('rnas_', g_params )
+  vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'rnas_', MIN_COUNT_G, '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
   
   
@@ -88,7 +93,6 @@ raw_counts <- as.matrix(raw_counts[idx, ])
 dim(raw_counts)
 
 
-raw_counts
 ##### Define
 
 ### TODO: Question: Should I input everything into the matrix to normalize? 
@@ -113,13 +117,11 @@ dds <- DESeqDataSetFromMatrix(
 
 # Compute normalization factors and vst 
 
-dds <- estimateSizeFactors(dds,)
+dds <- estimateSizeFactors(dds)
 # Variance stabilization transformation
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
 vsd <- varianceStabilizingTransformation(dds)
-
-
 vsd_mat <- assay(vsd)
 colnames(vsd_mat)<-vsd$Sample
 
@@ -147,29 +149,22 @@ title("Boxplots of logCPMs (after vst)")
 #plotPCA(vsd, "sample") + labs(color='sample') + ggtitle("Batch effect") 
 #dev.off()
 
+#### This saves the whole file without filtering for highly variable 
+write.csv(vsd_mat,vsn_out_file)
 ##### Store the most variable genes only for MOFA 
 # Select most variable genes
-highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
-dim(highly_variable_genes_mofa)
-
-
-boxplot(highly_variable_genes_mofa[,1:30], xlab="", ylab="vst(counts) ",las=2)
-
-
-write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
-
-
-dim(highly_variable_genes_mofa)
-
+### run on its own for all visits? 
 # Check that the distribution is approximately normal
 dev.off()
 
-hist(highly_variable_genes_mofa)
+###TODO: Move this to the mofa file 
+highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
+dim(highly_variable_genes_mofa)
 
 
 
-
-### SANITY CHECK: Just plot one gene before and after to ensure the mapping looks correct 
+### SANITY CHECK: Just plot one gene before and after preprocessing to ensure the mapping looks correct 
 df=highly_variable_genes_mofa
 par(mfrow=c(2,1))
 idx=30

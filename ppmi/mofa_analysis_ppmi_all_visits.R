@@ -142,7 +142,7 @@ for (i in seq(1,vps)){
   }
 
 
-
+dir.create(paste0(outdir, 'top_weights/'))
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     view=views[i]
@@ -221,14 +221,8 @@ for (i in 1:dim(positive_cors)[2]){
   FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,color_by,shape_by,'.png')
     ggsave(FNAME, width = 4, height=4, dpi=100)
   
-  
-  
-  
-  
-  
-  
-
 }
+
 
 MOFAobject@samples_metadata$COHORT_DEFINITION
 
@@ -577,10 +571,10 @@ head((reactomeGS))
 
 
 subcategory<- 'CP:KEGG'
-
+subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
-subcategory<- 'CP:KEGG'
+
 
 gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
 
@@ -681,7 +675,9 @@ all_fs_merged2
 jpeg(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.positive, 
-                        alpha=0.5, cap=0.0005)
+                        alpha=0.5, 
+                        cap=0.0005,
+                          colnames=TRUE)
 dev.off()
 
 plot_enrichment_heatmap(res.positive$sigPathways, 

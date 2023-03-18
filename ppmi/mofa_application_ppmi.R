@@ -1,8 +1,9 @@
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
-source('setup_os.R')
-setwd('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/')
+source(paste0(script_dir,'/setup_os.R'))
+#setwd('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/')
 
 #BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
@@ -24,7 +25,7 @@ library(dplyr)
 outdir_orig=paste0(os_dir,'ppmi/plots/')
 output_files<- paste0(os_dir,'ppmi/output/')
 
-source('bladder_cancer/preprocessing.R')
+source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -39,7 +40,7 @@ source('bladder_cancer/preprocessing.R')
 
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
-N_FACTORS=10
+N_FACTORS=6
 
 
 
@@ -58,8 +59,9 @@ VISIT='BL'
 
 VISIT='V06'
 
-TISSUE='Plasma';
+
 TISSUE='CSF'; 
+TISSUE='Plasma';
 
 TOP_PN=0.90
 TOP_GN=0.10# 0.20
@@ -71,9 +73,10 @@ FULL_SET=TRUE
 VISIT_COMPARE='BL'
 
 NORMALIZED=TRUE
+VISIT='V08'
 
 # cohort 1 =prodromal 
-sel_coh <- c(1)
+sel_coh <- c(2)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -205,11 +208,13 @@ common_samples<-intersect(common_samples,colnames(RNA))
 ######
 # Add metadata
 combined_bl$X<-NULL
-sel_coh<-c(1)
+
 metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO),]
 only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% c(1,4))]
 only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% sel_coh)]
-
+only_pd
+only_pd
+metadata_filt$COHORT
 
 common_samples<-only_pd
 metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO),]
@@ -303,6 +308,7 @@ MOFAobject <- prepare_mofa(MOFAobject,
 plot_data_overview(MOFAobject)
 outdir
 ggsave(paste0(outdir, 'data_overview.jpeg'))
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
 ##### run the model 
@@ -335,5 +341,5 @@ NROW(metadata_filt)
 #samples_metadata(MOFAobject)
 MOFAobject
 
-metadata_filt
+metadata_filt$COHORT_DEFINITION
 

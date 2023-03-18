@@ -1,6 +1,7 @@
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
+
 source('setup_os.R')
 
 #BiocManager::install("MOFA2")
@@ -29,7 +30,7 @@ library(dplyr)
 outdir_orig=paste0('ppmi/plots/')
 output_files<- paste0('ppmi/output/')
 
-source('bladder_cancer/preprocessing.R')
+source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -61,8 +62,8 @@ NORMALIZED=TRUE
 TISSUE='Plasma';
 TOP_PN=0.70
 # cohort 1 =prodromal 
-sel_coh <- c(4)
-VISIT='V06'
+sel_coh <- c(2)
+VISIT='V08'
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -288,7 +289,6 @@ experiments(mofa_multi)[1]
 #install.packages('UpSetR')
 library('UpSetR')
 upsetSamples(mofa_multi)
-VISIT='V04'
 mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID==VISIT]
 
 
@@ -300,17 +300,19 @@ head(cbind(colnames(prot_filt),colnames(RNA_filt), colnames(miRNA_filt)  ))
 
 NCOL(miRNA_filt)
 
-
+colData(mofa_multi_V04)
 
 ##### Setup MOFA model 
 ## model opts 
 # SET factor values 
 MOFAobject <- create_mofa(data, groups= metadata_filt$EVENT_ID, sample=metadata_filt$PATNO)
 
+
+
+
 ### separate visits 
 outdir
 MOFAobject <- create_mofa(mofa_multi_V04)
-
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- N_FACTORS
 model_opts
@@ -326,14 +328,13 @@ outdir
 ggsave(paste0(outdir, 'data_overview.jpeg'))
 
 #### TODO FIX THE DATAFRAME 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
-
 outdir = paste0(outdir_orig,out_params , '_', VISIT, '/');
 outdir
 dir.create(outdir, showWarnings = FALSE)
-
 ##### run the model 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
+
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
 
@@ -356,18 +357,28 @@ plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
 
 
+
+
+
+
+#### single visit 
+
+
+
 #MOFAobject@training_stats
 ######
 # Check model metadata
-metadata_filt$sample<-as.character(metadata_filt$PATNO_EVENT_ID)
 
-sm<-samples_metadata(MOFAobject)
-samples_metadata(MOFAobject)$PATNO_EVENT_ID=paste0(sm$sample)
-nnw<-merge(samples_metadata(MOFAobject), metadata_filt, by=c('sample'))
-samples_metadata(MOFAobject)<-nnw
-NROW(samples_metadata(MOFAobject))
+#metadata_filt$sample<-as.character(metadata_filt$PATNO_EVENT_ID)
+#
+#sm<-samples_metadata(MOFAobject)
+#samples_metadata(MOFAobject)$PATNO_EVENT_ID=paste0(sm$sample)
+#nnw<-merge(samples_metadata(MOFAobject), metadata_filt, by=c('sample'))
+#samples_metadata(MOFAobject)<-nnw
+#NROW(samples_metadata(MOFAobject))
 
-sampleMap(mofa_multi_V04)
-samples_metadata(MOFAobject)<-sampleMap(mofa_multi_V04)
+
+
+
 
 

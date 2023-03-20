@@ -181,7 +181,7 @@ for (i in seq(1,vps)){
 ### wHICH VARIABLES correlate with which factors 
 pos_cors<-cors>0  # which have more than two factors positive 
 positive_cors<-cors[,colSums(pos_cors)>1]
-  
+
 for (i in 1:dim(positive_cors)[2]){
   
 
@@ -239,6 +239,13 @@ plot_data_scatter(MOFAobject,
 
 
 
+## todo extract row and column for which positive cors are TRUE 
+#positive_cors_1<-pos_cors>0
+#which(positive_cors_1)
+
+#for (i in 1:length(positive_cors_1)){
+#  
+#}
 
 plot_factors(MOFAobject, 
              factors = fs, 
@@ -627,7 +634,7 @@ for (subcategory in c('CP:KEGG','GO:BP' )){
           print(sign2)
         }
         
-        enrichment_list=all_fs_enrichment
+       # enrichment_list=all_fs_enrichment
         stack_list<-function(i,enrichment_list) {
           
           # Take a list of dataframes and stack them 

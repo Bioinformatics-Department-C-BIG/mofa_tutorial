@@ -44,13 +44,20 @@ VISIT='BL'
 TISSUE='Plasma'
 NORMALIZED=FALSE
 
-sel_coh <- c(2)
+sel_coh <- c(1,2)
 VISIT=c('V06')
 VISIT=c('BL')
 
+
+VISIT=c('V08')
+VISIT=c('V08')
 VISIT=c('BL')
-VISIT=c('V08')
-VISIT=c('V08')
+
+
+
+metadata_output<-paste0(output_files, 'combined.csv')
+combined<-read.csv2(metadata_output)
+
 
 
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
@@ -81,8 +88,7 @@ if (NORMALIZED){
 }
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
-
-
+outdir<-outdir_orig
 
 
 #### Read in 
@@ -131,7 +137,7 @@ df<-proteomics; dim(df)
 min.count= quantile(df, na.rm = TRUE, 0.1)
 min.count= min(df, na.rm = TRUE)
 dim(df)
-keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
+keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.95*ncol(df))
 length(which(keep))
 proteomics<-proteomics[keep,]
 dim(df); dim(proteomics)
@@ -220,9 +226,10 @@ normalized_data<-normalize_vsn(se_filt)
 
 
 normalized_data<-justvsn(tmp)
-
+dev.off()
 meanSdPlot(normalized_data)
-ggsave(paste0(outdir,'meansd.png' ))
+ggsave(paste0(outdir,'meansd_', p_params_out, '.png' ))
+
 # Check plot after vsn
 #View(normalized_data)
 

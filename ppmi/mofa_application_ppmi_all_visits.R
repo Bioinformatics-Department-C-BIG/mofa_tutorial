@@ -70,7 +70,7 @@ NORMALIZED=FALSE
 TISSUE='Plasma';
 TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(2)
+sel_coh <- c(1,2)
 VISIT='BL'
 
 

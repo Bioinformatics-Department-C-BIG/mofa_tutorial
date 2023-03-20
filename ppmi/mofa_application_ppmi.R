@@ -64,7 +64,7 @@ TISSUE='CSF';
 TISSUE='Plasma';
 
 TOP_PN=0.90
-TOP_GN=0.10# 0.20
+TOP_GN=0.20# 0.20
 TOP_MN=0.50
 
 MIN_COUNT_G=100
@@ -73,10 +73,10 @@ FULL_SET=TRUE
 VISIT_COMPARE='BL'
 
 NORMALIZED=TRUE
-VISIT='V08'
+VISIT='V04'
 
 # cohort 1 =prodromal 
-sel_coh <- c(2)
+sel_coh <- c(1)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -85,11 +85,12 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined[combined$EVENT_ID==VISIT,]
 
+VISIT_S=paste(VISIT,sep='_',collapse='-')
 
-
-p_params<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
-g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
+## VISIT_S to allow this to be more than one visits at once!! 
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_')
+m_params<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 mofa_params<-paste0(N_FACTORS )
 
 #
@@ -210,7 +211,6 @@ common_samples<-intersect(common_samples,colnames(RNA))
 combined_bl$X<-NULL
 
 metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO),]
-only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% c(1,4))]
 only_pd<-metadata_filt$PATNO[which(metadata_filt$COHORT %in% sel_coh)]
 only_pd
 only_pd

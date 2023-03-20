@@ -41,11 +41,12 @@ combined<-read.csv2(metadata_output)
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 VISIT='BL'
-VISIT='V04'
+VISIT=c('V08')
+VISIT=('BL')
+TOP_GN=0.1
+TOP_MN=0.5
 
-
-
-sel_coh=c(1)
+sel_coh=c(2)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 VISIT_S=paste(VISIT,sep='_',collapse='-')
@@ -55,7 +56,7 @@ m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_')
 
 
 #### Remove low expression 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -145,8 +146,8 @@ se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 
 
 
-se_filt<-se[,(se$EVENT_ID %in% VISIT & se$COHORT %in% sel_coh )]
-
+se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
+se_filt$EVENT_ID; se_filt$COHORT
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 

@@ -350,6 +350,10 @@ ggsave(paste0(outdir, 'top_weights/top_weights_',factor, view,'_','.png'), width
 
 
 fps=8
+dir.create(paste0(outdir, 'top_weights/'))
+dir.create(paste0(outdir, 'heatmap/'))
+dir.create(paste0(outdir, 'enrichment/'))
+
 for (i in 1:vps){
   for (ii in 1:fps){
     print(c(i,ii))
@@ -359,21 +363,21 @@ for (i in 1:vps){
                      nfeatures = 10,     # Top number of features to highlight
                      scale = T           # Scale weights from -1 to 1
     )
-    ggsave(paste0(outdir, 'top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
+    ggsave(paste0(outdir, 'top_weights/top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
     
     plot_weights(MOFAobject, 
                  view = views[i], 
                  factor = ii, 
                  nfeatures = 10
     )
-    ggsave(paste0(outdir, 'all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+    ggsave(paste0(outdir, 'top_weights/all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
     
     
     
     ###### Heatmaps 
     nfs=40
     print('heatmap')
-    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
+    jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     fps[ii]=1
     # Plot heatmaps for each factor only for miRNA 
     p<-plot_data_heatmap(MOFAobject, 

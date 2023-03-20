@@ -46,7 +46,9 @@ NORMALIZED=TRUE
 VISIT=c('V04')
 
 sel_coh <- c(2)
-VISIT=c('V04')
+VISIT=c('V06')
+VISIT=c('BL')
+
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 ### TODO: filter out the cohort too before processig !! 
@@ -122,14 +124,18 @@ dim(df); dim(proteomics)
 ### filter here before editing more 
 ## filter out rows with very low min count
 df<-proteomics; dim(df)
-min.count= quantile(df, na.rm = TRUE, 0.1)
+min.count= quantile(df, na.rm = TRUE, 0.15)
 min.count= min(df, na.rm = TRUE)
 dim(df)
-keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
+keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.8*ncol(df))
 length(which(keep))
 proteomics<-proteomics[keep,]
 dim(df); dim(proteomics)
 
+##keep <- colSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
+#length(keep)
+#length(which(!keep))
+#proteomics<-proteomics[,keep]
 
 
 
@@ -183,7 +189,7 @@ proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 is.nan(as.matrix(data))
 boxplot(log(data[1:16]))
 
-assays(se)[[1]][1]
+#View(head(assays(proteomics_se)[[1]]))
 data_columns
 interm<-as.matrix(assays(se)[[1]])
 
@@ -199,9 +205,13 @@ Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
 Sample
-
+tmp<- assays(se_filt)[[1]]
+nonf<-!is.finite( assays(se_filt)[[1]])
+length(nonf)
+tmp[which(!is.finite( assays(se_filt)[[1]]) )]
 # Filter and normalize
 normalized_data<-normalize_vsn(se_filt)
+normalized_data<-justvsn(tmp)
 
 meanSdPlot(normalized_data)
 ggsave(paste0(outdir,'meansd.png' ))

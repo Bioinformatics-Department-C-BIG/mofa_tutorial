@@ -14,7 +14,7 @@
 library(ggplot2)
 dev.off()
 MOFAobject@features_metadata
-features_names(MOFAobject, view='RNA')
+features_names(MOFAobject)
 getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
 
 
@@ -483,9 +483,6 @@ p2<-plot_data_heatmap(MOFAobject,
 )
 p2
 dev.off()
-plot_group_kernel(MOFAobject, 
-                  factors = "all",
-                  groups = "all")
 
 
 
@@ -575,98 +572,101 @@ subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 
-
-gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
-
-gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-rownames(gs)
-
-features_names(MOFAobject)$RNA
-features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
-       function(x) {stringr::str_remove(x, '\\..*')}
-)
-
-
-# GSEA on positive weights, with default options
-res.positive <- run_enrichment(MOFAobject, 
-                               feature.sets = reactomeGS, 
-                               view = "RNA",
-                               sign = "positive"
-)
-
-
-
-# GSEA on negative weights, with default options
-res.negative <- run_enrichment(MOFAobject, 
-                               feature.sets = gs, 
-                               view = "RNA",
-                               sign = "negative"
-)
-
-
-
-res.positive <- run_enrichment(MOFAobject, 
-                               feature.sets = gs, 
-                               view = "RNA",
-                               sign = "positive"
-)
-
-
-
+for (subcategory in c('CP:KEGG','GO:BP' )){
   
-  
-  
-# change to negative and positive
-
-extract_order_significant<-function(x) {
-  # extracy most significant and order 
-  T=0.005
-  sign<-x[x<T]
-  sign2<-sign[order(sign)]
-  print(sign2)
+        
+        gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+        
+        gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+        rownames(gs)
+        
+        features_names(MOFAobject)$RNA
+        features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
+               function(x) {stringr::str_remove(x, '\\..*')}
+        )
+        
+        
+        # GSEA on positive weights, with default options
+        res.positive <- run_enrichment(MOFAobject, 
+                                       feature.sets = reactomeGS, 
+                                       view = "RNA",
+                                       sign = "positive"
+        )
+        
+        
+        
+        # GSEA on negative weights, with default options
+        res.negative <- run_enrichment(MOFAobject, 
+                                       feature.sets = gs, 
+                                       view = "RNA",
+                                       sign = "negative"
+        )
+        
+        
+        
+        res.positive <- run_enrichment(MOFAobject, 
+                                       feature.sets = gs, 
+                                       view = "RNA",
+                                       sign = "positive"
+        )
+        
+        
+        
+          
+          
+          
+        # change to negative and positive
+        
+        extract_order_significant<-function(x) {
+          # extracy most significant and order 
+          T=0.005
+          sign<-x[x<T]
+          sign2<-sign[order(sign)]
+          print(sign2)
+        }
+        
+        enrichment_list=all_fs_enrichment
+        stack_list<-function(i,enrichment_list) {
+          
+          # Take a list of dataframes and stack them 
+          # Add a column called factor which extracts the list counter 
+          
+          x=enrichment_list[[i]]
+          if (length(x)){
+            tmp<-as.data.frame(x)
+            tmp$path<-rownames(tmp)
+            colnames(tmp)<-'pvals'
+            
+            rownames(tmp)<-NULL
+            f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
+            tmp$factor=f
+            return(tmp)}}
+        
+        
+        
+        results_enrich<-res.positive$pval.adj
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
+        
+        write.csv(all_fs_merged1,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
+        
+        all_fs_merged1
+        results_enrich<-res.negative$pval.adj
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+        all_fs_merged2<-do.call(rbind, all_fs_unlisted )
+        
+        write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
+        
+        ##### which factor is related to parkinsons disease in KEGG
+        ### PROBLEM: this is based on RNA only!!! 
+        all_fs_merged1[str_detect(all_fs_merged1[,2], 'PARKINSON'),'factor']
+        all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
+        all_fs_merged1
+        all_fs_merged2
 }
 
-enrichment_list=all_fs_enrichment
-stack_list<-function(i,enrichment_list) {
-  
-  # Take a list of dataframes and stack them 
-  # Add a column called factor which extracts the list counter 
-  
-  x=enrichment_list[[i]]
-  if (length(x)){
-    tmp<-as.data.frame(x)
-    tmp$path<-rownames(tmp)
-    colnames(tmp)<-'pvals'
-    
-    rownames(tmp)<-NULL
-    f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
-    tmp$factor=f
-    return(tmp)}}
-
-
-
-results_enrich<-res.positive$pval.adj
-all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
-all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-all_fs_merged1<-do.call(rbind, all_fs_unlisted )
-
-write.csv(all_fs_merged1,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
-
-all_fs_merged1
-results_enrich<-res.negative$pval.adj
-all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
-all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-all_fs_merged2<-do.call(rbind, all_fs_unlisted )
-
-write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
-
-##### which factor is related to parkinsons disease in KEGG
-### PROBLEM: this is based on RNA only!!! 
-
-all_fs_merged1[str_detect(all_fs_merged1[,2], 'PARKINSON'),'factor']
-all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
-all_fs_merged1
-all_fs_merged2
 
 
 

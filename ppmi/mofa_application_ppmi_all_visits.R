@@ -1,8 +1,9 @@
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir,'/setup_os.R'))
 
-source('setup_os.R')
 
 #BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
@@ -49,7 +50,7 @@ N_FACTORS=10
 
 TISSUE='CSF'; 
 
-TOP_PN=0.90
+TOP_PN=0.70
 TOP_GN=0.20# 0.20
 TOP_MN=0.50
 
@@ -60,10 +61,10 @@ VISIT_COMPARE='BL'
 
 NORMALIZED=TRUE
 TISSUE='Plasma';
-TOP_PN=0.70
+TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(2)
-VISIT='V08'
+sel_coh <- c(1)
+VISIT='V04'
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -75,12 +76,15 @@ combined<-read.csv2(metadata_output)
 combined_bl<-combined
 combined_bl$PATNO_EVENT_ID<-paste0(combined_bl$PATNO, '_',combined_bl$EVENT_ID)
 
+VISIT_S=paste(VISIT,sep='_',collapse='-')
 
-p_params<- paste0( TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
-g_params<-paste0( TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_') 
+## VISIT_S to allow this to be more than one visits at once!! 
+
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_', sel_coh_s, '_')
+g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_', sel_coh_s, '_'  )
+m_params<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_',  sel_coh_s, '_' ) 
 mofa_params<-paste0(N_FACTORS )
-
+#param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
 

@@ -339,13 +339,14 @@ v_set=c()
 
 view='miRNA'
 factor=8
+dir.create(paste0(outdir, 'top_weights/'))
 plot_top_weights(MOFAobject,
                  view = view,
                  factor = factor,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
-ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
+ggsave(paste0(outdir, 'top_weights/top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
 
 
 fps=8

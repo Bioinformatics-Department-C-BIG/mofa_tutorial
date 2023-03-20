@@ -35,8 +35,12 @@ TOP_MN=0.50
 
 VISIT='BL'
 VISIT='V04'
+sel_coh='1'
 
-g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
+
+
+
+g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_', , '_')
 m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_') 
 
 

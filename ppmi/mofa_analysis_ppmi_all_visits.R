@@ -581,6 +581,7 @@ gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
 gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
 rownames(gs)
 
+features_names(MOFAobject)$RNA
 features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
        function(x) {stringr::str_remove(x, '\\..*')}
 )

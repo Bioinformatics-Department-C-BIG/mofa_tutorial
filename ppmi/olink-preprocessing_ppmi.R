@@ -44,6 +44,8 @@ VISIT='BL'
 TISSUE='Plasma'
 NORMALIZED=TRUE
 VISIT=c('V04')
+VISIT=c('BL')
+
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 

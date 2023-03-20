@@ -34,7 +34,7 @@ TOP_GN=0.10
 TOP_MN=0.50
 
 VISIT='BL'
-VISIT='V04'
+VISIT='V08'
 sel_coh='1'
 
 

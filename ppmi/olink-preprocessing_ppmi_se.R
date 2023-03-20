@@ -42,12 +42,16 @@ VISIT='BL'
 VISIT='BL'
 VISIT='BL'
 TISSUE='Plasma'
-NORMALIZED=TRUE
-VISIT=c('V04')
+NORMALIZED=FALSE
 
 sel_coh <- c(2)
 VISIT=c('V06')
 VISIT=c('BL')
+
+VISIT=c('BL')
+VISIT=c('V08')
+VISIT=c('V08')
+
 
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
@@ -124,10 +128,10 @@ dim(df); dim(proteomics)
 ### filter here before editing more 
 ## filter out rows with very low min count
 df<-proteomics; dim(df)
-min.count= quantile(df, na.rm = TRUE, 0.15)
+min.count= quantile(df, na.rm = TRUE, 0.1)
 min.count= min(df, na.rm = TRUE)
 dim(df)
-keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.8*ncol(df))
+keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
 length(which(keep))
 proteomics<-proteomics[keep,]
 dim(df); dim(proteomics)
@@ -199,28 +203,35 @@ is.nan(as.matrix(interm))
 ##### filter here by visits
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
 se_filt$COHORT
+se_filt$EVENT_ID
 
 tail(assays(se_filt)[[1]])
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
-Sample
+
 tmp<- assays(se_filt)[[1]]
 nonf<-!is.finite( assays(se_filt)[[1]])
 length(nonf)
 tmp[which(!is.finite( assays(se_filt)[[1]]) )]
 # Filter and normalize
+### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
 normalized_data<-normalize_vsn(se_filt)
+
+
 normalized_data<-justvsn(tmp)
 
 meanSdPlot(normalized_data)
 ggsave(paste0(outdir,'meansd.png' ))
 # Check plot after vsn
+#View(normalized_data)
+
+
+
+vsn_mat<-normalized_data
 vsn_mat<-assays(normalized_data)[[1]]
 
-
-
-
+max(vsn_mat, na.rm=TRUE)
 
 #vsn_mat<-normalized_data
 head(rownames(vsn_mat))
@@ -245,6 +256,7 @@ write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
 dim(highly_variable_proteins_mofa)
 
 hist(highly_variable_proteins_mofa)
+colnames(highly_variable_proteins_mofa)
 
 
 

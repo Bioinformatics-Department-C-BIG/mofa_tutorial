@@ -41,12 +41,14 @@ combined<-read.csv2(metadata_output)
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 VISIT='BL'
-VISIT=c('V08')
+
+VISIT=c('V04')
 VISIT=('BL')
+
 TOP_GN=0.1
 TOP_MN=0.5
 
-sel_coh=c(2)
+sel_coh=c(1)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 VISIT_S=paste(VISIT,sep='_',collapse='-')

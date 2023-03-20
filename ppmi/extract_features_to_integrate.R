@@ -145,7 +145,7 @@ VISIT='V04'
 TISSUE='CSF'
 TISSUE='Plasma'
 
-NORMALIZED=TRUE
+NORMALIZED=FALSE
 
 output_files<-'ppmi/output/'
 setwd(os_dir)
@@ -164,6 +164,7 @@ for (VISIT in Visits){
         prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
                                full.names = TRUE)
         pv='COUNT' # Value of the protein level 
+        
         
       }
       
@@ -241,6 +242,7 @@ for (VISIT in Visits){
 
 output_files<-'ppmi/output/'
 setwd(os_dir)
+NORMALIZED=FALSE
 Visits=c('BL', 'V04', 'V06', 'V08')
 
 #### ALL VISITS # include alla visits again
@@ -274,10 +276,10 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   all_frames2<-bind_rows(all_frames)
   all_frames2<-do.call(rbind, all_frames)
   ppmi_prot=all_frames2
-  
+  length(unique(all_frames2$PATNO))
   ### remove PPMI- suffix from PATNO column 
   ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
-  
+  unique(ppmi_prot$PATNO)
   prot_bl<-ppmi_prot
   #ppmi_prot<-as.data.frame(ppmi_prot) %>% 
   #               mutate(across('PATNO', str_replace, 
@@ -293,14 +295,19 @@ Visits=c('BL', 'V04', 'V06', 'V08')
                                        select=-c( update_stamp, OLINKID, UNIPROT,
                                                   PANEL, PLATEID)))
   ## Extract QC pass only 
-  prot_bl_matrix<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
-  
-  hist(prot_bl_matrix[,pv])
+    prot_bl_matrix
+  prot_bl_matrix_QC<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
+  if (length(prot_bl_matrix_QC==0)){
+    prot_bl_matrix_QC<-prot_bl_matrix
+    
+  }
+  hist(log10(prot_bl_matrix[,pv]))
   
   
   
   ## Reshape: Make a wide matrix with patient in columns 
   prot_bl_tbl<-as.data.table(prot_bl_matrix)
+  NROW(unique(prot_bl_tbl$PATNO))
   prot_bl_tbl$PATNO_EVENT_ID<-paste0(prot_bl_tbl$PATNO,'_',prot_bl_tbl$EVENT_ID)
 
   prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO_EVENT_ID,
@@ -322,12 +329,15 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   ## Write output both log and not logged
   fwrite(prot_bl_wide, paste0(outname), row.names = TRUE)
   fwrite(prot_bl_wide_unlog, paste0(outname2), row.names = TRUE)
+  dim(prot_bl_wide)
   
   
   df<-prot_bl_wide_unlog[prot_bl_wide_unlog<10]
+  #df<-prot_bl_wide[prot_bl_wide<200]
+  
   hist(as.numeric(as.matrix(df)))
 
-
+dev.off()
 
 
 

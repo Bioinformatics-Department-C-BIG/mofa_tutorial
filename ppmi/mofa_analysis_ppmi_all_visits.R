@@ -1,6 +1,7 @@
 
 #install.packages('psych')
 
+
 #install.packages("remotes")
 #remotes::install_github("bioFAM/MOFAdata")
 ##### 
@@ -25,6 +26,7 @@ dev.off()
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
 dev.off()
+
 
 
 calculate_variance_explained(MOFAobject)

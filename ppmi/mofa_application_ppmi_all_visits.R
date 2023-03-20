@@ -28,6 +28,13 @@ library(dplyr)
 
 
 
+
+
+
+
+
+
+
 outdir_orig=paste0('ppmi/plots/')
 output_files<- paste0('ppmi/output/')
 
@@ -59,13 +66,19 @@ MIN_COUNT_M=10
 FULL_SET=TRUE
 VISIT_COMPARE='BL'
 
-NORMALIZED=TRUE
+NORMALIZED=FALSE
 TISSUE='Plasma';
 TOP_PN=0.90
 # cohort 1 =prodromal 
 sel_coh <- c(2)
 VISIT='BL'
+
+
 VISIT=c('V08')
+
+
+VISIT=c('V04')
+VISIT=c('BL')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'

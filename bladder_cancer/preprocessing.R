@@ -72,18 +72,26 @@ filter_most_var<-function(df,most_var, ng){  # take the most variable entries
 
 
 
-X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
-X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
-Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
+#X1_raw<-read.csv(file = paste0(dir,'RNAseq_BladderCancer.csv' ))
+#X2_raw<-read.csv(file = paste0(dir,'Proteomics_BladderCancer.csv' ))
+#Y_raw<-read.csv(file = paste0(dir,'pheno_BladderCancer.csv' ), nrows = 16)
 
 
-X1_t_raw<-transpose_matrix(X1_raw)
-X2_t_raw<-transpose_matrix(X2_raw)
+#X1_t_raw<-transpose_matrix(X1_raw)
+#X2_t_raw<-transpose_matrix(X2_raw)
+
+#
+#most_var=TRUE
+#X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
+#X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
+#most_var=TRUE
 
 
-most_var=TRUE
-X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
-X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
+
+
+#ng_p=round(5,2)
+#ng_g=round(35,2)
+# X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
 
 
 
@@ -92,4 +100,33 @@ ng_g=25
 
 
 q=0.7
-##### Select most variable genes
+
+# TODO: check if we get the same exact results! 
+# one works for matrices one works for df? 
+selectMostVariable<-function(vsn_mat,q){
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:  round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat)
+  return(vsn_mat)
+}
+
+
+
+
+selectMostVariable<-function(vsn_mat,TOP_N ){
+  
+  ### FIXED 
+  variances<-rowVars(vsn_mat, na.rm = TRUE)
+  maxn<-round(length(variances)*TOP_N)
+  to_sel<-rownames(vsn_mat)[order(variances, decreasing=TRUE)][1:maxn]
+  rownames(vsn_mat[to_sel,])
+  highly_variable_proteins_mofa=vsn_mat[to_sel,]
+  return(highly_variable_proteins_mofa)
+}
+
+

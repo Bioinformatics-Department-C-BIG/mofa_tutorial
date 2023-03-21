@@ -34,10 +34,14 @@ TOP_GN=0.10
 TOP_MN=0.50
 
 VISIT='BL'
-VISIT='V04'
+VISIT='V08'
+sel_coh='1'
 
-g_params<-paste0(VISIT, '_', TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0(VISIT, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
+
+
+
+g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_', , '_')
+m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_') 
 
 
 #### Remove low expression 
@@ -56,7 +60,7 @@ if (process_mirnas){
   
   
 }else{
-  rnas_file<-paste0(output_files, 'rnas_', VISIT, '.csv')
+  rnas_file<-paste0(output_files, 'rnas_all_visits.csv')
   rnas_BL<-as.matrix(fread(rnas_file, header=TRUE), rownames=1)
  
   raw_counts<-as.data.frame(rnas_BL)
@@ -79,18 +83,16 @@ sample_info<-DataFrame(Sample=Sample)
 
 raw_counts<-mutate_all(raw_counts, as.numeric)
 
-
-hist(log10(as.matrix(raw_counts)))
-
 ## filterbyExpr takes cpm so remove from there 
 #cpm_data<-cpm(countdata, log=FALSE)
-
 idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
 
 length(which(idx))
 raw_counts <- as.matrix(raw_counts[idx, ])
+dim(raw_counts)
 
 
+raw_counts
 ##### Define
 
 ### TODO: Question: Should I input everything into the matrix to normalize? 
@@ -99,6 +101,7 @@ raw_counts <- as.matrix(raw_counts[idx, ])
 ### batch effect and normalization 
 # Create a separate matrix with counts only
 counts_only <- raw_counts
+
 # Include batch information if there is any
 #sample_info$Batch <- as.factor(sample_info$Batch)
 

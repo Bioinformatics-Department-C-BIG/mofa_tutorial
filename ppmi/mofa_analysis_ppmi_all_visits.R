@@ -1,6 +1,7 @@
 
 #install.packages('psych')
 
+
 #install.packages("remotes")
 #remotes::install_github("bioFAM/MOFAdata")
 ##### 
@@ -10,10 +11,12 @@
 # 4. outdirs 
 # 5. csf/plasma/untargeted flags
 
-
 #source('enrichment.R')
 library(ggplot2)
-
+dev.off()
+MOFAobject@features_metadata
+features_names(MOFAobject)
+getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
 
 
 
@@ -23,6 +26,7 @@ dev.off()
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
 dev.off()
+
 
 
 calculate_variance_explained(MOFAobject)
@@ -41,11 +45,7 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
 NROW(non_na_vars)
 #### Covariance of factors with metadata 
-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c('INFODT.x','INFODT.y' ,'NUPSOURC',"NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
-                                  plot = "log_pval",
-                                  
-)
+
 
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = c("NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
@@ -118,27 +118,33 @@ views
 
 ##### WRITE ALL weights for each factor in one file 
 
+
+### Actually get only factors with higher variance in RNA
+
+T=0.3
 for (i in seq(1,vps)){
   view=views[i]
-  all_weights<-MOFA2::get_weights(MOFAobject,views = view, 
+  
+  cluego1<-paste0(outdir, 'top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
+  
+  all_weights1<-MOFA2::get_weights(MOFAobject,
+                                  views = view, 
                                   as.data.frame =TRUE)  
   # threshold each? 
-  T=0.3
-  all_weights_filt<-all_weights[abs(all_weights$value)>T,]
-  dim(all_weights_filt)
+
+  all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
   write.table(all_weights_filt,paste0(outdir, 'top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
   ens_ids<-gsub('\\..*', '', all_weights_filt$feature)
-  write.csv(ens_ids,paste0(outdir, 'top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt'),
+  write.csv(ens_ids,cluego1,
             row.names = FALSE, quote=FALSE)
-  print(view)
-  print(dim(all_weights_filt))
-  print(dim(all_weights))
+
+  
+  
   
   }
 
 
-
-
+dir.create(paste0(outdir, 'top_weights/'))
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     view=views[i]
@@ -149,7 +155,7 @@ for (i in seq(1,vps)){
     
     ### get the top highly weighted variables - absolute value
     top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
-    write.table(top,paste0(outdir, 'top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+    write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
     
 
   }
@@ -194,8 +200,9 @@ for (i in 1:dim(positive_cors)[2]){
   
   plot_factors(MOFAobject, 
                factors = fs, 
-               color_by=color_by,
-               show_missing = FALSE
+               shape_by=color_by,
+               color_by = 'group',
+                 show_missing = FALSE
   )
   
   fss<-paste(fs,sep='_',collapse='-')
@@ -206,14 +213,18 @@ for (i in 1:dim(positive_cors)[2]){
   
   ggsave(FNAME, width = 4, height=4, dpi=100)
   
+  shape_by='group'
+  plot_factors(MOFAobject, 
+               factors = fs, 
+               color_by=color_by,
+                shape_by= 'group',
+               show_missing = FALSE
+  )
+  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,color_by,shape_by,'.png')
+    ggsave(FNAME, width = 4, height=4, dpi=100)
   
-  
-  
-  
-  
-  
-
 }
+
 
 MOFAobject@samples_metadata$COHORT_DEFINITION
 
@@ -339,21 +350,16 @@ v_set=c()
 
 view='miRNA'
 factor=8
-dir.create(paste0(outdir, 'top_weights/'))
 plot_top_weights(MOFAobject,
                  view = view,
                  factor = factor,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
-ggsave(paste0(outdir, 'top_weights/top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
-
+ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
+dir.create(paste0(outdir, 'top_weights/'))
 
 fps=8
-dir.create(paste0(outdir, 'top_weights/'))
-dir.create(paste0(outdir, 'heatmap/'))
-dir.create(paste0(outdir, 'enrichment/'))
-
 for (i in 1:vps){
   for (ii in 1:fps){
     print(c(i,ii))
@@ -368,22 +374,24 @@ for (i in 1:vps){
     plot_weights(MOFAobject, 
                  view = views[i], 
                  factor = ii, 
-                 nfeatures = 10
+                 nfeatures = 30
     )
     ggsave(paste0(outdir, 'top_weights/all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
     
     
     
     ###### Heatmaps 
-    nfs=40
+    nfs=20
     print('heatmap')
-    jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
+    dir.create(paste0(outdir, '/heatmap/'))
+    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     fps[ii]=1
     # Plot heatmaps for each factor only for miRNA 
     p<-plot_data_heatmap(MOFAobject, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,
+                         groups=c('V04'),
                          denoise = TRUE,
                          cluster_rows = TRUE, cluster_cols = FALSE,
                          show_rownames = TRUE, show_colnames = FALSE,
@@ -394,7 +402,7 @@ for (i in 1:vps){
     )
     dev.off()
     
-    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
+    jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
     
     p<-plot_data_heatmap(MOFAobject, 
                          view = views[i], 
@@ -421,18 +429,70 @@ for (i in 1:vps){
 
 
 # plot heatmaps by view and 
+library(cowplot)
+library(ComplexHeatmap)
+nfs=20
+
+breaksList = seq(-3, 3, by = 0.01)
+groups='all'
+
+groups=c(1,3)
+view=c(3)
+factor=8
+image_path<-paste0(outdir, 'heatmap_',ii,'_',view, 'nfs_', factor, 'gr_', groups, '.jpeg')
+
+# set width of plot based on number of samples retrieved
+n_samples<-get_factors(MOFAobject, factors = 1, groups=groups)
+ns<-length(unlist(n_samples))
+
+jpeg(image_path, height=30*nfs, width=20*ns)
 
 
-
-plot_data_heatmap(MOFAobject, 
-                  view = "proteomics",
-                  factor = 1,  
-                  features = 200,
-                  cluster_rows = FALSE, cluster_cols = TRUE,
-                  show_rownames = TRUE, show_colnames = FALSE,
+p1<-plot_data_heatmap(MOFAobject, 
+                  view = view,
+                  factor = factor,  
+                  features = nfs,
+                  groups=groups,
+                  cluster_rows = TRUE, cluster_cols = TRUE,
+                  show_rownames = TRUE, show_colnames = TRUE,
                   scale = "row"
+                  
 )
+p1
+dev.off()
 
+
+
+
+
+
+samples_order<-MOFAobject@samples_metadata$PATNO_EVENT_ID.x
+# ORDER patients by their groups
+samples_order<-samples_order[ with(MOFAobject@samples_metadata, order(EVENT_ID, PATNO))]
+
+
+
+p2<-plot_data_heatmap(MOFAobject, 
+                     view = "proteomics",
+                     factor = 1,  
+                     features = nfs,
+                     groups='all',
+                     cluster_rows = TRUE, cluster_cols = FALSE,
+                     show_rownames = TRUE, show_colnames = TRUE,
+                     scale = "row", 
+                     max.value = 3, 
+                     width=10
+)
+p2
+dev.off()
+
+
+
+library(gridExtra)
+grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
+do.call('grid.arrange', c(list(p1,p2)) )
+
+dev.off()
 plot_data_heatmap(MOFAobject, 
                   view = "miRNA",
                   factor = 1,  
@@ -510,104 +570,105 @@ head((reactomeGS))
 
 
 subcategory<- 'CP:KEGG'
-
+subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 
-
-
-# GSEA on positive weights, with default options
-res.positive <- run_enrichment(MOFAobject, 
-                               feature.sets = reactomeGS, 
-                               view = "RNA",
-                               sign = "positive"
-)
-
-
-
-for (subcategory in c('GO:MF',
-                     'GO:BP', 'CP:KEGG')){
-  gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+for (subcategory in c('CP:KEGG','GO:BP' )){
   
-  gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-  
-  
-  features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
-         function(x) {stringr::str_remove(x, '\\..*')}
-  )
-  
-  
-  
-  # GSEA on negative weights, with default options
-  res.negative <- run_enrichment(MOFAobject, 
-                                 feature.sets = gs, 
-                                 view = "RNA",
-                                 sign = "negative"
-  )
-  
-  
-  
-  res.positive <- run_enrichment(MOFAobject, 
-                                 feature.sets = gs, 
-                                 view = "RNA",
-                                 sign = "positive"
-  )
-  
-  
-  
-    
-    
-    
-  # change to negative and positive
-  
-  extract_order_significant<-function(x) {
-    # extracy most significant and order 
-    T=0.005
-    sign<-x[x<T]
-    sign2<-sign[order(sign)]
-    print(sign2)
-  }
-  
-  enrichment_list=all_fs_enrichment
-  stack_list<-function(i,enrichment_list) {
-    
-    # Take a list of dataframes and stack them 
-    # Add a column called factor which extracts the list counter 
-    
-    x=enrichment_list[[i]]
-    if (length(x)){
-      tmp<-as.data.frame(x)
-      tmp$path<-rownames(tmp)
-      colnames(tmp)<-'pvals'
-      
-      rownames(tmp)<-NULL
-      f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
-      tmp$factor=f
-      return(tmp)}}
-  
-  
-  
-  results_enrich<-res.positive$pval.adj
-  all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
-  
-  all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-  all_fs_merged<-do.call(rbind, all_fs_unlisted )
-  dim(all_fs_merged)
-  
-  
-  write.csv(all_fs_merged,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
-  
-  
-  
-  results_enrich<-res.negative$pval.adj
-  all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
-  all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-  all_fs_merged<-do.call(rbind, all_fs_unlisted )
-  dim(all_fs_merged)
-  
-  write.csv(all_fs_merged,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
-  
+        
+        gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+        
+        gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+        rownames(gs)
+        
+        features_names(MOFAobject)$RNA
+        features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
+               function(x) {stringr::str_remove(x, '\\..*')}
+        )
+        
+        
+        # GSEA on positive weights, with default options
+        res.positive <- run_enrichment(MOFAobject, 
+                                       feature.sets = reactomeGS, 
+                                       view = "RNA",
+                                       sign = "positive"
+        )
+        
+        
+        
+        # GSEA on negative weights, with default options
+        res.negative <- run_enrichment(MOFAobject, 
+                                       feature.sets = gs, 
+                                       view = "RNA",
+                                       sign = "negative"
+        )
+        
+        
+        
+        res.positive <- run_enrichment(MOFAobject, 
+                                       feature.sets = gs, 
+                                       view = "RNA",
+                                       sign = "positive"
+        )
+        
+        
+        
+          
+          
+          
+        # change to negative and positive
+        
+        extract_order_significant<-function(x) {
+          # extracy most significant and order 
+          T=0.005
+          sign<-x[x<T]
+          sign2<-sign[order(sign)]
+          print(sign2)
+        }
+        
+        enrichment_list=all_fs_enrichment
+        stack_list<-function(i,enrichment_list) {
+          
+          # Take a list of dataframes and stack them 
+          # Add a column called factor which extracts the list counter 
+          
+          x=enrichment_list[[i]]
+          if (length(x)){
+            tmp<-as.data.frame(x)
+            tmp$path<-rownames(tmp)
+            colnames(tmp)<-'pvals'
+            
+            rownames(tmp)<-NULL
+            f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
+            tmp$factor=f
+            return(tmp)}}
+        
+        
+        
+        results_enrich<-res.positive$pval.adj
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
+        
+        write.csv(all_fs_merged1,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
+        
+        all_fs_merged1
+        results_enrich<-res.negative$pval.adj
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+        all_fs_merged2<-do.call(rbind, all_fs_unlisted )
+        
+        write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
+        
+        ##### which factor is related to parkinsons disease in KEGG
+        ### PROBLEM: this is based on RNA only!!! 
+        all_fs_merged1[str_detect(all_fs_merged1[,2], 'PARKINSON'),'factor']
+        all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
+        all_fs_merged1
+        all_fs_merged2
 }
+
 
 
 
@@ -617,7 +678,9 @@ for (subcategory in c('GO:MF',
 jpeg(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.positive, 
-                        alpha=0.5, cap=0.0005)
+                        alpha=0.5, 
+                        cap=0.0005,
+                          colnames=TRUE)
 dev.off()
 
 plot_enrichment_heatmap(res.positive$sigPathways, 
@@ -723,12 +786,16 @@ round(importance(model.y), 2)
 ### Plot predictions
 p <- plot_factors(MOFAobject, 
                   factors = c(1,2), 
-                  color_by = "EORTC.risk.pred",
-                  shape_by = "EORTC.risk.pred_logical",
+                  color_by = "NHY",
+                  shape_by = "NHY",
                   dot_size = 2.5,
                   show_missing = T
 )
 
 
-MOFAobject@samples_metadata$COHORT_DEFINITION
+cbind(MOFAobject@samples_metadata$sample,MOFAobject@samples_metadata$COHORT_DEFINITION)
+MOFAobject@samples_metadata[MOFAobject@samples_metadata$PATNO=='3156',]
+
+
+
 

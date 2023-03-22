@@ -4,7 +4,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir,'/setup_os.R'))
 
-
+#BiocManager::install('MultiAssayExperiment')
 #BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
 #browseVignettes("MOFA2")
@@ -25,6 +25,7 @@ library(ggplot2)
 library(ggpubr)
 library(dplyr)
 
+library('MultiAssayExperiment')
 
 
 
@@ -53,9 +54,8 @@ source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
-N_FACTORS=6
 
-TISSUE='CSF'; 
+
 
 TOP_PN=0.70
 TOP_GN=0.10# 0.20
@@ -66,19 +66,39 @@ MIN_COUNT_M=10
 FULL_SET=TRUE
 VISIT_COMPARE='BL'
 
-NORMALIZED=FALSE
-TISSUE='Plasma';
+
+
+
 TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(2)
+sel_coh <- c(1)
 VISIT='BL'
 
 
 VISIT=c('V08')
 
-
-VISIT=c('V04')
 VISIT=c('BL')
+VISIT=c('V04')
+#VISIT=c('BL')
+VISIT=c('BL')
+
+VISIT=c('V06');
+sel_coh <- c(2)
+
+
+TISSUE='CSF'; 
+N_FACTORS=8
+
+VISIT=c('BL', 'V04','V06', 'V08');sel_coh <- c(1)
+VISIT=c('V08');sel_coh <- c(1)
+VISIT=c('BL')
+
+VISIT=c('BL', 'V04','V06', 'V08')
+TISSUE='Plasma';
+
+
+NORMALIZED=FALSE;run_vsn=TRUE
+
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 #TISSUE='untargeted'
@@ -94,20 +114,33 @@ VISIT_S=paste(VISIT,sep='_',collapse='-')
 
 ## VISIT_S to allow this to be more than one visits at once!! 
 
-p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_', sel_coh_s, '_')
-g_params_2<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_', sel_coh_s, '_'  )
-m_params_2<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_',  sel_coh_s, '_' ) 
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_', sel_coh_s,  'vsn', '_', run_vsn, '_')
+g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_', sel_coh_s, '_'  )
+m_params<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_',  sel_coh_s, '_' ) 
 mofa_params<-paste0(N_FACTORS )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
 
 highly_variable_proteins_outfile = paste0(output_files, p_params , 'highly_variable_proteins_mofa.csv')
-highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params_2,'_highly_variable_genes_mofa.csv')
-highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params_2,'_highly_variable_genes_mofa.csv')
+highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params,'_highly_variable_genes_mofa.csv')
+highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly_variable_genes_mofa.csv')
+highly_variable_proteins_outfile
+
+### TODO: INPUT vsn files and filter here instead of rerunnign!!1 
+#param_str_m<-paste0('mirnas_', m_params ,sel_coh_s, '_')
+#vsn_file_m<-paste0(output_files, 'mirnas_', param_str_m, '_vsn.csv')
+#vsn_file_g<-paste0(output_files, 'rnas_', param_str_g, '_vsn.csv')
+
+###
+#vsn_file_m_df<-read.csv(vsn_file_m,header=TRUE)
+#duplicated(colnames(vsn_file_m_df))
+#vsn_file_m_df[,1]
+#rownames(vsn_file_m_df)<-vsn_file_m_df[,1]
 
 
-out_params<- paste0( 'p_', p_params, 'g_', g_params_2, 'm_', m_params_2, mofa_params, '_full_', FULL_SET, '_coh_', sel_coh_s )
+
+out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S )
 outdir = paste0(outdir_orig,out_params , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 
@@ -116,28 +149,11 @@ fname
 
 
 
-#### FILTER SAMPLES 
-if (!FULL_SET){
-  common_samples_with_visit=read.csv(paste0(output_files,'BL_V08.txt' ))
-}
-
-
-
-
-
-outdir
-##### Create MOFA object 
-
-##### Handle duplicates 
-#proteomics<-proteomics[,!duplicated(colnames(proteomics),fromLast=TRUE)]
-output_files
-
-
-
 ###### Option 2: preprocessing from VSN: Load from file 
 ### 1. Load proteins 
 
 in_file<-highly_variable_proteins_outfile
+
 highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 
 
@@ -204,9 +220,8 @@ colnames(proteomics)
 
 
 common_samples<-intersect(colnames(miRNA), colnames(proteomics)); common_samples
-common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID); common_samples
 common_samples<-intersect(common_samples,colnames(RNA)) ; common_samples
-common_samples
+common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID); common_samples
 
 ######
 # Add metadata
@@ -221,12 +236,12 @@ metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO_EVENT_ID),]
 # Rewrite to add only pd
 #metadata_filt[c('COHORT', 'COHORT_DEFINITION')]
 
-metadata_filt$PATNO
+#metadata_filt$PATNO
 
 write.csv(common_samples,paste0(output_files,out_params, '_common_samples.txt'), 
           row.names = FALSE, quote=FALSE )
 
-common_samples
+head(common_samples)
 
 
 #### Filter samples that are common in all three
@@ -251,9 +266,6 @@ head(rownames(miRNA_filt))
 head(rownames(prot_filt))
 
 #RNA_filt<-as.data.table(RNA) %>% select(common_samples)
-
-
-
 
 
 rownames(prot_filt)<-rownames(proteomics)
@@ -288,12 +300,10 @@ data = list(proteomics = as.matrix(prot_filt),
             miRNA=as.matrix(miRNA_filt), 
             RNA=as.matrix(RNA_filt) )
 
-rownames(RNA_filt)
 #### just trying a multi assay here to help with filtering.. 
 
-colnames(prot_filt)
+head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
-library('MultiAssayExperiment')
 assay=c(rep('proteomics', length(prot_filt)),
         rep('miRNA', length(miRNA_filt)),
         rep('RNA', length(RNA_filt)))
@@ -313,7 +323,7 @@ library('UpSetR')
 upsetSamples(mofa_multi)
 mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 
-
+mofa_multi_V04
 
 ###  REMOVE NON ens ids 
 
@@ -327,14 +337,19 @@ colData(mofa_multi_V04)
 ##### Setup MOFA model 
 ## model opts 
 # SET factor values 
-#MOFAobject <- create_mofa(data, groups= metadata_filt$EVENT_ID, sample=metadata_filt$PATNO)
 
 
 
-
+#N_FACTORS=8
 ### separate visits 
 outdir
 MOFAobject <- create_mofa(mofa_multi_V04)
+
+if (length(VISIT)>1){
+  MOFAobject <- create_mofa(mofa_multi_V04, groups= mofa_multi_V04$EVENT_ID)
+  
+}
+
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- N_FACTORS
 model_opts
@@ -350,18 +365,17 @@ outdir
 ggsave(paste0(outdir, 'data_overview.jpeg'))
 
 #### TODO FIX THE DATAFRAME 
-outdir = paste0(outdir_orig,out_params , '_', VISIT, '/');
+#outdir = paste0(outdir_orig,out_params , '_', VISIT, '/');
 outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
-mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
 
 MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
 
 #if (file.exists(mofa_file)){
-#  pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
+# pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
 #  MOFAobject<-pre_trained
   
   
@@ -376,28 +390,10 @@ MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 ##### Basic stats
 
 plot_variance_explained(MOFAobject, max_r2=20)
-ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
+ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 7, height=4, dpi=100)
 
 
 
-
-
-
-#### single visit 
-
-
-
-#MOFAobject@training_stats
-######
-# Check model metadata
-
-#metadata_filt$sample<-as.character(metadata_filt$PATNO_EVENT_ID)
-#
-#sm<-samples_metadata(MOFAobject)
-#samples_metadata(MOFAobject)$PATNO_EVENT_ID=paste0(sm$sample)
-#nnw<-merge(samples_metadata(MOFAobject), metadata_filt, by=c('sample'))
-#samples_metadata(MOFAobject)<-nnw
-#NROW(samples_metadata(MOFAobject))
 
 
 

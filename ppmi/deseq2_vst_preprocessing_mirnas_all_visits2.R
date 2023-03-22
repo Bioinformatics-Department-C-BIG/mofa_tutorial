@@ -23,6 +23,8 @@ library(dplyr)
 
 output_1='ppmi/output/'
 output_files_orig<-'ppmi/output/'
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+
 
 output_de=paste0(output_1, 'gene')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
@@ -45,17 +47,30 @@ VISIT='BL'
 VISIT=c('V04')
 VISIT=('BL')
 
+
+
 TOP_GN=0.1
 TOP_MN=0.5
 
-sel_coh=c(1)
+sel_coh=c(2);
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
+
+
+sel_coh <- c(1)
+VISIT=('V04')
+VISIT=c('BL', 'V04','V06', 'V08');
+
 VISIT_S=paste(VISIT,sep='_',collapse='-')
+VISIT_S=paste(VISIT,sep='_',collapse='-')
+
+
+
+
+
 
 g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
-
 
 #### Remove low expression 
 process_mirnas<-FALSE
@@ -204,6 +219,7 @@ if (length(sel_coh)>1){
 
 
 
+
 # Compute normalization factors and vst 
 # or use blind=false 
 
@@ -215,21 +231,31 @@ if (length(sel_coh)>1){
 
 vsd_mat <- assay(vsd)
 
+###TODO: Move this to the mofa file 
+highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
+dim(highly_variable_genes_mofa)
+rownames(highly_variable_genes_mofa)
+
+
+
+
+
 meanSdPlot(vsd_mat)
 
 
 ##### Checks
 # Check the effect of vst before and after
 par(mfrow=c(1,3))
-# Check distributions of samples using boxplots
-boxplot(log2(assay(ddsSE)[,1:30]), xlab="", ylab="Log2 counts ",las=2)
-# Let's add a blue horizontal line that corresponds to the median logCPM
-abline(h=median(log10(assay(dds))),col="blue")
-title("Boxplots of logCPMs (unnormalised)")
-boxplot(log10(raw_counts)[,1:30], xlab="", ylab="Log10 counts ",las=2)
 
 # Check distributions of samples using boxplots
-boxplot(vsd_mat[,1:30], xlab="", ylab="vst(counts) ",las=2)
+boxplot(log2(assay(ddsSE)), xlab="", ylab="Log2 counts ",las=2)
+# Let's add a blue horizontal line that corresponds to the median logCPM
+title("Boxplots of logCPMs (unnormalised)")
+boxplot(log10(raw_counts), xlab="", ylab="Log10 counts ",las=2)
+
+# Check distributions of samples using boxplots
+boxplot(vsd_mat, xlab="", ylab="vst(counts) ",las=2)
 # Let's add a blue horizontal line that corresponds to the median logCPM
 abline(h=median(vsd_mat),col="blue")
 title("Boxplots of logCPMs (after vst)")
@@ -239,20 +265,13 @@ title("Boxplots of logCPMs (after vst)")
 #plotPCA(vsd, "sample") + labs(color='sample') + ggtitle("Batch effect") 
 #dev.off()
 
-#### This saves the whole file without filtering for highly variable 
+#### This saves the whSole file without filtering for highly variable 
 write.csv(vsd_mat,vsn_out_file)
 ##### Store the most variable genes only for MOFA 
 # Select most variable genes
 ### run on its own for all visits? 
 # Check that the distribution is approximately normal
 dev.off()
-
-###TODO: Move this to the mofa file 
-highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
-write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
-dim(highly_variable_genes_mofa)
-rownames(highly_variable_genes_mofa)
-
 
 ### SANITY CHECK: Just plot one gene before and after preprocessing to ensure the mapping looks correct 
 df=highly_variable_genes_mofa

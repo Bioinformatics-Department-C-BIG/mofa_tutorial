@@ -47,7 +47,7 @@ for (VISIT in Visits){
 #            sep = ',')}
 #        )
 
-rna_all_visits_list<-sapply(visits, 
+rna_all_visits_list<-sapply(Visits, 
   ### here i just merged them                          
       function(VISIT){
     ### RNA visits all 
@@ -84,7 +84,6 @@ VISIT='V06'
 mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
 mirnas_BL
 
-mirnas_rpmmm$
 names_split<- strsplit(names(mirnas_BL),split='\\.')
 
 PATNO<-sapply(names_split, '[[', 3)
@@ -151,7 +150,7 @@ VISIT='V04'
 TISSUE='CSF'
 TISSUE='Plasma'
 
-NORMALIZED=FALSE
+NORMALIZED=TRUE
 
 
 output_files<-'ppmi/output/'
@@ -248,7 +247,6 @@ for (VISIT in Visits){
 
 
 output_files<-'ppmi/output/'
-setwd(os_dir)
 NORMALIZED=FALSE
 Visits=c('BL', 'V04', 'V06', 'V08')
 
@@ -267,9 +265,14 @@ Visits=c('BL', 'V04', 'V06', 'V08')
     prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
                            full.names = TRUE)
     pv='COUNT' # Value of the protein level 
+
     
   }
   
+  #prot_files_1<-read.csv('ppmi/ppmi_data/proteomics/targeted_olink/Plasma/PPMI_Project_196_Plasma_Cardio_NPX.csv')
+  #prot_files_2<-read.csv('ppmi/ppmi_data/proteomics/targeted_olink/Plasma/PPMI_Project_196_Plasma_Cardio_Counts.csv')
+  
+  #intersect(unique(prot_files_1$PATNO),unique(prot_files_2$PATNO))
   
   
   prot_files
@@ -278,16 +281,24 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   
   
   # Merge the 4 datasets together 
-  read_all<-lapply(prot_files, read.csv)
+  read_all<-lapply(prot_files, function(x) {
+    # panel INF is read as a number...
+    df<-read.csv(x)
+    df$PANEL<-as.character(df$PANEL)
+    return(df)
+  }
+                                )
+  
   all_frames<-lapply(read_all, as.data.frame)
-  all_frames2<-bind_rows(all_frames)
   all_frames2<-do.call(rbind, all_frames)
+
   ppmi_prot=all_frames2
   length(unique(all_frames2$PATNO))
   ### remove PPMI- suffix from PATNO column 
   ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
-  unique(ppmi_prot$PATNO)
+  print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
   prot_bl<-ppmi_prot
+  
   #ppmi_prot<-as.data.frame(ppmi_prot) %>% 
   #               mutate(across('PATNO', str_replace, 
   #                          'PPMI-', ''

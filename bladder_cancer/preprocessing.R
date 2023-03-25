@@ -43,6 +43,22 @@ preprocess_raw_data<-function(df, cut_n){
   
 }
 
+selectMostVariable<-function(vsn_mat,q){
+  #' selects rows ie. genes must be rows
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var, na.rm=TRUE)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat);dim(vsn_mat)
+  if (is.null(topx)){print('Warning: zero most variable features returned')}
+  return(vsn_mat)
+
+  }
+
+
 filter_most_var<-function(df,most_var, ng){  # take the most variable entries 
   if (most_var){
     n=round(dim(df)[2]/ng)
@@ -64,6 +80,10 @@ filter_most_var<-function(df,most_var, ng){  # take the most variable entries
 #X1_t_raw<-transpose_matrix(X1_raw)
 #X2_t_raw<-transpose_matrix(X2_raw)
 
+#
+#most_var=TRUE
+#X1_t_cut<-preprocess_raw_data(X1_t_raw, cut_n=27000)
+#X2_t_cut<-preprocess_raw_data(X2_t_raw, cut_n = FALSE)
 #most_var=TRUE
 
 
@@ -75,11 +95,14 @@ filter_most_var<-function(df,most_var, ng){  # take the most variable entries
 
 
 
+ng_p=70
+ng_g=25
 
 
+q=0.7
 
-
-##### Select most variable genes
+# TODO: check if we get the same exact results! 
+# one works for matrices one works for df? 
 selectMostVariable<-function(vsn_mat,q){
   #' Selects top q most variable genes
   #' Ideally take vsn transformed dataset!

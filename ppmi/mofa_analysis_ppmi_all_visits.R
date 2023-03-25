@@ -12,24 +12,57 @@
 # 5. csf/plasma/untargeted flags
 
 #source('enrichment.R')
+
+
 library(ggplot2)
-dev.off()
+#BiocManager::install('EnsDb.Hsapiens.v79')
+library(EnsDb.Hsapiens.v79)
+
+graphics.off()
 MOFAobject@features_metadata
 features_names(MOFAobject)
-getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
+#getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
 
 
 
 print(outdir)
-dev.off()
 
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
 dev.off()
+group=1
+
+### Change mofa names to gene symbols 
+### create a new object with rna names 
+MOFAobject_gs<-MOFAobject
+
+ens_ids_full<- features_names(MOFAobject)$RNA
+ens_ids<-   ens_ids<-gsub('\\..*', '', ens_ids_full)
 
 
+geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
+length(ens_ids)
+geneIDs1
+length(geneIDs1$SYMBOL)
 
-calculate_variance_explained(MOFAobject)
+new_ids<-geneIDs1[match(ens_ids,geneIDs1$GENEID ),]
+## sOME SYMBOLS DOI NOT EXIST SO we only replace the ones that do
+not_na_ind<-!is.na(new_ids$SYMBOL)
+ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
+
+features_names(MOFAobject_gs)$RNA<-ens_ids
+
+
+MOFAobject_gs@samples_metadata$COHORT_DEFINITION
+
+vars_by_factor_all<-calculate_variance_explained(MOFAobject)
+vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
+write.table(format(vars_by_factor,digits = 2)
+            ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
+
+
+vars_by_factor>0.1
+
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
 
@@ -47,13 +80,13 @@ NROW(non_na_vars)
 #### Covariance of factors with metadata 
 
 
-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c("NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
-                                  plot = "log_pval"
-                                 
-                                  
-)
-dev.off()
+#correlate_factors_with_covariates(MOFAobject,
+#                                  covariates = c("NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
+#                                  plot = "log_pval"
+#                                 
+#                                  
+#)
+#dev.off()
 
 
 
@@ -75,7 +108,7 @@ correlate_factors_with_covariates(MOFAobject,
                                   
 )
 dev.off()
-
+graphics.off()
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
@@ -100,12 +133,6 @@ covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
 )
 write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 
-jpeg(paste0(outdir, 'factors_covariates','.jpeg'), width = 2000, height=800, res = 200)
-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:65, 90:124)], 
-                                  plot = "log_pval"
-)
-dev.off()
 
 view='proteomics'; factor=6
 
@@ -120,12 +147,13 @@ views
 
 
 ### Actually get only factors with higher variance in RNA
+dir.create(paste0(outdir, 'top_weights/'))
 
 T=0.3
 for (i in seq(1,vps)){
   view=views[i]
   
-  cluego1<-paste0(outdir, 'top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
+  cluego1<-paste0(outdir, 'top_weights/top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
   
   all_weights1<-MOFA2::get_weights(MOFAobject,
                                   views = view, 
@@ -143,10 +171,12 @@ for (i in seq(1,vps)){
   
   }
 
-
-dir.create(paste0(outdir, 'top_weights/'))
+high_vars_by_factor<-vars_by_factor>0.1
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
+    
+    
+    #### print only the views with high variance in factor  
     view=views[i]
     factor=ii
     print(view, factor)
@@ -155,7 +185,11 @@ for (i in seq(1,vps)){
     
     ### get the top highly weighted variables - absolute value
     top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
-    write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+    if (high_vars_by_factor[factor, view]){
+      write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+      
+    }
+    
     
 
   }
@@ -226,7 +260,7 @@ for (i in 1:dim(positive_cors)[2]){
 }
 
 
-MOFAobject@samples_metadata$COHORT_DEFINITION
+MOFAobject@samples_metadata$CONCOHORT_DEFINITION
 
 # here find the view for which the variability of the factor maximum
 plot_data_scatter(MOFAobject, 
@@ -283,32 +317,37 @@ plot_weights(MOFAobject,
 
 
 
+
 ### Age, gender , stage does not discriminate factors
 #Conclusion here:# factor 1 correlates with grade
 
-p<-plot_factor(MOFAobject, 
-            factors = 3, 
-            color_by = "NP3BRADY",
-            add_violin = TRUE,
-            dodge = TRUE,
-            show_missing = FALSE
-)
-p
-plot_factor(MOFAobject, 
-            factors = 4, 
-            color_by = "NP3BRADY",
-            add_violin = TRUE,
-            dodge = TRUE,
-            show_missing = FALSE
-)
-
-plot_factor(MOFAobject, 
-            factors = 1, 
-            color_by = "NP3BRADY",
-            add_violin = TRUE,
-            dodge = TRUE,
-            show_missing = FALSE
-)
+  
+for (ii in seq(1,fps)){
+  ### Plot factors against a clinical variable 
+  cors_sig<-names(which(positive_cors[ii,]>2))
+  ln_cs<-length(cors_sig)
+  if (ln_cs>0){
+    for (iii in seq(1:ln_cs)){
+         color_by=cors_sig[iii]
+          p<-plot_factor(MOFAobject, 
+                         factors = ii, 
+                         color_by =color_by,
+                         add_violin = TRUE,
+                         dodge = TRUE,
+                         show_missing = FALSE
+                        
+          )
+        
+        
+        FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_1D_',ii, '_',color_by,'.png')
+        
+        
+        ggsave(FNAME, width = 4, height=4, dpi=100)
+        
+        
+    }
+  }
+}
 
 
 
@@ -351,7 +390,8 @@ ggsave(FNAME, width = 4, height=4, dpi=100)
 
 
 ##### plot weights 
-
+library(grid)
+library(gridExtra)
 v_set=c()
 v_set=c()
 
@@ -367,61 +407,97 @@ ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height
 dir.create(paste0(outdir, 'top_weights/'))
 
 fps=8
-for (i in 1:vps){
-  for (ii in 1:fps){
-    print(c(i,ii))
-    plot_top_weights(MOFAobject,
-                     view = views[i],
-                     factor = ii,
-                     nfeatures = 10,     # Top number of features to highlight
-                     scale = T           # Scale weights from -1 to 1
-    )
-    ggsave(paste0(outdir, 'top_weights/top_weights_', ii,'_',vps[i],'.png'), width = , height=4, dpi=100)
+vps
+fps
+seq(1,fps)
+seq(1,vps)
+
+
+for (i in seq(1,vps)){
+  for (ii in seq(1,fps)){
+   
     
-    plot_weights(MOFAobject, 
-                 view = views[i], 
-                 factor = ii, 
-                 nfeatures = 30
-    )
-    ggsave(paste0(outdir, 'top_weights/all_weights_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+    ### oNLY SAVE THE ones with high variance
+    if (high_vars_by_factor[ii, i]){
+      print(c(i,ii))
+      
+          plot_top_weights(MOFAobject_gs,
+                           view = views[i],
+                           factor = ii,
+                           nfeatures = 10,     # Top number of features to highlight
+                           scale = T           # Scale weights from -1 to 1
+          )
+          
+          plot_weights(MOFAobject_gs, 
+                       view = views[i], 
+                       factor = ii, 
+                       nfeatures = 30
+          )
+         
+            
+          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+      
+          
+          cluster_rows=TRUE;cluster_cols=TRUE
+          
+          ###### Heatmaps 
+          nfs=20
+          print('heatmap')
+          dir.create(paste0(outdir, '/heatmap/'))
+          #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
+          # Plot heatmaps for each factor only for miRNA 
+          
+          var_captured<-round(vars_by_factor[ii,i], digits=2)
+          main_t<-paste0('Factor ', ii, ', Variance = ',var_captured, '%')
+         #p<-plot_data_heatmap(MOFAobject, 
+         #                     view = views[i], 
+         #                     factor =  ii,  
+         #                     features = nfs,
+         #                     groups=1,
+         #                     denoise = TRUE,
+         #                     cluster_rows = cluster_rows, cluster_cols = cluster_cols,
+         #                     show_rownames = TRUE, show_colnames = TRUE,
+         #                     scale = "row",
+         #                     fontsize_number = 5, 
+         #                     annotation_samples='NHY',
+         #                     main=main_t
+         #                     
+         #                     
+         #                     
+         #)
+         ##main=textGrob(main_t,gp = gpar(fontsize = 21, fontface = "bold") )
+         ##grid.arrange(grobs = list(main, p[[4]]), heights = c(0.05, 1))
+         #
+         #dev.off()
+      #          
+          ns<-dim(MOFAobject@samples_metadata)[1]
     
-    
-    
-    ###### Heatmaps 
-    nfs=20
-    print('heatmap')
-    dir.create(paste0(outdir, '/heatmap/'))
-    jpeg(paste0(outdir, 'heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
-    fps[ii]=1
-    # Plot heatmaps for each factor only for miRNA 
-    p<-plot_data_heatmap(MOFAobject, 
-                         view = views[i], 
-                         factor =  ii,  
-                         features = nfs,
-                         groups=c('V04'),
-                         denoise = TRUE,
-                         cluster_rows = TRUE, cluster_cols = FALSE,
-                         show_rownames = TRUE, show_colnames = FALSE,
-                         scale = "row",
-                         fontsize_number = 5
-                         
-                         
-    )
-    dev.off()
-    
-    jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i], 'nfs_', nfs, '.jpeg'), height=20*nfs, width=20*nfs)
-    
-    p<-plot_data_heatmap(MOFAobject, 
-                         view = views[i], 
-                         factor =  ii,  
-                         features = nfs,
-                         denoise = TRUE,
-                         cluster_rows = FALSE, cluster_cols = FALSE,
-                         show_rownames = TRUE, show_colnames = FALSE,
-                         scale = "row"
-    )
-    dev.off()
-    
+          cors_sig=names(which(cors[ii,]>2))
+          if (length(cors_sig)==0){
+            cors_sig=c()
+            
+          }
+          
+          res=100
+         jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '.jpeg'),
+              height=60*nfs, width=50*ns, res=200)
+               
+         p<-plot_data_heatmap(MOFAobject_gs, 
+                                    view = views[i], 
+                                    factor =  ii,  
+                                    features = nfs,
+                                    denoise = TRUE,
+                                    cluster_rows = cluster_rows, cluster_cols = cluster_cols,
+                                    show_rownames = TRUE, show_colnames = TRUE,
+                                    scale = "row",
+                                    annotation_samples=cors_sig,
+                                    main=main_t
+                                    
+                                    
+            )
+        
+      dev.off()
+          }
     # top weights
     # concat all 
     
@@ -432,43 +508,48 @@ for (i in 1:vps){
   
 }
 
+MOFAobject@samples_metadata$NHY
 
 
 
 # plot heatmaps by view and 
-library(cowplot)
-library(ComplexHeatmap)
-nfs=20
+n_groups=length(MOFAobject@data_options$groups)
+if (length(MOFAobject@data_options$groups)>1){
+  
+        
+        library(cowplot)
+        library(ComplexHeatmap)
+        nfs=20
+        
+        breaksList = seq(-3, 3, by = 0.01)
+        groups='all'
+        
+        groups=c(1,3)
+        view=c(3)
+        factor=8
+        image_path<-paste0(outdir, 'heatmap_',ii,'_',view, 'nfs_', factor, 'gr_', groups, '.jpeg')
+        
+        # set width of plot based on number of samples retrieved
+        n_samples<-get_factors(MOFAobject, factors = 1, groups=groups)
+        ns<-length(unlist(n_samples))
+        
+        jpeg(image_path, height=30*nfs, width=20*ns)
+        
+        
+        p1<-plot_data_heatmap(MOFAobject, 
+                          view = view,
+                          factor = factor,  
+                          features = nfs,
+                          groups=groups,
+                          cluster_rows = TRUE, cluster_cols = TRUE,
+                          show_rownames = TRUE, show_colnames = TRUE,
+                          scale = "row"
+                          
+        )
+        p1
+        dev.off()
 
-breaksList = seq(-3, 3, by = 0.01)
-groups='all'
-
-groups=c(1,3)
-view=c(3)
-factor=8
-image_path<-paste0(outdir, 'heatmap_',ii,'_',view, 'nfs_', factor, 'gr_', groups, '.jpeg')
-
-# set width of plot based on number of samples retrieved
-n_samples<-get_factors(MOFAobject, factors = 1, groups=groups)
-ns<-length(unlist(n_samples))
-
-jpeg(image_path, height=30*nfs, width=20*ns)
-
-
-p1<-plot_data_heatmap(MOFAobject, 
-                  view = view,
-                  factor = factor,  
-                  features = nfs,
-                  groups=groups,
-                  cluster_rows = TRUE, cluster_cols = TRUE,
-                  show_rownames = TRUE, show_colnames = TRUE,
-                  scale = "row"
-                  
-)
-p1
-dev.off()
-
-
+}
 
 
 
@@ -477,21 +558,21 @@ samples_order<-MOFAobject@samples_metadata$PATNO_EVENT_ID.x
 # ORDER patients by their groups
 samples_order<-samples_order[ with(MOFAobject@samples_metadata, order(EVENT_ID, PATNO))]
 
+if (n_groups>1){
+  p2<-plot_data_heatmap(MOFAobject, 
+                        view = "proteomics",
+                        factor = 1,  
+                        features = nfs,
+                        groups='all',
+                        cluster_rows = TRUE, cluster_cols = FALSE,
+                        show_rownames = TRUE, show_colnames = TRUE,
+                        scale = "row", 
+                        max.value = 3, 
+                        width=10
+  )
+  p2
+}
 
-
-p2<-plot_data_heatmap(MOFAobject, 
-                     view = "proteomics",
-                     factor = 1,  
-                     features = nfs,
-                     groups='all',
-                     cluster_rows = TRUE, cluster_cols = FALSE,
-                     show_rownames = TRUE, show_colnames = TRUE,
-                     scale = "row", 
-                     max.value = 3, 
-                     width=10
-)
-p2
-dev.off()
 
 
 
@@ -500,14 +581,7 @@ grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
 do.call('grid.arrange', c(list(p1,p2)) )
 
 dev.off()
-plot_data_heatmap(MOFAobject, 
-                  view = "miRNA",
-                  factor = 1,  
-                  features = 30,
-                  cluster_rows = FALSE, cluster_cols = TRUE,
-                  show_rownames = TRUE, show_colnames = FALSE,
-                  scale = "row"
-)
+
 
 plot_data_heatmap(MOFAobject, 
                   view = "miRNA",
@@ -543,7 +617,6 @@ p <- plot_factors(MOFAobject,
 #  geom_hline(yintercept=-1, linetype="dashed") +
 #  geom_vline(xintercept=(-0.5), linetype="dashed")
 print(p)
-ggsave(p)
 ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 
@@ -580,7 +653,7 @@ subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
-
+dir.create(paste0(outdir, '/enrichment/'))
 for (subcategory in c('CP:KEGG','GO:BP' )){
   
         
@@ -634,7 +707,7 @@ for (subcategory in c('CP:KEGG','GO:BP' )){
           print(sign2)
         }
         
-       # enrichment_list=all_fs_enrichment
+
         stack_list<-function(i,enrichment_list) {
           
           # Take a list of dataframes and stack them 
@@ -658,22 +731,25 @@ for (subcategory in c('CP:KEGG','GO:BP' )){
         all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
         all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
-        write.csv(all_fs_merged1,paste0(outdir, gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f_' ,  out_params, '.csv' ))
+        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f.csv' ))
         
         all_fs_merged1
         results_enrich<-res.negative$pval.adj
         all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
-        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-        all_fs_merged2<-do.call(rbind, all_fs_unlisted )
-        
-        write.csv(all_fs_merged2,paste0(outdir,gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f_', out_params, '.csv' ))
-        
+        if (length(all_fs_enrichment)>0){
+          all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+          all_fs_merged2<-do.call(rbind, all_fs_unlisted )
+          
+          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f.csv' ))
+          #all_fs_merged2
+          all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
+          
+        }
+       
         ##### which factor is related to parkinsons disease in KEGG
         ### PROBLEM: this is based on RNA only!!! 
-        all_fs_merged1[str_detect(all_fs_merged1[,2], 'PARKINSON'),'factor']
-        all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
-        all_fs_merged1
-        all_fs_merged2
+    
+        
 }
 
 

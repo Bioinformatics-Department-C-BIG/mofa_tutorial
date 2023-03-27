@@ -76,14 +76,13 @@ names<-colnames(mirnas_rpmmm)[-1]
 VISIT='V08'
 VISIT='BL'
 
-mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
-mirnas_BL
-
+VISIT
+visits<-c('BL','V04','V06', 'V08')
+mirnas_BL<-select(mirnas_rpmmm,contains(visits))
 
 names_split<- strsplit(names(mirnas_BL),split='\\.')
 
 PATNO<-sapply(names_split, '[[', 3)
-length(PATNO)
 colnames(mirnas_BL)<-PATNO
 rownames(mirnas_BL)<-mirnas_rpmmm$miRNA
 
@@ -93,6 +92,8 @@ rownames(mirnas_BL)
 
 
 write.csv2(mirnas_BL, paste0(output_files, 'mirnas_', VISIT, '.csv'), row.names = TRUE)
+
+
 
 
 
@@ -149,6 +150,8 @@ ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
  #               mutate(across('PATNO', str_replace, 
   #                          'PPMI-', ''
    #                         ))
+
+
 ## Filter baseline
 prot_bl<-ppmi_prot[ppmi_prot$EVENT_ID==VISIT,]
 

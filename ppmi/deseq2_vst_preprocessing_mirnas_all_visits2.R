@@ -54,7 +54,10 @@ VISIT=('BL')
 TOP_GN=0.1
 TOP_MN=0.5
 
-sel_coh=c(2);
+
+sel_coh=c(1,4)
+
+
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 
@@ -77,7 +80,7 @@ m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_')
 
 
 #### Remove low expression 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -177,17 +180,22 @@ se_filt$PATNO=as.factor(se_filt$PATNO)
 if (length(sel_coh)>1){
   
       if (length(VISIT)>1){
+        print('Two cohorts and visits detected, running deseq and vsd with design formula')
+        
         ddsSE <- DESeqDataSet(se_filt, 
                               design = ~COHORT + EVENT_ID)
         vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
         
       }else{
+        print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
                             design = ~COHORT)
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
     
   }
   }else{
+    print('Single cohort and visit deseq ')
+    
     ddsSE <- DESeqDataSet(se_filt, 
                           design = ~PATNO)
     vsd <- varianceStabilizingTransformation(ddsSE)

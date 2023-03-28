@@ -71,7 +71,8 @@ NA_PERCENT=0.8
 VISIT_COMPARE='BL'
 TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(1)
+sel_coh <- c(1,4)
+
 VISIT='BL'
 
 

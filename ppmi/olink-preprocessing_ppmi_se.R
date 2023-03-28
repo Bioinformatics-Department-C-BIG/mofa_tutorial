@@ -48,11 +48,15 @@ VISIT='BL'
 VISIT='BL'
 TISSUE='Plasma'
 
-VISIT=c('V06')
-VISIT=c('BL')
+sel_coh <- c(1,4)
 
-VISIT=c('BL')
 
+
+metadata_output<-paste0(output_files, 'combined.csv')
+combined<-read.csv2(metadata_output)
+
+
+VISIT=c('V08')
 VISIT=c('V08')
 TISSUE='Plasma'
 NA_PERCENT=0.8
@@ -100,8 +104,7 @@ if (NORMALIZED){
 }
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
-
-
+outdir<-outdir_orig
 
 
 #### Read in 
@@ -222,8 +225,11 @@ tmp<- assays(se_filt)[[1]]
 
 #normalized_data<-varianceStabilizingTransformation(tmp  )
 
-normalized_data<-justvsn(tmp)
+
 vsn::meanSdPlot(normalized_data)
+
+
+meanSdPlot(normalized_data)
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
 # Check plot after vsn
 #View(normalized_data)

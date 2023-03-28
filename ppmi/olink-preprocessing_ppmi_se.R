@@ -1,0 +1,303 @@
+
+#BiocManager::install('DEP')
+## TODO: change all scripts to be agnostic of visit until mofa
+library(edgeR)
+library(limma)
+library(Glimma)
+#library(org.Mm.eg.db)
+
+library(gplots)
+library(RColorBrewer)
+library(sys)
+library(sys)
+library(ggplot2)
+library("vsn")
+library("DEP")
+library("data.table")
+library("SummarizedExperiment")
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+
+
+if (!require("pacman")) install.packages("pacman")
+#pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
+source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+
+output_1=paste0('ppmi/plots/proteomics/')
+output_files<-paste0('ppmi/output/')
+
+
+metadata_output<-paste0(output_files, 'combined.csv')
+combined<-read.csv2(metadata_output)
+combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
+
+
+TOP_PN<-0.9
+
+param_str<-paste0(TOP_PN)
+
+
+
+TISSUE='CSF'
+
+TISSUE='CSF'
+
+
+VISIT='BL'
+
+VISIT='BL'
+VISIT='BL'
+TISSUE='Plasma'
+NORMALIZED=FALSE;run_vsn=TRUE
+
+sel_coh <- c(1,4)
+
+
+
+metadata_output<-paste0(output_files, 'combined.csv')
+combined<-read.csv2(metadata_output)
+
+VISIT=c('V08')
+VISIT=c('V08')
+TISSUE='Plasma'
+
+
+
+### TODO: filter out the cohort too before processig !! 
+VISIT=c('BL');sel_coh <- c(2)
+sel_coh <- c(1)
+VISIT=c('BL', 'V04','V06', 'V08');
+
+sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
+sel_coh_s
+VISIT_S=paste(VISIT,sep='_',collapse='-')
+
+## VISIT_S to allow this to be more than one visits at once!! 
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+
+
+#### read in proteomics 
+p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
+p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', NORMALIZED, '_', sel_coh_s,'vsn_', run_vsn)
+
+
+if (NORMALIZED){
+  in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
+  # if we dont run vsn we want to take the log values 
+  if (!run_vsn){
+    in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '.csv')
+    
+  }
+  
+  
+}else{
+  in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
+
+
+}
+
+highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
+outdir<-outdir_orig
+
+
+#### Read in 
+prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
+in_file_original
+proteomics<-prot_bl_wide_unlog
+  
+#proteomics[2,]
+
+
+
+
+####  TODO: MAKE SUMMARIZED EXPERIMENT AND FILTER 
+getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
+  #
+  raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
+  combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
+  
+  ### some samples do not exist in metadata so filter them out 
+  ## 
+  common_samples<-intersect(colnames(raw_counts_all),combined$PATNO_EVENT_ID)
+  unique_s<-colnames(raw_counts_all)[!(colnames(raw_counts_all) %in% common_samples)]
+  metadata_filt<-combined[match(common_samples, combined$PATNO_EVENT_ID),]
+  raw_counts_filt<-raw_counts_all[,match(common_samples, colnames(raw_counts_all))]
+  dim(metadata_filt)[1] ==dim(raw_counts_filt)[2]
+  
+  
+  #subset sample names
+  raw_counts<-raw_counts_filt
+  
+  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt)
+  return(se)
+}
+
+
+
+#### FILTERING LOW VALUES 
+# Remove rows with 90% NA 
+
+#### TODO: move this after the selection of the cohort!!! 
+df<-proteomics
+proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
+dim(df); dim(proteomics)
+
+
+### filter here before editing more 
+## filter out rows with very low min count
+df<-proteomics; dim(df)
+min.count= quantile(df, na.rm = TRUE, 0.01)
+min.count= min(df, na.rm = TRUE)
+dim(df)
+keep <- rowSums(df>min.count, na.rm = TRUE) >= round(0.95*ncol(df))
+length(which(keep))
+proteomics<-proteomics[keep,]
+dim(df); dim(proteomics)
+
+##keep <- colSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
+#length(keep)
+#length(which(!keep))
+#proteomics<-proteomics[,keep]
+
+
+
+
+#### MAKE NUMERIC 
+raw_counts_all=proteomics
+class(raw_counts_all) <- "numeric"
+## They seem to have taken averages for replicas so need to fix 
+#raw_counts_all<-round(raw_counts_all)
+
+head(raw_counts_all[,2])
+
+#### Input to se 
+
+
+
+
+dim(proteomics)
+data<-proteomics
+data<-as.data.frame(data)
+
+data$name<-c(rownames(data))
+data$ID<-data$name
+data_columns=seq(1:dim(proteomics)[2])
+
+#sample<-colnames(proteomics_se)
+head(sample)
+
+
+
+
+#exp_design = data.frame(label=sample,
+#                        condition=sample, 
+#                        replicate=rep(1, dim(proteomics)[2]))
+#exp_design
+
+#se <- make_se(data, data_columns,exp_design)
+
+
+proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
+
+
+head(is.nan(as.matrix(data)))
+boxplot(log(data[1:16]))
+head(raw_counts_all[2,])
+
+#View(head(assays(proteomics_se)[[1]]))
+data_columns
+
+
+
+##### filter here by visits
+se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
+se_filt$COHORT
+se_filt$EVENT_ID
+
+tail(assays(se_filt)[[1]])
+Sample<-colnames(se_filt)
+sample_info<-DataFrame(Sample=Sample)
+
+
+tmp<- assays(se_filt)[[1]]
+
+
+# Filter and normalize
+### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
+#normalized_data1<-assays(normalize_vsn(se_filt))[[1]]
+#normalized_data1<-normalize_vsn(se_filt)
+#meanSdPlot(normalized_data1)
+#vsn_mat<-assays(normalized_data1)[[1]]
+
+#ggsave(paste0(output_1,'meansd_normalize_vsn_', p_params_out,'.png' ))
+
+#normalized_data<-varianceStabilizingTransformation(tmp  )
+
+normalized_data<-justvsn(tmp)
+
+meanSdPlot(normalized_data)
+ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
+# Check plot after vsn
+#View(normalized_data)
+
+
+
+vsn_mat<-normalized_data
+
+max(vsn_mat, na.rm=TRUE)
+
+#vsn_mat<-normalized_data
+head(rownames(vsn_mat))
+head(colnames(vsn_mat))
+hist(vsn_mat)
+
+boxplot(vsn_mat[,1:30])
+dim(normalized_data)
+
+
+
+# Select the top most variable proteins
+## TODO: fix the bug in selectMostVariable
+highly_variable_proteins_mofa=selectMostVariable(vsn_mat, TOP_PN)
+
+dim(highly_variable_proteins_mofa)
+head(rownames(highly_variable_proteins_mofa))
+# Just plot to see the result of vsn
+png(paste0(output_1,'box_', p_params_out,'.png' ))
+boxplot(highly_variable_proteins_mofa[,1:30])
+dev.off()
+
+colnames(highly_variable_proteins_mofa)
+
+write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
+dim(highly_variable_proteins_mofa)
+
+png(paste0(output_1,'hist_high_var_', p_params_out,'.png' ))
+hist(highly_variable_proteins_mofa)
+dev.off()
+
+
+png(paste0(output_1,'hist_', p_params_out,'.png' ))
+hist(vsn_mat)
+dev.off()
+
+
+#dev.off()
+colnames(highly_variable_proteins_mofa)
+
+
+
+
+# IF WE DONT RUN VSN WE SAVE THE SE VALUES 
+if (!run_vsn){
+  print('Saving without VSN')
+  highly_variable_proteins_mofa=selectMostVariable(tmp, TOP_PN)
+  write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
+  meanSdPlot(tmp)
+  ggsave(paste0(output_1,'meansd_NO_VSN_', p_params_out,'.png' ), width = 5, height=3)
+  png(paste0(output_1,'hist_', p_params_out,'.png' ))
+  hist(tmp)
+  dev.off()
+}
+
+
+

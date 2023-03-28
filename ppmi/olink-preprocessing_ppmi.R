@@ -1,6 +1,6 @@
 
 #BiocManager::install('DEP')
-
+## TODO: change all scripts to be agnostic of visit until mofa
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -15,37 +15,47 @@ library("vsn")
 library("DEP")
 library("data.table")
 library("SummarizedExperiment")
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
-source('bladder_cancer/preprocessing.R')
+source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+
+output_1=paste0('ppmi/plots/')
+output_files<-paste0('ppmi/output/')
 
 
-output_1='ppmi/plots/'
-output_files<-'ppmi/output/'
-
-
-TOP_PN<-0.90
+TOP_PN<-0.7
 
 param_str<-paste0(TOP_PN)
 
 
 
 TISSUE='CSF'
+
+TISSUE='CSF'
+
+
+VISIT='BL'
+
+VISIT='BL'
+VISIT='BL'
 TISSUE='Plasma'
-
-
-VISIT='BL'
-
-VISIT='BL'
-VISIT='V06'
-
 NORMALIZED=TRUE
+VISIT=c('V04')
+VISIT=c('BL')
+
+
+VISIT_S=paste(VISIT,sep='_',collapse='-')
+
+## VISIT_S to allow this to be more than one visits at once!! 
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+
 
 #### read in proteomics 
-p_params_in<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED)
-p_params_out<- paste0(VISIT, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED)
+p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
+p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', NORMALIZED)
 
 
 if (NORMALIZED){
@@ -55,8 +65,7 @@ if (NORMALIZED){
 }else{
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
 
-  
-  
+
 }
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
@@ -65,6 +74,10 @@ highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_v
 prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
 proteomics<-prot_bl_wide_unlog
   
+colnames(proteomics)
+
+####  TODO: MAKE SUMMARIZED EXPERIMENT AND FILTER 
+
 
 
 
@@ -117,7 +130,8 @@ se <- make_se(data, data_columns,exp_design)
 is.nan(as.matrix(data))
 boxplot(log(data[1:16]))
 
-
+assays(se)[[1]][1]
+data_columns
 interm<-as.matrix(assays(se)[[1]])
 
 is.nan(as.matrix(interm))
@@ -145,15 +159,17 @@ vsn_mat<-assays(normalized_data)[[1]]
 
 
 #vsn_mat<-normalized_data
-
-
+head(rownames(vsn_mat))
+head(colnames(vsn_mat))
 hist(vsn_mat)
 
 boxplot(vsn_mat[,1:30])
 dim(normalized_data)
 
 # Select the top most variable proteins
-highly_variable_proteins_mofa<-selectMostVariable(vsn_mat, TOP_PN)
+## TODO: fix the bug in selectMostVariable
+highly_variable_proteins_mofa=selectMostVariable2(vsn_mat, TOP_PN)
+
 dim(highly_variable_proteins_mofa)
 rownames(highly_variable_proteins_mofa)
 # Just plot to see the result of vsn

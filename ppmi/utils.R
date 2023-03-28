@@ -7,7 +7,6 @@
 library(SummarizedExperiment)
 
 
-dim(raw_counts_all)
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #
   raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
@@ -30,6 +29,55 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
   return(se)
   
+  
+}
+
+
+
+## Create the summarized experiment by selecting VISITS and cohorts 
+filter_se<-function(se, VISIT, sel_coh){
+  
+  #' Takes the raw file with all counts
+  #' Filters summarized experiment by selecting VISITS and cohorts 
+  #' @param VISIT
+  #' @param sel_coh
+  
+  ##### 2.   start filtering the experiment  to normalize as appropriate 
+  ## Option 1: normalize cohort and EVENT separately!! 
+  
+  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
+  se_filt$EVENT_ID; se_filt$COHORT
+  Sample<-colnames(se_filt)
+  sample_info<-DataFrame(Sample=Sample)
+  
+  raw_counts=assays(se_filt)[[1]]
+  
+  ## filterbyExpr takes cpm so remove from there 
+  idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
+  
+  length(which(idx))
+  raw_counts <- as.matrix(raw_counts[idx, ])
+  dim(raw_counts)
+  se_filt=se_filt[idx]
+  
+  ##### Define
+  
+  ### TODO: Question: Should I input everything into the matrix to normalize? 
+  ### And then filter 
+  
+  ### batch effect and normalization 
+  # Create a separate matrix with counts only
+  # Include batch information if there is any
+  #sample_info$Batch <- as.factor(sample_info$Batch)
+  
+  
+  ### DEFINE THE DESEQ OBJECT with the groups appropriately 
+  se_filt$EVENT_ID=as.factor(se_filt$EVENT_ID)
+  se_filt$COHORT=as.factor(se_filt$COHORT)
+  se_filt$PATNO=as.factor(se_filt$PATNO)
+  
+  
+  return(se_filt)
   
 }
 

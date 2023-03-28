@@ -161,16 +161,27 @@ for (i in seq(1,vps)){
   # threshold each? 
 
   all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
-  write.table(all_weights_filt,paste0(outdir, 'top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
   ens_ids<-gsub('\\..*', '', all_weights_filt$feature)
   write.csv(ens_ids,cluego1,
             row.names = FALSE, quote=FALSE)
 
+  ### write gene symbols here 
+  all_weights1<-MOFA2::get_weights(MOFAobject_gs,
+                                   views = view, 
+                                   as.data.frame =TRUE)  
+  
+  
+  all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
+  write.table(all_weights_filt,paste0(outdir, 'top_weights/top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
+  
+  # threshold each? 
   
   
   
   }
 
+
+outdir
 high_vars_by_factor<-vars_by_factor>0.1
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
@@ -180,7 +191,7 @@ for (i in seq(1,vps)){
     view=views[i]
     factor=ii
     print(view, factor)
-    all_weights<-MOFA2::get_weights(MOFAobject,views = view, factors=factor, 
+    all_weights<-MOFA2::get_weights(MOFAobject_gs,views = view, factors=factor, 
                             as.data.frame =TRUE)
     
     ### get the top highly weighted variables - absolute value
@@ -227,11 +238,14 @@ for (i in 1:dim(positive_cors)[2]){
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
   print(paste(i, pos_factors))
   
+  
+  #TODO: print also other factors combinations
+  #combn(pos_factors,2)
+  
   fs<-c(pos_factors[1],pos_factors[2])
   color_by<-names[i]
   print(color_by)
- 
-  
+   
   plot_factors(MOFAobject, 
                factors = fs, 
                shape_by=color_by,
@@ -242,19 +256,21 @@ for (i in 1:dim(positive_cors)[2]){
   fss<-paste(fs,sep='_',collapse='-')
   dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
   
-  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,color_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by,'.png')
   
   
   ggsave(FNAME, width = 4, height=4, dpi=100)
   
-  shape_by='group'
+  shape_by='NHY'
+  #shape_by='AGE_AT_VISIT'
+  
   plot_factors(MOFAobject, 
                factors = fs, 
                color_by=color_by,
-                shape_by= 'group',
+                shape_by= shape_by,
                show_missing = FALSE
   )
-  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,color_by,shape_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by,'.png')
     ggsave(FNAME, width = 4, height=4, dpi=100)
   
 }
@@ -413,6 +429,8 @@ seq(1,fps)
 seq(1,vps)
 
 
+
+graphics.off()
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    

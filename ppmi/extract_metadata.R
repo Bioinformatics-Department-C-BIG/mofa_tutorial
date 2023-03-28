@@ -39,11 +39,14 @@ output_files<-'ppmi/output/'
 # TODO: genetic consensus
 ps<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Participant_Status.csv'))
 #<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus'))
-
-
-
 clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Age_at_visit.csv'))
 demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
+
+
+dim(characteristics)
+characteristics<-merge(clinical, ps, by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
+dim(characteristics)
+
 
 
 # todo: add more motor mds-updrs

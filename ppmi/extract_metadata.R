@@ -54,6 +54,9 @@ motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS
 
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
 non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
+non_motor_stait<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
+
+pr_outcome<-read.csv(paste0('ppmi/ppmi_data/patient_outcomes_predictions.csv'))
 
 
 VISIT='BL'
@@ -73,10 +76,15 @@ combined<-merge(combined, clinical,by=c('PATNO','EVENT_ID'),suffixes = c("", 'cl
 combined<-merge(combined, demographics,by=c('PATNO'),suffixes = c("", 'd'), all=TRUE)
 
 combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
+combined<-merge(combined, non_motor_stait,by=c('PATNO','EVENT_ID'), suffixes = c("", '_st'),  all=TRUE)
+
 dim(combined)
 combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
+combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
+
 dim(combined)
 
+#which(!is.na(combined$Outcome))
 
 unique(motor_assess_all$PATNO)
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
@@ -92,8 +100,8 @@ metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
 combined$COHORT_DEFINITION
-View(combined[combined$PATNO=='4125',])
-
+#View(combined[combined$PATNO=='4125',])
+combined$NHY
 
 
 # females would be NA

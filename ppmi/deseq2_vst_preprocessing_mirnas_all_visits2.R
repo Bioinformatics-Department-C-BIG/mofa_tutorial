@@ -28,6 +28,7 @@ script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 output_de=paste0(output_1, 'gene')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, '/utils.R'))
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
@@ -38,7 +39,8 @@ combined<-read.csv2(metadata_output)
 ##### Load required data 
 # TODO: input all the visits 
 
-
+## TODO: move to config
+## CONFIGURATION 
 
 MIN_COUNT_G=100
 MIN_COUNT_M=10
@@ -57,20 +59,22 @@ sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
 
 
-sel_coh <- c(1)
-VISIT=('V04')
+
+sel_coh <- c(1,2)
+
 VISIT=c('BL', 'V04','V06', 'V08');
 
+sel_coh=c(1,2);
+VISIT=('V06')
+TISSUE='Plasma'
+
+
 VISIT_S=paste(VISIT,sep='_',collapse='-')
-VISIT_S=paste(VISIT,sep='_',collapse='-')
-
-
-
-
-
 
 g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
+
+
 
 #### Remove low expression 
 process_mirnas<-FALSE
@@ -121,33 +125,10 @@ class(raw_counts_all) <- "numeric"
 raw_counts_all<-round(raw_counts_all)
 
 
+
+
 ## Question: why are there duplicate samples - seems to be controls! 
 ## first filter what is in metadata and mirnas ?
-
-
-### TODO: move to a utils / preprocessing file because it is used also for proteoomics
-library(SummarizedExperiment)
-getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
-  #
-  raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
-  combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
-  
-  ### some samples do not exist in metadata so filter them out 
-  ## 
-  common_samples<-intersect(colnames(raw_counts_all),combined$PATNO_EVENT_ID)
-  unique_s<-colnames(raw_counts_all)[!(colnames(raw_counts_all) %in% common_samples)]
-  metadata_filt<-combined[match(common_samples, combined$PATNO_EVENT_ID),]
-  raw_counts_filt<-raw_counts_all[,match(common_samples, colnames(raw_counts_all))]
-  dim(metadata_filt)[1] ==dim(raw_counts_filt)[2]
-  
-  
-  #subset sample names
-  raw_counts<-raw_counts_filt
-  
-  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt)
-  return(se)
-}
-
 
 se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 # remove duplicates 
@@ -160,8 +141,6 @@ se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 
 ##### 2.  Now start filtering to normalize as appropriate 
 ## Option 1: normalize cohort and EVENT separately!! 
-
-
 
 se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
 se_filt$EVENT_ID; se_filt$COHORT
@@ -177,7 +156,6 @@ length(which(idx))
 raw_counts <- as.matrix(raw_counts[idx, ])
 dim(raw_counts)
 se_filt=se_filt[idx]
-se_filt
 
 
 ##### Define
@@ -237,14 +215,15 @@ write.csv(highly_variable_genes_mofa, highly_variable_outfile, col.names = TRUE)
 dim(highly_variable_genes_mofa)
 rownames(highly_variable_genes_mofa)
 
-
+highly_variable_outfile
 
 
 
 meanSdPlot(vsd_mat)
 
 
-##### Checks
+######  Checks
+# TODO: could move checks outside pipeline in interactive mode
 # Check the effect of vst before and after
 par(mfrow=c(1,3))
 

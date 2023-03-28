@@ -64,11 +64,11 @@ TOP_MN=0.50
 MIN_COUNT_G=100
 MIN_COUNT_M=10
 FULL_SET=TRUE
+
+NA_PERCENT=0.8
+
+
 VISIT_COMPARE='BL'
-
-
-
-
 TOP_PN=0.90
 # cohort 1 =prodromal 
 sel_coh <- c(1)
@@ -86,21 +86,27 @@ VISIT=c('V06');
 sel_coh <- c(2)
 
 
-TISSUE='CSF'; 
 N_FACTORS=8
 
 VISIT=c('BL', 'V04','V06', 'V08');sel_coh <- c(1)
-VISIT=c('V08');sel_coh <- c(1)
-VISIT=c('BL')
+
+
+VISIT=c('V06');
+
 
 VISIT=c('BL', 'V04','V06', 'V08')
+
+
+
+TISSUE='CSF'; 
+run_vsn=TRUE
 TISSUE='Plasma';
+VISIT=c('V06');sel_coh <- c(1,2);NORMALIZED=TRUE;
 
-
-NORMALIZED=FALSE;run_vsn=TRUE
 
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 sel_coh_s
+
 #TISSUE='untargeted'
 
 
@@ -111,10 +117,13 @@ combined_bl<-combined
 combined_bl$PATNO_EVENT_ID<-paste0(combined_bl$PATNO, '_',combined_bl$EVENT_ID)
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
+scale_views=TRUE
 
+combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 
-p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_', sel_coh_s,  'vsn', '_', run_vsn, '_')
+p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+
 g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_', sel_coh_s, '_'  )
 m_params<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_',  sel_coh_s, '_' ) 
 mofa_params<-paste0(N_FACTORS )
@@ -122,7 +131,7 @@ mofa_params<-paste0(N_FACTORS )
 #
 
 
-highly_variable_proteins_outfile = paste0(output_files, p_params , 'highly_variable_proteins_mofa.csv')
+highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
 highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params,'_highly_variable_genes_mofa.csv')
 highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly_variable_genes_mofa.csv')
 highly_variable_proteins_outfile
@@ -140,7 +149,7 @@ highly_variable_proteins_outfile
 
 
 
-out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S )
+out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
 outdir = paste0(outdir_orig,out_params , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 
@@ -351,10 +360,13 @@ if (length(VISIT)>1){
 }
 
 model_opts <- get_default_model_options(MOFAobject)
+data_opts <- get_default_data_options(MOFAobject)
 model_opts$num_factors <- N_FACTORS
-model_opts
+data_opts
+data_opts$scale_views=scale_views
 MOFAobject <- prepare_mofa(MOFAobject,
-                           model_options = model_opts
+                           model_options = model_opts,
+                           data_options = data_opts
 )
 
 
@@ -370,30 +382,25 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
 
 #if (file.exists(mofa_file)){
 # pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
-#  MOFAobject<-pre_trained
-  
-  
+# MOFAobject<-pre_trained
+ 
+ 
 #}else {
-#  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
-#  
+  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 #}
-
-###
-
-
 ##### Basic stats
 
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 7, height=4, dpi=100)
 
 
-
+samples_metadata(MOFAobject)$Outcome
 
 
 

@@ -92,9 +92,12 @@ unique(motor_assess_all$PATNO)
 
 
 # filtering here only to produce separate files for each visit? 
-combined_bl<-combined[combined$EVENT_ID==VISIT,]
 
 ## add demographics with suffix if common? 
+
+### Add new features here
+
+combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
@@ -111,4 +114,9 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
+
+
+
+
+
 

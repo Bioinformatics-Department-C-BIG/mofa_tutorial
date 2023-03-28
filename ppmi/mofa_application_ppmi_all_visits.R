@@ -115,7 +115,6 @@ sel_coh_s
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined
-combined_bl$PATNO_EVENT_ID<-paste0(combined_bl$PATNO, '_',combined_bl$EVENT_ID)
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 scale_views=TRUE

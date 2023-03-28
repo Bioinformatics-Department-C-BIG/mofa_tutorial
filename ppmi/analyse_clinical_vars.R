@@ -1,8 +1,6 @@
 library(dplyr)
 
-VISIT='V08'
 
-com
 metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
 combined_bl<-read.csv2(metadata_output)
 
@@ -16,37 +14,59 @@ combined[which(combined$NHY==101),]$NHY<-NA
 
 
 library(ggplot2)
+
+graphics.off()
+
 ### Create new variables from the averages 
+## scopa does not have a total - maybe just add scopa total ? 
+# because the average is the same as np3total
 
 get_averages<-function(combined,sub_pattern ){
-  # groups and averages specific coluymns 
-    sca_assess<-combined[ , grepl( sub_pattern, colnames( combined ) )
+  # groups and averages specific columns 
+    # TODO somehwte it is considering NAs as zeros CHECK 
+    sub_pattern=paste0(sub_pattern,'[1-9]')  #For testing
+    sub_pattern='SCAU[1-9]'
+  
+    df<-combined[ , grepl( sub_pattern, colnames( combined ) )
                           & !grepl('TOT',  colnames( combined ) ) ]
 
-    print(colnames(sca_assess))
-    sca_assess<-as.data.frame(apply(sca_assess, 2, as.numeric))
-    sca_assess$sca_average<-rowMeans(sca_assess, na.rm = TRUE)
+    print(colnames(df))
+    df<-as.data.frame(apply(df, 2, as.numeric))
+    
+    ind <- rowSums(is.na(df)) == ncol(df)
+
+    df$sca_tot<-rowSums(df, na.rm = TRUE)
+    # If all rows are NA then replace zero sum by NA
+    #TODO: or do not run in the first place
+    df$sca_tot[ind]<-NA 
     #combined$PATNO = as.factor(combined$PATNO )
+    return(df$sca_tot)
+    print(df$sca_tot)
 
 }
-sub_pattern='NP1'  
+
+
 sca_assess<-combined[ , grepl( sub_pattern, colnames( combined ) ) ]
 colnames(sca_assess)
 
-sub_patterns=c('NP1','NP3', 'NP2', 'NP4', 'SCA', 'STAIAD')
+sub_patterns=c( 'SCAU', 'STAIAD')
 
 #add gait 
-for (sub_pattern in sub_patterns){
-  combined[,sub_pattern]<-get_averages(combined, sub_pattern)
+# conevrt to apply 
+#combined[,sub_pattern]<-
   
-}
+# ADD THE NEW averages   
+avs<-sapply(sub_patterns,get_averages, combined=combined)
+combined<-cbind(combined,avs)
 
-combined$STAIAD
+
+
+
 #combined %>% 
 
   
 
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCA', 'NP1', 'NP2' , 'NP3', 'NP4')
+scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')
 
 #
 
@@ -57,12 +77,19 @@ scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCA', 'NP1', 'NP2' ,
 
 
 
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCA', 'STAIAD')
+scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
 
 
 
+
+##### INSPECT DISTIRBUTIONS to decide on appropriate transforms 
+###  Create plots only for the specific datasets
+### If we are going to normalize/standardize by min-max it is better to do it only for the specific samples? 
 i=2
 graphics.off()
+combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
+
+#### Histograms to check the distributions of the clinical variables before and after processing 
 for (i in 1:length(scales_in_stage)){
   
     ### 
@@ -70,7 +97,7 @@ for (i in 1:length(scales_in_stage)){
     y=scales_in_stage[i]
     
   
-    vals<-combined[,y]  
+    vals<-combined_p[,y]  
     hist(vals)
     
     vals_zero<-vals
@@ -102,10 +129,14 @@ for (i in 1:length(scales_in_stage)){
 }
 
 
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCA', 'STAIAD')
+scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
 
 
-### AVERAGE ALL THE DATA 
+
+##### AVERAGE ALL THE DATA 
+###
+###
+
 scaled=DataFrame();scaled_log<-DataFrame();scaled_log_sc<-DataFrame()
 
 for (i in 1:length(scales_in_stage)){
@@ -118,7 +149,7 @@ for (i in 1:length(scales_in_stage)){
   comb_scale_data<-combined[,y]
   #print(paste(y, which(comb_scale_data==0)))
   
-  comb_scale_data[which(comb_scale_data==0)]<(10^-6)
+  comb_scale_data[which(comb_scale_data==0)]<-(10^-6)
   scaled[,y2]<-scale(comb_scale_data, center = FALSE)
   scaled_log[,y2]<-log2(comb_scale_data)
   
@@ -129,24 +160,34 @@ for (i in 1:length(scales_in_stage)){
 
 }
 
-scaled$average=rowMeans(as.data.frame(scaled), na.rm=TRUE)
-combined$STAGE_AV<-scaled$average
-combined$STAGE_LOG_AV<-rowMeans(as.data.frame(scaled_log), na.rm=TRUE)
-combined$STAGE_LOG_SCALE_AV<-rowMeans(as.data.frame(scaled_log_sc), na.rm=TRUE)
+average_if_not_na<-function(df){
+  ind <- rowSums(is.na(df)) == ncol(df)
+  df$average<-rowMeans(as.data.frame(df), na.rm = TRUE)
+  # If all rows are NA then replace zero sum by NA
+  #TODO: or do not run in the first place
+  df$average[ind]<-NA
+  return(df$average)
+}
+
+
+#scaled$average=rowMeans(as.data.frame(scaled), na.rm=TRUE)
+
+combined$STAGE_AV<-average_if_not_na(scaled)
+combined$STAGE_LOG_AV<-average_if_not_na(as.data.frame(scaled_log))
+combined$STAGE_LOG_SCALE_AV<-average_if_not_na(as.data.frame(scaled_log_sc))
 
 
 hist(combined$STAGE_AV)
 
 
-#View(combined[combined$PATNO=='3710',])
 
-
+###### Now filter by relevant patients to make the plots 
 ### First filter by combined_filt\
 
 
-combined_filt<-combined[combined$PATNO %in% common_samples[1:100], ]
+combined_filt<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
 
-
+combined_filt<-combined
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
 
@@ -167,7 +208,7 @@ combined_filt=as.data.frame(combined_filt)
 PS_101<-combined[which(combined$NHY==101),]
 
 
-dim(PS_101[,c('COHORT_DEFINITION','NHY' , '')])
+dim(PS_101[,c('COHORT_DEFINITION','NHY' )])
 
 # REMOVE OUTLIERS FOR plot consistency
 combined_filt<-combined_filt %>% 
@@ -189,7 +230,7 @@ x='EVENT_ID'
 shape='PAG_NAME_M3'
 
 #time points
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCA', 'NP1', 'NP2' , 'NP3', 'NP4', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
 
 
 tps<-read.csv(paste0('ppmi/ppmi_data/','visit_tps.csv'), sep=',')
@@ -221,6 +262,10 @@ combined_filt[combined_filt$COHORT==4,]$STAGE_LOG_SCALE_AV
 
 y='STAGE_LOG_AV'
 
+
+scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+scales<-c( 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+
 for (y in scales){
 
   p<-ggplot(combined_to_plot, aes_string( x=x, color='line_group', group='line_group'))+
@@ -230,7 +275,7 @@ for (y in scales){
       #theme(legend.position="bottom", legend.text=element_text(size=2))+
     #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
           
-  p+facet_wrap(~COHORT_DEFINITION, nrow = 3)
+  p+facet_wrap(~COHORT_DEFINITION, nrow = 4)
   ggsave(paste0(outdir_orig,'metadata/lines_',y,'.jpeg' ), width=10, height=7)
 
   
@@ -246,7 +291,7 @@ for (y in scales){
   #theme(legend.position="bottom", legend.text=element_text(size=2))+
   #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
   
-  p+facet_wrap(~COHORT_DEFINITION, nrow = 3)
+  p+facet_wrap(~COHORT_DEFINITION, nrow = 4)
   ggsave(paste0(outdir_orig,'metadata/box_',y,'.jpeg' ), width=10, height=7)
   
   

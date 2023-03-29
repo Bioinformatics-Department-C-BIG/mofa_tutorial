@@ -28,6 +28,7 @@ script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 output_de=paste0(output_1, 'gene')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
+source(paste0(script_dir, '/config.R'))
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
@@ -39,28 +40,6 @@ combined<-read.csv2(metadata_output)
 ## TODO: move to config
 ## CONFIGURATION 
 
-MIN_COUNT_G=100
-MIN_COUNT_M=10
-VISIT='BL'
-
-VISIT=c('V04')
-VISIT=('BL')
-
-
-
-TOP_GN=0.1
-TOP_MN=0.5
-
-
-sel_coh=c(1,4)
-
-
-sel_coh_s
-sel_coh <- c(1,2)
-
-
-sel_coh=c(1,2);
-VISIT=c( 'BL');
 
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
@@ -72,7 +51,7 @@ m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_')
 
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -104,6 +83,10 @@ if (process_mirnas){
   
   highly_variable_outfile
   
+  
+  deseq_file<-paste0(output_files, param_str_g,'deseq.Rds')
+  
+  
 }
 
 raw_counts_all=raw_counts
@@ -132,13 +115,20 @@ se_filt<-filter_se(se, VISIT, sel_coh)
 
 ### OUTPUT THE FILTERED se_filt 
 
+ind<-which(is.na(se_filt$AGE_AT_VISIT))
+se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
+
+## Turn to factors for deseq
+se_filt$SEX<-as.factor(se_filt$SEX)
+
+
 if (length(sel_coh)>1){
   
       if (length(VISIT)>1){
         print('Two cohorts and visits detected, running deseq and vsd with design formula')
         
         ddsSE <- DESeqDataSet(se_filt, 
-                              design = ~COHORT + EVENT_ID +AGE_AT_VISIT)
+                              design = ~COHORT + EVENT_ID  + SEX)
         ddsSE<-estimateSizeFactors(ddsSE)
         
         vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -147,7 +137,7 @@ if (length(sel_coh)>1){
       }else{
         print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~COHORT)
+                            design = ~SEX+COHORT )
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -157,13 +147,16 @@ if (length(sel_coh)>1){
     print('Single cohort and visit deseq ')
     
     ddsSE <- DESeqDataSet(se_filt, 
-                          design = ~PATNO)
+                          design = ~PATNO + AGE_AT_VISIT + SEX)
     ddsSE<-estimateSizeFactors(ddsSE)
     
     vsd <- varianceStabilizingTransformation(ddsSE)
     
+    
   }
 
+datalist=list(ddsSE, vsd)
+saveRDS(datalist,deseq_file)
 
 
 

@@ -23,6 +23,7 @@ if (!require("pacman")) install.packages("pacman")
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
 output_1=paste0('ppmi/plots/proteomics/')
+outdir_orig<-('ppmi/plots/')
 output_files<-paste0('ppmi/output/')
 
 
@@ -225,11 +226,12 @@ tmp<- assays(se_filt)[[1]]
 
 #normalized_data<-varianceStabilizingTransformation(tmp  )
 
-
+normalized_data<-justvsn(se_filt)
 vsn::meanSdPlot(normalized_data)
 
+vsn_mat
 
-meanSdPlot(normalized_data)
+
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
 # Check plot after vsn
 #View(normalized_data)

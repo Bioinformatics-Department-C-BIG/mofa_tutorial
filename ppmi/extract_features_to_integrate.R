@@ -100,7 +100,7 @@ rownames(mirnas_BL)
 write.csv2(mirnas_BL, paste0(output_files, 'mirnas_', VISIT, '.csv'), row.names = TRUE)
 
 
-
+paste0(output_files, 'mirnas_', VISIT, '.csv')
 
 names<-colnames(mirnas_rpmmm)[-1]
 
@@ -145,8 +145,9 @@ library(tidyr)
 
 
 
-TISSUE='Plasma'
 TISSUE='CSF'
+TISSUE='Plasma'
+
 NORMALIZED=TRUE
 
 

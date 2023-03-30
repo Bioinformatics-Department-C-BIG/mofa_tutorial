@@ -22,4 +22,7 @@ sel_coh <- c(1,2)
 
 
 sel_coh=c(1,2);
-VISIT=c( 'V08')
+VISIT=c( 'V06')
+
+
+

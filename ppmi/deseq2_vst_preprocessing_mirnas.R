@@ -40,7 +40,7 @@ sel_coh='1'
 
 
 
-g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_', , '_')
+g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0( TOP_MN, '_', MIN_COUNT_M, '_') 
 
 

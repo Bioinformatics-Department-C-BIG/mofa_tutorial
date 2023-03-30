@@ -82,3 +82,22 @@ filter_se<-function(se, VISIT, sel_coh){
 }
 
 
+
+
+### METADTA 
+
+#install.packages('eeptools' )
+#library('eeptools')
+
+#as.Date(as.character(new$STATUS_DATE), format = "MM/YY",)
+
+# TODO: fix 
+get_age_at_visit<-function(new){
+  AGE_AT_VISIT<-as.numeric(gsub('.*/','',new$STATUS_DATE)) - as.numeric(gsub('.*/','',new$BIRTHDT))
+  return(AGE_AT_VISIT)
+  }
+#x_age <- age_calc( as.Date(new$BIRTHDT),          # Convert birth to age
+##                   as.Date(new$STATUS_DATE),
+#                  units = "years")
+
+

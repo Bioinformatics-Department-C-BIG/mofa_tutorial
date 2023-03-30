@@ -7,32 +7,34 @@ library(edgeR)
 library(limma)
 library(Glimma)
 #library(org.Mm.eg.db)
+
 library(gplots)
 library(RColorBrewer)
 library(sys)
+library(sys)
 library(DESeq2)
 library("vsn")
+
 library("SummarizedExperiment")
+
 library(data.table)
 library(dplyr)
 ## Output directory
 
 output_1='ppmi/output/'
 output_files_orig<-'ppmi/output/'
-output_files<-'ppmi/output/'
-outdir_orig<-'ppmi/plots/'
-
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 
 output_de=paste0(output_1, 'gene')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
-source(paste0(script_dir, '/config.R'))
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
+# TODO: move the pre-processing script to utils
+
 
 ##### Load required data 
 # TODO: input all the visits 
@@ -40,16 +42,40 @@ combined<-read.csv2(metadata_output)
 ## TODO: move to config
 ## CONFIGURATION 
 
+MIN_COUNT_G=100
+MIN_COUNT_M=10
+VISIT='BL'
 
-filter_common=TRUE
 VISIT=c('V04')
-VISIT_S=paste(VISIT,sep='_',collapse='-')
+VISIT=('BL')
+
+
+TOP_GN=0.1
+TOP_MN=0.5
+
+
+sel_coh=c(1,4)
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
+sel_coh_s
+
+
+
+sel_coh <- c(1,2)
+
+VISIT=c('BL', 'V04','V06', 'V08');
+
+sel_coh=c(1,2);
+VISIT=('V06')
+TISSUE='Plasma'
+
+
+VISIT_S=paste(VISIT,sep='_',collapse='-')
 
 g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 
-# MOVE ALL this to a configuration file!! 
+
+
 #### Remove low expression 
 process_mirnas<-TRUE
 if (process_mirnas){
@@ -64,7 +90,6 @@ if (process_mirnas){
   param_str_m<-paste0('mirnas_', m_params ,sel_coh_s, '_')
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'mirnas_', param_str_m, '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-  deseq_file<-paste0(output_files, param_str_m,'deseq.Rds')
   
   
 }else{
@@ -84,14 +109,9 @@ if (process_mirnas){
   
   highly_variable_outfile
   
-  
-  deseq_file<-paste0(output_files, param_str_g,'deseq.Rds')
-  
-  
 }
 
-raw_counts_all=raw_counts
-
+rownames(raw_counts)
 
 ##### 1.  First create the summarized experiment object  
 ### find common samples in mirnas file + metadata
@@ -99,27 +119,60 @@ raw_counts_all=raw_counts
 ## And create SE object with metadata
 #duplicate_samples<-colnames(mirnas_BL)[which(duplicated(colnames(mirnas_BL),fromLast = TRUE))]
 
+raw_counts_all=raw_counts
 class(raw_counts_all) <- "numeric"
 ## They seem to have taken averages for replicas so need to fix 
 raw_counts_all<-round(raw_counts_all)
 
+
+
+
 ## Question: why are there duplicate samples - seems to be controls! 
 ## first filter what is in metadata and mirnas ?
+
 se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 # remove duplicates 
+
+
 ##### Up till here it is generic, no filters yet. 
 
 
-se_filt<-filter_se(se, VISIT, sel_coh)
 
-### OUTPUT THE FILTERED se_filt 
 
-ind<-which(is.na(se_filt$AGE_AT_VISIT))
-se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
+##### 2.  Now start filtering to normalize as appropriate 
+## Option 1: normalize cohort and EVENT separately!! 
 
-## Turn to factors for deseq
-se_filt$SEX<-as.factor(se_filt$SEX)
+se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
+se_filt$EVENT_ID; se_filt$COHORT
+Sample<-colnames(se_filt)
+sample_info<-DataFrame(Sample=Sample)
 
+raw_counts=assays(se_filt)[[1]]
+
+## filterbyExpr takes cpm so remove from there 
+idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
+
+length(which(idx))
+raw_counts <- as.matrix(raw_counts[idx, ])
+dim(raw_counts)
+se_filt=se_filt[idx]
+
+
+##### Define
+
+### TODO: Question: Should I input everything into the matrix to normalize? 
+### And then filter 
+
+### batch effect and normalization 
+# Create a separate matrix with counts only
+# Include batch information if there is any
+#sample_info$Batch <- as.factor(sample_info$Batch)
+
+
+### DEFINE THE DESEQ OBJECT with the groups appropriately 
+se_filt$EVENT_ID=as.factor(se_filt$EVENT_ID)
+se_filt$COHORT=as.factor(se_filt$COHORT)
+se_filt$PATNO=as.factor(se_filt$PATNO)
 
 if (length(sel_coh)>1){
   
@@ -127,18 +180,13 @@ if (length(sel_coh)>1){
         print('Two cohorts and visits detected, running deseq and vsd with design formula')
         
         ddsSE <- DESeqDataSet(se_filt, 
-                              design = ~COHORT + EVENT_ID  + SEX)
-        ddsSE<-estimateSizeFactors(ddsSE)
-        
+                              design = ~COHORT + EVENT_ID)
         vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-        print(dim(vsd))
         
       }else{
         print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~SEX+COHORT )
-      ddsSE<-estimateSizeFactors(ddsSE)
-      
+                            design = ~COHORT)
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
     
   }
@@ -146,16 +194,11 @@ if (length(sel_coh)>1){
     print('Single cohort and visit deseq ')
     
     ddsSE <- DESeqDataSet(se_filt, 
-                          design = ~PATNO + AGE_AT_VISIT + SEX)
-    ddsSE<-estimateSizeFactors(ddsSE)
-    
+                          design = ~PATNO)
     vsd <- varianceStabilizingTransformation(ddsSE)
-    
     
   }
 
-datalist=list(ddsSE, vsd)
-saveRDS(datalist,deseq_file)
 
 
 
@@ -179,51 +222,49 @@ rownames(highly_variable_genes_mofa)
 
 highly_variable_outfile
 
-run_plots<-FALSE
-if (run_plots){
-  meanSdPlot(vsd_mat)
-  
-  
-  ######  Checks
-  # TODO: could move checks outside pipeline in interactive mode
-  # Check the effect of vst before and after
-  par(mfrow=c(1,3))
-  
-  # Check distributions of samples using boxplots
-  boxplot(log2(assay(ddsSE)), xlab="", ylab="Log2 counts ",las=2)
-  # Let's add a blue horizontal line that corresponds to the median logCPM
-  title("Boxplots of logCPMs (unnormalised)")
-  boxplot(log10(raw_counts), xlab="", ylab="Log10 counts ",las=2)
-  
-  # Check distributions of samples using boxplots
-  boxplot(vsd_mat, xlab="", ylab="vst(counts) ",las=2)
-  # Let's add a blue horizontal line that corresponds to the median logCPM
-  abline(h=median(vsd_mat),col="blue")
-  title("Boxplots of logCPMs (after vst)")
-  
-  ## ASSESS BATCH
-  ### Assess batch effect
-  #plotPCA(vsd, "sample") + labs(color='sample') + ggtitle("Batch effect") 
-  #dev.off()
-  
-  #### This saves the whSole file without filtering for highly variable 
-  write.csv(vsd_mat,vsn_out_file)
-  ##### Store the most variable genes only for MOFA 
-  # Select most variable genes
-  ### run on its own for all visits? 
-  # Check that the distribution is approximately normal
-  dev.off()
-  
-  ### SANITY CHECK: Just plot one gene before and after preprocessing to ensure the mapping looks correct 
-  df=highly_variable_genes_mofa
-  par(mfrow=c(2,1))
-  idx=30
-  plot(df[idx,1:150]) 
-  gname<-rownames(df)[idx]
-  title(gname)
-  df=raw_counts
-  plot(df[gname, 1:150])
-  title(gname)
-  
-}
+
+
+meanSdPlot(vsd_mat)
+
+
+######  Checks
+# TODO: could move checks outside pipeline in interactive mode
+# Check the effect of vst before and after
+par(mfrow=c(1,3))
+
+# Check distributions of samples using boxplots
+boxplot(log2(assay(ddsSE)), xlab="", ylab="Log2 counts ",las=2)
+# Let's add a blue horizontal line that corresponds to the median logCPM
+title("Boxplots of logCPMs (unnormalised)")
+boxplot(log10(raw_counts), xlab="", ylab="Log10 counts ",las=2)
+
+# Check distributions of samples using boxplots
+boxplot(vsd_mat, xlab="", ylab="vst(counts) ",las=2)
+# Let's add a blue horizontal line that corresponds to the median logCPM
+abline(h=median(vsd_mat),col="blue")
+title("Boxplots of logCPMs (after vst)")
+
+## ASSESS BATCH
+### Assess batch effect
+#plotPCA(vsd, "sample") + labs(color='sample') + ggtitle("Batch effect") 
+#dev.off()
+
+#### This saves the whSole file without filtering for highly variable 
+write.csv(vsd_mat,vsn_out_file)
+##### Store the most variable genes only for MOFA 
+# Select most variable genes
+### run on its own for all visits? 
+# Check that the distribution is approximately normal
+dev.off()
+
+### SANITY CHECK: Just plot one gene before and after preprocessing to ensure the mapping looks correct 
+df=highly_variable_genes_mofa
+par(mfrow=c(2,1))
+idx=30
+plot(df[idx,1:150]) 
+gname<-rownames(df)[idx]
+title(gname)
+df=raw_counts
+plot(df[gname, 1:150])
+title(gname)
 

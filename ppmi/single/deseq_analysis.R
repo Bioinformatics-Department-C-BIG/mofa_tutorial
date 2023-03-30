@@ -30,15 +30,20 @@ library('pheatmap')
 #  design = ~COHORT, tidy = F
 #)
 
-highly_variable_genes_mofa
-se_filt
-ddsSE
-dds
+
+table(se_filt$COHORT_DEFINITION)
+
+datalist=loadRDS(deseq_file)
+ddsSE=datalist[[1]]
+vsd=datalist[[2]]
+
+
 # todo join strings
 deseq2Data <- DESeq(ddsSE)
+# TODO: Report the number of samples too! 
 
 des<-paste0(as.character(design(ddsSE))[-1])
-sel_coh
+sel_coh_s
 if  (process_mirnas){
   outdir_s<-paste0(outdir_orig, '/single/', param_str_m, 'visits_', VISIT_S, '_coh_', sel_coh_s, '_',des)
   
@@ -66,14 +71,13 @@ dir.create(outdir_s)
 print(deseq2Data$EVENT_ID)
 
 
-deseq2Results <- results(deseq2Data)
+deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 
 summary(deseq2Results)
 
 # 
-dev.off()
 
 jpeg(paste0(outdir_s, '/MA_plot_results.jpeg'))
 plotMA(deseq2Results)
@@ -106,10 +110,37 @@ library(viridis)
 # Coerce to a data frame
 deseq2ResDF <- as.data.frame(deseq2Results)
 
-# Set a boolean column for significance
-deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < .05 , "Significant", NA)
+### TODO: what is lfcShrink? 
 
-deseq2ResDF$significant 
+library(org.Hs.eg.db)
+#BiocManager::install('org.Hs.eg.db')
+###  TODO: turn to gene symbols 
+if (!process_mirnas){
+  ens <- rownames(deseq2ResDF)
+  length(ens)
+  ens<-gsub('\\..*', '',ens)
+  symbols <- mapIds(org.Hs.eg.db, keys = ens,
+                    column = c('SYMBOL'), keytype = 'ENSEMBL')
+  symbols <- symbols[!is.na(symbols)]
+  symbols_ordered <- symbols[match(ens, names(symbols))]
+  
+  length(symbols_ordered)
+  deseq2ResDF$SYMBOL<-symbols_ordered
+}
+
+#symbols[dup_ind]
+
+outdir_s
+
+
+
+# Set a boolean column for significance
+T_lfc=0.1
+deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < .05 , "Significant", NA)
+deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj < .05 & abs(deseq2ResDF$log2FoldChange) >T_lfc , "Significant", NA)
+
+
+head(deseq2ResDF$significant )
 
 # Examine this data frame
 # Order the significant to save as a new output file 
@@ -121,6 +152,16 @@ ens_ids<-gsub('\\..*', '', rownames(sign_only_ordered))
 rownames(sign_only_ordered)<-ens_ids
 
 write.csv(sign_only_ordered,paste0(outdir_s, '/significant.csv'), row.names = TRUE)
+sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
+sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
+
+write.csv(sign_only_ordered,paste0(outdir_s, '/significant.csv'), row.names = TRUE)
+
+dim(sign_only_ordered)
+
+
+outdir_s
+
 
 
 
@@ -140,7 +181,6 @@ dir.create(outdir_s)
 
 
 # Let's add some more detail
-max(deseq2ResDF$log2FoldChange)
 
 p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) + 
   geom_point(size=1) + scale_y_continuous(limits=c(-2, 2), oob=squish) +
@@ -153,7 +193,7 @@ p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) +
 
 p
 logplot_f<-paste0(outdir_s, '/logfold_padjusted_plot.jpeg')
-ggsave(logplot_f)
+ggsave(logplot_f,width=8, height=6, res=300 )
 
 #### NORMALIZED COUNTS
 top_gene<-rownames(deseq2ResDF[which.min(deseq2ResDF$padj),])
@@ -174,21 +214,21 @@ otop2Counts <- plotCounts(dds,
 # Plot the data using ggplot2
 # this is more useful for paired datasets !! 
 # TODO: otherwise do a box plot 
-p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-                           group=Sample)) + geom_point() + geom_line() +
-  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-
-
-p
-
-p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-                           group=Sample)) + geom_point() + geom_line() +
-  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-
-
-p
+#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
+#                           group=Sample)) + geom_point() + geom_line() +
+#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
+#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
+#
+#
+#p
+#
+#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
+#                           group=Sample)) + geom_point() + geom_line() +
+#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
+#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
+#
+#
+#p
 
 
 
@@ -201,15 +241,15 @@ p
 
 
 
-dds <- estimateSizeFactors(dds,)
+#dds <- estimateSizeFactors(dds,)
 # Variance stabilization transformation
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
-vsd <- varianceStabilizingTransformation(dds)
-
-rand_ind<-sample(seq(1:dim(vsd)[2]), 100)
+#vsd <- varianceStabilizingTransformation(dds)
+nind<-300
+rand_ind<-sample(seq(1:dim(vsd)[2]),nind )
 vsd_filt<-vsd[,rand_ind]
-
+vsd_filt=vsd
 deseq2VST <- as.data.frame( assay(vsd_filt))
 
 #### Filter data for visualization 
@@ -224,9 +264,16 @@ head(deseq2VST)
 deseq2ResDF$padj 
 # Keep only the significantly differentiated genes where the fold-change was at least 3
 log2fol_T<-0.35
-sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= .05 & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
-#sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= .05, ])
+log2fol_T<-0.5
 
+sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= .05 & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
+orderedSigGenes<-deseq2ResDF[deseq2ResDF$padj <= .05, ] %>% 
+  arrange(desc(abs(log2FoldChange)))
+ntop=20
+sigGenes <- rownames(orderedSigGenes[1:ntop,])
+
+
+## Take the first 20 instead of threshold?? 
 length(sigGenes)
 deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
 
@@ -269,18 +316,76 @@ vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
 dim(vsd_filt_genes)
 length(vsd_filt_genes$COHORT)
 
-df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX")])
+df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
 
-pheatmap(assay(vsd_filt_genes), cluster_rows=FALSE, 
-         show_rownames=FALSE,
-         cluster_cols=TRUE, annotation_col=df )
+#colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
 
+fname<-paste0(outdir_s, '/heatmap3.jpeg')
+jpeg(fname, width=2000, height=1500, res=200)
+my_pheatmap<-pheatmap(assay(vsd_filt_genes), 
+         cluster_rows=FALSE, 
+         show_rownames=TRUE,
+         cluster_cols=TRUE, annotation_col=df)
+
+my_pheatmap
+
+dev.off()
+
+pheatmap(assay(vsd_filt_genes), 
+         cluster_rows=FALSE, 
+         show_rownames=TRUE,
+         cluster_cols=TRUE, annotation_col=df)
+
+
+
+fname<-paste0(outdir_s, '/heatmap2.jpeg')
 
 
 ggsave(paste0(outdir_s, '/heatmap2.jpeg'))
 
 
 
+
 dists <- dist(t(assay(vsd_filt)))
 plot(hclust(dists))
+
+
+### Add Volcano plots 
+### Compare to their results 
+
+
+
+
+#BiocManager::install('EnhancedVolcano')
+
+library('EnhancedVolcano')
+if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
+ns<-table(se_filt$COHORT_DEFINITION)
+ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+pvol<-EnhancedVolcano(deseq2ResDF,
+                lab = lab,
+                pCutoff = 10e-6,
+                FCcutoff = 0.1,
+                x = 'log2FoldChange',
+                y = 'pvalue', 
+                subtitle = ns   )
+pvol
+fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
+ggsave(fname)
+
+library('EnhancedVolcano')
+pvol+coord_flip()
+
+fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
+ggsave(fname)
+
+
+
+
+
+
+
+
+
+
 

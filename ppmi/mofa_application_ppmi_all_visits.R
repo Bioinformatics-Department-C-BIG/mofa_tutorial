@@ -28,18 +28,11 @@ library(dplyr)
 library('MultiAssayExperiment')
 
 
-
-
-
-
-
-
-
-
 outdir_orig=paste0('ppmi/plots/')
 output_files<- paste0('ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/../config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -55,7 +48,7 @@ source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 
-
+# TODO: move all to config file 
 
 TOP_PN=0.70
 TOP_GN=0.10# 0.20
@@ -102,6 +95,8 @@ VISIT=c('BL', 'V04','V06', 'V08')
 TISSUE='CSF'; 
 run_vsn=TRUE
 TISSUE='Plasma';
+
+
 VISIT=c('V06');sel_coh <- c(1,2);NORMALIZED=TRUE;
 
 

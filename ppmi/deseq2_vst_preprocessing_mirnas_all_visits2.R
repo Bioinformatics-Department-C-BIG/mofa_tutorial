@@ -45,6 +45,7 @@ filter_common=TRUE
 
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
+
 process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
@@ -146,7 +147,7 @@ if (length(sel_coh)>1){
     
   }
 
-datalist=list(ddsSE, vsd)
+datalist=list(ddsSE, vsd, se_filt)
 saveRDS(datalist,deseq_file)
 
 

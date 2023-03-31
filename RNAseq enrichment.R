@@ -46,13 +46,13 @@ res = results(dds_enrich, contrast = c('Subtype', 'NPS1', 'NPS3' ))
 res=deseq2ResDF
 res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
 dim(res)
-# Order the DE gene list by the stat statistic 
+res
+resLFC# Order the DE gene list by the stat statistic 
 #remove negatives thatw ere introduced with vst transofrmations
 res<-res[res$baseMean>0,]
 res<-res[res$baseMean>0,]
 
 res <- res[order(-res$stat),]
-res<-res[1:500,]
 gene_list<-res$stat
 names(gene_list)<-rownames(res)
 
@@ -70,9 +70,22 @@ gse <- clusterProfiler::gseGO(gene_list,
                               OrgDb = 'org.Hs.eg.db', 
                               pvalueCutoff  = 0.05)
 
+ONT='MF'
+gse <- clusterProfiler::gseGO(gene_list, 
+                              ont=ONT, 
+                              keyType = 'ENSEMBL', 
+                              OrgDb = 'org.Hs.eg.db', 
+                              pvalueCutoff  = 0.05)
+
 require(DOSE)
 gse
+dev.off()
+
+jpeg(paste0(outdir_s, '/gseGO', ONT, '.jpeg'))
 dotplot(gse, showCategory=10, split=".sign") + facet_grid(.~.sign)
+dev.off()
+
+
 emapplot(gse, showCategory = 10)
 
 

@@ -6,6 +6,7 @@ library('UpSetR')
 library('dplyr')
 #install.packages('VennDiagram')
 library('VennDiagram')
+library(grid)
 
 ### Table of samples from all visits 
 
@@ -39,7 +40,7 @@ counts_table<-table(get_stats)
 ## TODO: which are the common samples in all the lists
 
 
-View(c(meta$PATNO,meta$EVENT_ID))
+#View(c(meta$PATNO,meta$EVENT_ID))
 library(plyr)
 meta %>% 
   filter(EVENT_ID==visits[1])
@@ -48,22 +49,30 @@ meta %>%
 
 dirs<-dir(path = "ppmi/plots/single/", pattern = 'mirnas', 
     full.names = TRUE)
-dirs
+visits=c('BL', 'V04', 'V06', 'V08')
 
-all_visits<-lapply(dirs, function(x) {
+if  (process_mirnas){
+  outdir_all<-paste0(outdir_orig, '/single/', 'mirnas_',visits, '_', m_params ,'coh_', sel_coh_s, '_',des)
+  title='mirnas'
+}else{
+  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_', g_params ,'coh_', sel_coh_s, '_',des)
+  title='rnas'
+  
+}
+
+
+all_visits<-lapply(outdir_all, function(x) {
   outfile<-paste0(x, '/significant.csv')
-  print
   as.data.frame(read.csv(outfile))
   })
 
-all_visits
+names(all_visits)
 all_visits
 list_of_mirs<-lapply(all_visits,function(df)
   df[df$sign_lfc=='Significant',]$X
 )
 
 
-sig_mirs[sig_mirs$sign_lfc=='Significant',]
 
 
 listInput <- list(BL = list_of_mirs[[1]],
@@ -72,8 +81,9 @@ listInput <- list(BL = list_of_mirs[[1]],
                   V08 =  list_of_mirs[[4]])
 
 
-jpeg(paste0(out_compare, 'venn_diagram.jpeg'))
-upset(fromList(listInput))
+jpeg(paste0(out_compare, 'upSet_diagram.jpeg'), res=200, width=800, height=500)
+up<-upset(fromList(listInput))
+up+grid.text('mirnas')
 dev.off()
 
 #data_with_intersection <- listInput %>%

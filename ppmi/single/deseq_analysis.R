@@ -1,22 +1,19 @@
-#install.packages('R.filesets')
 
 
-#intall
-#install.packages(c("factoextra", "FactoMineR"))
-#install.packages('pheatmap')
+#install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
 library('R.filesets')
+
+
+### TODO: Add volcano plot for each time point -DONE
+### TODO: add heatmap for all tps tpogether -DONE
+#source('ppmi/de')
+
 #load
 library("factoextra")
 library("FactoMineR")
 library('pheatmap')
-
-### TODO: Add volcano plot for each time point
-### TODO: add heatmap for all tps tpogether 
-#source('ppmi/de')
-
-
-
+library('ggplot2')
 
 #### Run DE 
 
@@ -24,36 +21,36 @@ library('pheatmap')
 #ddsSE <- DESeqDataSet(se_filt, 
 #                      design = ~PATNO)
 
-
-
 # TODO: assign the groups 
 #dds <- DESeqDataSetFromMatrix(
 # countData = assay(se_filt),
 #  colData = colData(se_filt),
 #  design = ~COHORT, tidy = F
 #)
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
+source('config.R')
+source(paste0(script_dir, '/../config.R'))
 
-print(deseq_file)
+### LOAD runs
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
 vsd=datalist[[2]]
 se_filt=datalist[[3]]
-
+deseq2Data=datalist[[4]]
 
 table(se_filt$COHORT_DEFINITION)
 
 # todo join strings
-deseq2Data <- DESeq(ddsSE)
 # TODO: Report the number of samples too! 
 
 des<-paste0(as.character(design(ddsSE))[-1])
-sel_coh_s
 if  (process_mirnas){
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m,des)
+
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
   
 }else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g,des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, des)
   
 }
 outdir_s
@@ -141,7 +138,6 @@ outdir_s
 
 
 # Set a boolean column for significance
-
 
 
 

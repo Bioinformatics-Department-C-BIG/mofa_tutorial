@@ -3,6 +3,9 @@
 #### This script performs filter by expression, size factor estimation and vsn on the whole matrix of 
 #### RNAs or miRNAS 
 #### parameters: MIN_COUNT_M, MIN_COUNT_G define the parameters for filtering out genes with low counts 
+install.packages('GenomicRanges')
+install.packages('edgeR')
+
 library(edgeR)
 library(limma)
 library(Glimma)
@@ -10,8 +13,17 @@ library(Glimma)
 library(gplots)
 library(RColorBrewer)
 library(sys)
+install.packages('BiocManager')
+
+
+BiocManager::install('DESeq2')
+#BiocManager::install('vsn')
+
+
+library(GenomicRanges)
+
+#remove.packages('Glimma') 
 library(DESeq2)
-library("vsn")
 library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
@@ -46,44 +58,7 @@ filter_common=TRUE
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
 
-process_mirnas<-FALSE
-if (process_mirnas){
-   mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
-   mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
-   
-   raw_counts<-mirnas_BL
 
-  # if we filter too much we get normalization problems 
-  min.count=MIN_COUNT_M
-  most_var=TOP_MN
-  vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-  deseq_file<-paste0(output_files, param_str_m,'deseq.Rds')
-  
-  
-}else{
-  rnas_file<-paste0(output_files, 'rnas_all_visits.csv')
-  rnas_BL<-as.matrix(fread(rnas_file, header=TRUE), rownames=1)
- 
-  raw_counts<-rnas_BL
-    # this is defined later but filter here if possible to speed up
-  # TODO: fix and input common samples as a parameter
-# raw_counts<-raw_counts %>% select(common_samples)
-
-  min.count=MIN_COUNT_G
-  most_var=TOP_GN
-  vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'rnas_', param_str_g,  '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
-  
-  highly_variable_outfile
-  
-  
-  deseq_file<-paste0(output_files, param_str_g,'deseq.Rds')
-  
-  
-}
-deseq_file
-raw_counts_all=raw_counts
 
 
 ##### 1.  First create the summarized experiment object  
@@ -124,7 +99,8 @@ if (length(sel_coh)>1){
         ddsSE<-estimateSizeFactors(ddsSE)
         
         vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-        print(dim(vsd))
+
+        
         
       }else{
         print('Two cohorts detected, running deseq and vsd with design formula')
@@ -133,7 +109,7 @@ if (length(sel_coh)>1){
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-    
+
   }
   }else{
     print('Single cohort and visit deseq ')
@@ -147,7 +123,8 @@ if (length(sel_coh)>1){
     
   }
 
-datalist=list(ddsSE, vsd, se_filt)
+deseq2Data <- DESeq(ddsSE)
+datalist=list(ddsSE, vsd, se_filt, deseq2Data)
 saveRDS(datalist,deseq_file)
 
 

@@ -10,6 +10,17 @@ library(Glimma)
 library(gplots)
 library(RColorBrewer)
 library(sys)
+
+
+BiocManager::install('Glimma')
+# BiocManager::install('IRanges', force=TRUE)
+BiocManager::install('GenomicRanges')
+BiocManager::install(c("GenomicFeatures", "AnnotationDbi"))
+
+
+library(GenomicRanges)
+
+#remove.packages('Glimma') 
 library(DESeq2)
 library("vsn")
 library("SummarizedExperiment")
@@ -124,7 +135,8 @@ if (length(sel_coh)>1){
         ddsSE<-estimateSizeFactors(ddsSE)
         
         vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-        print(dim(vsd))
+
+        
         
       }else{
         print('Two cohorts detected, running deseq and vsd with design formula')
@@ -133,7 +145,7 @@ if (length(sel_coh)>1){
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-    
+
   }
   }else{
     print('Single cohort and visit deseq ')
@@ -147,7 +159,9 @@ if (length(sel_coh)>1){
     
   }
 
-datalist=list(ddsSE, vsd, se_filt)
+deseq2Data <- DESeq(ddsSE)
+
+datalist=list(ddsSE, vsd, se_filt, deseq2Data)
 saveRDS(datalist,deseq_file)
 
 

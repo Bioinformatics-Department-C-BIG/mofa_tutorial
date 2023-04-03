@@ -138,12 +138,12 @@ outdir_s
 
 
 # Set a boolean column for significance
-T_lfc=0.1
+T_lfc=0.15
 padj_T=0.05
 deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < padj_T , "Significant", NA)
 deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj < padj_T & abs(deseq2ResDF$log2FoldChange) >T_lfc , "Significant", NA)
 
-
+length(which(!is.na(deseq2ResDF$sign_lfc )))
 head(deseq2ResDF$significant )
 
 # Examine this data frame

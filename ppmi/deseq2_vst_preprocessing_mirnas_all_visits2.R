@@ -46,7 +46,7 @@ filter_common=TRUE
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -174,6 +174,7 @@ rownames(highly_variable_genes_mofa)
 highly_variable_outfile
 
 run_plots<-FALSE
+
 if (run_plots){
   meanSdPlot(vsd_mat)
   

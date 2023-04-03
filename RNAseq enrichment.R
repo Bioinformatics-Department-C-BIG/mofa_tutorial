@@ -31,14 +31,15 @@ dds_enrich = DESeq(dds_enrich)
 resultsNames(dds_enrich)
 
 
-res <- results(dds_enrich, name = 'Subtype_NPS3_vs_NPS1')
-resLFC <- lfcShrink(dds_enrich, coef="Subtype_NPS3_vs_NPS1", type="apeglm")
-res
+#res <- results(dds_enrich, name = 'Subtype_NPS3_vs_NPS1')
+#resLFC <- lfcShrink(dds_enrich, coef="Subtype_NPS3_vs_NPS1", type="apeglm")
 
-res = results(dds_enrich, contrast = c('Subtype', 'NPS1', 'NPS3' ))
+#res = results(dds_enrich, contrast = c('Subtype', 'NPS1', 'NPS3' ))
 
 # Order the DE gene list by the stat statistic 
-#remove negatives thatw ere introduced with vst transofrmations
+#remove negatives that were introduced with vst transofrmations
+
+
 res<-res[res$baseMean>0,]
 
 res <- res[order(-res$stat),]
@@ -49,7 +50,6 @@ gene_list
 
 
 top20<-res[1:200,]
-write.csv(top20, 'bladder_cancer/Enrichment/top20.txt')
 #  Takes input the DE genes from DESeq2 
 gse <- clusterProfiler::gseGO(gene_list, 
              ont='BP', 

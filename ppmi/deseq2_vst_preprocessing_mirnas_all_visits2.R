@@ -46,7 +46,7 @@ filter_common=TRUE
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -146,11 +146,12 @@ if (length(sel_coh)>1){
     
     
   }
+deseq2Data <- DESeq(ddsSE)
 
-datalist=list(ddsSE, vsd, se_filt)
+datalist=list(ddsSE, vsd, se_filt,deseq2Data )
 saveRDS(datalist,deseq_file)
 
-
+se_filt$COHORT
 
 
 # Compute normalization factors and vst 

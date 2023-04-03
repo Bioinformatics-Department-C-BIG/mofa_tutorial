@@ -31,24 +31,27 @@ library('pheatmap')
 #)
 
 
-table(se_filt$COHORT_DEFINITION)
 
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
 vsd=datalist[[2]]
+se_filt=datalist[[3]]
+deseq2Data=datalist[[4]]
+
+
+table(se_filt$COHORT_DEFINITION)
 
 
 # todo join strings
-deseq2Data <- DESeq(ddsSE)
 # TODO: Report the number of samples too! 
 
 des<-paste0(as.character(design(ddsSE))[-1])
 sel_coh_s
 if  (process_mirnas){
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, 'visits_', VISIT_S, '_coh_', sel_coh_s, '_',des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
   
 }else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, 'visits_', VISIT_S, '_coh_', sel_coh_s, '_',des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, des)
   
 }
 outdir_s
@@ -136,8 +139,9 @@ outdir_s
 
 # Set a boolean column for significance
 T_lfc=0.1
-deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < .05 , "Significant", NA)
-deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj < .05 & abs(deseq2ResDF$log2FoldChange) >T_lfc , "Significant", NA)
+padj_T=0.05
+deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < padj_T , "Significant", NA)
+deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj < padj_T & abs(deseq2ResDF$log2FoldChange) >T_lfc , "Significant", NA)
 
 
 head(deseq2ResDF$significant )
@@ -151,7 +155,7 @@ sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
 ens_ids<-gsub('\\..*', '', rownames(sign_only_ordered))
 rownames(sign_only_ordered)<-ens_ids
 
-write.csv(sign_only_ordered,paste0(outdir_s, '/significant.csv'), row.names = TRUE)
+write.csv(sign_only_ordered,paste0(outdir_s, '/significant_', 'p_', padj_T, '.csv'), row.names = TRUE)
 sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
 sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
 

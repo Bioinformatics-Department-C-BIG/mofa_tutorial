@@ -3,7 +3,10 @@
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
 library('R.filesets')
-
+library(DESeq2)
+library("SummarizedExperiment")
+library(data.table)
+library(dplyr)
 
 ### TODO: Add volcano plot for each time point -DONE
 ### TODO: add heatmap for all tps tpogether -DONE
@@ -27,17 +30,15 @@ library('ggplot2')
 #  colData = colData(se_filt),
 #  design = ~COHORT, tidy = F
 #)
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
-source('config.R')
-source(paste0(script_dir, '/../config.R'))
+#source(paste0(script_dir, '/config.R'))
 
 ### LOAD runs
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
 vsd=datalist[[2]]
 se_filt=datalist[[3]]
-deseq2Data=datalist[[4]]
+deseq2Results=datalist[[4]]
 
 table(se_filt$COHORT_DEFINITION)
 
@@ -70,20 +71,28 @@ dir.create(outdir_s)
 #deseq2Data<-loadRDS(paste0(outdir_s, '/deseq_results.RDS'))
 #### First obtain the single omics significant RNAs 
 
-print(deseq2Data$EVENT_ID)
 
 
-deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
+deseq2ResDF <- as.data.frame(deseq2Results)
 
-summary(deseq2Results)
+
+### Up to here output can be used for other reasons
+##
+
+
 
 # 
 
-jpeg(paste0(outdir_s, '/MA_plot_results.jpeg'))
-plotMA(deseq2Results)
-dev.off()
+if (run_ma){
+  jpeg(paste0(outdir_s, '/MA_plot_results.jpeg'))
+  plotMA(deseq2Results)
+  dev.off()
+}
+
+
+
 #, ylim=c(-1,10), xlim=c(0,5))
 
 
@@ -109,7 +118,6 @@ library(viridis)
 
 
 # Coerce to a data frame
-deseq2ResDF <- as.data.frame(deseq2Results)
 
 ### TODO: what is lfcShrink? 
 
@@ -188,17 +196,22 @@ dir.create(outdir_s)
 
 
 # Let's add some more detail
-
+dev.off()
+limits<-as.numeric(max(abs(deseq2ResDF$log2FoldChange)))
+limits
 p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) + 
   geom_point(size=1) + scale_y_continuous(limits=c(-2, 2), oob=squish) +
   scale_x_log10() + geom_hline(yintercept = 0, colour="darkorchid4", size=1, 
                                linetype="longdash") + 
   labs(x="mean of normalized counts", y="log fold change") +
   scale_colour_viridis(direction=-1, trans='sqrt') + theme_bw() +
-  geom_density_2d(colour="black", size=0.5)
-
+  geom_density_2d(colour="black", size=0.5)+ 
+  geom_hline(yintercept=c(0.15, -0.15),linetype="dashed", color = "red")+
+  ylim(-(limits+0.1),(limits+0.1))
+  
 
 p
+
 logplot_f<-paste0(outdir_s, '/logfold_padjusted_plot.jpeg')
 ggsave(logplot_f,width=8, height=6, res=300 )
 ggsave(logplot_f,width=8, height=6 )

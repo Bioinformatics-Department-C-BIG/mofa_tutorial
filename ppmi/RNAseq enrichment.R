@@ -5,6 +5,7 @@ library(pheatmap)
 library(org.Hs.eg.db)
 #BiocManager::install('clusterProfiler')
 library(DOSE)
+require(DOSE)
 
 
 library('apeglm')
@@ -37,8 +38,11 @@ library(tidyverse)
 
 #### Try using the deseq2 enrichment results 
 
-
+padj_T=0.05;log2fol_T=0.10
 res=deseq2ResDF
+res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
+
+length(which(!is.na(res$sign_lfc )))
 res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
 dim(res)
 res
@@ -60,7 +64,6 @@ names(gene_list)<-rownames(res)
 names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
 ONT='BP'
-
 gse <- clusterProfiler::gseGO(gene_list, 
                               ont=ONT, 
                               keyType = 'ENSEMBL', 
@@ -69,15 +72,17 @@ gse <- clusterProfiler::gseGO(gene_list,
 
 
 #ONT='MF'
-gse <- clusterProfiler::gseGO(gene_list, 
-                              ont=ONT, 
-                              keyType = 'ENSEMBL', 
-                              OrgDb = 'org.Hs.eg.db', 
-                              pvalueCutoff  = 0.05)
+#gse <- clusterProfiler::gseGO(gene_list, 
+#                              ont=ONT, 
+#                              keyType = 'ENSEMBL', 
+#                              OrgDb = 'org.Hs.eg.db', 
+#                              pvalueCutoff  = 0.05)
 
-require(DOSE)
 
-jpeg(paste0(outdir_s, '/gseGO', ONT, '.jpeg'))
+
+results_file<-paste0(outdir_s, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T)
+write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
+jpeg(paste0(results_file, '.jpeg'))
 dotplot(gse, showCategory=10, split=".sign") + facet_grid(.~.sign)
 dev.off()
 

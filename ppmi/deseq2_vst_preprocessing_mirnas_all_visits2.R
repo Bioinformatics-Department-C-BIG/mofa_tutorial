@@ -3,8 +3,6 @@
 #### This script performs filter by expression, size factor estimation and vsn on the whole matrix of 
 #### RNAs or miRNAS 
 #### parameters: MIN_COUNT_M, MIN_COUNT_G define the parameters for filtering out genes with low counts 
-install.packages('GenomicRanges')
-install.packages('edgeR')
 
 library(edgeR)
 library(limma)
@@ -13,10 +11,8 @@ library(Glimma)
 library(gplots)
 library(RColorBrewer)
 library(sys)
-install.packages('BiocManager')
 
 
-BiocManager::install('DESeq2')
 #BiocManager::install('vsn')
 
 
@@ -28,16 +24,12 @@ library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
 ## Output directory
+output_de=paste0(output_1, 'gene')
 
-output_1='ppmi/output/'
-output_files_orig<-'ppmi/output/'
-output_files<-'ppmi/output/'
-outdir_orig<-'ppmi/plots/'
 
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir, '/setup_os.R'))
 
-
-output_de=paste0(output_1, 'gene')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
 source(paste0(script_dir, '/config.R'))
@@ -124,7 +116,8 @@ if (length(sel_coh)>1){
   }
 
 deseq2Data <- DESeq(ddsSE)
-datalist=list(ddsSE, vsd, se_filt, deseq2Data)
+deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
+datalist=list(ddsSE, vsd, se_filt, deseq2Results)
 saveRDS(datalist,deseq_file)
 
 

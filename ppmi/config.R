@@ -1,14 +1,13 @@
 
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir, '/setup_os.R'))
+print(script_dir)
+library(sys)
+library(data.table)
 
 
 MIN_COUNT_G=100
 MIN_COUNT_M=10
-VISIT='BL'
-
-VISIT=c('V04')
-VISIT=('BL')
-VISIT=('BL')
-
 
 
 
@@ -24,11 +23,9 @@ sel_coh <- c(1,2)
 
 sel_coh=c(1,2);
 
+VISIT=c('V04')
 
 
-
-
-VISIT=c( 'V08')
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
@@ -39,6 +36,14 @@ m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_')
 param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
 param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
 
+
+
+
+#### specific to rna seq 
+output_1='ppmi/output/'
+output_files_orig<-'ppmi/output/'
+output_files<-'ppmi/output/'
+outdir_orig<-'ppmi/plots/'
 
 
 process_mirnas<-FALSE
@@ -77,5 +82,4 @@ if (process_mirnas){
   
   
 }
-deseq_file
-raw_counts_all=raw_counts
+

@@ -42,16 +42,11 @@ combined<-read.csv2(metadata_output)
 
 
 filter_common=TRUE
-VISIT=c('V04')
-VISIT_S=paste(VISIT,sep='_',collapse='-')
-sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
-
-g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0( VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_') 
 
 # MOVE ALL this to a configuration file!! 
 #### Remove low expression 
-process_mirnas<-TRUE
+
+process_mirnas<-FALSE
 if (process_mirnas){
    mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
    mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
@@ -61,8 +56,7 @@ if (process_mirnas){
   # if we filter too much we get normalization problems 
   min.count=MIN_COUNT_M
   most_var=TOP_MN
-  param_str_m<-paste0('mirnas_', m_params ,sel_coh_s, '_')
-  vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'mirnas_', param_str_m, '_vsn.csv')
+  vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
   deseq_file<-paste0(output_files, param_str_m,'deseq.Rds')
   
@@ -78,7 +72,6 @@ if (process_mirnas){
 
   min.count=MIN_COUNT_G
   most_var=TOP_GN
-  param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'rnas_', param_str_g,  '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
   
@@ -89,7 +82,7 @@ if (process_mirnas){
   
   
 }
-
+deseq_file
 raw_counts_all=raw_counts
 
 
@@ -154,7 +147,7 @@ if (length(sel_coh)>1){
     
   }
 
-datalist=list(ddsSE, vsd)
+datalist=list(ddsSE, vsd, se_filt)
 saveRDS(datalist,deseq_file)
 
 

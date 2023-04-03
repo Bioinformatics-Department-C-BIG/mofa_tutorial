@@ -6,13 +6,19 @@ library('UpSetR')
 library('dplyr')
 #install.packages('VennDiagram')
 library('VennDiagram')
+library(grid)
 
 ### Table of samples from all visits 
 
 out_compare<-'ppmi/plots/single/compare/'
 dir.create(out_compare)
 
+log2fol_T<-0.1;padj_T<-.05;
 
+### TODO: filter by threshold here!! 
+signif_file<-paste0('/significant', padj_T, '_',log2fol_T, '.csv')
+  
+  
 #### Firstly print numbers of samples 
 visits<-c('BL', 'V04', 'V06', 'V08')
 all_vs_ps<-filter_se(se,visits, sel_coh )
@@ -39,31 +45,46 @@ counts_table<-table(get_stats)
 ## TODO: which are the common samples in all the lists
 
 
-View(c(meta$PATNO,meta$EVENT_ID))
+#View(c(meta$PATNO,meta$EVENT_ID))
 library(plyr)
 meta %>% 
   filter(EVENT_ID==visits[1])
 
 
+visits=c('BL', 'V04', 'V06', 'V08')
 
-dirs<-dir(path = "ppmi/plots/single/", pattern = 'mirnas', 
-    full.names = TRUE)
-dirs
+if  (process_mirnas){
+  outdir_all<-paste0(outdir_orig, '/single/', 'mirnas_',visits, '_', m_params ,'coh_', sel_coh_s, '_',des)
+  title_x='mirna'
+}else{
+  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_', g_params ,'coh_', sel_coh_s, '_',des)
+  title_x='rna'
+  
+}
 
-all_visits<-lapply(dirs, function(x) {
-  outfile<-paste0(x, '/significant.csv')
-  print
-  as.data.frame(read.csv(outfile))
+
+all_visits<-lapply(outdir_all, function(x) {
+  
+  outfile<-paste0(x, signif_file)
+  if (file.exists(outfile)){
+  return(as.data.frame(read.csv(outfile)))
+  }else{
+      print(paste0(outfile,'not available'))
+    }
   })
 
+
 all_visits
-all_visits
+padj_T<-0.01
+log2fol_T<-0.1
 list_of_mirs<-lapply(all_visits,function(df)
-  df[df$sign_lfc=='Significant',]$X
+  if ('X' %in% colnames(df)){
+    df$sign_lfc2 <- ifelse(df$padj <padj_T & abs(df$log2FoldChange) >log2fol_T , TRUE, FALSE);
+  return(df[df$sign_lfc2,]$X)
+  }
 )
-
-
-sig_mirs[sig_mirs$sign_lfc=='Significant',]
+list_of_mirs[[1]]
+merge(list_of_mirs, by='feats',all=TRUE)
 
 
 listInput <- list(BL = list_of_mirs[[1]],
@@ -72,15 +93,20 @@ listInput <- list(BL = list_of_mirs[[1]],
                   V08 =  list_of_mirs[[4]])
 
 
-jpeg(paste0(out_compare, 'venn_diagram.jpeg'))
-upset(fromList(listInput))
+
+
+jpeg(paste0(out_compare, title_x,'_upSet_diagram', padj_T, '_', log2fol_T, '.jpeg'), 
+     res=200, width=800, height=500)
+up<-upset(fromList(listInput), 
+          sets.x.label = paste0(title_x," counts by Visit"))
+up
 dev.off()
 
 #data_with_intersection <- listInput %>%
 #  unite(col = "intersection", -c("entry"), sep = "")
 
+calculate.overlap(listInput)
 
-getwd()
 venn.diagram(listInput,   
              filename = paste0(out_compare,'14_venn_diagramm.png'), output=TRUE)
 

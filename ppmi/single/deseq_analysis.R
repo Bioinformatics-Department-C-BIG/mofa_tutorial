@@ -1,19 +1,22 @@
 #install.packages('R.filesets')
-library('R.filesets')
 
+
+#intall
+#install.packages(c("factoextra", "FactoMineR"))
+#install.packages('pheatmap')
+
+library('R.filesets')
+#load
+library("factoextra")
+library("FactoMineR")
+library('pheatmap')
 
 ### TODO: Add volcano plot for each time point
 ### TODO: add heatmap for all tps tpogether 
 #source('ppmi/de')
 
 
-#intall
-#install.packages(c("factoextra", "FactoMineR"))
 
-#load
-library("factoextra")
-library("FactoMineR")
-library('pheatmap')
 
 #### Run DE 
 
@@ -31,12 +34,14 @@ library('pheatmap')
 #)
 
 
-table(se_filt$COHORT_DEFINITION)
-
+print(deseq_file)
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
 vsd=datalist[[2]]
+se_filt=datalist[[3]]
 
+
+table(se_filt$COHORT_DEFINITION)
 
 # todo join strings
 deseq2Data <- DESeq(ddsSE)
@@ -45,10 +50,10 @@ deseq2Data <- DESeq(ddsSE)
 des<-paste0(as.character(design(ddsSE))[-1])
 sel_coh_s
 if  (process_mirnas){
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, 'visits_', VISIT_S, '_coh_', sel_coh_s, '_',des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m,des)
   
 }else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, 'visits_', VISIT_S, '_coh_', sel_coh_s, '_',des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g,des)
   
 }
 outdir_s
@@ -92,10 +97,9 @@ pca.data <- PCA(t(highly_variable_genes_mofa), scale.unit = TRUE, graph = FALSE)
 
 fviz_eig(pca.data, addlabels = TRUE, ylim = c(0, 70))
 
-dev.off()
+
 fviz_pca_ind(pca.data)
 
-dev.off()
 #### Make plots 
 # Load libraries
 # install.packages(c("ggplot2", "scales", "viridis"))
@@ -123,11 +127,13 @@ if (!process_mirnas){
                     column = c('SYMBOL'), keytype = 'ENSEMBL')
   symbols <- symbols[!is.na(symbols)]
   symbols_ordered <- symbols[match(ens, names(symbols))]
-  
-  length(symbols_ordered)
+  na_ind<-is.na(symbols_ordered);
+  symbols_ordered[na_ind]=ens[na_ind]
   deseq2ResDF$SYMBOL<-symbols_ordered
+  
 }
-
+rowData(vsd)$SYMBOL=symbols_ordered
+is.na(rowData(vsd)$SYMBOL)
 #symbols[dup_ind]
 
 outdir_s
@@ -135,32 +141,37 @@ outdir_s
 
 
 # Set a boolean column for significance
-T_lfc=0.1
-deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < .05 , "Significant", NA)
-deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj < .05 & abs(deseq2ResDF$log2FoldChange) >T_lfc , "Significant", NA)
 
 
-head(deseq2ResDF$significant )
-
-# Examine this data frame
-# Order the significant to save as a new output file 
-head(deseq2ResDF)
-sign_only<-deseq2ResDF[which(deseq2ResDF$significant=='Significant'),]
-sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
-
-ens_ids<-gsub('\\..*', '', rownames(sign_only_ordered))
-rownames(sign_only_ordered)<-ens_ids
-
-write.csv(sign_only_ordered,paste0(outdir_s, '/significant.csv'), row.names = TRUE)
-sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
-sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
-
-write.csv(sign_only_ordered,paste0(outdir_s, '/significant.csv'), row.names = TRUE)
-
-dim(sign_only_ordered)
 
 
-outdir_s
+
+
+mark_signficant<-function(deseq2ResDF, padj_T, log2fol_T){
+  ## mark a significant column and write to file
+  
+  signif_file<-paste0('/significant', padj_T, '_',log2fol_T, '.csv')
+  
+  deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < padj_T , "Significant", NA)
+  deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj <padj_T & abs(deseq2ResDF$log2FoldChange) >log2fol_T , "Significant", NA)
+  # Examine this data frame
+  # Order the significant to save as a new output file 
+  head(deseq2ResDF)
+  # LARGER ONE not saved 
+  sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
+  sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
+  write.csv(sign_only_ordered,paste0(outdir_s,signif_file), row.names = TRUE)
+  ### create also a more strict file? 
+  return(deseq2ResDF)
+}
+log2fol_T<-0.25
+padj_T<-.005
+
+deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
+
+log2fol_T<-0.1
+padj_T<-.05
+deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 
 
@@ -194,10 +205,12 @@ p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) +
 p
 logplot_f<-paste0(outdir_s, '/logfold_padjusted_plot.jpeg')
 ggsave(logplot_f,width=8, height=6, res=300 )
+ggsave(logplot_f,width=8, height=6 )
+
 
 #### NORMALIZED COUNTS
 top_gene<-rownames(deseq2ResDF[which.min(deseq2ResDF$padj),])
-top_gene
+#top_gene
 
 contrasts<-c('Condition', 'EVENT_ID')
 dds$Condition<-dds$COHORT
@@ -250,6 +263,7 @@ nind<-300
 rand_ind<-sample(seq(1:dim(vsd)[2]),nind )
 vsd_filt<-vsd[,rand_ind]
 vsd_filt=vsd
+rowData(vsd)$SYMBOL
 deseq2VST <- as.data.frame( assay(vsd_filt))
 
 #### Filter data for visualization 
@@ -263,22 +277,24 @@ head(deseq2VST)
 
 deseq2ResDF$padj 
 # Keep only the significantly differentiated genes where the fold-change was at least 3
-log2fol_T<-0.35
-log2fol_T<-0.5
+log2fol_T<-0.25
+padj_T<-.005
 
-sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= .05 & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
-orderedSigGenes<-deseq2ResDF[deseq2ResDF$padj <= .05, ] %>% 
-  arrange(desc(abs(log2FoldChange)))
+sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
+orderedSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] %>% 
+  arrange(padj)
+dim(orderedSigGenes)
+#  arrange(desc(abs(log2FoldChange)))
 ntop=20
-sigGenes <- rownames(orderedSigGenes[1:ntop,])
-
+sigGenes <- rownames(orderedSigGenes)
+#vsd_filt
 
 ## Take the first 20 instead of threshold?? 
 length(sigGenes)
 deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
 
 dim(deseq2VST)
-deseq2VST$Gene
+#deseq2VST$Gene
 
 #Convert the VST counts to long format for ggplot2
 library(reshape2)
@@ -297,7 +313,6 @@ head(deseq2VST_long)
 #deseq2VST_p <- melt(deseq2VST_long, id.vars=c("Gene"))
 
 
-dim(deseq2VST_p)
 graphics.off()
 # Make a heatmap ## using the vst
 ## TODO add annotation
@@ -307,35 +322,42 @@ heatmap <- ggplot(deseq2VST_long, aes(x=variable, y=Gene, fill=value)) + geom_ra
   theme(axis.text.x=element_text(angle=65, hjust=1), axis.text.y=element_blank(), 
         axis.ticks.y=element_blank())
 heatmap
-#library('pheatmap')
+library('pheatmap')
 
 df<-vsd_filt$COHORT
 assay(vsd_filt)
 vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+#vsd_filt
+
 
 dim(vsd_filt_genes)
 length(vsd_filt_genes$COHORT)
 
 df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
+df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
 
 #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-
-fname<-paste0(outdir_s, '/heatmap3.jpeg')
+graphics.off()
+fname<-paste0(outdir_s, '/heatmap3', padj_T,'_', log2fol_T ,'.jpeg')
 jpeg(fname, width=2000, height=1500, res=200)
+
+
 my_pheatmap<-pheatmap(assay(vsd_filt_genes), 
-         cluster_rows=FALSE, 
+        labels_row=as.character(rowData(vsd_filt_genes)$SYMBOL),
+         cluster_rows=TRUE, 
          show_rownames=TRUE,
-         cluster_cols=TRUE, annotation_col=df)
+         cluster_cols=TRUE, annotation_col=df
+         )
 
 my_pheatmap
 
 dev.off()
 
-pheatmap(assay(vsd_filt_genes), 
+P2<-pheatmap(assay(vsd_filt_genes), 
          cluster_rows=FALSE, 
          show_rownames=TRUE,
          cluster_cols=TRUE, annotation_col=df)
-
+P2
 
 
 fname<-paste0(outdir_s, '/heatmap2.jpeg')

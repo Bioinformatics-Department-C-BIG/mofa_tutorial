@@ -17,6 +17,7 @@ TOP_MN=0.5
 sel_coh=c(1,4)
 
 
+sel_coh_s
 sel_coh <- c(1,2)
 
 
@@ -25,10 +26,9 @@ sel_coh=c(1,2);
 
 
 
+VISIT=c('V04')
 
 VISIT=c( 'V08')
-VISIT=c('V06')
-
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 

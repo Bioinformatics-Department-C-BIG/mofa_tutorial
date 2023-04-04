@@ -23,7 +23,7 @@ sel_coh <- c(1,2)
 
 sel_coh=c(1,2);
 
-VISIT=c('V04')
+
 
 
 
@@ -40,19 +40,16 @@ param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
 
 
 #### specific to rna seq 
-output_1='ppmi/output/'
-output_files_orig<-'ppmi/output/'
-output_files<-'ppmi/output/'
-outdir_orig<-'ppmi/plots/'
+output_1=paste0(data_dir, 'ppmi/output/')
+output_files_orig<-output_1
+output_files<-output_1
+outdir_orig<-paste0(data_dir,'ppmi/plots/')
 
 
 process_mirnas<-FALSE
 if (process_mirnas){
-  mirnas_file<-paste0(output_files, 'mirnas_all_visits.csv')
-  mirnas_BL<-as.matrix(fread(mirnas_file, header=TRUE), rownames=1)
-  
-  raw_counts<-mirnas_BL
-  
+  input_file<-paste0(output_files, 'mirnas_all_visits.csv')
+ 
   # if we filter too much we get normalization problems 
   min.count=MIN_COUNT_M
   most_var=TOP_MN
@@ -62,10 +59,8 @@ if (process_mirnas){
   
   
 }else{
-  rnas_file<-paste0(output_files, 'rnas_all_visits.csv')
-  rnas_BL<-as.matrix(fread(rnas_file, header=TRUE), rownames=1)
+  input_file<-paste0(output_files, 'rnas_all_visits.csv')
   
-  raw_counts<-rnas_BL
   # this is defined later but filter here if possible to speed up
   # TODO: fix and input common samples as a parameter
   # raw_counts<-raw_counts %>% select(common_samples)
@@ -82,4 +77,7 @@ if (process_mirnas){
   
   
 }
+
+#raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+#raw_counts_all<-raw_counts
 

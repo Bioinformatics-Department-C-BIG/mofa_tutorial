@@ -33,7 +33,7 @@ combined<-read.csv2(metadata_output)
 
 
 
-for (VISIT in c( 'V08', 'V06')){
+for (VISIT in c('BL', 'V04', 'V08', 'V06')){
   
   source(paste0(script_dir, '/config.R'))
   
@@ -84,6 +84,7 @@ for (VISIT in c( 'V08', 'V06')){
   ## Turn to factors for deseq
   se_filt$SEX<-as.factor(se_filt$SEX)
   
+  se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   
   if (length(sel_coh)>1){
     
@@ -91,7 +92,7 @@ for (VISIT in c( 'V08', 'V06')){
       print('Two cohorts and visits detected, running deseq and vsd with design formula')
       
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~COHORT + EVENT_ID  + SEX)
+                            design = ~AGE_AT_VISIT +SEX +  COHORT + EVENT_ID )
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -101,7 +102,7 @@ for (VISIT in c( 'V08', 'V06')){
     }else{
       print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~SEX+COHORT )
+                            design = ~AGE_AT_VISIT+SEX+COHORT )
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)

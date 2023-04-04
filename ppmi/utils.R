@@ -101,3 +101,29 @@ get_age_at_visit<-function(new){
 #                  units = "years")
 
 
+
+
+
+#### data specifc 
+get_symbols_vector<-function(ens ){
+  #' @param ens ensemble ids to conver to symbols 
+  #' @returns symbols_ordered the total 
+  #'  
+  #'  
+  
+  symbols <- mapIds(org.Hs.eg.db, keys = ens,
+                    column = c('SYMBOL'), keytype = 'ENSEMBL')
+  symbols <- symbols[!is.na(symbols)]
+  symbols_ordered <- symbols[match(ens, names(symbols))]
+  na_ind<-is.na(symbols_ordered);
+  
+  # Add ensembl ids if no symbol found
+  symbols_ordered[na_ind]=ens[na_ind]
+  return(symbols_ordered)
+  
+  
+}
+
+
+
+

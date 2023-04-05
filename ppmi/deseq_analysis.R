@@ -37,7 +37,7 @@ library('ggplot2')
 #source(paste0(script_dir, '/config.R'))
 
 ### LOAD runs
-VISIT='BL'
+VISIT='V08'
 
 
 
@@ -182,25 +182,31 @@ deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 log2fol_T<-0.1
 padj_T<-.05
+deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
+deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
+
 deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 
 
+#hist(-log10(deseq2ResDF$padj))
+#hist(deseq2ResDF$log2FoldChange)
+#hist(deseq2ResDF$log2pval[abs(deseq2ResDF$log2pval)>0.15])
+#
+#
+#
+#min(deseq2ResDF$log2pval, na.rm = TRUE)
 
 
-##### PLOTS of DE genes 
-# Plot the results similar to DEseq2
+###### PLOTS of DE genes 
 
-
-
-
-
+## Plot the results similar to DEseq2
 
 # Let's add some more detail
 dev.off()
 limits<-as.numeric(max(abs(deseq2ResDF$log2FoldChange)))
 limits
-p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) + 
+p_log_plot<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) + 
   geom_point(size=1) + scale_y_continuous(limits=c(-2, 2), oob=squish) +
   scale_x_log10() + geom_hline(yintercept = 0, colour="darkorchid4", size=1, 
                                linetype="longdash") + 
@@ -211,7 +217,7 @@ p<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) +
   ylim(-(limits+0.1),(limits+0.1))
   
 
-p
+p_log_plot
 
 logplot_f<-paste0(outdir_s, '/logfold_padjusted_plot.jpeg')
 ggsave(logplot_f,width=8, height=6 )
@@ -246,12 +252,6 @@ dds$Condition<-dds$COHORT
 #
 #p
 
-
-
-
-
-
-
 ##### 
 # Compute normalization factors and vst 
 
@@ -262,93 +262,107 @@ dds$Condition<-dds$COHORT
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
 #vsd <- varianceStabilizingTransformation(dds)
-nind<-300
-rand_ind<-sample(seq(1:dim(vsd)[2]),nind )
-vsd_filt<-vsd[,rand_ind]
-vsd_filt=vsd
-rowData(vsd)$SYMBOL
-deseq2VST <- as.data.frame( assay(vsd_filt))
+run_heatmap=FALSE
 
-#### Filter data for visualization 
-table(vsd_filt$COHORT)
-### First filter data 
+if (run_heatmap){
+  vsd_filt=vsd
+  deseq2VST <- as.data.frame( assay(vsd_filt))
+  
+  #### Filter data for visualization 
+  table(vsd_filt$COHORT)
+  ### First filter data 
+  rownames(vsd)
+  rownames(deseq2VST)<-rownames(vsd)
+  deseq2VST$Gene <- rownames(deseq2VST)
+  #head(deseq2VST)
+  
+  
+  #deseq2ResDF$padj 
+  # Keep only the significantly differentiated genes where the fold-change was at least 3
+  log2fol_T<-0.2
+  padj_T<-.01
+  
+  sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
+  deseq2ResDF$Gene<-rownames(deseq2ResDF)
+  order_by_metric<-'log2pval'
+  order_by_metric<-'abslog2pval'
+  
+  oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] 
+  orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
 
-dim(deseq2VST)
-deseq2VST$Gene <- rownames(deseq2VST)
-head(deseq2VST)
+  n_sig<-30
+  sigGenes <- orderedSigGenes$Gene[1:n_sig]
+  length(sigGenes);head(sigGenes)
+  deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
+  dim(deseq2VST)
+  #deseq2VST$Gene
+  
+  #Convert the VST counts to long format for ggplot2
+  library(reshape2)
+  library(pheatmap)
+  
+  deseq2VST_wide <- deseq2VST
+  deseq2VST_long <- melt(deseq2VST_wide, id.vars=c("Gene"))
+  
+  graphics.off()
+  # Make a heatmap ## using the vst
+  ## TODO add annotation
+  
+  
+  library('pheatmap')
+  
+  df<-vsd_filt$COHORT
+  assay(vsd_filt)
+  vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+  #vsd_filt
+  
+  
+  dim(vsd_filt_genes)
+  length(vsd_filt_genes$COHORT)
+  
+  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
+  
+  #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
+  graphics.off()
+  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T,'_', log2fol_T ,order_by_metric, '_', n_sig,'.jpeg')
+  jpeg(fname, width=2000, height=1500, res=200)
+  
+  if(process_mirnas){
+    lab=rownames(rowData(vsd_filt_genes)) }else{
+      lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+  
+  
+      my_pheatmap<-pheatmap(assay(vsd_filt_genes), 
+                            labels_row=lab,
+                            cluster_rows=TRUE, 
+                            show_rownames=TRUE,
+                            cluster_cols=TRUE, annotation_col=df
+      )
+      
+      my_pheatmap
+  
+  dev.off()
+  
+  
 
+  #P2<-pheatmap(assay(vsd_filt_genes), 
+  #         cluster_rows=FALSE, 
+  #         show_rownames=TRUE,
+  #         cluster_cols=TRUE, annotation_col=df)
+  #P2
+  
+  
+  #fname<-paste0(outdir_s, '/heatmap2.jpeg')
+  #ggsave(fname, width=8, height=8)
+  
+  #dev.off()
+  
+  
+  
+  dists <- dist(t(assay(vsd_filt)))
+  plot(hclust(dists))
+}
 
-deseq2ResDF$padj 
-# Keep only the significantly differentiated genes where the fold-change was at least 3
-log2fol_T<-0.6
-padj_T<-.001
-
-sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
-orderedSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] %>% 
-  arrange(padj)
-
-sigGenes <- rownames(orderedSigGenes)
-length(sigGenes)
-deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
-
-#deseq2VST$Gene
-
-#Convert the VST counts to long format for ggplot2
-library(reshape2)
-library(pheatmap)
-
-deseq2VST_wide <- deseq2VST
-deseq2VST_long <- melt(deseq2VST_wide, id.vars=c("Gene"))
-
-graphics.off()
-# Make a heatmap ## using the vst
-## TODO add annotation
-
-
-library('pheatmap')
-
-df<-vsd_filt$COHORT
-assay(vsd_filt)
-vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-#vsd_filt
-
-
-dim(vsd_filt_genes)
-length(vsd_filt_genes$COHORT)
-
-df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
-
-#colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-graphics.off()
-fname<-paste0(outdir_s, '/heatmap3', '_',padj_T,'_', log2fol_T ,'.jpeg')
-jpeg(fname, width=2000, height=1500, res=200)
-
-if(process_mirnas){
-          lab=rownames(rowData(vsd_filt_genes)) }else{
-          lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
-
-
-
-
-
-dev.off()
-
-#P2<-pheatmap(assay(vsd_filt_genes), 
-#         cluster_rows=FALSE, 
-#         show_rownames=TRUE,
-#         cluster_cols=TRUE, annotation_col=df)
-#P2
-
-
-#fname<-paste0(outdir_s, '/heatmap2.jpeg')
-#ggsave(fname, width=8, height=8)
-
-#dev.off()
-
-
-
-dists <- dist(t(assay(vsd_filt)))
-plot(hclust(dists))
 
 
 ### Add Volcano plots 

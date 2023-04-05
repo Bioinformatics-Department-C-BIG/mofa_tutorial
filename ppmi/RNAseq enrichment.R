@@ -13,38 +13,48 @@ library(clusterProfiler)
 library(AnnotationDbi)
 library(ensembldb)
 
-padj_T=0.01;log2fol_T=0.1
-res=deseq2ResDF
-res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
+padj_T=1;log2fol_T=0.000
 
-length(which(!is.na(res$sign_lfc )))
+order_by_metric<-'log2pval'
 
+get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
+  
+        #### Gives a gene list cut by the thresholds padj_T and log2fol and orders by specific metric supplied 
+        #' @param padj_T filter the genes by metric padj_T
+        #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
+        #' @param order_by_metric metric to order the gene list by 
+        res=deseq2ResDF
+        res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
+        
+        length(which(!is.na(res$sign_lfc )))
+        res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
+        
+        
+        # Order the DE gene list by the stat statistic 
+        #remove negatives thatw ere introduced with vst transofrmations
 
-res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
+        res$log2pval<-res$log2FoldChange*-log10(res$padj)
+        res$signlog2pval<-sign(res$log2FoldChange)*-log10(res$padj)
+        res<-res[res$baseMean>0,]
+        
+        #res <- res[order(-res$stat),]
+        res <- res[order(-res[,order_by_metric]),]
+        gene_list<-res[, order_by_metric]
+        names(gene_list)<-rownames(res)
+        
+        return(gene_list)
 
-
-# Order the DE gene list by the stat statistic 
-#remove negatives thatw ere introduced with vst transofrmations
-
-order_by_metric<-'log2FoldChange'
-
-res<-res[res$baseMean>0,]
-
-#res <- res[order(-res$stat),]
-res <- res[order(-res$log2FoldChange),]
-
-res2<-res[!grepl('ENSG', res$SYMBOL),]
-
-gene_list_symbols<-res2[,order_by_metric]
-gene_list<-res[,order_by_metric]
-names(gene_list)<-rownames(res)
+        
+  
+}
+ 
+gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
 
 
 names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
 
-
-ONT='BP'
+ONT='MF'
 
 gse <- clusterProfiler::gseGO(gene_list, 
                               ont=ONT, 
@@ -62,7 +72,7 @@ library('enrichplot')
 library('ggnewscale')
 
 
-results_file<-paste0(outdir_s, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T)
+results_file<-paste0(outdir_s, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
 N=10
 dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
@@ -71,13 +81,13 @@ ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
 #### EMAP PLOT 
 
 x2 <- pairwise_termsim(gse)
-
-p<-emapplot(x2,showCategory = 20,
+N=25
+p<-emapplot(x2,showCategory = N,
             layout = "nicely")
 p_enrich <- p + theme(text=element_text(size=12))
 
 
-ggsave(paste0(results_file, '_emap',  '.jpeg'), width=8, height=8)
+ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=8, height=8)
 
 
 

@@ -46,7 +46,7 @@ output_files<-output_1
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
 
 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 if (process_mirnas){
   input_file<-paste0(output_files, 'mirnas_all_visits.csv')
  
@@ -78,6 +78,5 @@ if (process_mirnas){
   
 }
 
-#raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
-#raw_counts_all<-raw_counts
+
 

@@ -28,11 +28,11 @@ library(dplyr)
 library('MultiAssayExperiment')
 
 
-outdir_orig=paste0('ppmi/plots/')
-output_files<- paste0('ppmi/output/')
+outdir_orig=paste0(data_dir,'ppmi/plots/')
+output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir,'/../config.R'))
+source(paste0(script_dir,'/config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -224,6 +224,8 @@ colnames(proteomics)
 
 
 common_samples<-intersect(colnames(miRNA), colnames(proteomics)); common_samples
+common_samples<-intersect(colnames(miRNA), colnames(miRNA)); common_samples
+
 common_samples<-intersect(common_samples,colnames(RNA)) ; common_samples
 common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID); common_samples
 
@@ -304,6 +306,10 @@ data = list(proteomics = as.matrix(prot_filt),
             miRNA=as.matrix(miRNA_filt), 
             RNA=as.matrix(RNA_filt) )
 
+data = list(
+            miRNA=as.matrix(miRNA_filt), 
+            RNA=as.matrix(RNA_filt) )
+
 #### just trying a multi assay here to help with filtering.. 
 
 head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
@@ -311,6 +317,10 @@ head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 assay=c(rep('proteomics', length(prot_filt)),
         rep('miRNA', length(miRNA_filt)),
         rep('RNA', length(RNA_filt)))
+
+assay=c(rep('miRNA', length(miRNA_filt)),
+        rep('RNA', length(RNA_filt)))
+
 
 primary=metadata_filt$PATNO_EVENT_ID
 colname=metadata_filt$PATNO_EVENT_ID

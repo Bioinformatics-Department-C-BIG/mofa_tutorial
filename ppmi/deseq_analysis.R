@@ -145,6 +145,8 @@ if (!process_mirnas){
   deseq2ResDF$SYMBOL<-symbols_ordered
   rowData(vsd)$SYMBOL=symbols_ordered
   rownames(deseq2ResDF)<-ens
+  rownames(vsd)<-ens
+  
   
 }
 
@@ -262,7 +264,7 @@ dds$Condition<-dds$COHORT
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
 #vsd <- varianceStabilizingTransformation(dds)
-run_heatmap=FALSE
+run_heatmap=TRUE
 
 if (run_heatmap){
   vsd_filt=vsd
@@ -274,13 +276,13 @@ if (run_heatmap){
   rownames(vsd)
   rownames(deseq2VST)<-rownames(vsd)
   deseq2VST$Gene <- rownames(deseq2VST)
-  #head(deseq2VST)
+  head(deseq2VST$Gene)
   
   
   #deseq2ResDF$padj 
   # Keep only the significantly differentiated genes where the fold-change was at least 3
-  log2fol_T<-0.2
-  padj_T<-.01
+  log2fol_T<-0.15
+  padj_T<-.005
   
   sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
   deseq2ResDF$Gene<-rownames(deseq2ResDF)
@@ -290,9 +292,12 @@ if (run_heatmap){
   oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] 
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
 
-  n_sig<-30
+  dim(orderedSigGenes)
+  n_sig<-50
+  n_sig=dim(orderedSigGenes)[1]
   sigGenes <- orderedSigGenes$Gene[1:n_sig]
   length(sigGenes);head(sigGenes)
+  deseq2VST[deseq2VST$Gene %in% sigGenes,]
   deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
   dim(deseq2VST)
   #deseq2VST$Gene
@@ -336,13 +341,14 @@ if (run_heatmap){
                             labels_row=lab,
                             cluster_rows=TRUE, 
                             show_rownames=TRUE,
-                            cluster_cols=TRUE, annotation_col=df
+                            cluster_cols=FALSE,
+                            annotation_col=df
       )
       
       my_pheatmap
   
   dev.off()
-  
+  my_pheatmap
   
 
   #P2<-pheatmap(assay(vsd_filt_genes), 
@@ -359,8 +365,8 @@ if (run_heatmap){
   
   
   
-  dists <- dist(t(assay(vsd_filt)))
-  plot(hclust(dists))
+  #dists <- dist(t(assay(vsd_filt)))
+  #plot(hclust(dists))
 }
 
 

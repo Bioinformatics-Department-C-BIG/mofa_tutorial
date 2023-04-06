@@ -1,6 +1,8 @@
 ---
 title: "deseq"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 date: "2023-04-04"
 ---
 
@@ -14,19 +16,13 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
 
-
-
-
-
-```
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r Enrichment,  dev='png', fig.show='hide', echo=FALSE}
+```{r Enrichment,  results='hide', echo=FALSE, suppressW }
 source('ppmi/deseq_analysis.R')
 
 
@@ -35,19 +31,69 @@ source('ppmi/deseq_analysis.R')
 
 #
 #p_enrich
+ns<-table(se_filt$COHORT_DEFINITION)
+ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+
+
+
+```
+
+```{r main}
+
+
+
+
+cat(ns)
+cat(VISIT)
+
 
 
 ```
 
 
 
-```{r plot}
+
+
+
+```{r logplot,echo=FALSE,  fig.width=8, fig.height=6}
+
+
+
+show(p_log_plot)
+
+
+
+
+```
+
+
+```{r plot, echo=FALSE, fig.width=6, fig.height=8}
+
 
 
 show(pvol)
 
 
+
+
 ```
 
+```{r run_enrich, echo=FALSE, fig.width=6, fig.height=8}
 
 
+source('ppmi/RNAseq enrichment.R')
+show(dp)
+
+
+
+
+```
+
+```{r run_enrich2, echo=FALSE, fig.width=8, fig.height=6}
+
+
+show(p_enrich)
+
+
+
+```

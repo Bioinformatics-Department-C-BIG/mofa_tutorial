@@ -33,11 +33,12 @@ combined<-read.csv2(metadata_output)
 
 
 
-for (VISIT in c('BL', 'V04', 'V08', 'V06')){
+for (VISIT in c('BL', 'V04')){
   
   source(paste0(script_dir, '/config.R'))
   
-  
+  raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+  raw_counts_all<-raw_counts
   
   ##### Load required data 
   # TODO: input all the visits 

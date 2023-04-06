@@ -2,6 +2,37 @@
 #BiocManager::install('clusterProfiler', force=TRUE)
 #BiocManager::install('apeglm')
 # BiocManager::install('AnnotationDbi')
+get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
+  
+  #### Gives a gene list cut by the thresholds padj_T and log2fol and orders by specific metric supplied 
+  #' @param padj_T filter the genes by metric padj_T
+  #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
+  #' @param order_by_metric metric to order the gene list by 
+  res=deseq2ResDF
+  res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
+  
+  length(which(!is.na(res$sign_lfc )))
+  res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
+  
+  
+  # Order the DE gene list by the stat statistic 
+  #remove negatives thatw ere introduced with vst transofrmations
+  
+  res$log2pval<-res$log2FoldChange*-log10(res$padj)
+  res$signlog2pval<-sign(res$log2FoldChange)*-log10(res$padj)
+  res<-res[res$baseMean>0,]
+  
+  #res <- res[order(-res$stat),]
+  res <- res[order(-res[,order_by_metric]),]
+  gene_list<-res[, order_by_metric]
+  names(gene_list)<-rownames(res)
+  
+  return(gene_list)
+  
+  
+  
+}
+
 
 
   
@@ -13,40 +44,11 @@ library(clusterProfiler)
 library(AnnotationDbi)
 library(ensembldb)
 
-padj_T=1;log2fol_T=0.000
+padj_T=1;log2fol_T=0.00
 
 order_by_metric<-'log2pval'
 
-get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
-  
-        #### Gives a gene list cut by the thresholds padj_T and log2fol and orders by specific metric supplied 
-        #' @param padj_T filter the genes by metric padj_T
-        #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
-        #' @param order_by_metric metric to order the gene list by 
-        res=deseq2ResDF
-        res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
-        
-        length(which(!is.na(res$sign_lfc )))
-        res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
-        
-        
-        # Order the DE gene list by the stat statistic 
-        #remove negatives thatw ere introduced with vst transofrmations
 
-        res$log2pval<-res$log2FoldChange*-log10(res$padj)
-        res$signlog2pval<-sign(res$log2FoldChange)*-log10(res$padj)
-        res<-res[res$baseMean>0,]
-        
-        #res <- res[order(-res$stat),]
-        res <- res[order(-res[,order_by_metric]),]
-        gene_list<-res[, order_by_metric]
-        names(gene_list)<-rownames(res)
-        
-        return(gene_list)
-
-        
-  
-}
  
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
 
@@ -54,7 +56,7 @@ gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fo
 names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
 
-ONT='MF'
+ONT='BP'
 
 gse <- clusterProfiler::gseGO(gene_list, 
                               ont=ONT, 
@@ -70,7 +72,7 @@ require(DOSE)
 library('enrichplot')
 #BiocManager::install('ggnewscale')
 library('ggnewscale')
-
+gse@result
 
 results_file<-paste0(outdir_s, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
@@ -131,3 +133,4 @@ ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=8, height=8)
 #
 #
 #
+

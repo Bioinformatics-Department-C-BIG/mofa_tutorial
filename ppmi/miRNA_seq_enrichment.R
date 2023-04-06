@@ -1,6 +1,8 @@
 
-#install.packages('rbioapi')
+install.packages('VennDiagram')
 library(rbioapi)
+
+library('VennDiagram')
 order_by_metric<-'abslog2pval'
 if (VISIT=='V08'){
   padj_T=0.01
@@ -32,7 +34,7 @@ mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
 
 table(mieaa_all_gsea$Category)
 Category<-'Annotation (Gene Ontology)';
-#Category<-'GO Biological process (miRPathDB)';
+Category<-'GO Biological process (miRPathDB)';
 #Category<-'Gene Ontology (miRWalk)';
 
 
@@ -89,8 +91,9 @@ dim(rna_paths_cut)
 mofa_p<-paste0('ppmi/plots/p_',VISIT,'_Plasma_0.9_T_1-2vsn_TNA_0.8g_0.5_100_m_0.75_10_8_coh_1-2_V08_TRUE/enrichment/GO_BP_0.05_enrichment_positive_pvals_no_f.csv')
 mofa_paths<-read.csv(mofa_p)
 
-mofa_paths_list<-mofa_paths[,2]
-
+mofa_paths_list<-mofa_paths[,3]
+mofa_paths_list<-tolower(gsub('_', ' ',gsub('GOBP_', '', mofa_paths_list)))
+mofa_paths_list
 # todo: convert everything to caps to comapre? ???
 
 
@@ -114,7 +117,8 @@ length(common_pathways)
 
 
 listInput=list(RNA=rna_paths_cut$Description, 
-               miR=mir_paths)
+               miR=mir_paths, 
+               mofa=mofa_paths_list)
 
 
 library(RColorBrewer)

@@ -765,7 +765,7 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
         all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
         all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
-        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory),  T, '_enrichment_positive_pvals_no_f.csv' ))
+        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
         
         all_fs_merged1
         results_enrich<-res.negative$pval.adj
@@ -774,7 +774,7 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
           all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
           all_fs_merged2<-do.call(rbind, all_fs_unlisted )
           
-          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory),  T, '_enrichment_negative_pvals_no_f.csv' ))
+          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f.csv' ))
           #all_fs_merged2
           all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
           

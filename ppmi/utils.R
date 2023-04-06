@@ -44,8 +44,9 @@ filter_se<-function(se, VISIT, sel_coh){
   
   ##### 2.   start filtering the experiment  to normalize as appropriate 
   ## Option 1: normalize cohort and EVENT separately!! 
+  # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
   
-  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
+  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
   se_filt$EVENT_ID; se_filt$COHORT
   Sample<-colnames(se_filt)
   sample_info<-DataFrame(Sample=Sample)

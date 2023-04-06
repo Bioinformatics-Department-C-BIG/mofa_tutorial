@@ -11,9 +11,12 @@ MIN_COUNT_M=10
 
 
 
-TOP_GN=0.1
+TOP_GN=0.10
 TOP_MN=0.5
 
+### if using signif
+TOP_GN=0.50
+TOP_MN=0.75
 
 sel_coh=c(1,4)
 
@@ -36,7 +39,8 @@ m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_')
 param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
 param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
 
-
+param_str_m_f<-paste0('mirnas_',VISIT_S, '_coh_',sel_coh_s, '_')
+param_str_g_f<-paste0('rnas_', VISIT_S, '_coh_', sel_coh_s, '_'  )
 
 
 #### specific to rna seq 
@@ -55,7 +59,9 @@ if (process_mirnas){
   most_var=TOP_MN
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-  deseq_file<-paste0(output_files, param_str_m,'deseq.Rds')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  
+  deseq_file<-paste0(output_files, param_str_m_f, 'deseq.Rds')
   
   
 }else{
@@ -69,11 +75,12 @@ if (process_mirnas){
   most_var=TOP_GN
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'rnas_', param_str_g,  '_vsn.csv')
   highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif', '.csv')
   
   highly_variable_outfile
   
   
-  deseq_file<-paste0(output_files, param_str_g,'deseq.Rds')
+  deseq_file<-paste0(output_files, param_str_g_f,'deseq.Rds')
   
   
 }

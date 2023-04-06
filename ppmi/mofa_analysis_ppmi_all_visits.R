@@ -431,6 +431,9 @@ seq(1,vps)
 
 
 graphics.off()
+
+dir.create(paste0(outdir, '/heatmap/'))
+
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
@@ -461,7 +464,6 @@ for (i in seq(1,vps)){
           ###### Heatmaps 
           nfs=20
           print('heatmap')
-          dir.create(paste0(outdir, '/heatmap/'))
           #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
           # Plot heatmaps for each factor only for miRNA 
           
@@ -489,16 +491,26 @@ for (i in seq(1,vps)){
          #dev.off()
       #          
           ns<-dim(MOFAobject@samples_metadata)[1]
-    
-          cors_sig=names(which(cors[ii,]>2))
+          cor_T<-4
+          rel_cors<-cors[ii,][cors[ii,]>cor_T ]
+          rel_cors
+          
+          cors_sig=names(which(cors[ii,]>cor_T))
+          FT=0
           if (length(cors_sig)==0){
             cors_sig=c()
             
+          } else if (length(cors_sig)>7){
+            FT=5
+            rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
+            cors_sig<-names(rel_cors_ordered)
           }
+         # exclude_vars= c('LAST_UPDATE_M4')
+          #cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]
           
           res=100
-         jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '.jpeg'),
-              height=60*nfs, width=50*ns, res=200)
+         jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg'),
+              height=60*nfs, width=4*ns, res=200)
                
          p<-plot_data_heatmap(MOFAobject_gs, 
                                     view = views[i], 
@@ -672,7 +684,7 @@ subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
-for (subcategory in c('CP:KEGG','GO:BP' )){
+for (subcategory in c('GO:BP' ,'CP:KEGG')){
   
         
         gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
@@ -716,10 +728,10 @@ for (subcategory in c('CP:KEGG','GO:BP' )){
           
           
         # change to negative and positive
-        
-        extract_order_significant<-function(x) {
+        T=0.05
+        extract_order_significant<-function(x, T) {
           # extracy most significant and order 
-          T=0.005
+          
           sign<-x[x<T]
           sign2<-sign[order(sign)]
           print(sign2)
@@ -730,35 +742,39 @@ for (subcategory in c('CP:KEGG','GO:BP' )){
           
           # Take a list of dataframes and stack them 
           # Add a column called factor which extracts the list counter 
-          
-          x=enrichment_list[[i]]
-          if (length(x)){
-            tmp<-as.data.frame(x)
-            tmp$path<-rownames(tmp)
-            colnames(tmp)<-'pvals'
+          if (length(enrichment_list)){
             
-            rownames(tmp)<-NULL
-            f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
-            tmp$factor=f
-            return(tmp)}}
+         
+                x=enrichment_list[[i]]
+                if (length(x)){
+                  tmp<-as.data.frame(x)
+                  tmp$path<-rownames(tmp)
+                  colnames(tmp)<-'pvals'
+                  
+                  rownames(tmp)<-NULL
+                  f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
+                  tmp$factor=f
+                  return(tmp)}
+                }
+          }
         
         
         
         results_enrich<-res.positive$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
         all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
         all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
-        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_enrichment_positive_pvals_no_f.csv' ))
+        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory),  T, '_enrichment_positive_pvals_no_f.csv' ))
         
         all_fs_merged1
         results_enrich<-res.negative$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant)
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
         if (length(all_fs_enrichment)>0){
           all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
           all_fs_merged2<-do.call(rbind, all_fs_unlisted )
           
-          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_enrichment_negative_pvals_no_f.csv' ))
+          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory),  T, '_enrichment_negative_pvals_no_f.csv' ))
           #all_fs_merged2
           all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
           

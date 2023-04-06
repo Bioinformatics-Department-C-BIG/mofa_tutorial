@@ -33,7 +33,7 @@ combined<-read.csv2(metadata_output)
 
 
 
-for (VISIT in c('BL', 'V04')){
+for (VISIT in c('V08', 'BL')){
   
   source(paste0(script_dir, '/config.R'))
   
@@ -130,24 +130,19 @@ for (VISIT in c('BL', 'V04')){
   
   
   # Compute normalization factors and vst 
+  ### select mofa genes 
   # or use blind=false 
   
-  #ddsSE <- estimateSizeFactors(ddsSE)
+  # ddsSE <- estimateSizeFactors(ddsSE)
   # Variance stabilization transformation
   # This uses the size factors estimated before 
   # TODO: you can run VST using a saved dispersion function
   
+  # in mofa apply also a filtering based on most DE genes
+  #
   
-  vsd_mat <- assay(vsd)
   
-  ###TODO: Move this to the mofa file 
-  highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
-  write.csv(highly_variable_genes_mofa, highly_variable_outfile)
-  dim(highly_variable_genes_mofa)
-  rownames(highly_variable_genes_mofa)
-  
-  highly_variable_outfile
-  
+  ## need to move to deseq analaysi 
   run_plots<-FALSE
   
   if (run_plots){

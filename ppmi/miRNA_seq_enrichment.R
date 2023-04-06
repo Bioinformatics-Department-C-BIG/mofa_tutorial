@@ -80,11 +80,21 @@ ggsave(paste0(results_file, '_bar',  '.png'), height = 7, width=8)
 
 rna_p<-paste0('ppmi/plots/single/rnas_', VISIT, '_0.1_100_coh_1-2_AGE_AT_VISIT+SEX+COHORT/gseGO_BP_1_0log2pval.csv')
 rna_paths<-read.csv(rna_p)
-
-
 rna_paths_cut<-rna_paths[rna_paths$p.adjust<Padj_T_paths,]
 dim(rna_paths_cut)
 
+
+
+
+mofa_p<-paste0('ppmi/plots/p_',VISIT,'_Plasma_0.9_T_1-2vsn_TNA_0.8g_0.5_100_m_0.75_10_8_coh_1-2_V08_TRUE/enrichment/GO_BP_0.05_enrichment_positive_pvals_no_f.csv')
+mofa_paths<-read.csv(mofa_p)
+
+mofa_paths_list<-mofa_paths[,2]
+
+# todo: convert everything to caps to comapre? ???
+
+
+#### COMPARE ALSO WITH MULTI!!! 
 
 if (grepl('GO', mir_paths[1])){
   if (startsWith(mir_paths[1], 'GO')){

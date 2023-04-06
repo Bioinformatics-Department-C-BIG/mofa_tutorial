@@ -110,6 +110,8 @@ if (run_ma){
 
 
 
+
+
 #### PCA plots
 
 #pca.data <- PCA(t(highly_variable_genes_mofa), scale.unit = TRUE, graph = FALSE)
@@ -181,6 +183,37 @@ log2fol_T<-0.25
 padj_T<-.005
 
 deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
+
+
+####### MOFA deseq2  
+
+padj_T<0.05
+### this is also done later on -- save from there? 
+deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T , "Significant", NA)
+signif_genes<-rownames(deseq2ResDF[!is.na(deseq2ResDF$mofa_sign),])
+
+
+vsd_mat <- assay(vsd)
+
+###TODO: Move this to the mofa file 
+highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+
+highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+  
+
+write.csv(highly_variable_genes_mofa, highly_variable_outfile)
+write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
+
+highly_variable_sign_outfile
+dim(highly_variable_genes_mofa)
+rownames(highly_variable_genes_mofa)
+
+highly_variable_outfile
+
+
+
+
+
 
 log2fol_T<-0.1
 padj_T<-.05

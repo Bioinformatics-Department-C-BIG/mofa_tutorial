@@ -51,11 +51,7 @@ source(paste0(script_dir,'/config.R'))
 # TODO: move all to config file 
 
 TOP_PN=0.70
-TOP_GN=0.10# 0.20
-TOP_MN=0.50
 
-MIN_COUNT_G=100
-MIN_COUNT_M=10
 FULL_SET=TRUE
 
 NA_PERCENT=0.8
@@ -82,13 +78,10 @@ sel_coh <- c(2)
 
 N_FACTORS=8
 
-VISIT=c('BL', 'V04','V06', 'V08');sel_coh <- c(1)
+VISIT=c('V08');
 
 
-VISIT=c('V06');
-
-
-VISIT=c('BL', 'V04','V06', 'V08')
+source(paste0(script_dir, '/config.R'))
 
 
 
@@ -97,21 +90,13 @@ run_vsn=TRUE
 TISSUE='Plasma';
 
 
-VISIT=c('V06');sel_coh <- c(1,2);NORMALIZED=TRUE;
-
-
-sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
-sel_coh_s
-
-#TISSUE='untargeted'
-
+NORMALIZED=TRUE;
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined
 
-VISIT_S=paste(VISIT,sep='_',collapse='-')
 scale_views=TRUE
 
 combined$Outcome
@@ -119,16 +104,19 @@ combined$Outcome
 
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
-g_params<-paste0(VISIT_S, '_', TOP_GN, '_', MIN_COUNT_G, '_', sel_coh_s, '_'  )
-m_params<-paste0(VISIT_S, '_', TOP_MN, '_', MIN_COUNT_M, '_',  sel_coh_s, '_' ) 
 mofa_params<-paste0(N_FACTORS )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
 
 highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-highly_variable_genes_outfile<-paste0(output_files, 'rnas_',g_params,'_highly_variable_genes_mofa.csv')
-highly_variable_mirnas_outfile<-paste0(output_files, 'mirnas_',m_params,'_highly_variable_genes_mofa.csv')
+highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
+highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+
+highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+
+highly_variable_mirnas_outfile
 highly_variable_proteins_outfile
 
 ### TODO: INPUT vsn files and filter here instead of rerunnign!!1 
@@ -188,7 +176,7 @@ head(rownames(miRNA))
 highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
 colnames(highly_variable_genes_mofa)[1]<-'rnas'
 rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
-
+dim(highly_variable_genes_mofa)
 # or input to vst or put as is normalized
 
 RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
@@ -224,8 +212,9 @@ colnames(proteomics)
 
 
 common_samples<-intersect(colnames(miRNA), colnames(proteomics)); common_samples
-common_samples<-intersect(colnames(miRNA), colnames(miRNA)); common_samples
 
+## do not add proteomics
+common_samples<-intersect(colnames(miRNA), colnames(miRNA)); common_samples
 common_samples<-intersect(common_samples,colnames(RNA)) ; common_samples
 common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID); common_samples
 

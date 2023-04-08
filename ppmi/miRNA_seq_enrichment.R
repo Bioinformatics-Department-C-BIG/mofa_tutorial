@@ -98,7 +98,7 @@ ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=padj))+
 ggsave(paste0(results_file, '_bar',  '.png'), height = 7, width=8)
 
 
-#########
+######### convert to enrichResult to use gsego functios
 
 
 install.packages("remotes")
@@ -120,6 +120,8 @@ x2<-pairwise_termsim(enr)
 
 p_emap<-emapplot(x2)
 p_emap
+
+gsave()
 
 p2<-dotplot(enr, showCategory=25)
 p2

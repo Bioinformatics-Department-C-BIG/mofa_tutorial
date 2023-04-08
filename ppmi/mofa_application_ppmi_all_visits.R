@@ -4,8 +4,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir,'/setup_os.R'))
 
-BiocManager::install('MultiAssayExperiment')
-#BiocManager::install("MOFA2")
+#BiocManager::install('MultiAssayExperiment')
+BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
 #browseVignettes("MOFA2")
 #BiocManager::install("MOFAdata")'
@@ -32,6 +32,8 @@ outdir_orig=paste0(data_dir,'ppmi/plots/')
 output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+
+
 source(paste0(script_dir,'/config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
@@ -81,7 +83,6 @@ N_FACTORS=8
 VISIT=c('V08');
 
 
-source(paste0(script_dir, '/config.R'))
 
 
 
@@ -91,7 +92,9 @@ TISSUE='Plasma';
 
 
 NORMALIZED=TRUE;
+use_signif=FALSE
 
+source(paste0(script_dir, '/config.R'))
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
@@ -104,7 +107,6 @@ combined$Outcome
 
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
-use_signif=FALSE
 mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
@@ -158,6 +160,7 @@ highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 
 ### Start loading mofa data
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
+
 dim(proteomics)
 
 
@@ -390,7 +393,7 @@ dir.create(outdir, showWarnings = FALSE)
  
  
 #}else {
-  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
 #}
 ##### Basic stats
 

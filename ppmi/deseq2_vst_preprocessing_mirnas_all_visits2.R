@@ -31,6 +31,18 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
 
+con = 4
+clin_con <- colnames(coldata[con])
+clin_con <-  paste("~",clin_con)
+
+
+
+dds <- DESeqDataSetFromMatrix(
+  countData = countdata,
+  colData = coldata,
+  design = as.formula(clin_con))
+
+
 
 
 for (VISIT in c('V08', 'BL')){
@@ -87,13 +99,18 @@ for (VISIT in c('V08', 'BL')){
   
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   
+  
+  formula_deseq<-'~AGE_AT_VISIT+SEX+COHORT+EVENT_ID'
+  formula_deseq2<'~AGE_AT_VISIT+SEX+COHORT'
+  formula_deseq3<'~PATNO+AGE_AT_VISIT+SEX'
+  
   if (length(sel_coh)>1){
     
     if (length(VISIT)>1){
       print('Two cohorts and visits detected, running deseq and vsd with design formula')
       
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~AGE_AT_VISIT +SEX +  COHORT + EVENT_ID )
+                            design = as.formula(formula_deseq))
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -103,7 +120,7 @@ for (VISIT in c('V08', 'BL')){
     }else{
       print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
-                            design = ~AGE_AT_VISIT+SEX+COHORT )
+                            design =formula_deseq2 )
       ddsSE<-estimateSizeFactors(ddsSE)
       
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -113,7 +130,7 @@ for (VISIT in c('V08', 'BL')){
     print('Single cohort and visit deseq ')
     
     ddsSE <- DESeqDataSet(se_filt, 
-                          design = ~PATNO + AGE_AT_VISIT + SEX)
+                          design = formula_deseq3)
     ddsSE<-estimateSizeFactors(ddsSE)
     
     vsd <- varianceStabilizingTransformation(ddsSE)

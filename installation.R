@@ -65,4 +65,6 @@ BiocManager::install('clusterProfiler')
 BiocManager::install('DOSE')
 #install.packages('ggnewscale')
 BiocManager::install('GOfuncR')
+BiocManager::install('ensembldb')
+BiocManager::install('org.Hs.eg.db')
 

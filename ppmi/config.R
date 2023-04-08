@@ -12,12 +12,15 @@ MIN_COUNT_M=10
 
 
 
-TOP_GN=0.10
-TOP_MN=0.5
-
 ### if using signif
-TOP_GN=0.50
-TOP_MN=0.75
+if (use_signif){
+  TOP_GN=0.50
+  TOP_MN=0.75
+}else{
+  TOP_GN=0.10
+  TOP_MN=0.5
+}
+
 
 sel_coh=c(1,4)
 
@@ -26,9 +29,6 @@ sel_coh <- c(1,2)
 
 
 sel_coh=c(1,2);
-
-
-
 
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
@@ -51,7 +51,18 @@ output_files<-output_1
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
 
 
-process_mirnas<-FALSE
+### setup deseq formula 
+
+formula_deseq<-'~AGE_AT_VISIT+SEX+COHORT+EVENT_ID'
+formula_deseq2<-'~AGE_AT_VISIT+SEX+COHORT'
+formula_deseq3<-'~PATNO+AGE_AT_VISIT+SEX'
+
+
+des=gsub('~', '', formula_deseq2)
+
+
+des
+process_mirnas<-TRUE
 if (process_mirnas){
   input_file<-paste0(output_files, 'mirnas_all_visits.csv')
  
@@ -59,10 +70,11 @@ if (process_mirnas){
   min.count=MIN_COUNT_M
   most_var=TOP_MN
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-  highly_variable_sign_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  highly_variable_outfile<-paste0(output_files, param_str_m_f,'_highly_variable_genes_mofa.csv')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_m_f,'_highly_variable_genes_mofa_signif.csv')
   
-  deseq_file<-paste0(output_files, param_str_m_f, 'deseq.Rds')
+  deseq_file<-paste0(output_files, param_str_m, 'deseq.Rds')
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
   
   
 }else{
@@ -83,8 +95,9 @@ if (process_mirnas){
   
   deseq_file<-paste0(output_files, param_str_g_f,'deseq.Rds')
   
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
+  
   
 }
-
 
 

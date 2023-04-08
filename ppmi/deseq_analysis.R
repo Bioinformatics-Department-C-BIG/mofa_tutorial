@@ -60,15 +60,15 @@ table(se_filt$COHORT_DEFINITION)
 # TODO: Report the number of samples too! 
 
 des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
-if  (process_mirnas){
-
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
-  
-}else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
-  
-}
-outdir_s
+#if  (process_mirnas){
+#
+#  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
+#  
+#}else{
+#  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
+#  
+#}
+#outdir_s
 # RUN DIFFERENTIAL EXPRESSION ANALYSIS 
 
 
@@ -90,6 +90,10 @@ dir.create(outdir_s)
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
+deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
+deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
+
+write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
 ### Up to here output can be used for other reasons
@@ -218,8 +222,7 @@ highly_variable_outfile
 
 log2fol_T<-0.1
 padj_T<-.05
-deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
-deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
+
 
 deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 

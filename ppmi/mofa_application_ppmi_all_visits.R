@@ -4,7 +4,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir,'/setup_os.R'))
 
-#BiocManager::install('MultiAssayExperiment')
+BiocManager::install('MultiAssayExperiment')
 #BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
 #browseVignettes("MOFA2")
@@ -104,7 +104,8 @@ combined$Outcome
 
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
-mofa_params<-paste0(N_FACTORS )
+use_signif=FALSE
+mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
@@ -113,8 +114,11 @@ highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_vari
 highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
 highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
 
-highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
-highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+if (use_signif){
+  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  
+}
 
 highly_variable_mirnas_outfile
 highly_variable_proteins_outfile

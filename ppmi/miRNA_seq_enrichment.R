@@ -1,8 +1,10 @@
 
-install.packages('VennDiagram')
-library(rbioapi)
+#install.packages('VennDiagram')
+#install.packages('rbioapi')
 
+library(rbioapi)
 library('VennDiagram')
+
 order_by_metric<-'abslog2pval'
 if (VISIT=='V08'){
   padj_T=0.01
@@ -16,7 +18,14 @@ if (VISIT=='V08'){
 
 library(enrichplot)
 
+deseq2ResDF = read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1)
+outdir_enrich<-paste0(outdir_s,'/enrichment/')
+dir.create(outdir_enrich)
 
+
+  
+  
+  
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
 top_n=length(gene_list);
 #top_n=200
@@ -25,12 +34,27 @@ top_n
 gene_list_cut<-gene_list[1:top_n]
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
+results_file<-paste0(outdir_enrich, '/mirs_enrich_', '_', padj_T, '_',  log2fol_T, '_',  order_by_metric, '_',top_n)
+outdir_enrich_file<-paste0(outdir_enrich, 'mieaa_res.csv')
 
-mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
-                              mirna_type = "mature",
-                              test_type = "GSEA",
-                              species = 'Homo sapiens'
-                              )
+
+ if (file.exists(outdir_enrich_file)){
+   mieaa_all_gsea<-read.csv(outdir_enrich_file)
+   
+ }else{
+   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
+                                      mirna_type = "mature",
+                                      test_type = "GSEA",
+                                      species = 'Homo sapiens'
+   )
+   
+   
+   
+   write.csv(mieaa_all_gsea, outdir_enrich_file)
+ }
+        
+colnames(mieaa_all_gsea)<-gsub('-', '.',colnames(mieaa_all_gsea) )
+
 
 table(mieaa_all_gsea$Category)
 Category<-'Annotation (Gene Ontology)';
@@ -44,7 +68,7 @@ Padj_T_paths=0.01
 mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$`P-adjusted`<Padj_T_paths, ]
 mir_paths<-mieaa_gsea_1_cut[,c(2)]
 
-results_file<-paste0(outdir_s, '/mirs_enrich_', '_', padj_T, '_',  log2fol_T, '_',  order_by_metric, '_',top_n, '_', Category)
+results_df<-paste0(results_file, '_', Category)
 
 write.csv(mieaa_all_gsea, paste0(results_file, '_', '.csv' ))
 
@@ -72,6 +96,35 @@ ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=padj))+
   geom_bar(position='dodge', stat='identity')+
   coord_flip()
 ggsave(paste0(results_file, '_bar',  '.png'), height = 7, width=8)
+
+
+#########
+
+
+install.packages("remotes")
+remotes::install_github("jmw86069/jamenrich")
+library('multienrichjam')
+
+jmw86069
+mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
+
+enr <- enrichDF2enrichResult(enrichDF = mieaa_gsea_1,
+                             keyColname = "Subcategory", 
+                             geneColname = "miRNAs/precursors", 
+                             pvalueColname = "P.adjusted", 
+                             descriptionColname = "Subcategory",
+                             
+                             pvalueCutoff = 0.05)
+
+x2<-pairwise_termsim(enr)
+
+p_emap<-emapplot(x2)
+p_emap
+
+p2<-dotplot(enr, showCategory=25)
+p2
+
+
 
 
 

@@ -7,6 +7,7 @@ library('dplyr')
 #install.packages('VennDiagram')
 library('VennDiagram')
 library(grid)
+source(paste0(script_dir, '/utils.R'))
 
 ### Table of samples from all visits 
 
@@ -53,11 +54,13 @@ meta %>%
 
 visits=c('BL', 'V04', 'V06', 'V08')
 
+outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
+outdir_s
 if  (process_mirnas){
-  outdir_all<-paste0(outdir_orig, '/single/', 'mirnas_',visits, '_', m_params ,'coh_', sel_coh_s, '_',des)
+  outdir_all<-paste0(outdir_orig, '/single/', 'mirnas_',visits, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
   title_x='mirna'
 }else{
-  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_', g_params ,'coh_', sel_coh_s, '_',des)
+  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_', des)
   title_x='rna'
   
 }
@@ -69,7 +72,7 @@ all_visits<-lapply(outdir_all, function(x) {
   if (file.exists(outfile)){
   return(as.data.frame(read.csv(outfile)))
   }else{
-      print(paste0(outfile,'not available'))
+      print(paste0(outfile,' not available'))
     }
   })
 

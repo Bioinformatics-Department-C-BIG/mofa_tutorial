@@ -1,9 +1,4 @@
 
-BiocManager::install('clusterProfiler', force=TRUE)
-#BiocManager::install('apeglm')
-#install.packages('ggnewscale')
-#BiocManager::install('GOfuncR')
-#install.packages("BiocManager")
 
 library('GOfuncR')
 require(DOSE)
@@ -11,6 +6,10 @@ library('apeglm')
 library(clusterProfiler)
 library(AnnotationDbi)
 library(ensembldb)
+library('org.Hs.eg.db')
+install.packages('ggridges')
+require(ggridges)
+
 
 padj_T=1;log2fol_T=0.00
 
@@ -18,18 +17,19 @@ order_by_metric<-'log2pval'
 
 deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
 deseq2ResDF <- as.data.frame(deseq2Results) 
-
+outdir_enrich<-paste0(outdir_s,'/enrichment/')
+dir.create(outdir_enrich)
  
+### setup
+
+
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-
-
 names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
 
 ONT='BP'
 
-outdir_enrich<-paste0(outdir_s,'/enrichment/')
-dir.create(outdir_enrich)
+
                       
 results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 
@@ -50,15 +50,13 @@ if (file.exists(res_path)){
 
 }
 
+write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
+
 
 
 require(DOSE)
 library('enrichplot')
-#BiocManager::install('ggnewscale')
-#library('ggnewscale')
-gse@result
 
-write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
 N=10
 dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
 ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
@@ -66,8 +64,8 @@ ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
 #### EMAP PLOT 
 options(ggrepel.max.overlaps = Inf)
 
-
-x2 <- pairwise_termsim(gse)
+N=200
+x2 <- pairwise_termsim(gse )
 N=25
 p<-emapplot(x2,showCategory = N,
             layout = "nicely")
@@ -77,13 +75,34 @@ p_enrich
 ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=8, height=8)
 
 
+#### Ridge plot: NES shows what is at the bottom of the list
+
+r_p<-ridgeplot(gse)
+r_p
+
 #### Gene-concept plot 
 gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
-p1 <- cnetplot(gse_x, gene_list)
-p1
+p1_net <- cnetplot(gse_x)
+node_label<-"gene"
+node_label<-"all"
+node_label<-"category"
+
+N=3
+p2_net<- cnetplot(gse_x, node_label=node_label, 
+                       cex_label_category = 1.2, showCategory=N)
+
+p2_net
+ggsave(paste0(results_file, '_geneconcept_', node_label, '_',N, '.jpeg'), width=8, height=8)
+
 
 ####Visualize go terms as an undirected acyclic graph 0
 goplot(gse_x)
+
+
+#### heatmap
+p1 <- treeplot(x2)
+p2 <- treeplot(x2, hclust_method = "average")
+aplot::plot_list(p1, p2, tag_levels='A')
 
 
 
@@ -93,6 +112,7 @@ goplot(gse_x)
 parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
 
 parents$distance
+
 
 
 #### 

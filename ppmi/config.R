@@ -39,8 +39,8 @@ m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_')
 param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
 param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
 
-param_str_m_f<-paste0('mirnas_',VISIT_S, '_coh_',sel_coh_s, '_')
-param_str_g_f<-paste0('rnas_', VISIT_S, '_coh_', sel_coh_s, '_'  )
+param_str_m_f<-paste0('mirnas_',VISIT_S, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_')
+param_str_g_f<-paste0('rnas_', VISIT_S, '_',MIN_COUNT_G, '_coh_', sel_coh_s, '_'  )
 
 
 #### specific to rna seq 
@@ -50,7 +50,7 @@ output_files<-output_1
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
 
 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 if (process_mirnas){
   input_file<-paste0(output_files, 'mirnas_all_visits.csv')
  

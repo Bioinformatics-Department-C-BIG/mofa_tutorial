@@ -35,6 +35,7 @@ library('ggplot2')
 #)
 
 #source(paste0(script_dir, '/config.R'))
+source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 
 ### LOAD runs
 VISIT='V08'
@@ -61,10 +62,10 @@ table(se_filt$COHORT_DEFINITION)
 des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
 if  (process_mirnas){
 
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
   
 }else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
   
 }
 outdir_s

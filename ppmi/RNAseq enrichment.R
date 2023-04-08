@@ -1,8 +1,9 @@
 
-#BiocManager::install('clusterProfiler')
+BiocManager::install('clusterProfiler', force=TRUE)
 #BiocManager::install('apeglm')
 #install.packages('ggnewscale')
 #BiocManager::install('GOfuncR')
+#install.packages("BiocManager")
 
 library('GOfuncR')
 require(DOSE)
@@ -15,6 +16,8 @@ padj_T=1;log2fol_T=0.00
 
 order_by_metric<-'log2pval'
 
+deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
+deseq2ResDF <- as.data.frame(deseq2Results) 
 
  
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )

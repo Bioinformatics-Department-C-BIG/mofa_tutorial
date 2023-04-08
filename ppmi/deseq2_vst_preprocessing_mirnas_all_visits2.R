@@ -100,9 +100,6 @@ for (VISIT in c('V08', 'BL')){
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   
   
-  formula_deseq<-'~AGE_AT_VISIT+SEX+COHORT+EVENT_ID'
-  formula_deseq2<'~AGE_AT_VISIT+SEX+COHORT'
-  formula_deseq3<'~PATNO+AGE_AT_VISIT+SEX'
   
   if (length(sel_coh)>1){
     

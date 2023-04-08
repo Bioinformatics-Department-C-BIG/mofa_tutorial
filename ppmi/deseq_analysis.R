@@ -44,7 +44,7 @@ VISIT='V08'
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/utils.R'))
-
+highly_variable_outfile
 
 print(deseq_file)
 
@@ -439,7 +439,7 @@ ggsave(fname, width=7,height=8)
 #
 #fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
 #ggsave(fname, width=8, height=7)
-
+outdir_s
 
 
 

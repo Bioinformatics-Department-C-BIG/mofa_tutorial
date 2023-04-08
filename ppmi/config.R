@@ -70,8 +70,8 @@ if (process_mirnas){
   min.count=MIN_COUNT_M
   most_var=TOP_MN
   vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_m_f,'_highly_variable_genes_mofa.csv')
-  highly_variable_sign_outfile<-paste0(output_files, param_str_m_f,'_highly_variable_genes_mofa_signif.csv')
+  highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
   
   deseq_file<-paste0(output_files, param_str_m, 'deseq.Rds')
   outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
@@ -99,5 +99,4 @@ if (process_mirnas){
   
   
 }
-
 

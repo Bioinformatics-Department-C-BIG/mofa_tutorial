@@ -105,7 +105,7 @@ install.packages("remotes")
 remotes::install_github("jmw86069/jamenrich")
 library('multienrichjam')
 
-jmw86069
+
 mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
 
 enr <- enrichDF2enrichResult(enrichDF = mieaa_gsea_1,
@@ -121,10 +121,12 @@ x2<-pairwise_termsim(enr)
 p_emap<-emapplot(x2)
 p_emap
 
-gsave()
+ggsave(paste0(results_file, '_emap',  '.png'), height = 7, width=8)
+
 
 p2<-dotplot(enr, showCategory=25)
 p2
+ggsave(paste0(results_file, '_dotplot',  '.png'), height = 7, width=8)
 
 
 

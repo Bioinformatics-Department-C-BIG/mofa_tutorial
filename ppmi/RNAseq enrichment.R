@@ -61,71 +61,84 @@ require(DOSE)
 library('enrichplot')
 
 results_file=results_file
+
 gse = gse
 
+#run_mofa=TRUE
+
 if (run_mofa){
-  results_file = paste0(outdir, '/enrichment/gsego_')
-  gse=gse_mofa}
+  for (factor in c(1:8)){
+    
+
+      results_file = paste0(outdir, '/enrichment/gsego_',factor,'_')
+      gse=list1[[factor]]
+      write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
+  } 
+}
 ### to run mofa results
 
 
-
-N=10
-dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
-ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
-
-#### EMAP PLOT 
-options(ggrepel.max.overlaps = Inf)
-
-N=200
-x2 <- pairwise_termsim(gse )
-N=25
-p<-emapplot(x2,showCategory = N,
-            layout = "nicely")
-p_enrich <- p + theme(text=element_text(size=12))
-p_enrich
-
-ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=8, height=8)
-
-
-#### Ridge plot: NES shows what is at the bottom of the list
-
-r_p<-ridgeplot(gse)
-r_p
-
-#### Gene-concept plot 
-gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
-p1_net <- cnetplot(gse_x)
-node_label<-"gene"
-node_label<-"all"
-node_label<-"category"
-
-N=3
-p2_net<- cnetplot(gse_x, node_label=node_label, 
-                       cex_label_category = 1.2, showCategory=N)
-
-p2_net
-ggsave(paste0(results_file, '_geneconcept_', node_label, '_',N, '.jpeg'), width=8, height=8)
-
-
-####Visualize go terms as an undirected acyclic graph 0
-goplot(gse_x)
-
-
-#### heatmap
-p1 <- treeplot(x2)
-p2 <- treeplot(x2, hclust_method = "average")
-aplot::plot_list(p1, p2, tag_levels='A')
-
-
-
-############# KEGG
-
-
-parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
-
-parents$distance
-
+    
+    N=10
+    dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
+    ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
+    
+    #### EMAP PLOT 
+    options(ggrepel.max.overlaps = Inf)
+    
+    N=200
+    x2 <- pairwise_termsim(gse )
+    N=25
+    p<-emapplot(x2,showCategory = N,
+                layout = "nicely")
+    p_enrich <- p + theme(text=element_text(size=12))
+    p_enrich
+    
+    ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=8, height=8)
+    
+    
+    #### Ridge plot: NES shows what is at the bottom of the list
+    
+    r_p<-ridgeplot(gse)
+    r_p
+    ggsave(paste0(results_file, '_ridge_.jpeg'), width=8, height=8)
+    
+    
+    
+    #### Gene-concept plot 
+    gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
+    p1_net <- cnetplot(gse_x)
+    node_label<-"gene"
+    node_label<-"all"
+    node_label<-"category"
+    
+    N=3
+    p2_net<- cnetplot(gse_x, node_label=node_label, 
+                           cex_label_category = 1.2, showCategory=N)
+    
+    p2_net
+    ggsave(paste0(results_file, '_geneconcept_', node_label, '_',N, '.jpeg'), width=8, height=8)
+    
+    
+    ####Visualize go terms as an undirected acyclic graph 0
+    goplot(gse_x)
+    ggsave(paste0(results_file, '_goplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+    
+    
+    #### heatmap
+    p1 <- treeplot(x2)
+    p2 <- treeplot(x2, hclust_method = "average")
+    aplot::plot_list(p1, p2, tag_levels='A')
+    
+    
+    
+    ############# KEGG
+    
+    
+    parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
+    
+    parents$distance
+    
 
 
 #### 

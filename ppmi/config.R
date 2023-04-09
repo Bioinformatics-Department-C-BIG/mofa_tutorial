@@ -11,7 +11,7 @@ MIN_COUNT_G=100
 MIN_COUNT_M=10
 
 
-
+### THE ONES THAT MOFA WILL USE! because to print we have set tgem in deseq_analysis
 ### if using signif
 if (use_signif){
   TOP_GN=0.50
@@ -19,6 +19,7 @@ if (use_signif){
 }else{
   TOP_GN=0.10
   TOP_MN=0.5
+  TOP_MN=0.75
 }
 
 
@@ -61,42 +62,35 @@ formula_deseq3<-'~PATNO+AGE_AT_VISIT+SEX'
 des=gsub('~', '', formula_deseq2)
 
 
-des
-process_mirnas<-TRUE
+
 if (process_mirnas){
-  input_file<-paste0(output_files, 'mirnas_all_visits.csv')
- 
+  prefix='mirnas_'
   # if we filter too much we get normalization problems 
   min.count=MIN_COUNT_M
   most_var=TOP_MN
-  vsn_out_file<-highly_variable_outfile<-paste0(output_files, param_str_m, '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-  highly_variable_sign_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
-  
-  deseq_file<-paste0(output_files, param_str_m, 'deseq.Rds')
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
-  
-  
+  param_str=param_str_m
+  param_str_f=param_str_m_f
 }else{
-  input_file<-paste0(output_files, 'rnas_all_visits.csv')
-  
-  # this is defined later but filter here if possible to speed up
-  # TODO: fix and input common samples as a parameter
-  # raw_counts<-raw_counts %>% select(common_samples)
-  
-  min.count=MIN_COUNT_G
-  most_var=TOP_GN
-  vsn_out_file<-highly_variable_outfile<-paste0(output_files, 'rnas_', param_str_g,  '_vsn.csv')
-  highly_variable_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
-  highly_variable_sign_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif', '.csv')
-  
-  highly_variable_outfile
-  
-  
-  deseq_file<-paste0(output_files, param_str_g_f,'deseq.Rds')
-  
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
-  
-  
+  prefix='rnas_'
+   min.count=MIN_COUNT_G
+   most_var=TOP_GN
+   param_str=param_str_g_f
+   param_str_f=param_str_g_f
 }
+
+
+input_file<-paste0(output_files, prefix, 'all_visits.csv')
+vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
+
+deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds')
+outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
+
+
+
+### MOFA definitions
+highly_variable_outfile<-paste0(output_files, param_str,'_highly_variable_genes_mofa.csv')
+highly_variable_sign_outfile<-paste0(output_files, param_str,'_highly_variable_genes_mofa_signif.csv')
+
+  
+
 

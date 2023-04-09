@@ -5,7 +5,7 @@ script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir,'/setup_os.R'))
 
 #BiocManager::install('MultiAssayExperiment')
-BiocManager::install("MOFA2")
+#BiocManager::install("MOFA2")
 #devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
 #browseVignettes("MOFA2")
 #BiocManager::install("MOFAdata")'
@@ -62,30 +62,14 @@ NA_PERCENT=0.8
 VISIT_COMPARE='BL'
 TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(1,4)
-
-VISIT='BL'
 
 
-VISIT=c('V08')
 
-VISIT=c('BL')
-VISIT=c('V04')
-#VISIT=c('BL')
-VISIT=c('BL')
-
-VISIT=c('V06');
-sel_coh <- c(2)
 
 
 N_FACTORS=8
 
 VISIT=c('V08');
-
-
-
-
-
 TISSUE='CSF'; 
 run_vsn=TRUE
 TISSUE='Plasma';
@@ -328,7 +312,6 @@ mofa_multi<-MultiAssayExperiment(experiments=data,
                      sampleMap=sample_map)
 
 complete.cases(metadata_filt$EVENT_ID)
-#install.packages('UpSetR')
 library('UpSetR')
 upsetSamples(mofa_multi)
 mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
@@ -386,15 +369,15 @@ dir.create(outdir, showWarnings = FALSE)
 #MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
+mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
+if (file.exists(mofa_file)){
+ pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
+ MOFAobject<-pre_trained
 
-#if (file.exists(mofa_file)){
-# pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
-# MOFAobject<-pre_trained
- 
- 
-#}else {
-  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
-#}
+
+}else {
+ MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
+}
 ##### Basic stats
 
 plot_variance_explained(MOFAobject, max_r2=20)

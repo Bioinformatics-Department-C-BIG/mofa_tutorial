@@ -59,6 +59,14 @@ install.packages('data.table')
 install.packages('dplyr')
 
 
+install.packages('UpSetR')
+
+#### MOFA
+BiocManager::install('MOFAdata')
+
+
+
+
 ### Enrichment 
 
 BiocManager::install('clusterProfiler')

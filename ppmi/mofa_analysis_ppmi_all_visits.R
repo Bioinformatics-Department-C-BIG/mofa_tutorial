@@ -671,7 +671,6 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
   
 #library(AnnotationHub)
 
-
 library('MOFAdata')
 utils::data(reactomeGS)
 
@@ -684,9 +683,9 @@ subcategory<- 'CP:KEGG'
 subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
-for (subcategory in c('GO:BP' ,'CP:KEGG')){
-  
-        
+#for (subcategory in c('GO:BP' ,'CP:KEGG')){
+  for (subcategory in c('CP:KEGG','GO:BP' )){
+
         gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
         
         gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
@@ -699,11 +698,11 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
         
         
         # GSEA on positive weights, with default options
-        res.positive <- run_enrichment(MOFAobject, 
-                                       feature.sets = reactomeGS, 
-                                       view = "RNA",
-                                       sign = "positive"
-        )
+       #es.positive <- run_enrichment(MOFAobject, 
+       #                              feature.sets = reactomeGS, 
+       #                              view = "RNA",
+       #                              sign = "positive"
+       #
         
         
         
@@ -743,10 +742,12 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
           # Take a list of dataframes and stack them 
           # Add a column called factor which extracts the list counter 
           if (length(enrichment_list)){
-            
-         
+                
+                factor<-paste0('Factor', i)
+                x=enrichment_list[factor]
                 x=enrichment_list[[i]]
-                if (length(x)){
+                
+                if (length(x)>0){
                   tmp<-as.data.frame(x)
                   tmp$path<-rownames(tmp)
                   colnames(tmp)<-'pvals'
@@ -760,14 +761,6 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
         
         
         
-        results_enrich<-res.positive$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
-        all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
-        
-        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
-        
-        all_fs_merged1
         results_enrich<-res.negative$pval.adj
         all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
         if (length(all_fs_enrichment)>0){
@@ -776,9 +769,19 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
           
           write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f.csv' ))
           #all_fs_merged2
-          all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
+         # all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
           
         }
+        
+        
+        results_enrich<-res.positive$pval.adj
+        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
+        all_fs_unlisted<-lapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
+        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
+        
+        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
+        
+        
        
         ##### which factor is related to parkinsons disease in KEGG
         ### PROBLEM: this is based on RNA only!!! 
@@ -792,12 +795,13 @@ for (subcategory in c('GO:BP' ,'CP:KEGG')){
 
 # Make enrichment plots for all factors 
 # threshold on p value to zoom in 
-jpeg(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
+jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.positive, 
                         alpha=0.5, 
                         cap=0.0005,
-                          colnames=TRUE)
+                          colnames=TRUE, 
+                        show_rownames=TRUE)
 dev.off()
 
 plot_enrichment_heatmap(res.positive$sigPathways, 
@@ -806,10 +810,13 @@ plot_enrichment_heatmap(res.positive$sigPathways,
 #ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
 
 
-jpeg(paste0(outdir,'Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
+jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.negative, 
-                        alpha=0.5, cap=0.0005)
+                        alpha=0.5, cap=0.00000000005, 
+                          )
+
+
 dev.off()
 #ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
 

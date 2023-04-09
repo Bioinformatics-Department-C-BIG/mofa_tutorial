@@ -54,8 +54,21 @@ write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
 
 
 
+#### 
+# run all results
+
 require(DOSE)
 library('enrichplot')
+
+results_file=results_file
+gse = gse
+
+if (run_mofa){
+  results_file = paste0(outdir, '/enrichment/gsego_')
+  gse=gse_mofa}
+### to run mofa results
+
+
 
 N=10
 dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)

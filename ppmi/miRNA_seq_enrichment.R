@@ -8,7 +8,7 @@ library('VennDiagram')
 order_by_metric<-'abslog2pval'
 if (VISIT=='V08'){
   padj_T=0.01
-  log2fol_T=0.1
+  log2fol_T=0.2
 }else{
   padj_T=0.05
   log2fol_T=0.1
@@ -82,7 +82,7 @@ write.csv(mieaa_all_gsea, paste0(results_file, '_', '.csv' ))
   
 
 df=mieaa_gsea_1
-df$`P-adjusted`<-as.numeric(df$`P-adjusted`)
+df$P.adjusted<-as.numeric(df$P.adjusted)
 df$padj<-as.numeric(df$`P-adjusted`)
 
 df$Observed<-as.numeric(df$Observed)
@@ -101,9 +101,9 @@ ggsave(paste0(results_file, '_bar',  '.png'), height = 7, width=8)
 ######### convert to enrichResult to use gsego functios
 
 
-install.packages("remotes")
-remotes::install_github("jmw86069/jamenrich")
-library('multienrichjam')
+#install.packages("remotes")
+#remotes::install_github("jmw86069/jamenrich")
+#library('multienrichjam')
 
 
 mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
@@ -121,12 +121,12 @@ x2<-pairwise_termsim(enr)
 p_emap<-emapplot(x2)
 p_emap
 
-ggsave(paste0(results_file, '_emap',  '.png'), height = 7, width=8)
+ggsave(paste0(results_file, '_conv_emap',  '.png'), height = 7, width=8)
 
 
 p2<-dotplot(enr, showCategory=25)
 p2
-ggsave(paste0(results_file, '_dotplot',  '.png'), height = 7, width=8)
+ggsave(paste0(results_file, '_conv_dotplot',  '.png'), height = 7, width=8)
 
 
 

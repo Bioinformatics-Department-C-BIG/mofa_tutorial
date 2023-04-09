@@ -41,6 +41,7 @@ source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 VISIT='V08'
 
 
+process_mirnas<-TRUE
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/utils.R'))
@@ -201,19 +202,30 @@ signif_genes<-rownames(deseq2ResDF[!is.na(deseq2ResDF$mofa_sign),])
 vsd_mat <- assay(vsd)
 
 ###TODO: Move this to the mofa file 
-highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
 
-highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
+
+  param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
+  highly_variable_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa.csv')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa_signif.csv')
   
+  highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+  highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+  
+  
+  write.csv(highly_variable_genes_mofa, highly_variable_outfile); 
+  write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
-write.csv(highly_variable_genes_mofa, highly_variable_outfile)
-write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
+  
+  highly_variable_sign_outfile
+  rownames(highly_variable_genes_mofa)
+  
+  highly_variable_outfile
+  
+  
+} 
 
-highly_variable_sign_outfile
-dim(highly_variable_genes_mofa)
-rownames(highly_variable_genes_mofa)
 
-highly_variable_outfile
 
 
 

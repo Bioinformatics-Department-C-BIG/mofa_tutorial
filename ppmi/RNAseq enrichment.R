@@ -65,7 +65,7 @@ results_file=results_file
 gse = gse
 
 #run_mofa=TRUE
-
+### TODO: FIX AND MAKE A FUNCTION OF THIS SO I CAN USE IN MOFA TOO 
 if (run_mofa){
   for (factor in c(1:8)){
     
@@ -73,8 +73,7 @@ if (run_mofa){
       results_file = paste0(outdir, '/enrichment/gsego_',factor,'_')
       gse=list1[[factor]]
       write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
-  } 
-}
+ 
 ### to run mofa results
 
 
@@ -135,11 +134,12 @@ if (run_mofa){
     ############# KEGG
     
     
-    parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
+    #parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
     
-    parents$distance
+    #parents$distance
     
-
+  }
+}
 
 #### 
 #library(ggplot2)

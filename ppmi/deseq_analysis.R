@@ -257,7 +257,6 @@ num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 ### make the plot with higly variable AND significant genes 
 
 pca_files<-paste0(outdir_s, '/PCA/')
-dir.create(pca_files)
 
 
 

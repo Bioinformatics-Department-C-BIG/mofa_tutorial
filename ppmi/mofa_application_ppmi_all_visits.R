@@ -28,8 +28,9 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-#source(paste0(script_dir,'/mofa_config.R'))
 source(paste0(script_dir,'/config.R'))
+source(paste0(script_dir,'/mofa_config.R'))
+TOP_GN
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -74,6 +75,7 @@ NORMALIZED=TRUE;
 use_signif=FALSE
 
 source(paste0(script_dir, '/config.R'))
+source(paste0(script_dir, '/mofa_config.R'))
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)

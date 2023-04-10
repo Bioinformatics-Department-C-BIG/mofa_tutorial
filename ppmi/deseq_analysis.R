@@ -4,6 +4,7 @@
 
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
+
 print(script_dir)
 library('R.filesets')
 library(DESeq2)
@@ -37,12 +38,16 @@ library('ggplot2')
 #source(paste0(script_dir, '/config.R'))
 
 ### LOAD runs
+
+
+source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, '/utils.R'))
+
 VISIT='V08'
 
 
 
 source(paste0(script_dir, '/config.R'))
-source(paste0(script_dir, '/utils.R'))
 
 
 print(deseq_file)
@@ -61,10 +66,10 @@ table(se_filt$COHORT_DEFINITION)
 des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
 if  (process_mirnas){
 
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m, des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
   
 }else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g, des)
+  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
   
 }
 outdir_s
@@ -111,19 +116,6 @@ if (run_ma){
 
 
 
-
-#### PCA plots
-
-#pca.data <- PCA(t(highly_variable_genes_mofa), scale.unit = TRUE, graph = FALSE)
-
-#fviz_eig(pca.data, addlabels = TRUE, ylim = c(0, 70))
-
-
-#fviz_pca_ind(pca.data)
-
-#### Make plots 
-# Load libraries
-# install.packages(c("ggplot2", "scales", "viridis"))
 library(ggplot2)
 
 library(scales) # needed for oob parameter
@@ -179,6 +171,7 @@ mark_signficant<-function(deseq2ResDF, padj_T, log2fol_T){
   ### create also a more strict file? 
   return(deseq2ResDF)
 }
+
 log2fol_T<-0.25
 padj_T<-.005
 
@@ -187,17 +180,24 @@ deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 ####### MOFA deseq2  
 
-padj_T<0.05
-### this is also done later on -- save from there? 
-deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T , "Significant", NA)
-signif_genes<-rownames(deseq2ResDF[!is.na(deseq2ResDF$mofa_sign),])
+padj_T_hv<-0.001
+log2fol_T_hv<-0.3
 
+### this is also done later on -- save from there? 
+deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
+
+deseq2ResDF$mofa_sign
+
+signif_genes<-rownames(deseq2ResDF[!is.na(deseq2ResDF$mofa_sign),])
+length(signif_genes)
 
 vsd_mat <- assay(vsd)
 
 ###TODO: Move this to the mofa file 
 highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
 
+
+### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
 
@@ -205,8 +205,8 @@ write.csv(highly_variable_genes_mofa, highly_variable_outfile)
 write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
 highly_variable_sign_outfile
-dim(highly_variable_genes_mofa)
-rownames(highly_variable_genes_mofa)
+dim(highly_variable_sign_genes_mofa)
+head(rownames(highly_variable_genes_mofa))
 
 highly_variable_outfile
 
@@ -215,14 +215,19 @@ highly_variable_outfile
 
 
 
-log2fol_T<-0.1
-padj_T<-.05
+
+
+
+
+
+log2fol_T_overall<-0.1
+padj_T_overall<-.05
 deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
 deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
 
-deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
+deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall)
 
-
+num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 
 #hist(-log10(deseq2ResDF$padj))
 #hist(deseq2ResDF$log2FoldChange)
@@ -233,12 +238,77 @@ deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 #min(deseq2ResDF$log2pval, na.rm = TRUE)
 
 
+
+
+
+
+
+
+#### PCA plots
+### make the plot with higly variable AND significant genes 
+
+pca_files<-paste0(outdir_s, '/PCA/')
+dir.create(pca_files)
+
+
+
+pca_data_list<-list(t(highly_variable_sign_genes_mofa),t(highly_variable_genes_mofa) )
+
+pc_ind_ps<-list()
+for (i in c(1,2)){
+      pca_data<-pca_data_list[[i]]
+  
+
+      pca_pars<-paste0('_signif_', i)
+      
+      dim(highly_variable_sign_genes_mofa)
+      meta_d<-colData(se_filt)
+      coh_d<-meta_d$COHORT_DEFINITION
+      
+      pca.data <- PCA(pca_data,
+                      scale.unit = TRUE, graph = FALSE
+                      )
+      
+      fviz_eig(pca.data, addlabels = TRUE, ylim = c(0, 70))
+      
+      
+      pc_ind_p<-fviz_pca_ind(pca.data,col.ind = meta_d$COHORT_DEFINITION, 
+                   label='none')
+      pc_ind_ps[[i]]=pc_ind_p
+      ggsave(paste0(pca_files, 'individuals', pca_pars, '.jpeg'), width=6, height = 6)
+      
+      ### graph of variables 
+      
+      
+      
+      fviz_pca_var(pca.data,
+        col.var="contrib")+
+        scale_color_gradient2(low="blue", mid="white", 
+                              high="red", midpoint=1.5)+theme_bw()
+      
+      
+      #### TODO: calculate PCs for ALL the datasets 
+      
+      
+      ggsave(paste0(pca_files, 'variables', pca_pars,'.jpeg'), width=6, height = 6)
+}
+#### Make plots 
+# Load libraries
+# install.packages(c("ggplot2", "scales", "viridis"))
+
+
+
+
+
+
+
+
 ###### PLOTS of DE genes 
 
 ## Plot the results similar to DEseq2
 
 # Let's add some more detail
-dev.off()
+
 limits<-as.numeric(max(abs(deseq2ResDF$log2FoldChange)))
 limits
 p_log_plot<-ggplot(deseq2ResDF, aes(baseMean, log2FoldChange, colour=padj)) + 
@@ -322,9 +392,18 @@ if (run_heatmap){
   order_by_metric<-'log2pval'
   order_by_metric<-'abslog2pval'
   
+  
+  
+  
   oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] 
+  
+  oSigGenes<-deseq2ResDF[rownames(deseq2ResDF) %in% rownames(highly_variable_sign_genes_mofa),]
+  
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
 
+  
+  
+  
   dim(orderedSigGenes)
   n_sig<-50
   n_sig=dim(orderedSigGenes)[1]
@@ -415,18 +494,39 @@ if (run_heatmap){
 library('EnhancedVolcano')
 if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
 
+mfc<-max(abs(deseq2ResDF$log2FoldChange))
+pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
+pmax
+xlim = c(-mfc-0.2,mfc+0.2)
+#ylim = c(0,pmax+1)
 
 ns<-table(se_filt$COHORT_DEFINITION)
-ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+ns<-paste(rownames(ns)[1], '\n' ,ns[1],', ',names(ns)[2],ns[2])
 pvol<-EnhancedVolcano(deseq2ResDF,
                 lab = lab,
                 pCutoff = 10e-6,
                 FCcutoff = 0.1,
                 x = 'log2FoldChange',
-                y = 'pvalue', 
-                  
-                subtitle = ns   )
+                y = 'pvalue',
+                
+                
+                ## format 
+                pointSize = 3,
+                legendIconSize = 5,
+                labSize = 4,
+                
+                
+                legendLabSize=11,
+                subtitleLabSize = 11,
+                axisLabSize=11,
+                
+                
+                xlim=xlim,
+                subtitle = ns, 
+                title='')
 pvol
+
+
 fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
 ggsave(fname, width=7,height=8)
 #

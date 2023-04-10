@@ -1,37 +1,5 @@
 
-#BiocManager::install('clusterProfiler', force=TRUE)
-#BiocManager::install('apeglm')
-# BiocManager::install('AnnotationDbi')
-get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
-  
-  #### Gives a gene list cut by the thresholds padj_T and log2fol and orders by specific metric supplied 
-  #' @param padj_T filter the genes by metric padj_T
-  #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
-  #' @param order_by_metric metric to order the gene list by 
-  res=deseq2ResDF
-  res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
-  
-  length(which(!is.na(res$sign_lfc )))
-  res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
-  
-  
-  # Order the DE gene list by the stat statistic 
-  #remove negatives thatw ere introduced with vst transofrmations
-  
-  res$log2pval<-res$log2FoldChange*-log10(res$padj)
-  res$signlog2pval<-sign(res$log2FoldChange)*-log10(res$padj)
-  res<-res[res$baseMean>0,]
-  
-  #res <- res[order(-res$stat),]
-  res <- res[order(-res[,order_by_metric]),]
-  gene_list<-res[, order_by_metric]
-  names(gene_list)<-rownames(res)
-  
-  return(gene_list)
-  
-  
-  
-}
+
 
 
 

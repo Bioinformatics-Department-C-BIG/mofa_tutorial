@@ -33,7 +33,7 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-
+source(paste0(script_dir,'/mofa_config.R'))
 source(paste0(script_dir,'/config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')

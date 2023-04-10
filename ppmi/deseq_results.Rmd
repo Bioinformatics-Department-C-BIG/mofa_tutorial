@@ -22,7 +22,9 @@ When you click the **Knit** button a document will be generated that includes bo
 
 You can also embed plots, for example:
 
-```{r Enrichment,  results='hide', echo=FALSE, suppressW }
+```{r Enrichment,  results='hide', echo=FALSE }
+
+
 source('ppmi/deseq_analysis.R')
 
 

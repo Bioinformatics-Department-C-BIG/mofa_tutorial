@@ -32,6 +32,8 @@ outdir_orig=paste0(data_dir,'ppmi/plots/')
 output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+
+
 source(paste0(script_dir,'/config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
@@ -60,38 +62,23 @@ NA_PERCENT=0.8
 VISIT_COMPARE='BL'
 TOP_PN=0.90
 # cohort 1 =prodromal 
-sel_coh <- c(1,4)
-
-VISIT='BL'
 
 
-VISIT=c('V08')
 
-VISIT=c('BL')
-VISIT=c('V04')
-#VISIT=c('BL')
-VISIT=c('BL')
-
-VISIT=c('V06');
-sel_coh <- c(2)
 
 
 N_FACTORS=8
 
 VISIT=c('V08');
-
-
-source(paste0(script_dir, '/config.R'))
-
-
-
 TISSUE='CSF'; 
 run_vsn=TRUE
 TISSUE='Plasma';
 
 
 NORMALIZED=TRUE;
+use_signif=FALSE
 
+source(paste0(script_dir, '/config.R'))
 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
@@ -104,7 +91,7 @@ combined$Outcome
 
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
-mofa_params<-paste0(N_FACTORS )
+mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
@@ -113,8 +100,11 @@ highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_vari
 highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
 highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
 
-highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
-highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+if (use_signif){
+  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  
+}
 
 highly_variable_mirnas_outfile
 highly_variable_proteins_outfile
@@ -154,6 +144,7 @@ highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 
 ### Start loading mofa data
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
+
 dim(proteomics)
 
 
@@ -321,7 +312,6 @@ mofa_multi<-MultiAssayExperiment(experiments=data,
                      sampleMap=sample_map)
 
 complete.cases(metadata_filt$EVENT_ID)
-#install.packages('UpSetR')
 library('UpSetR')
 upsetSamples(mofa_multi)
 mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
@@ -379,15 +369,15 @@ dir.create(outdir, showWarnings = FALSE)
 #MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
+mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
+if (file.exists(mofa_file)){
+ pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
+ MOFAobject<-pre_trained
 
-#if (file.exists(mofa_file)){
-# pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
-# MOFAobject<-pre_trained
- 
- 
-#}else {
-  MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
-#}
+
+}else {
+ MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
+}
 ##### Basic stats
 
 plot_variance_explained(MOFAobject, max_r2=20)

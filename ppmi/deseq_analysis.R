@@ -43,11 +43,14 @@ library('ggplot2')
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
 
-VISIT='V08'
+VISIT='BL'
 
+
+process_mirnas<-TRUE
 
 
 source(paste0(script_dir, '/config.R'))
+
 
 
 print(deseq_file)
@@ -64,15 +67,16 @@ table(se_filt$COHORT_DEFINITION)
 # TODO: Report the number of samples too! 
 
 des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
-if  (process_mirnas){
 
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
-  
-}else{
-  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
-  
-}
-outdir_s
+#if  (process_mirnas){
+#
+#  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
+#  
+#}else{
+#  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
+#  
+#}
+#outdir_s
 # RUN DIFFERENTIAL EXPRESSION ANALYSIS 
 
 
@@ -94,6 +98,10 @@ dir.create(outdir_s)
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
+deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
+deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
+
+write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
 ### Up to here output can be used for other reasons
@@ -117,6 +125,7 @@ if (run_ma){
 
 
 library(ggplot2)
+
 
 library(scales) # needed for oob parameter
 library(viridis)
@@ -194,36 +203,38 @@ length(signif_genes)
 vsd_mat <- assay(vsd)
 
 ###TODO: Move this to the mofa file 
-highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
 
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
+
+  param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
+  highly_variable_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa.csv')
+  highly_variable_sign_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa_signif.csv')
+
+  highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+  highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
+  
+  write.csv(highly_variable_genes_mofa, highly_variable_outfile); 
+  write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
-write.csv(highly_variable_genes_mofa, highly_variable_outfile)
-write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
-
-highly_variable_sign_outfile
-dim(highly_variable_sign_genes_mofa)
-head(rownames(highly_variable_genes_mofa))
-
-highly_variable_outfile
-
-
-
-
-
-
-
+  
+  highly_variable_sign_outfile
+  rownames(highly_variable_genes_mofa)
+  
+  highly_variable_outfile
+  
+  
+} 
 
 
 
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
-deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
-deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
+
 
 deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall)
 
@@ -236,9 +247,6 @@ num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 #
 #
 #min(deseq2ResDF$log2pval, na.rm = TRUE)
-
-
-
 
 
 
@@ -535,6 +543,7 @@ ggsave(fname, width=7,height=8)
 #
 #fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
 #ggsave(fname, width=8, height=7)
+outdir_s
 
 
 

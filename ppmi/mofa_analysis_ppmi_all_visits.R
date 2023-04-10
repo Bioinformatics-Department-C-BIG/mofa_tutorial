@@ -155,7 +155,7 @@ for (i in seq(1,vps)){
   
   cluego1<-paste0(outdir, 'top_weights/top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
   
-  all_weights1<-MOFA2::get_weights(MOFAobject,
+  all_weights1<-MOFA2::get_weights(MOFAobject_gs,
                                   views = view, 
                                   as.data.frame =TRUE)  
   # threshold each? 
@@ -285,9 +285,10 @@ plot_data_scatter(MOFAobject,
                   features = 4,
                   sign = "positive",
                   color_by = color_by
-) + labs(y="Drug response (cell viability)")
+) + labs(y=color_by)
 
 
+type(MOFAobject@samples_metadata$STAIAD3)
 
 ## todo extract row and column for which positive cors are TRUE 
 #positive_cors_1<-pos_cors>0
@@ -363,7 +364,20 @@ for (ii in seq(1,fps)){
         
     }
   }
+  
+  
 }
+
+f1<-get_factors(MOFAobject,factors=1)
+f1<-as.data.frame(get_factors(MOFAobject,factors=1)['group1'])
+
+var_name='STAIAD22'
+yvar<-MOFAobject@samples_metadata[var_name]
+yvar_name<-'yvar'
+length(yvar)
+f1[yvar_name]<-yvar
+f1[,yvar_name]=as.numeric(f1[,yvar_name])
+ggplot(f1, aes_string(x='Factor1', y=yvar_name) )+ geom_point()
 
 
 

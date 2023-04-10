@@ -4,11 +4,6 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir,'/setup_os.R'))
 
-#BiocManager::install('MultiAssayExperiment')
-#BiocManager::install("MOFA2")
-#devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
-#browseVignettes("MOFA2")
-#BiocManager::install("MOFAdata")'
 
 # TODO: update to receive the whole matrices and start filtering here depending on the test we want to do
 # SCENARIOS: 
@@ -33,7 +28,7 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-source(paste0(script_dir,'/mofa_config.R'))
+#source(paste0(script_dir,'/mofa_config.R'))
 source(paste0(script_dir,'/config.R'))
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')

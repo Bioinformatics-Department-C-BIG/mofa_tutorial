@@ -317,3 +317,9 @@ ppmi/plots/heatmap_2_mRNA_nfs_20.jpeg
 *.pdf
 *.txt
 *.zip
+plots/barplot_byGroupobjective_method.png
+plots/SingleOmicsbyData.png
+plots/barplot_byGroupobjective_method.png
+plots/SingleOmicsbyData.png
+*.png
+*.png

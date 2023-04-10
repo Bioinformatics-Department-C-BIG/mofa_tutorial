@@ -12,6 +12,7 @@ library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
 
+
 ### TODO: Add volcano plot for each time point -DONE
 ### TODO: add heatmap for all tps tpogether -DONE
 #source('ppmi/de')
@@ -497,7 +498,6 @@ if (run_heatmap){
 
 
 
-#BiocManager::install('EnhancedVolcano')
 
 library('EnhancedVolcano')
 if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
@@ -508,8 +508,9 @@ pmax
 xlim = c(-mfc-0.2,mfc+0.2)
 #ylim = c(0,pmax+1)
 
-ns<-table(se_filt$COHORT_DEFINITION)
-ns<-paste(rownames(ns)[1], '\n' ,ns[1],', ',names(ns)[2],ns[2])
+ns_full<-table(se_filt$COHORT_DEFINITION)
+ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
+ns
 pvol<-EnhancedVolcano(deseq2ResDF,
                 lab = lab,
                 pCutoff = 10e-6,
@@ -523,16 +524,32 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                 legendIconSize = 5,
                 labSize = 4,
                 
-                
                 legendLabSize=11,
                 subtitleLabSize = 11,
                 axisLabSize=11,
+                colAlpha = 1,
                 
+                # legend positions 
+                legendPosition = 'right',
                 
-                xlim=xlim,
-                subtitle = ns, 
-                title='')
+                xlim=xlim, 
+                subtitle=ns, 
+                title=''
+               )
+
+
 pvol
+
+library(gridExtra)
+library(grid)
+#grid.arrange(pvol, p2,
+grid.arrange(pvol,
+             ncol=1,
+             top = textGrob('EnhancedVolcano',
+                            just = c('center'),
+                            gp = gpar(fontsize = 32))
+             )
+
 
 
 fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')

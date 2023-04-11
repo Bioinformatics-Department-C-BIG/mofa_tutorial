@@ -40,6 +40,11 @@ ens_ids_full<- features_names(MOFAobject)$RNA
 ens_ids<-   ens_ids<-gsub('\\..*', '', ens_ids_full)
 
 
+library(ensembldb)
+#BiocManager::install('EnsDb.Hsapiens.v79')
+library(EnsDb.Hsapiens.v79)
+
+## Making a "short cut"
 geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
 length(ens_ids)
 geneIDs1
@@ -52,7 +57,7 @@ ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
 
 features_names(MOFAobject_gs)$RNA<-ens_ids
 
-
+ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
@@ -230,14 +235,13 @@ pos_cors<-cors>0  # which have more than two factors positive
 n_factors_pos=1
 positive_cors<-cors[,colSums(pos_cors)>n_factors_pos]
 
-graphics.off()
 for (i in 1:dim(positive_cors)[2]){
   
 
   names<-colnames(positive_cors)
   x_cors<-positive_cors[,i]
   pos_factors<-names(which(x_cors>0))
-  x_cor_t=2
+  x_cor_t=5
   pos_factors<-names(which(x_cors>x_cor_t))
   # Order by 
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
@@ -261,7 +265,7 @@ for (i in 1:dim(positive_cors)[2]){
   fss<-paste(fs,sep='_',collapse='-')
   dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
   
-  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by,x_cor_t,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
   
   
   ggsave(FNAME, width = 4, height=4, dpi=100)
@@ -347,7 +351,8 @@ plot_weights(MOFAobject,
   
 for (ii in seq(1,fps)){
   ### Plot factors against a clinical variable 
-  cors_sig<-names(which(positive_cors[ii,]>2))
+  x_cor_t=4
+  cors_sig<-names(which(positive_cors[ii,]>x_cor_t))
   ln_cs<-length(cors_sig)
   if (ln_cs>0){
     for (iii in seq(1:ln_cs)){
@@ -362,7 +367,7 @@ for (ii in seq(1,fps)){
           )
         
         
-        FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_1D_',ii, '_',color_by,'.png')
+        FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_1D_',ii, '_',color_by,'_cor_', x_cor_t, '.png')
         
         
         ggsave(FNAME, width = 4, height=4, dpi=100)
@@ -476,7 +481,7 @@ for (i in seq(1,vps)){
           )
          
             
-          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'), width = 4, height=4, dpi=100)
       
           
           cluster_rows=TRUE;cluster_cols=TRUE
@@ -511,7 +516,7 @@ for (i in seq(1,vps)){
          #dev.off()
       #          
           ns<-dim(MOFAobject@samples_metadata)[1]
-          cor_T<-4
+          cor_T<-2
           rel_cors<-cors[ii,][cors[ii,]>cor_T ]
           rel_cors
           
@@ -558,7 +563,7 @@ for (i in seq(1,vps)){
   
 }
 
-MOFAobject@samples_metadata$NHY
+sMOFAobject@samples_metadata$NHY
 
 
 
@@ -833,7 +838,7 @@ plot_enrichment_heatmap(res.positive$sigPathways,
 jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.negative, 
-                        alpha=0.5, cap=0.00000000005, 
+                        alpha=0.5, cap=0.00000000005 
                           )
 
 

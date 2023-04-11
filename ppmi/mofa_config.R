@@ -15,6 +15,10 @@ if (use_signif){
   TOP_MN=0.90
   TOP_GN=0.90
   
+  ## MAKE A BIG ONE
+  TOP_MN=0.90
+  TOP_GN=0.30
+  
   
   
 }

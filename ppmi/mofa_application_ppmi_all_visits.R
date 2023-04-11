@@ -28,9 +28,6 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-source(paste0(script_dir,'/config.R'))
-source(paste0(script_dir,'/mofa_config.R'))
-TOP_GN
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -63,7 +60,7 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=8
+N_FACTORS=10
 
 VISIT=c('V08');
 TISSUE='CSF'; 
@@ -73,7 +70,7 @@ TISSUE='Plasma';
 
 NORMALIZED=TRUE;
 use_signif=FALSE
-
+process_mirnas=FALSE
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
 

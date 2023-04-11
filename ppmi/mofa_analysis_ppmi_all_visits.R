@@ -908,14 +908,14 @@ print(confusion_mat)
 
 ## Show "importance" of variables: higher value mean more important:
 round(importance(model.EORTC.risk), 2)
-
+#install.packages('randomForest')
 
 # Prepare data
 # Predict EORTC.risk with factor 1,2 only!
-df <- as.data.frame(get_factors(MOFAobject, factors=c(3,4))[[1]])
+df <- as.data.frame(get_factors(MOFAobject, factors=c(2,3,4,6))[[1]])
 
 # Train the model for IGHV
-y_predict='NHY'
+y_predict='CONCOHORT_DEFINITION'
 df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
 model.y <- randomForest(y ~ .,data= df, ntree=10)
 df$y <- NULL # important 
@@ -928,20 +928,23 @@ predicted<-MOFAobject@samples_metadata$y.pred
 actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
 confusion_mat = as.matrix(table(actual, predicted )) 
 print(confusion_mat)
+View(confusion_mat)
 round(importance(model.y), 2)
 
 
-
+install.packages('GGally')
+library('GGally')
 ### Plot predictions
 p <- plot_factors(MOFAobject, 
-                  factors = c(1,2), 
-                  color_by = "NHY",
-                  shape_by = "NHY",
+                  factors = c(2,3,4,6), 
+                  color_by = "CONCOHORT_DEFINITION",
+                  shape_by = "CONCOHORT_DEFINITION",
                   dot_size = 2.5,
                   show_missing = T
 )
 
-
+show(p)
+dev.off()
 cbind(MOFAobject@samples_metadata$sample,MOFAobject@samples_metadata$COHORT_DEFINITION)
 MOFAobject@samples_metadata[MOFAobject@samples_metadata$PATNO=='3156',]
 

@@ -40,6 +40,7 @@ unused ppmi/*/*/*
 ppmi/ppmi_data/*/*
 ppmi/output/*/*
 ppmi/plots/*/*
+ppmi/output/*
 
 
 *.Rproj.user/*/*/*/*/*/*
@@ -325,3 +326,4 @@ Rplot001.svg
 Rplot002.svg
 Rplot003.svg
 *.xlsx
+*.tiff

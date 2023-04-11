@@ -38,6 +38,9 @@ unused ppmi/*/*/*
 .RData*
 
 ppmi/ppmi_data/*/*
+ppmi/output/*/*
+ppmi/plots/*/*
+
 
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper

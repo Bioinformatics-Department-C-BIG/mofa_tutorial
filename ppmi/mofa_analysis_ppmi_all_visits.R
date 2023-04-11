@@ -99,6 +99,7 @@ cors<-correlate_factors_with_covariates(MOFAobject,
 )
 ids_to_plot<-which(apply(cors, 2, sum)>0)
 
+ids_to_plot<-which(apply(cors, 2, sum)>0)
 
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
@@ -109,8 +110,9 @@ correlate_factors_with_covariates(MOFAobject,
 )
 dev.off()
 graphics.off()
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = 2000, height=700, res=150)
+ keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
+ ids_to_plot<-ids_to_plot[keep]
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=150)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars)[ids_to_plot], 
                                   plot = "log_pval"
@@ -225,15 +227,18 @@ for (i in seq(1,vps)){
   
 ### wHICH VARIABLES correlate with which factors 
 pos_cors<-cors>0  # which have more than two factors positive 
-positive_cors<-cors[,colSums(pos_cors)>1]
+n_factors_pos=1
+positive_cors<-cors[,colSums(pos_cors)>n_factors_pos]
 
+graphics.off()
 for (i in 1:dim(positive_cors)[2]){
   
 
   names<-colnames(positive_cors)
   x_cors<-positive_cors[,i]
   pos_factors<-names(which(x_cors>0))
-  
+  x_cor_t=2
+  pos_factors<-names(which(x_cors>x_cor_t))
   # Order by 
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
   print(paste(i, pos_factors))
@@ -256,7 +261,7 @@ for (i in 1:dim(positive_cors)[2]){
   fss<-paste(fs,sep='_',collapse='-')
   dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
   
-  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by,x_cor_t,'.png')
   
   
   ggsave(FNAME, width = 4, height=4, dpi=100)
@@ -270,10 +275,11 @@ for (i in 1:dim(positive_cors)[2]){
                 shape_by= shape_by,
                show_missing = FALSE
   )
-  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
     ggsave(FNAME, width = 4, height=4, dpi=100)
   
 }
+dev.off()
 
 
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION

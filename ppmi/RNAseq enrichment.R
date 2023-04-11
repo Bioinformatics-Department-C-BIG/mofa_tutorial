@@ -93,6 +93,10 @@ if (run_mofa){
               N=20
               ## TODO: ADD FACET IF SIGNED 
               if (process_mirnas){
+                
+                results_file=mir_results_file_anticor
+                gse=gse_mirnas;
+                
                 dp<-dotplot(gse, showCategory=N)
                 
               }else{
@@ -137,6 +141,7 @@ if (run_mofa){
                 gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
                 
               }
+              gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
               
               p1_net <- cnetplot(gse_x)
               
@@ -145,7 +150,8 @@ if (run_mofa){
               node_label<-"all"
               
               N=10
-              p2_net<- cnetplot(gse_x, node_label=node_label,
+              p2_net<- cnetplot(gse_x,
+                                node_label=node_label,
                                 cex_label_category = 1.2, showCategory=N)
               
               p2_net

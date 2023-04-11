@@ -28,8 +28,8 @@ order_by_metric<-'log2pval'
 if (VISIT=='V08'){
   padj_T=0.01
   log2fol_T=0.1
-  padj_T=0.05
-  log2fol_T=0.1
+  padj_T=0.01
+  log2fol_T=0.0
 }else{
   padj_T=0.05
   log2fol_T=0.1
@@ -37,7 +37,7 @@ if (VISIT=='V08'){
   
 
 
-
+log2fol_T;padj_T;
 ### run the enrichment if it has not been ran yet!! 
 
 Padj_T_paths=0.01
@@ -149,18 +149,14 @@ colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 
 
 ########### fix anticorrelation matrix
+### Filter by anticorrelated?? 
+
+T_cor=-0.1 ## if we dont then everything comes out at the same value... 
 cor_results_read<-read.csv(paste0(outdir_s, 'cor_results.csv'), row.names = 1) ## not sure try it 
 cor_results_long_all<-melt(cor_results, varnames = c('target_ensembl', 'mature_mirna_id'), value.name = 'cor' )
 #cor_results_long_all<-cor_results_long
 # could filter here
 ### filter using binary threhsold 
-
-
-T_cor=-0.1
-
-#T_cor=1
-
-mir_results_file_anticor=paste0(mir_results_file, '_anticor_T_cor_', T_cor)
 
 cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=T_cor,]
 
@@ -190,7 +186,8 @@ colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 ##################### merge all possible targets with correlation values 
 ###
 merged_targets<-merge(all_targets_long_true, cor_results_long_symbol, by=c('mature_mirna_id', 'symbol'))
-#hist(merged_targets$cor)
+
+
 
 
 
@@ -205,7 +202,7 @@ dim(merged_targets)
 
 
 order_metric='log2pval_negcor'
-merged_targets_metric[,order_metric]<- merged_targets_metric$cor *-1 * merged_targets_metric$order_by_metric
+merged_targets_metric[,order_metric]<- merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
 
 #merged_targets_metric[,order_metric]<-merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
 ############# REMOVE DUPLICATED ###################
@@ -213,7 +210,17 @@ merged_targets_metric[,order_metric]<- merged_targets_metric$cor *-1 * merged_ta
 ## Here we should expect high negative correlations to have positive metric (well unless fc is negative !! )
 mer_tars_ord
 mer_tars_ord<-merged_targets_metric[order(-merged_targets_metric$log2pval_negcor),]
-mer_tars_ord_no_dup<-mer_tars_ord[!duplicated(mer_tars_ord$target_ensembl),]
+remove_dup_g=FALSE
+
+if (remove_dup_g){
+  mer_tars_ord_no_dup<-mer_tars_ord[!duplicated(mer_tars_ord$target_ensembl),]
+  
+}else{
+  mer_tars_ord_no_dup<-mer_tars_ord
+  
+}
+
+### 
 
 hist(mer_tars_ord_no_dup[,order_metric])
 
@@ -227,6 +234,11 @@ gene_list_targets_ord<-gene_list_targets[order(-gene_list_targets)]
 
 
 ONT='BP'
+
+
+mir_results_file_anticor=paste0(mir_results_file, '_anticor_T_cor_', T_cor, 'dup', remove_dup_g )
+
+
 #### Now run enrichment analysis only by the top results 
 ## rank/ order the list by the top mirnas --> a combination of pvalue and significance 
 ## i also get a pvalue for the interactions? 
@@ -246,7 +258,7 @@ write.csv(gse_mirnas@result, paste0(mir_results_file_anticor, 'results.csv'))
 
 #ggsave(paste0(mir_results_file_anticor, '_',T_cor, '_barplot',  '.jpeg'), width=8, height=7)
 
-#run_enrichment_plots(gse_mirnas, )
+run_enrichment_plots(gse_mirnas, mir_results_file_anticor)
 ######################### RANKED BY NEGATIVE-CORELATION #########################
 
 

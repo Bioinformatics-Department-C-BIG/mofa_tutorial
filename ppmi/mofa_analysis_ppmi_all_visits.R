@@ -912,13 +912,17 @@ round(importance(model.EORTC.risk), 2)
 
 # Prepare data
 # Predict EORTC.risk with factor 1,2 only!
+high_weights=get_weights()
 df <- as.data.frame(get_factors(MOFAobject, factors=c(2,3,4,6))[[1]])
+df_genes<-as.data.frame(get_weights(MOFAobject, factors=c(2,3,4,6)) )
 
 # Train the model for IGHV
 y_predict='CONCOHORT_DEFINITION'
 df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
 model.y <- randomForest(y ~ .,data= df, ntree=10)
 df$y <- NULL # important 
+
+
 # Do predictions
 MOFAobject@samples_metadata$y.pred <- stats::predict(model.y, df)
 MOFAobject@samples_metadata$y.pred
@@ -927,6 +931,7 @@ MOFAobject@samples_metadata$y.pred
 predicted<-MOFAobject@samples_metadata$y.pred
 actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
 confusion_mat = as.matrix(table(actual, predicted )) 
+
 print(confusion_mat)
 View(confusion_mat)
 round(importance(model.y), 2)

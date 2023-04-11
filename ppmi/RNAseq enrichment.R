@@ -85,6 +85,9 @@ if (run_mofa){
       results_file=mir_results_file_anticor
       gse=gse_mirnas;
       
+      
+      
+      
     }
      run_enrichment_plots<-function(gse, results_file){
               N=20
@@ -141,7 +144,7 @@ if (run_mofa){
               node_label<-"category"
               node_label<-"all"
               
-              N=3
+              N=10
               p2_net<- cnetplot(gse_x, node_label=node_label,
                                 cex_label_category = 1.2, showCategory=N)
               

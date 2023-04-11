@@ -152,7 +152,7 @@ highly_variable_mirnas_outfile
 # EITHER input to vst or put as is normalized
 miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
 rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
-head(rownames(miRNA))
+head(rownames(miRNA));colnames(miRNA)
 
 
 
@@ -166,7 +166,7 @@ dim(highly_variable_genes_mofa)
 
 RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
 rownames(RNA)<-rownames(highly_variable_genes_mofa)
-head(rownames(RNA))
+head(rownames(RNA)); head(colnames(RNA))
 
 
 
@@ -201,14 +201,6 @@ data = list(
 #### just trying a multi assay here to help with filtering.. 
 head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
-assay=c(rep('proteomics', length(prot_filt)),
-        rep('miRNA', length(miRNA_filt)),
-        rep('RNA', length(RNA_filt)))
-
-assay=c(rep('miRNA', length(miRNA_filt)),
-        rep('RNA', length(RNA_filt)))
-
-
 ### might need to filter by what is common with meta
 data_full<-list(miRNA=as.matrix(miRNA), 
   RNA=as.matrix(RNA) )
@@ -217,11 +209,10 @@ data_full<-list(miRNA=as.matrix(miRNA),
 assay_full=c(rep('miRNA', length(miRNA)),
         rep('RNA', length(RNA)))
 
-length(assay_full); length(primary);
 
 colname = c(colnames(RNA), colnames(miRNA))
 primary=colname
-
+colname
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
 
 common_samples_in_assays=unique(colname)
@@ -229,18 +220,22 @@ common_samples_in_assays=unique(colname)
 ### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
 
+metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
 
 metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
 
-metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
 rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
 
 
-mofa_multi<-MultiAssayExperiment(experiments=data,
+mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  colData = metadata_filt, 
                                  sampleMap=sample_map)
 
 
+
+
+mofa_multi_complete<-mofa_multi[,complete.cases(mofa_multi)]
+mofa_multi_complete
 complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
 upsetSamples(mofa_multi)

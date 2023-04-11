@@ -4,17 +4,19 @@
 
 #BiocManager::install('miRLAB')
 library('miRLAB')
+### NEED TO RUN MOFA SCRIPT
 #library(miRLAB)
+out_compare<-'ppmi/plots/single/compare/'
 
 
 dataset=system.file("extdata", "ToyEMT.csv", package="miRLAB")
 results=Pearson(dataset, 1:3, 4:18) 
 
-mirs_vals<-assays(mofa_multi)[[1]]
+mirs_vals<-assays(mofa_multi_complete)[[1]]
 l1<-dim(mirs_vals)[2]
 dim(mirs_vals)
 l1
-rnas_vals<-assays(mofa_multi)[[2]]
+rnas_vals<-assays(mofa_multi_complete)[[2]]
 dim(rnas_vals)
 dataset1<-rbind( mirs_vals, rnas_vals)
 dim(dataset1)
@@ -30,6 +32,6 @@ hist(results)
 cor_results<-results
 anticor= results <= -0.35
 
-#outdir_s_1<-paste0(outdir_orig, '/single/', param_str_g_f, des)
+write.csv(cor_results,paste0(outdir_s, 'cor_results.csv') )
 
 

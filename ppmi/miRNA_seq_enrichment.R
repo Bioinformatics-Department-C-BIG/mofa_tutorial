@@ -21,13 +21,15 @@ source('ppmi/deseq_analysis.R')
 #order_by_metric<-'abslog2pval'
 order_by_metric<-'abslog2pval'
 order_by_metric<-'abslog2pval'
+order_by_metric<-'log2FoldChange'
+order_by_metric<-'log2pval'
 
 
 if (VISIT=='V08'){
   padj_T=0.01
   log2fol_T=0.1
   padj_T=0.05
-  log2fol_T=0
+  log2fol_T=0.1
 }else{
   padj_T=0.05
   log2fol_T=0.1
@@ -78,6 +80,7 @@ if (file.exists(gsea_results_fname)){
 
 ## remove . from names 
 colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
+colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
 
 
 
@@ -116,8 +119,12 @@ mir_results_file_anticor<-paste0(mir_results_file, '_anticor_')
 
 
 mirtars<-mieaa_all_gsea[mieaa_all_gsea$Category=='Target genes (miRTarBase)',]
+
 # select columns mirnas, gene targets
 all_targets<-mirtars[c('Subcategory', 'miRNAs.precursors')]
+
+dim(all_targets)
+
 
 library(data.table)
 dt<-data.table(all_targets)
@@ -142,13 +149,14 @@ colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 
 
 ########### fix anticorrelation matrix
+cor_results_read<-read.csv(paste0(outdir_s, 'cor_results.csv'), row.names = 1) ## not sure try it 
 cor_results_long_all<-melt(cor_results, varnames = c('target_ensembl', 'mature_mirna_id'), value.name = 'cor' )
 #cor_results_long_all<-cor_results_long
 # could filter here
 ### filter using binary threhsold 
 
-T_cor=-0.3
-T_cor=0
+
+T_cor=-0.1
 
 #T_cor=1
 
@@ -195,20 +203,26 @@ merged_targets_metric<-merge(merged_targets,gene_list_metric,  by=c('mature_mirn
 dim(merged_targets_metric)
 dim(merged_targets)
 
+
 order_metric='log2pval_negcor'
-merged_targets_metric[,order_metric]<-merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
+merged_targets_metric[,order_metric]<- merged_targets_metric$cor *-1 * merged_targets_metric$order_by_metric
 
 #merged_targets_metric[,order_metric]<-merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
+############# REMOVE DUPLICATED ###################
+## manual check to see that 
+## Here we should expect high negative correlations to have positive metric (well unless fc is negative !! )
+mer_tars_ord
+mer_tars_ord<-merged_targets_metric[order(-merged_targets_metric$log2pval_negcor),]
+mer_tars_ord_no_dup<-mer_tars_ord[!duplicated(mer_tars_ord$target_ensembl),]
+
+hist(mer_tars_ord_no_dup[,order_metric])
 
 
-hist(merged_targets_metric[,order_metric])
+write.csv(mer_tars_ord_no_dup, paste0(mir_results_file_anticor, 'gene_targets_filtered.csv'))
 
 
-write.csv(merged_targets_metric, paste0(mir_results_file_anticor, 'gene_targets_filtered.csv'))
-
-
-gene_list_targets<-merged_targets_metric[,order_metric]
-names(gene_list_targets)<-merged_targets_metric$target_ensembl
+gene_list_targets<-mer_tars_ord_no_dup[,order_metric]
+names(gene_list_targets)<-mer_tars_ord_no_dup$target_ensembl
 gene_list_targets_ord<-gene_list_targets[order(-gene_list_targets)]
 
 
@@ -225,10 +239,7 @@ gse_mirnas= clusterProfiler::gseGO(gene_list_targets_ord,
 
 
 
-  
-  
-  
-  
+
 
 #View(enrich_go_mirnas@result)
 write.csv(gse_mirnas@result, paste0(mir_results_file_anticor, 'results.csv'))

@@ -317,3 +317,8 @@ ppmi/plots/heatmap_2_mRNA_nfs_20.jpeg
 *.pdf
 *.txt
 *.zip
+*.gz
+Rplot001.svg
+Rplot002.svg
+Rplot003.svg
+*.xlsx

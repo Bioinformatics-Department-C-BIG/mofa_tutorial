@@ -3,6 +3,7 @@
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+script_dir='D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi/'
 source(paste0(script_dir, '/setup_os.R'))
 
 print(script_dir)

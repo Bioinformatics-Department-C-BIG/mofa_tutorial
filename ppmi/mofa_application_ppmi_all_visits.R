@@ -19,6 +19,8 @@ library(tidyverse)
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
+library(ggplot2)
+
 
 library('MultiAssayExperiment')
 
@@ -63,7 +65,7 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=8
+N_FACTORS=10
 
 VISIT=c('V08');
 TISSUE='CSF'; 
@@ -83,7 +85,7 @@ combined_bl<-combined
 
 scale_views=TRUE
 
-combined$Outcome
+#combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
@@ -134,18 +136,13 @@ fname
 in_file<-highly_variable_proteins_outfile
 
 highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
-
-
-
-
-
 ### Start loading mofa data
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
 
-dim(proteomics)
-
 
 ##### Load mirnas + RNAs 
+### we use data.table because there are duplicate samples? 
+### problem with saving of rownmaes 
 highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
 colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
 rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
@@ -171,113 +168,27 @@ RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
 rownames(RNA)<-rownames(highly_variable_genes_mofa)
 head(rownames(RNA))
 
-dim(RNA)
 
 
-##### duplicates 
+create_hist<-function(df, name){
+  
+      dfm<-melt(df)
+    
+      p1<-ggplot(miRNAm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+      ggsave(paste0(outdir, 'data_histograms',name,  '.jpeg' ), width = 10, height=8)
+  }
 ## histograms to check normal pattern 
-library(ggplot2)
-miRNAm<-melt(miRNA)
-proteomicsm<-melt(proteomics)
-par(mfrow=c(1,3))
-RNAm<-melt(RNA)
-
-p1<-ggplot(miRNAm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
-ggsave(paste0(outdir, 'data_histograms_mirnas.jpeg' ), width = 10, height=8)
-
-p2<-ggplot(RNAm, aes(x=value))+ geom_histogram()+ labs(title='rnas')
-ggsave(paste0(outdir, 'data_histograms_rnas.jpeg' ), width = 10, height=8)
-
-p3<-ggplot(proteomicsm, aes(x=value))+ geom_histogram()+ labs(title='proteins')
-ggsave(paste0(outdir, 'data_histograms_proteins.jpeg' ), width = 10, height=8)
-
-dev.off()
-dim(highly_variable_proteins_mofa)
-
-dim(proteomics)
-colnames(proteomics)
-##### Filter samples that have all modalities present!
-
-
-common_samples<-intersect(colnames(miRNA), colnames(proteomics)); common_samples
-
-## do not add proteomics
-common_samples<-intersect(colnames(miRNA), colnames(miRNA)); common_samples
-common_samples<-intersect(common_samples,colnames(RNA)) ; common_samples
-common_samples<-intersect(common_samples,combined_bl$PATNO_EVENT_ID); common_samples
-
-######
-# Add metadata
-
-
-metadata_filt<-combined_bl[match(common_samples, combined_bl$PATNO_EVENT_ID),]
-only_pd<-metadata_filt$PATNO_EVENT_ID[which(metadata_filt$COHORT %in% sel_coh)]
-
-
-common_samples<-only_pd;common_samples
-metadata_filt<-metadata_filt[match(only_pd, metadata_filt$PATNO_EVENT_ID),]
-# Rewrite to add only pd
-#metadata_filt[c('COHORT', 'COHORT_DEFINITION')]
-
-#metadata_filt$PATNO
-
-write.csv(common_samples,paste0(output_files,out_params, '_common_samples.txt'), 
-          row.names = FALSE, quote=FALSE )
-
-head(common_samples)
-
-
-#### Filter samples that are common in all three
-ids<-rownames(miRNA)
-miRNA<-as.data.frame(miRNA); dim(miRNA)
-miRNA_filt<-miRNA[,match(common_samples, colnames(miRNA)) ]
-dim(miRNA_filt)
-#miRNA_filt<-miRNA_filt[ ,common_samples]
-
-
-### Select creates the new matrix with the same order 
-prot_filt<-proteomics[,match(common_samples, colnames(proteomics))]
-dim(prot_filt)
-
-# use match to get column too
-RNA_filt<-RNA[,match(common_samples, colnames(RNA)) ]
-dim(prot_filt)
-
-
-head(rownames(RNA_filt))
-head(rownames(miRNA_filt))
-head(rownames(prot_filt))
-
-#RNA_filt<-as.data.table(RNA) %>% select(common_samples)
-
-
-rownames(prot_filt)<-rownames(proteomics)
-dim(miRNA_filt)
-dim(prot_filt)
-#colnames(miRNA_filt)
-#colnames(RNA_filt)
-
-
-## how to analyze and normalize olink? 
-
-mat<-as.matrix(miRNA_filt)
-
-
-##### Extract metadata with PATNO index
+create_hist(RNA, 'RNA')
+create_hist(miRNA, 'miRNA')
 
 
 
 
-
-
-### INPUT TO MOFA
-head(unique(rownames(miRNA_filt)))
-head(rownames(RNA_filt))
-head(rownames(prot_filt))
-
-
-
-
+############################# Preprocessing ############################
+########################################################################
+### Create the summarized experiment 
+########
+########
 
 data = list(proteomics = as.matrix(prot_filt),
             miRNA=as.matrix(miRNA_filt), 
@@ -288,7 +199,6 @@ data = list(
             RNA=as.matrix(RNA_filt) )
 
 #### just trying a multi assay here to help with filtering.. 
-
 head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
 assay=c(rep('proteomics', length(prot_filt)),
@@ -299,14 +209,37 @@ assay=c(rep('miRNA', length(miRNA_filt)),
         rep('RNA', length(RNA_filt)))
 
 
-primary=metadata_filt$PATNO_EVENT_ID
-colname=metadata_filt$PATNO_EVENT_ID
-sample_map=DataFrame(assay=assay, primary=primary, colname=colname)
+### might need to filter by what is common with meta
+data_full<-list(miRNA=as.matrix(miRNA), 
+  RNA=as.matrix(RNA) )
+
+
+assay_full=c(rep('miRNA', length(miRNA)),
+        rep('RNA', length(RNA)))
+
+length(assay_full); length(primary);
+
+colname = c(colnames(RNA), colnames(miRNA))
+primary=colname
+
+sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
+
+common_samples_in_assays=unique(colname)
+
+### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
+### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
+
+
+metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
+
+metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
 rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
 
+
 mofa_multi<-MultiAssayExperiment(experiments=data,
-                     colData = metadata_filt, 
-                     sampleMap=sample_map)
+                                 colData = metadata_filt, 
+                                 sampleMap=sample_map)
+
 
 complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
@@ -324,6 +257,11 @@ NCOL(miRNA_filt)
 
 colData(mofa_multi_V04)
 
+
+
+
+
+###################### RUN MOFA #########################
 ##### Setup MOFA model 
 ## model opts 
 # SET factor values 

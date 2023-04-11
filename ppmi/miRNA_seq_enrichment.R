@@ -4,8 +4,21 @@ library(rbioapi)
 library('VennDiagram')
 library(enrichplot)
 
+library('GOfuncR')
+require(DOSE)
+library('apeglm')
+library(clusterProfiler)
+library(AnnotationDbi)
+library(ensembldb)
+library('org.Hs.eg.db')
+#install.packages('ggridges')
+require(ggridges)
 
 
+source('ppmi/deseq_analysis.R')
+
+#order_by_metric<-'abslog2pval'
+#order_by_metric<-'abslog2pval'
 order_by_metric<-'abslog2pval'
 order_by_metric<-'abslog2pval'
 
@@ -87,21 +100,26 @@ write.csv(mieaa_all_gsea, paste0(mir_results_file, '_', '.csv' ))
 
 
 
+
+######################################################################
 ### ANOTHER WAY to obtain targets 
 ##
 ##
 
 #BiocManager::install("targetscan.Hs.eg.db")
 ### first retrieve all targets that mieaa returned 
+####################
+
+##### wgere to draw targets from????? 
+mir_results_file_anticor<-paste0(mir_results_file, '_anticor_')
+
+
+
 mirtars<-mieaa_all_gsea[mieaa_all_gsea$Category=='Target genes (miRTarBase)',]
 # select columns mirnas, gene targets
 all_targets<-mirtars[c('Subcategory', 'miRNAs.precursors')]
 
-
-dim(all_targets)
-colnames(all_targets)
 library(data.table)
-
 dt<-data.table(all_targets)
 strsplit(all_targets$miRNAs.precursors, "\\; ")
 all_targets_wide<-dcast(dt[, {x1 <- strsplit(miRNAs.precursors, "\\; "); c(list(unlist(x1)), 
@@ -113,55 +131,112 @@ all_targets_long_true<-all_targets_long[all_targets_long$value==1, ]
 
 
 
-### fix anticorrelation matrix
-anticor_long<-melt(anticor)
-anticor_long_ints<-anticor_long[anticor_long$value,]
-colnames(anticor_long_ints)<-c('target_ensembl', 'mature_mirna_id', 'int')
 
-symb<-get_symbols_vector(as.character(anticor_long_ints$target_ensembl))
-anticor_long_ints$symbol<-symb
-non_na<-(!is.na(symb)) & (!is.na(names(symb)))
-## filter by the ones that returned syumbols 
-anticor_long_ints_symbol<-anticor_long_ints[non_na,] 
-
-
-anticor_long_ints
-#symb_no_na<-symb_no_na[]
-## WE LOST SOME GENES HERE 
-length(symb);length(which(non_na))
-
-anticor_long_ints_symbol$mature_mirna_id<-gsub('\\.', '-', anticor_long_ints_symbol$mature_mirna_id)
 
 head(all_targets_long);
 colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 
-head(anticor_long_ints_symbol)
 
-### now filter all targets by what is actually anticorrelated 
-merged_targets<-merge(all_targets_long_true, anticor_long_ints_symbol, by=c('mature_mirna_id', 'symbol'))
-merged_targets
+##################### METHOD 2: RANK BY ANTI COR ######################
+#################
 
-write.csv(merged_targets, paste0(mir_results_file, 'gene_targets_filtered_TSCAN.csv'))
+
+########### fix anticorrelation matrix
+cor_results_long_all<-melt(cor_results, varnames = c('target_ensembl', 'mature_mirna_id'), value.name = 'cor' )
+#cor_results_long_all<-cor_results_long
+# could filter here
+### filter using binary threhsold 
+
+T_cor=-0.3
+T_cor=0
+
+#T_cor=1
+
+mir_results_file_anticor=paste0(mir_results_file, '_anticor_T_cor_', T_cor)
+
+cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=T_cor,]
+
+
+#cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=-0.3,]
+cor_results_long<-cor_results_long_ints
+
+
+symb<-get_symbols_vector(as.character(cor_results_long$target_ensembl))
+cor_results_long$symbol<-symb
+non_na<-(!is.na(symb)) & (!is.na(names(symb)))
+## filter by the ones that returned syumbols 
+cor_results_long_symbol<-cor_results_long[non_na,] 
+head(cor_results_long_symbol)
+## WE LOST SOME GENES HERE 
+length(symb);length(which(non_na))
+cor_results_long_symbol$mature_mirna_id<-gsub('\\.', '-', cor_results_long_symbol$mature_mirna_id)
+
+hist(cor_results_long_symbol$cor)
+
+##### ALL POSSIBLE TARGETS ################################
+
+colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
+
+
+
+##################### merge all possible targets with correlation values 
+###
+merged_targets<-merge(all_targets_long_true, cor_results_long_symbol, by=c('mature_mirna_id', 'symbol'))
+#hist(merged_targets$cor)
+
+
+
+gene_list_metric<-DataFrame(order_by_metric=gene_list)
+gene_list_metric$mature_mirna_id=rownames(gene_list_metric)
+colnames(gene_list_metric)
+
+
+merged_targets_metric<-merge(merged_targets,gene_list_metric,  by=c('mature_mirna_id'))
+dim(merged_targets_metric)
+dim(merged_targets)
+
+order_metric='log2pval_negcor'
+merged_targets_metric[,order_metric]<-merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
+
+#merged_targets_metric[,order_metric]<-merged_targets_metric$cor * -1 * merged_targets_metric$order_by_metric
+
+
+hist(merged_targets_metric[,order_metric])
+
+
+write.csv(merged_targets_metric, paste0(mir_results_file_anticor, 'gene_targets_filtered.csv'))
+
+
+gene_list_targets<-merged_targets_metric[,order_metric]
+names(gene_list_targets)<-merged_targets_metric$target_ensembl
+gene_list_targets_ord<-gene_list_targets[order(-gene_list_targets)]
 
 
 ONT='BP'
 #### Now run enrichment analysis only by the top results 
 ## rank/ order the list by the top mirnas --> a combination of pvalue and significance 
 ## i also get a pvalue for the interactions? 
-enrich_go_mirnas=enrichGO(merged_targets$symbol, 
-                       OrgDb='org.Hs.eg.db',
-                       keyType = 'SYMBOL',
-                       ont=ONT, 
-                      pvalueCutoff = 0.05)
+gse_mirnas= clusterProfiler::gseGO(gene_list_targets_ord, 
+                                                 ont=ONT, 
+                                                 keyType = 'ENSEMBL', 
+                                                 OrgDb = 'org.Hs.eg.db', 
+                                                 pvalueCutoff  = 0.05)
+
+
+
+
+  
+  
+  
   
 
-go_enrich<-enrich_go_mirnas
 #View(enrich_go_mirnas@result)
-barplot(go_enrich, 
-        drop = TRUE, 
-        showCategory = 30, 
-        title = "GO Biological Pathways",
-        font.size = 8)
+write.csv(gse_mirnas@result, paste0(mir_results_file_anticor, 'results.csv'))
+
+#ggsave(paste0(mir_results_file_anticor, '_',T_cor, '_barplot',  '.jpeg'), width=8, height=7)
+
+#run_enrichment_plots(gse_mirnas, )
+######################### RANKED BY NEGATIVE-CORELATION #########################
 
 
 
@@ -194,7 +269,8 @@ ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), height = 7, wid
 
 mir_results_file_by_cat<-paste0(mir_results_file, '_', Category)
 
-######### convert to enrichResult to use gsego functios
+######### convert to enrichResult to use gsego functions ##########################
+###################################################################################
 
 
 #install.packages("remotes")
@@ -215,7 +291,6 @@ enr <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
                                              pvalueColname = 'P.adjusted', 
                                              pvalueCutoff = 0.05)
 
-# descriptionColname = "Subcategory",
 
 enr
 x2<-pairwise_termsim(enr)

@@ -4,9 +4,7 @@
 
 #BiocManager::install('miRLAB')
 library('miRLAB')
-
-
-library(miRLAB)
+#library(miRLAB)
 
 
 dataset=system.file("extdata", "ToyEMT.csv", package="miRLAB")
@@ -29,6 +27,7 @@ results=Pearson(d2_f, 1:dim(mirs_vals)[1],(dim(mirs_vals)[1]+1):dim(dataset1)[1]
 
 
 hist(results)
+cor_results<-results
 anticor= results <= -0.35
 
 #outdir_s_1<-paste0(outdir_orig, '/single/', param_str_g_f, des)

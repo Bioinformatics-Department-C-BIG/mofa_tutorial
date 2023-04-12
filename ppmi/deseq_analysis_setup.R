@@ -1,7 +1,4 @@
 
-
-#install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
-
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
 
@@ -23,34 +20,20 @@ suppressWarnings(library("FactoMineR"))
 suppressWarnings(library('pheatmap'))
 suppressWarnings(library('ggplot2'))
 
-
-#ddsSE <- DESeqDataSet(se_filt, 
-#                      design = ~PATNO)
-
-# TODO: assign the groups 
-#dds <- DESeqDataSetFromMatrix(
-# countData = assay(se_filt),
-#  colData = colData(se_filt),
-#  design = ~COHORT, tidy = F
-#)
-
-#source(paste0(script_dir, '/config.R'))
-
-### LOAD runs
+#### Run DE
 
 
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
 
-VISIT='V08'
+VISIT='BL'
 
 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 
 
 source(paste0(script_dir, '/config.R'))
 
-pca_files<-paste0(outdir_s, '/PCA/')
 
 
 print(deseq_file)
@@ -90,20 +73,8 @@ dds<-ddsSE
 
 
 suppressWarnings(dir.create(outdir_s))
+pca_files<-paste0(outdir_s, '/PCA/')
+
 #deseq2Data<-loadRDS(paste0(outdir_s, '/deseq_results.RDS'))
 #### First obtain the single omics significant RNAs 
-
-
-
-write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
-
-deseq2ResDF <- as.data.frame(deseq2Results)
-deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
-deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
-
-write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
-
-
-### Up to here output can be used for other reasons
-##
 

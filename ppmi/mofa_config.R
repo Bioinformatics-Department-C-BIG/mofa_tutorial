@@ -11,7 +11,12 @@ if (use_signif){
   TOP_MN=0.5
   TOP_MN=0.75
   
-  ## MAKE A BIG ONE
+
+  
+
+  
+  
+  ## MAKE A BIG ONE FOR Other purposes 
   TOP_MN=0.90
   TOP_GN=0.90
   
@@ -19,13 +24,11 @@ if (use_signif){
   TOP_MN=0.90
   TOP_GN=0.30
   
-  
-  
 }
 
 
-g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_') 
+g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_') 
 
 param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
 param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )

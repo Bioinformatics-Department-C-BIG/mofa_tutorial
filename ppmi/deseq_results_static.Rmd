@@ -4,7 +4,6 @@ output:
   html_document: default
   pdf_document: default
   css: styles.css
-date: "2023-04-04"
 ---
 
 ```{r setup, include=FALSE}
@@ -33,10 +32,12 @@ source(paste0(data_dir, '/ppmi/deseq_analysis_setup.R'))
 
 ```{r main, echo=FALSE}
 
-cat('Deseq settings: ', des )
-
 ns<-table(se_filt$COHORT_DEFINITION)
 ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+cat('Deseq settings: ', des , '\n', 
+    'VISIT: ', VISIT, '\n', 
+    ns)
+
 
 
 ```
@@ -83,7 +84,7 @@ knitr::include_graphics(pca_plot, dpi = 96, )
 
 ```{r deseqtable, echo=FALSE, message=FALSE}
 #install.packages('kableExtra')
-library('kableExtra', suppressWarnings())
+suppressWarnings(library('kableExtra'))
 library(dplyr)
 
 log2fol_T_overall<-0.1
@@ -95,7 +96,8 @@ deseq_table<-paste0(outdir_s, '/results_df.csv')
 deseq_res<-read.csv(deseq_table)
 signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
 deseq_table<-paste0(signif_file)
-deseq_res<-read.csv(deseq_table)[,1:9]
+ncols=10 
+deseq_res<-read.csv(deseq_table)[,1:ncols]
 
 cat( 'log2foldChange > ', log2fol_T_overall,  ', padj < ', padj_T_overall,'\n',
      'DE features: ', dim(deseq_res)[1])
@@ -139,7 +141,7 @@ knitr::include_graphics(fname_vol, dpi = 96, )
 ## Enrichment analysis 
 ### Cluster Profiler, GSEA GO 
 
-```{r run_enrich2, echo=FALSE, fig.width=8, fig.height=6,  out.width = "50%"}
+```{r run_enrich2, echo=FALSE, fig.width=8, fig.height=6,  out.width = "60%"}
 
 padj_T=1;log2fol_T=0.00
 order_by_metric<-'log2pval'

@@ -1,14 +1,38 @@
 
+
+library(caret)
+library(caret)
+#remove.packages('rlang')
+install.packages('randomForest')
+#update.packages("rlang")
+
+suppressPackageStartupMessages(library(randomForest))
+
+#### make sure that mofa was ran with complete cases otherwise there might be issues 
+
+#install.packages('pROC')
+
+#### FIRST obtain the highly weighted features from MOFA 
+
 fetch_top_weights<-function(ws){
+  #ws=ws_all_miRNA
+  ### apply to each factor 
+  #ws=ws_all_miRNA[,1]
   ws=ws[order(-ws)]
   ws_top<-ws[abs(ws)>T]
+  ws_top
   #return(ws_top)
   return(names(ws_top))
 }
 
+
+
+
+### then do predictions 
 T=0.5;
 all_preds<-function(T){
   ## WEIGHT BY VARIANCE CAPTURED, RANK IN FACTOR, WEIGHT ETC. 
+  ## here automatically obtain highly associated features 
   ws_all_miRNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$miRNA 
   ws_all_RNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$RNA 
   
@@ -40,6 +64,8 @@ all_preds<-function(T){
   df <- as.data.frame(t(data_filt))
   # Train the model for IGHV
   y_predict='CONCOHORT_DEFINITION'
+  y_predict='CONCOHORT'
+  
   colnames(df)<-gsub('-', '.',colnames(df) ) 
   df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
   model.y <- randomForest(y ~ .,data= df, ntree=10)
@@ -53,7 +79,6 @@ all_preds<-function(T){
   # Assess performance 
   ## diagnostic
  # install.packages('caret')
-  library(caret)
   
   predicted<-MOFAobject@samples_metadata$y.pred
   actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
@@ -71,7 +96,6 @@ all_preds<-function(T){
 all_preds(T=0.1)
 
 library(pROC)
-install.packages('pROC')
 library(pROC)
 
 roc.mock <- roc(ifelse(predictions$observed==3, 3, 2), as.numeric(predictions$predicted))

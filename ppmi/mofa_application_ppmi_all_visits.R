@@ -154,7 +154,8 @@ highly_variable_mirnas_outfile
 # EITHER input to vst or put as is normalized
 miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
 rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
-head(rownames(miRNA));colnames(miRNA)
+head(rownames(miRNA));
+head(colnames(miRNA))
 
 
 
@@ -176,7 +177,7 @@ create_hist<-function(df, name){
   
   dfm<-melt(df)
   
-  p1<-ggplot(miRNAm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+  p1<-ggplot(dfm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
   ggsave(paste0(outdir, 'data_histograms',name,  '.jpeg' ), width = 10, height=8)
 }
 ## histograms to check normal pattern 
@@ -235,7 +236,7 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
 
 
 
-
+head(assays(mofa_multi)$miRNA)
 mofa_multi_complete<-mofa_multi[,complete.cases(mofa_multi)]
 mofa_multi_complete
 complete.cases(metadata_filt$EVENT_ID)
@@ -246,11 +247,6 @@ mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 mofa_multi_V04
 
 ###  REMOVE NON ens ids 
-
-order_cols<-colnames(miRNA_filt)
-head(cbind(colnames(prot_filt),colnames(RNA_filt), colnames(miRNA_filt)  ))
-
-NCOL(miRNA_filt)
 
 colData(mofa_multi_V04)
 
@@ -268,10 +264,10 @@ colData(mofa_multi_V04)
 #N_FACTORS=8
 ### separate visits 
 outdir
-MOFAobject <- create_mofa(mofa_multi_V04)
+MOFAobject <- create_mofa(mofa_multi_complete)
 
 if (length(VISIT)>1){
-  MOFAobject <- create_mofa(mofa_multi_V04, groups= mofa_multi_V04$EVENT_ID)
+  MOFAobject <- create_mofa(mofa_multi_complete, groups= mofa_multi_complete$EVENT_ID)
   
 }
 

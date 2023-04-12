@@ -61,122 +61,135 @@ require(DOSE)
 library('enrichplot')
 
 results_file=results_file
-
 gse = gse
 
+
+
+
+run_enrichment_plots<-function(gse, results_file){
+  N=15
+  ## TODO: ADD FACET IF SIGNED 
+  if (process_mirnas){
+    
+    #results_file=mir_results_file_anticor
+    #gse=gse_mirnas;
+    
+    dp<-dotplot(gse, showCategory=N)
+    
+  }else{
+    dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
+    
+  }
+  
+  ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
+  
+  #### EMAP PLOT 
+  options(ggrepel.max.overlaps = Inf)
+  
+  N=200
+  x2 <- pairwise_termsim(gse )
+  N=25; 
+  #if (process_mirnas){N=15}
+  p<-emapplot(x2,showCategory = N,
+              layout = "nicely")
+  p_enrich <- p + theme(text=element_text(size=12))
+  p_enrich
+  
+  ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=9, height=9)
+  
+  
+  #### Ridge plot: NES shows what is at the bottom of the list
+  
+  if (!process_mirnas){
+    r_p<-ridgeplot(gse)
+    r_p
+    ggsave(paste0(results_file, '_ridge_.jpeg'), width=8, height=8)
+  }
+  
+  
+  
+  
+  #### Gene-concept plot 
+  
+
+  
+  if (gse@keytype=='ENSEMBL' ){
+    gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
+    
+  }else{
+    gse_x=gse
+    
+  }
+  
+  
+  p1_net <- cnetplot(gse_x)
+  
+  node_label<-"gene"
+  node_label<-"category"
+  node_label<-"all"
+  
+  N=10
+  p2_net<- cnetplot(gse_x,
+                    node_label=node_label,
+                    cex_label_category = 1.2, showCategory=N)
+  
+  p2_net
+  ggsave(paste0(results_file, '_geneconcept_', node_label, '_',N, '.jpeg'), width=8, height=8)
+  
+  
+  ####Visualize go terms as an undirected acyclic graph 0
+  if (!process_mirnas){
+    goplot(gse_x)
+    ggsave(paste0(results_file, '_goplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+    
+  } 
+  
+  
+  #### heatmap
+  N=30
+  p1 <- treeplot(x2,showCategory =N)
+  p2_tree <- treeplot(x2, hclust_method = "average", showCategory =N )
+  #aplot::plot_list(p1, p2_tree, tag_levels='A')
+  #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+  
+  p2_tree
+  ggsave(paste0(results_file, '_clusterplot_average_',N, '.jpeg'), width=12, height=8)
+  
+  
+  return(list(dp, p_enrich, p2_tree))
+  
+}
+
+
+
+enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file )
+dp=enrich_plots[[1]]
+p_enrich=enrich_plots[[2]]
+p2_tree=enrich_plots[[3]]
+
+
+run_mofa=FALSE
 #run_mofa=TRUE
 ### TODO: FIX AND MAKE A FUNCTION OF THIS SO I CAN USE IN MOFA TOO 
 if (run_mofa){
   for (factor in c(1:8)){
     
       
-      results_file = paste0(outdir, '/enrichment/gsego_',factor,'_')
-      gse=list1[[factor]]
+      results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
+      gse_mofa=list1[[factor]]
       write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
  
 ### to run mofa results
-
+      run_enrichment_plots(gse=gse_mofa, results_file = results_file_mofa)
+      
+      
     if (process_mirnas){
       results_file=mir_results_file_by_cat
       gse=enr;
       
       
     }
-     run_enrichment_plots<-function(gse, results_file){
-              N=20
-              ## TODO: ADD FACET IF SIGNED 
-              if (process_mirnas){
-                
-                #results_file=mir_results_file_anticor
-                #gse=gse_mirnas;
-                
-                dp<-dotplot(gse, showCategory=N)
-                
-              }else{
-                dp<-dotplot(gse, showCategory=N, split=".sign") + facet_grid(.~.sign)
-                
-              }
-              
-              ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
-              
-              #### EMAP PLOT 
-              options(ggrepel.max.overlaps = Inf)
-              
-              N=200
-              x2 <- pairwise_termsim(gse )
-              N=25; 
-              if (process_mirnas){N=15}
-              p<-emapplot(x2,showCategory = N,
-                          layout = "nicely")
-              p_enrich <- p + theme(text=element_text(size=12))
-              p_enrich
-              
-              ggsave(paste0(results_file, '_emap_', N,  '.jpeg'), width=9, height=9)
-              
-              
-              #### Ridge plot: NES shows what is at the bottom of the list
-              
-              if (!process_mirnas){
-                r_p<-ridgeplot(gse)
-                r_p
-                ggsave(paste0(results_file, '_ridge_.jpeg'), width=8, height=8)
-              }
-             
-              
-              
-              
-              #### Gene-concept plot 
-              
-              
-      
-              
-              if (startsWith(gse@gene[1], 'ENS' )){
-                gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
-                
-              }else{
-                gse_x=gse
-                
-              }
-              
-
-              p1_net <- cnetplot(gse_x)
-              
-              node_label<-"gene"
-              node_label<-"category"
-              node_label<-"all"
-              
-              N=10
-              p2_net<- cnetplot(gse_x,
-                                node_label=node_label,
-                                cex_label_category = 1.2, showCategory=N)
-              
-              p2_net
-              ggsave(paste0(results_file, '_geneconcept_', node_label, '_',N, '.jpeg'), width=8, height=8)
-              
-              
-              ####Visualize go terms as an undirected acyclic graph 0
-             if (!process_mirnas){
-               goplot(gse_x)
-               ggsave(paste0(results_file, '_goplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
-               
-             } 
-              
-              
-              #### heatmap
-              N=30
-              p1 <- treeplot(x2,showCategory =N)
-              p2 <- treeplot(x2, hclust_method = "average", showCategory =N )
-              #aplot::plot_list(p1, p2, tag_levels='A')
-              #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
-              
-              p2
-              ggsave(paste0(results_file, '_clusterplot_average_', node_label, '_',N, '.jpeg'), width=12, height=8)
-              
-              
-      
-      
-    }
-   
+    
     
     
     ############# KEGG

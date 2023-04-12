@@ -1,0 +1,183 @@
+---
+title: "deseq"
+output:
+  html_document: default
+  pdf_document: default
+  css: styles.css
+date: "2023-04-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Single layer analysis 
+### Deseq results 
+
+
+```{r Enrichment,  results='hide', echo=FALSE, message=FALSE  }
+
+data_dir='D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
+print(getwd())
+source(paste0(data_dir, '/ppmi/deseq_analysis_setup.R'))
+
+
+
+#source('ppmi/RNAseq enrichment.R')
+
+#
+#p_enrich
+
+
+```
+
+```{r main, echo=FALSE}
+
+cat('Deseq settings: ', des )
+
+ns<-table(se_filt$COHORT_DEFINITION)
+ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+
+
+```
+
+
+
+
+
+
+```{r logplot,echo=FALSE,  fig.width=5, fig.height=4, out.width = "50%"}
+
+logplot_f<-paste0(outdir_s, '/logfold_padjusted_plot.jpeg')
+knitr::include_graphics(logplot_f, dpi = 96, )
+
+
+
+```
+
+
+#### PCA plots
+##### Left: Filtering by significant features 
+
+```{r plot, echo=FALSE, fig.width=10, fig.height=7, out.width = "40%"}
+
+pca_pars<-paste0('_signif_', 2)
+pca_plot<-paste0(pca_files, 'individuals', pca_pars, '.jpeg')
+knitr::include_graphics(pca_plot, dpi = 96, )
+
+pca_pars<-paste0('_signif_', 1)
+pca_plot<-paste0(pca_files, 'individuals', pca_pars, '.jpeg')
+knitr::include_graphics(pca_plot, dpi = 96, )
+
+
+
+#show(pvol)
+
+
+
+
+```
+
+### Differential Expression 
+
+
+```{r deseqtable, echo=FALSE, message=FALSE}
+#install.packages('kableExtra')
+library('kableExtra', suppressWarnings())
+library(dplyr)
+
+log2fol_T_overall<-0.1
+padj_T_overall<-.05
+
+padj_T=padj_T_overall
+log2fol_T=log2fol_T_overall
+deseq_table<-paste0(outdir_s, '/results_df.csv')
+deseq_res<-read.csv(deseq_table)
+signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
+deseq_table<-paste0(signif_file)
+deseq_res<-read.csv(deseq_table)[,1:9]
+
+cat( 'log2foldChange > ', log2fol_T_overall,  ', padj < ', padj_T_overall,'\n',
+     'DE features: ', dim(deseq_res)[1])
+
+
+deseq_res %>%
+  arrange(., padj)%>%
+  kable %>%
+  kable_styling("striped", full_width = F) %>% 
+ scroll_box(width = "1000px", height = "300px")
+
+```
+### Volcano plots
+```{r run_enrich, echo=FALSE, fig.show="hold", fig.width=6, fig.height=8, out.width = "50%"}
+
+
+log2fol_T_hm<-0.15
+padj_T_hm<-.005
+order_by_metric='log2pval'
+n_sig_f='all'
+
+fname_hm<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
+
+knitr::include_graphics(fname_hm, dpi = 96, )
+
+fname_vol<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
+knitr::include_graphics(fname_vol, dpi = 96, )
+
+
+#source(paste0(data_dir,'/ppmi/RNAseq enrichment.R'))
+#show(dp)
+#show(p_enrich)
+#show(p2_tree)
+
+
+
+
+```
+
+
+## Enrichment analysis 
+### Cluster Profiler, GSEA GO 
+
+```{r run_enrich2, echo=FALSE, fig.width=8, fig.height=6,  out.width = "50%"}
+
+padj_T=1;log2fol_T=0.00
+order_by_metric<-'log2pval'
+
+ONT='BP'
+cat('Category:', ONT)
+
+  outdir_enrich<-paste0(outdir_s,'/enrichment/')
+
+if (process_mirnas){
+  padj_T=0.01; log2fol_T=0.1
+  Category='GO Biological process (miRPathDB)'
+  
+  enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric)
+  mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
+  
+  mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
+  results_file<-mir_results_file_by_cat
+
+  
+}else{
+  
+    results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+
+}
+
+
+N=25
+dp_file<-paste0(results_file, '_dot',  '.jpeg')
+emap_file<-paste0(results_file, '_emap_', N,  '.jpeg')
+N=30
+p2_tree_file<-paste0(results_file, '_clusterplot_average_',N, '.jpeg')
+
+
+knitr::include_graphics(dp_file, dpi = 96, )
+knitr::include_graphics(emap_file, dpi = 96, )
+
+knitr::include_graphics(p2_tree_file, dpi = 96, )
+
+
+```

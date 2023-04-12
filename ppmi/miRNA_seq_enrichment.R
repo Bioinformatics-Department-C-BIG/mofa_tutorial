@@ -11,15 +11,18 @@ order_by_metric<-'abslog2pval'
 order_by_metric<-'log2pval'
 order_by_metric<-'abslog2pval'
 order_by_metric<-'log2FoldChange'
-order_by_metric<-'abslog2pval'
+order_by_metric<-'log2pval'
 
+use_anticor=FALSE
 
 if (VISIT=='V08'){
-  padj_T=0.01
-  log2fol_T=0.1
+
   padj_T=0.01
   log2fol_T=0.0
   padj_T=0.05
+  log2fol_T=0.1
+  ## MORE STRICT IN V08
+  padj_T=0.01
   log2fol_T=0.1
   
   
@@ -28,14 +31,18 @@ if (VISIT=='V08'){
   log2fol_T=0.1
 }
   
-
+if (use_anticor){
+  order_by_metric<-'log2pval'
+  padj_T=0.05
+  log2fol_T=0
+  
+}
 
 log2fol_T;padj_T;
-padj_T=0.05
 log2fol_T
 ### run the enrichment if it has not been ran yet!! 
 
-#Padj_T_paths=0.01
+Padj_T_paths=0.01
 
 deseq2ResDF = read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1)
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
@@ -49,13 +56,16 @@ gene_list_cut<-gene_list[1:top_n]
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
 mirs
-enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric, '_',top_n)
+enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric)
 mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
 
+
+
+############## RUN MIEAA ######################################
+
 gsea_results_fname<-paste0(mir_results_file,'_mieaa_res.csv' )
-  
-  
+
 
 if (file.exists(gsea_results_fname)){
   ### Load enrichment results if available
@@ -74,7 +84,7 @@ if (file.exists(gsea_results_fname)){
 }
 
 
-## remove . from names 
+## remove . and \ from mir names 
 colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
 colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
 
@@ -167,7 +177,8 @@ p2<-dotplot(enr, showCategory=25)
 p2
 ggsave(paste0(mir_results_file_by_cat, '_conv_dotplot',  '.png'), height = 7, width=8)
 
-
+gse=enr;
+results_file=mir_results_file_by_cat
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
 run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat)
 
@@ -175,6 +186,6 @@ run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat)
 ############
 ###########
 
-
+'plots/single/mirnas_V08_10_coh_1-2_AGE_AT_VISIT+SEX+COHORT/enrichment/GO Biological process (miRPathDB)/mirs_enrich__0.05_0.1_log2pval_176_dot.jpeg'
 
 

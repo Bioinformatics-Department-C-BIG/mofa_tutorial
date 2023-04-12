@@ -24,8 +24,9 @@ You can also embed plots, for example:
 
 ```{r Enrichment,  results='hide', echo=FALSE }
 
-
-source('ppmi/deseq_analysis.R')
+data_dir='D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
+print(getwd())
+source(paste0(data_dir, '/ppmi/deseq_analysis.R'))
 
 
 
@@ -57,7 +58,7 @@ cat(VISIT)
 
 
 
-```{r logplot,echo=FALSE,  fig.width=8, fig.height=6}
+```{r logplot,echo=FALSE,  fig.width=5, fig.height=4}
 
 
 
@@ -69,7 +70,8 @@ show(p_log_plot)
 ```
 
 
-```{r plot, echo=FALSE, fig.width=6, fig.height=8}
+```{r plot, echo=FALSE, fig.width=10, fig.height=7}
+
 
 
 
@@ -80,11 +82,13 @@ show(pvol)
 
 ```
 
-```{r run_enrich, echo=FALSE, fig.width=6, fig.height=8}
+```{r run_enrich, echo=FALSE, fig.show="hold", fig.width=6, fig.height=8}
 
 
-source('ppmi/RNAseq enrichment.R')
+source(paste0(data_dir,'/ppmi/RNAseq enrichment.R'))
 show(dp)
+show(p_enrich)
+show(p2_tree)
 
 
 

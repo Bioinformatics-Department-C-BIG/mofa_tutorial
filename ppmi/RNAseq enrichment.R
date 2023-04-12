@@ -1,4 +1,5 @@
 
+
 library('GOfuncR')
 require(DOSE)
 library('apeglm')
@@ -63,10 +64,8 @@ results_file=results_file
 
 gse = gse
 
-run_mofa=TRUE
+#run_mofa=TRUE
 ### TODO: FIX AND MAKE A FUNCTION OF THIS SO I CAN USE IN MOFA TOO 
-
-
 if (run_mofa){
   for (factor in c(1:8)){
     
@@ -76,16 +75,10 @@ if (run_mofa){
       write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
  
 ### to run mofa results
-      
+
     if (process_mirnas){
-      #results_file=mir_results_file_by_cat
-      #gse=enr;
-      
-      
-      results_file=mir_results_file_anticor
-      gse=gse_mirnas;
-      
-      
+      results_file=mir_results_file_by_cat
+      gse=enr;
       
       
     }
@@ -94,8 +87,8 @@ if (run_mofa){
               ## TODO: ADD FACET IF SIGNED 
               if (process_mirnas){
                 
-                results_file=mir_results_file_anticor
-                gse=gse_mirnas;
+                #results_file=mir_results_file_anticor
+                #gse=gse_mirnas;
                 
                 dp<-dotplot(gse, showCategory=N)
                 
@@ -135,14 +128,17 @@ if (run_mofa){
               #### Gene-concept plot 
               
               
-              if (process_mirnas){
-                gse_x=gse
-              }else{
+      
+              
+              if (startsWith(gse@gene[1], 'ENS' )){
                 gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
                 
+              }else{
+                gse_x=gse
+                
               }
-              gse_x <- setReadable(gse, 'org.Hs.eg.db', 'ENSEMBL')
               
+
               p1_net <- cnetplot(gse_x)
               
               node_label<-"gene"
@@ -159,19 +155,19 @@ if (run_mofa){
               
               
               ####Visualize go terms as an undirected acyclic graph 0
-             #if (!process_mirnas){
+             if (!process_mirnas){
                goplot(gse_x)
                ggsave(paste0(results_file, '_goplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
                
-             #} 
+             } 
               
               
               #### heatmap
               N=30
               p1 <- treeplot(x2,showCategory =N)
               p2 <- treeplot(x2, hclust_method = "average", showCategory =N )
-              aplot::plot_list(p1, p2, tag_levels='A')
-              ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+              #aplot::plot_list(p1, p2, tag_levels='A')
+              #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
               
               p2
               ggsave(paste0(results_file, '_clusterplot_average_', node_label, '_',N, '.jpeg'), width=12, height=8)

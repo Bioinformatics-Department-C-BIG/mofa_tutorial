@@ -40,6 +40,11 @@ ens_ids_full<- features_names(MOFAobject)$RNA
 ens_ids<-   ens_ids<-gsub('\\..*', '', ens_ids_full)
 
 
+library(ensembldb)
+#BiocManager::install('EnsDb.Hsapiens.v79')
+library(EnsDb.Hsapiens.v79)
+
+## Making a "short cut"
 geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
 length(ens_ids)
 geneIDs1
@@ -52,7 +57,7 @@ ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
 
 features_names(MOFAobject_gs)$RNA<-ens_ids
 
-
+ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
@@ -99,6 +104,7 @@ cors<-correlate_factors_with_covariates(MOFAobject,
 )
 ids_to_plot<-which(apply(cors, 2, sum)>0)
 
+ids_to_plot<-which(apply(cors, 2, sum)>0)
 
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
@@ -109,8 +115,9 @@ correlate_factors_with_covariates(MOFAobject,
 )
 dev.off()
 graphics.off()
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = 2000, height=700, res=150)
+ keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
+ ids_to_plot<-ids_to_plot[keep]
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=150)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars)[ids_to_plot], 
                                   plot = "log_pval"
@@ -225,7 +232,8 @@ for (i in seq(1,vps)){
   
 ### wHICH VARIABLES correlate with which factors 
 pos_cors<-cors>0  # which have more than two factors positive 
-positive_cors<-cors[,colSums(pos_cors)>1]
+n_factors_pos=1
+positive_cors<-cors[,colSums(pos_cors)>n_factors_pos]
 
 for (i in 1:dim(positive_cors)[2]){
   
@@ -233,7 +241,8 @@ for (i in 1:dim(positive_cors)[2]){
   names<-colnames(positive_cors)
   x_cors<-positive_cors[,i]
   pos_factors<-names(which(x_cors>0))
-  
+  x_cor_t=5
+  pos_factors<-names(which(x_cors>x_cor_t))
   # Order by 
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
   print(paste(i, pos_factors))
@@ -256,7 +265,7 @@ for (i in 1:dim(positive_cors)[2]){
   fss<-paste(fs,sep='_',collapse='-')
   dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
   
-  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
   
   
   ggsave(FNAME, width = 4, height=4, dpi=100)
@@ -270,10 +279,11 @@ for (i in 1:dim(positive_cors)[2]){
                 shape_by= shape_by,
                show_missing = FALSE
   )
-  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by,'.png')
+  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
     ggsave(FNAME, width = 4, height=4, dpi=100)
   
 }
+dev.off()
 
 
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION
@@ -341,7 +351,8 @@ plot_weights(MOFAobject,
   
 for (ii in seq(1,fps)){
   ### Plot factors against a clinical variable 
-  cors_sig<-names(which(positive_cors[ii,]>2))
+  x_cor_t=4
+  cors_sig<-names(which(positive_cors[ii,]>x_cor_t))
   ln_cs<-length(cors_sig)
   if (ln_cs>0){
     for (iii in seq(1:ln_cs)){
@@ -356,7 +367,7 @@ for (ii in seq(1,fps)){
           )
         
         
-        FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_1D_',ii, '_',color_by,'.png')
+        FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_1D_',ii, '_',color_by,'_cor_', x_cor_t, '.png')
         
         
         ggsave(FNAME, width = 4, height=4, dpi=100)
@@ -470,7 +481,7 @@ for (i in seq(1,vps)){
           )
          
             
-          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',vps[i],'.png'), width = 4, height=4, dpi=100)
+          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'), width = 4, height=4, dpi=100)
       
           
           cluster_rows=TRUE;cluster_cols=TRUE
@@ -505,7 +516,7 @@ for (i in seq(1,vps)){
          #dev.off()
       #          
           ns<-dim(MOFAobject@samples_metadata)[1]
-          cor_T<-4
+          cor_T<-2
           rel_cors<-cors[ii,][cors[ii,]>cor_T ]
           rel_cors
           
@@ -552,7 +563,7 @@ for (i in seq(1,vps)){
   
 }
 
-MOFAobject@samples_metadata$NHY
+sMOFAobject@samples_metadata$NHY
 
 
 
@@ -827,7 +838,7 @@ plot_enrichment_heatmap(res.positive$sigPathways,
 jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
 
 plot_enrichment_heatmap(res.negative, 
-                        alpha=0.5, cap=0.00000000005, 
+                        alpha=0.5, cap=0.00000000005 
                           )
 
 
@@ -897,17 +908,21 @@ print(confusion_mat)
 
 ## Show "importance" of variables: higher value mean more important:
 round(importance(model.EORTC.risk), 2)
-
+#install.packages('randomForest')
 
 # Prepare data
 # Predict EORTC.risk with factor 1,2 only!
-df <- as.data.frame(get_factors(MOFAobject, factors=c(3,4))[[1]])
+high_weights=get_weights()
+df <- as.data.frame(get_factors(MOFAobject, factors=c(2,3,4,6))[[1]])
+df_genes<-as.data.frame(get_weights(MOFAobject, factors=c(2,3,4,6)) )
 
 # Train the model for IGHV
-y_predict='NHY'
+y_predict='CONCOHORT_DEFINITION'
 df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
 model.y <- randomForest(y ~ .,data= df, ntree=10)
 df$y <- NULL # important 
+
+
 # Do predictions
 MOFAobject@samples_metadata$y.pred <- stats::predict(model.y, df)
 MOFAobject@samples_metadata$y.pred
@@ -916,21 +931,25 @@ MOFAobject@samples_metadata$y.pred
 predicted<-MOFAobject@samples_metadata$y.pred
 actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
 confusion_mat = as.matrix(table(actual, predicted )) 
+
 print(confusion_mat)
+View(confusion_mat)
 round(importance(model.y), 2)
 
 
-
+install.packages('GGally')
+library('GGally')
 ### Plot predictions
 p <- plot_factors(MOFAobject, 
-                  factors = c(1,2), 
-                  color_by = "NHY",
-                  shape_by = "NHY",
+                  factors = c(2,3,4,6), 
+                  color_by = "CONCOHORT_DEFINITION",
+                  shape_by = "CONCOHORT_DEFINITION",
                   dot_size = 2.5,
                   show_missing = T
 )
 
-
+show(p)
+dev.off()
 cbind(MOFAobject@samples_metadata$sample,MOFAobject@samples_metadata$COHORT_DEFINITION)
 MOFAobject@samples_metadata[MOFAobject@samples_metadata$PATNO=='3156',]
 

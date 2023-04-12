@@ -38,10 +38,6 @@ unused ppmi/*/*/*
 .RData*
 
 ppmi/ppmi_data/*/*
-ppmi/output/*/*
-ppmi/plots/*/*
-ppmi/output/*
-
 
 *.Rproj.user/*/*/*/*/*/*
 .Rproj.user/0F86D29C/pcs/files-pane.pper
@@ -321,15 +317,6 @@ ppmi/plots/heatmap_2_mRNA_nfs_20.jpeg
 *.pdf
 *.txt
 *.zip
-
-*.gz
-Rplot001.svg
-Rplot002.svg
-Rplot003.svg
-*.xlsx
-*.tiff
-*.cys
-
 plots/barplot_byGroupobjective_method.png
 plots/SingleOmicsbyData.png
 plots/barplot_byGroupobjective_method.png
@@ -350,4 +337,3 @@ highly_variable_proteins_normalized.csv
 literature_review_backup.R
 review/output/data_diseases.txt
 review/output/tools_objectives_latex.txt
-

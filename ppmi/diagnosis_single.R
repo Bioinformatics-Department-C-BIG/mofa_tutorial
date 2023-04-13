@@ -4,9 +4,18 @@ library(caret)
 #remove.packages('rlang')
 #install.packages('vctrs')
 library('vctrs')
+
 library(caret)
-install.packages('ConfusionTableR')
+#install.packages('ConfusionTableR')
 library(ConfusionTableR)
+
+sessionInfo()
+library(dplyr)
+library(randomForest) 
+#install.packages('Metrics')
+library(ranger)
+library(Metrics)
+
 
 #update.packages("rlang")
 
@@ -18,113 +27,185 @@ suppressPackageStartupMessages(library(randomForest))
 
 #### FIRST obtain the highly weighted features from MOFA 
 
-fetch_top_weights<-function(ws){
-  #ws=ws_all_miRNA
-  ### apply to each factor 
-  #ws=ws_all_miRNA[,1]
-  ws=ws[order(-ws)]
-  ws_top<-ws[abs(ws)>T]
-  ws_top
-  #return(ws_top)
-  return(names(ws_top))
-}
+
+vars_by_factor_all<-calculate_variance_explained(MOFAobject)
+vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
+
 
 
 sig<-read.csv(paste0(outdir_s, '/significant0.005_0.25.csv'))
 SIG_GENES<-sig$X
 
 ### then do predictions 
-T=0.5;
-all_preds<-function(T){
-  ## WEIGHT BY VARIANCE CAPTURED, RANK IN FACTOR, WEIGHT ETC. 
-  ## here automatically obtain highly associated features 
-  ws_all_miRNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$miRNA 
-  ws_all_RNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$RNA 
+T=0.3;
+
+############### MOFA SPECIFIC WEIGHTED GENES ##################################
+###############################################################################
+# Should I overlap with de? 
+# choose factors with higher overlap with clinvar of interest 
+###############################################################################
+
+choose_factors<-c(2,3)
+# choose factors based on important/associate
+ws_all_miRNA<-get_weights(MOFAobject, factors=choose_factors)$miRNA 
+ws_all_RNA<-get_weights(MOFAobject, factors=choose_factors)$RNA 
+
+QUANTILE_THRESH<-0.5
+T1<-quantile(ws_all_RNA,QUANTILE_THRESH )
+T2<-quantile(ws_all_miRNA, QUANTILE_THRESH)
+hist(ws_all_miRNA)
+
+
+
+
+
+
+### weight all 
+### probably not a good idea to scale there might be high variability but NOT associated with disease control
+# maybe better to scale by disease control association? 
+#var_weights_miRNA<-ws_all_miRNA * vars_by_factor[choose_factors,'miRNA' ] /100
+#var_weights_RNA<-ws_all_RNA * vars_by_factor[choose_factors,'RNA' ] / 100
+head(var_weights_RNA)
+all_feats_RNA<-rownames(ws_all_RNA)[rowSums((abs(ws_all_RNA)>abs(T1)))>0L]
+all_feats_miRNA<-rownames(ws_all_miRNA)[rowSums((abs(ws_all_miRNA)>abs(T2)))>0L]
+
+length(all_feats_RNA)
+length(all_feats_miRNA)
+
+
+summary(var_weights_miRNA)
+#hist(var_weights_miRNA[,1])
+#hist(var_weights_miRNA[,2])
+#get_data(MOFAobject, views='miRNA')[[1]]$group1
+# these are the real datasets!!! 
+
+
+
+miRNA_data<-get_data(MOFAobject)$miRNA[[1]]
+RNA_data<-get_data(MOFAobject)$RNA[[1]]
+CONF_train<-MOFAobject@samples_metadata[c('AGE_AT_VISIT', 'SEX')]
+CONF_train_R<-t(CONF_train)
+
+
+
+### TEST
+test_data_miRNA<-assays(mofa_multi_complete_test)$miRNA
+test_data_RNA<-assays(mofa_multi_complete_test)$RNA
+y_actual<-colData(mofa_multi_complete_test)[,'CONCOHORT']
+CONF<-as.data.frame(colData(mofa_multi_complete_test)@listData[c('AGE_AT_VISIT', 'SEX')])
+CONF_R<-t(CONF)
+#######################################################
+# here using DE GENES 
+
+### FEATURE SELECTION
+
+#### ADD ALSO SEX AND AGE 
+use_mofa=TRUE
+if (use_mofa){
+  RNA_data
+  RNA_data_filt<-RNA_data[rownames(RNA_data) %in% unique(all_feats_RNA),]
+  miRNA_data_filt<-miRNA_data[rownames(miRNA_data) %in% unique(all_feats_miRNA),]
   
-  ws_all_miRNA * vars_by_factor
   
   
-  all_feats_miRNA<-unlist(apply(ws_all_miRNA,2,fetch_top_weights) )
-  all_feats_RNA<-unlist(apply(ws_all_RNA,2,fetch_top_weights) )
-  all_feats_miRNA
   
-  miRNA_data<-get_data(MOFAobject)$miRNA[[1]]
-  RNA_data<-get_data(MOFAobject)$RNA[[1]]
+  test_data_miRNA_filt<-test_data_miRNA[ rownames(test_data_miRNA) %in% all_feats_miRNA,]
+  test_data_RNA_filt<-test_data_RNA[ rownames(test_data_RNA) %in% all_feats_RNA,]
   
   
-  ### FEATURE SELECTION
-  sel_feats<-unique(all_feats_RNA)
   
-  select_features<-function(select_feats){
-    RNA_data_filt<-RNA_data[SIG_GENES,]
-    
-    
-  }
+  dim(RNA_data)
+  dim(RNA_data_filt);  dim(test_data_RNA_filt); 
+  dim(miRNA_data_filt)
   
   
- # miRNA_data_filt<-miRNA_data[unique(all_feats_miRNA),]
+  data_filt<-rbind(RNA_data_filt, miRNA_data_filt)
+  test_data_filt<-rbind(test_data_RNA_filt, test_data_miRNA_filt)
   
-#  dim(RNA_data_filt)
-  #dim(miRNA_data_filt)
+  ## append confounding factors 
+  
+  test_data_filt_conf<-rbind(test_data_filt, CONF_R)
+  data_filt_conf<-rbind(data_filt, CONF_train_R)
   
   
- # data_filt<-rbind(RNA_data_filt, miRNA_data_filt)
-  data_filt<-RNA_data_filt
+  
+  
   dim(data_filt)
+}else{
+  data_filt<-RNA_data_filt
+  
+}
+
+#sel_feats<-unique(all_feats_RNA)
+
+
+select_features<-function(select_feats){
+  RNA_data_filt<-RNA_data[SIG_GENES,]
   
   
-  
-  
+}
+
+
+all_preds<-function(data_filt){
+ 
   # Prepare data
   # Predict EORTC.risk with factor 1,2 only!
   df <- as.data.frame(t(data_filt))
+  colnames(df)<-gsub('-', '.',colnames(df) ) 
+  
+  
+  rownames(test_data_filt)<-gsub('-','.', rownames(test_data_filt))
+  df_test <- as.data.frame(t(test_data_filt))
+  
   # Train the model for IGHV
   y_predict='CONCOHORT_DEFINITION'
   y_predict='CONCOHORT'
+ # as.factor(MOFAobject@samples_metadata[,'CONCOHORT_DEFINITION'])
   
-  
-  colnames(df)<-gsub('-', '.',colnames(df) ) 
   
   df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
   
   
   #run_rf( df, ){
-    model.y <- randomForest(y ~ .,data= df, ntree=10)
-    df$y <- NULL # important 
+  model.y <- randomForest(y ~ .,data= df, ntree=35)
+  df$y <- NULL # important 
     
   #}
  
-  
-  
-  
-  
   # Do predictions
-  MOFAobject@samples_metadata$y.pred <- stats::predict(model.y, df)
-  MOFAobject@samples_metadata$y.pred
+    
+    ###
+  head(test_data_filt)
+  
+  y.pred <- stats::predict(model.y, df_test)
+
+  
+  
+  #### ON TEST SET 
   
   # Assess performance 
   ## diagnostic
  # install.packages('caret')
   
-  predicted<-MOFAobject@samples_metadata$y.pred
-  actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
+  predicted <- y.pred
+  actual <-as.factor(y_actual)
   confusion_mat = as.matrix(table(actual, predicted )) 
-  predictions<-as.data.frame(cbind(c(actual), c(predicted)))
-  colnames(predictions)=c('observed', 'predicted')
+  #predictions<-as.data.frame(cbind(c(actual), c(predicted)))
+  #colnames(predictions)=c('observed', 'predicted')
   #conf<-confusionMatrix(confusion_mat)
+
   
-  accuracy(confusion_mat)
   print(confusion_mat)
   round(importance(model.y), 2)
   
-  mc_df <- ConfusionTableR::multi_class_cm(predictions$actual, 
-                                           predictions$predicted,
-                                           mode="everything")
   
-  return(conf)
+  
+  return(confusion_mat)
 }
 
-all_preds(T=0.1)
+all_preds(data_filt_conf)
+
+
 
 library(pROC)
 library(pROC)

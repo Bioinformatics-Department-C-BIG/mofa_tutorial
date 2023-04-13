@@ -59,6 +59,8 @@ mirs
 enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric)
 mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
+#### Up to here we can take the output for other methods 
+
 
 
 
@@ -186,6 +188,5 @@ run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat)
 ############
 ###########
 
-'plots/single/mirnas_V08_10_coh_1-2_AGE_AT_VISIT+SEX+COHORT/enrichment/GO Biological process (miRPathDB)/mirs_enrich__0.05_0.1_log2pval_176_dot.jpeg'
 
 

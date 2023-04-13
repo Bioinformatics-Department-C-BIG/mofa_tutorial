@@ -86,6 +86,8 @@ knitr::include_graphics(pca_plot, dpi = 96, )
 #install.packages('kableExtra')
 suppressWarnings(library('kableExtra'))
 library(dplyr)
+library('DT')
+
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
@@ -102,14 +104,32 @@ deseq_res<-read.csv(deseq_table)[,1:ncols]
 cat( 'log2foldChange > ', log2fol_T_overall,  ', padj < ', padj_T_overall,'\n',
      'DE features: ', dim(deseq_res)[1])
 
+#### bring the absolute high fol to the top 
+deseq_res_ord<-deseq_res %>%
+  arrange(., -abslog2pval)
 
-deseq_res %>%
-  arrange(., padj)%>%
-  kable %>%
-  kable_styling("striped", full_width = F) %>% 
- scroll_box(width = "1000px", height = "300px")
+datatable(deseq_res_ord, options = list(scrollY = "300px"), class = "display", fillContainer = T, 
+       width = NULL, height = 1000, editable = FALSE) 
+
+#deseq_res_ord %>%
+#  kable %>%
+#  kable_styling("striped", full_width = F) %>% 
+# scroll_box(width = "1000px", height = "300px")
+
+
+if (process_mirnas){COL='X'}else{COL='SYMBOL'}
+  
+  top<-deseq_res_ord[,COL][1:10]
+  cat('Top 10 markers: ', top)
+
+
+
 
 ```
+
+
+
+
 ### Volcano plots
 ```{r run_enrich, echo=FALSE, fig.show="hold", fig.width=6, fig.height=8, out.width = "50%"}
 
@@ -152,7 +172,7 @@ cat('Category:', ONT)
   outdir_enrich<-paste0(outdir_s,'/enrichment/')
 
 if (process_mirnas){
-  padj_T=0.01; log2fol_T=0.1
+  #padj_T=1; log2fol_T=0
   Category='GO Biological process (miRPathDB)'
   
   enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric)

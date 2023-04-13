@@ -41,6 +41,9 @@ all_preds<-function(T){
   ws_all_miRNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$miRNA 
   ws_all_RNA<-get_weights(MOFAobject, factors=c(2,3,4,6))$RNA 
   
+  ws_all_miRNA * vars_by_factor
+  
+  
   all_feats_miRNA<-unlist(apply(ws_all_miRNA,2,fetch_top_weights) )
   all_feats_RNA<-unlist(apply(ws_all_RNA,2,fetch_top_weights) )
   all_feats_miRNA

@@ -30,8 +30,6 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-source(paste0(script_dir,'/config.R'))
-source(paste0(script_dir,'/mofa_config.R'))
 TOP_GN
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
@@ -75,6 +73,7 @@ TISSUE='Plasma';
 
 NORMALIZED=TRUE;
 use_signif=FALSE
+process_mirnas=FALSE
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
@@ -124,8 +123,10 @@ highly_variable_proteins_outfile
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-outdir = paste0(outdir_orig,out_params , '/');outdir
+split=TRUE 
+outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
+
 
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
 fname
@@ -237,20 +238,34 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
 
 
 head(assays(mofa_multi)$miRNA)
-mofa_multi_complete<-mofa_multi[,complete.cases(mofa_multi)]
-mofa_multi_complete
+mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+
 complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
 upsetSamples(mofa_multi)
-mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
+#mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 
 mofa_multi_V04
 
 ###  REMOVE NON ens ids 
 
-colData(mofa_multi_V04)
+nsamples<-dim(colData(mofa_multi_complete_all))[1]
+nsamples
 
 
+### Split the data
+split=TRUE
+if (split){
+  seed=123
+  set.seed(seed)
+  train_ind<-sample(nsamples, nsamples*0.7)
+  mofa_multi_complete_train = mofa_multi_complete_all[,train_ind]
+  mofa_multi_complete_test = mofa_multi_complete_all[,-train_ind]
+  mofa_multi_complete=mofa_multi_complete_train
+}else{
+  mofa_multi_complete=mofa_multi_complete_all
+}
+dim(colData(mofa_multi_complete_train))[1]
 
 
 
@@ -294,7 +309,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

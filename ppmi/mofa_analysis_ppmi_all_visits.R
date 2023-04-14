@@ -103,9 +103,9 @@ cors<-correlate_factors_with_covariates(MOFAobject,
                                   
 )
 ids_to_plot<-which(apply(cors, 2, sum)>0)
-
 ids_to_plot<-which(apply(cors, 2, sum)>0)
-
+ids_to_plot
+names(non_na_vars)
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,

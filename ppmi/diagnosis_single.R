@@ -44,7 +44,7 @@ sig<-read.csv(paste0(outdir_s, '/significant0.005_0.25.csv'))
 SIG_GENES<-sig$X
 SIG_GENES
 ### then do predictions 
-T=0.3;
+
 
 ############### MOFA SPECIFIC WEIGHTED GENES ##################################
 ###############################################################################
@@ -58,20 +58,32 @@ cors<-correlate_factors_with_covariates(MOFAobject,
                                         return_data = TRUE
                                         
 )
+yvar='COHORT'
 yvar='CONCOHORT'
+
+
+
 choose_factors<-which(cors[,yvar]>0)
 choose_factors
+QUANTILE_THRESH<-0.01
+
+
 detach(package:MOFA2,unload=TRUE)# replaces predict so we detach it 
 require(MOFA2)
+vars_by_factor_all<-calculate_variance_explained(MOFAobject)
+vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
+
+choose_factor_var<-vars_by_factor[choose_factors,]>1 
+
 # choose factors based on important/associate
-ws_all_miRNA<-get_weights(MOFAobject, factors=choose_factors)$miRNA 
-ws_all_RNA<-get_weights(MOFAobject, factors=choose_factors)$RNA 
 
-QUANTILE_THRESH<-0.05
-T1<-quantile(ws_all_RNA,QUANTILE_THRESH )
-T2<-quantile(ws_all_miRNA, QUANTILE_THRESH)
+ws_all_miRNA<-get_weights(MOFAobject, factors=which(choose_factor_var[,1]), views=1)$miRNA
+ws_all_RNA<-get_weights(MOFAobject, factors=which(choose_factor_var[,2]), views=2)$RNA
+
+T1<-quantile(unlist(ws_all_RNA),QUANTILE_THRESH )
+T2<-quantile(unlist(ws_all_miRNA), QUANTILE_THRESH)
 hist(ws_all_miRNA)
-
+hist(ws_all_RNA)
 
 
 
@@ -82,7 +94,7 @@ hist(ws_all_miRNA)
 # maybe better to scale by disease control association? 
 #var_weights_miRNA<-ws_all_miRNA * vars_by_factor[choose_factors,'miRNA' ] /100
 #var_weights_RNA<-ws_all_RNA * vars_by_factor[choose_factors,'RNA' ] / 100
-all_feats_RNA<-rownames(ws_all_RNA)[rowSums((abs(ws_all_RNA)>abs(T1)))>0L]
+all_feats_RNA_mofa<-rownames(ws_all_RNA)[rowSums((abs(ws_all_RNA)>abs(T1)))>0L]
 all_feats_miRNA<-rownames(ws_all_miRNA)[rowSums((abs(ws_all_miRNA)>abs(T2)))>0L]
 
 length(all_feats_RNA)
@@ -98,7 +110,7 @@ length(all_feats_miRNA)
 
 miRNA_data<-get_data(MOFAobject)$miRNA[[1]]
 RNA_data<-get_data(MOFAobject)$RNA[[1]]
-CONF_train<-MOFAobject@samples_metadata[c('AGE_AT_VISIT', 'SEX')]
+CONF_train<-MOFAobject@samples_metadata[c('AGE_SCALED', 'SEX')]
 CONF_train$SEX<-as.factor(CONF_train$SEX)
 CONF_train_R<-t(CONF_train)
 
@@ -108,7 +120,7 @@ CONF_train_R<-t(CONF_train)
 test_data_miRNA<-assays(mofa_multi_complete_test)$miRNA
 test_data_RNA<-assays(mofa_multi_complete_test)$RNA
 y_actual<-colData(mofa_multi_complete_test)[,yvar]
-CONF<-as.data.frame(colData(mofa_multi_complete_test)@listData[c('AGE_AT_VISIT', 'SEX')])
+CONF<-as.data.frame(colData(mofa_multi_complete_test)@listData[c('AGE_SCALED', 'SEX')])
 CONF$SEX<-as.factor(CONF$SEX)
 
 CONF_R<-t(CONF)
@@ -121,8 +133,9 @@ CONF_R<-t(CONF)
 use_mofa=TRUE
 if (use_mofa){
   
-  all_feats_RNA
+  print(length(all_feats_RNA))
   RNA_data
+  all_feats_RNA=all_feats_RNA_mofa
   
 }else{
   all_feats_RNA=SIG_GENES
@@ -144,11 +157,25 @@ test_data_RNA_filt<-test_data_RNA[ rownames(test_data_RNA) %in% all_feats_RNA,]
 
 dim(RNA_data)
 dim(RNA_data_filt);  dim(test_data_RNA_filt); 
-dim(miRNA_data_filt)
+dim(miRNA_data_filt) ;dim(test_data_miRNA_filt); 
+
+run_single=FALSE;single_mode='RNA'
+
+if (run_single){
+  if (single_mode=='RNA'){
+    data_filt<-RNA_data_filt
+    test_data_filt<-test_data_RNA_filt
+  }
+}else if (single_mode=='miRNA'){
+      data_filt<-miRNA_data_filt
+      test_data_filt<-test_data_miRNA_filt
+}else{
+  print('run both modalities')
+  data_filt<-rbind(RNA_data_filt, miRNA_data_filt)
+  test_data_filt<-rbind(test_data_RNA_filt, test_data_miRNA_filt)
+}
 
 
-data_filt<-rbind(RNA_data_filt, miRNA_data_filt)
-test_data_filt<-rbind(test_data_RNA_filt, test_data_miRNA_filt)
 
 ## append confounding factors 
 
@@ -167,16 +194,35 @@ library(randomForest)
 detach(package:MOFA2,unload=TRUE)# replaces predict so we detach it 
 
 
-all_preds<-function(data_filt, test_data_filt){
+#if (add_conf){
+#  all_preds(data_filt_conf, test_data_filt_conf)
+  
+#}else{
+#  stats<-all_preds(data_filt, test_data_filt)
+#}
 
+
+add_conf=FALSE
+
+#all_preds<-function(data_filt, test_data_filt){
+if (add_conf){
+  data_filt_in=data_filt_conf
+  test_data_filt_in=test_data_filt_conf
+}else{
+  data_filt_in=data_filt
+  test_data_filt_in=test_data_filt
+}
+
+
+
+add_conf
   # Prepare data
   # Predict EORTC.risk with factor 1,2 only!
-  df <- as.data.frame(t(data_filt))
+  df <- as.data.frame(t(data_filt_in))
   colnames(df)<-gsub('-', '.',colnames(df) ) 
   
-  
-  rownames(test_data_filt)<-gsub('-','.', rownames(test_data_filt))
-  df_test <- as.data.frame(t(test_data_filt))
+  rownames(test_data_filt_in)<-gsub('-','.', rownames(test_data_filt_in))
+  df_test <- as.data.frame(t(test_data_filt_in))
   colnames(df_test)==  colnames(df)
   # Train the model for IGHV
   
@@ -195,37 +241,41 @@ all_preds<-function(data_filt, test_data_filt){
   if (tune_res){
     x=df
     df;y
-    ntry=5
-    repeats=2
+    ntry=3
+    repeats=3
     control <- trainControl(method="repeatedcv", number=ntry, repeats=repeats)
     
-    seed <- 7
+    seed <- 10
     metric <- "Accuracy"
     set.seed(seed)
-    mtry <- floor(sqrt(ncol(x))/5)
-    
-    tunegrid <- expand.grid(.mtry=mtry)
+    mtry <- floor(sqrt(ncol(x))) ### mtry will depend on the number of features 
+    tunegrid <- expand.grid(.mtry=mtry); 
+    print(paste0('gridsize: ',as.character(tunegrid$.mtry)))
     df_all<-df;df_all$y=y
-    #rf_default <- train(y~., data=df_all, method="rf", metric=metric, 
-    #                    tuneGrid=tunegrid, trControl=control)
-    rf_random <- caret::train(x = x, y=y, method="cforest", metric=metric,
-                              tuneLength=15, trControl=control)
+    method='cforest'## cforest takes longer, but it looks like it has better outcome
+    rf_default <- train(y~., data=df_all, method=method, metric=metric, 
+                        tuneGrid=tunegrid, trControl=control)
+    rf_default
+    #rf_random <- train(x = x, y=y, method="cforest", metric=metric,
+    #                        tuneLength=5, trControl=control)
     
   
     print(rf_default)
   }
   #model.y_tuned<-tuning_res
-  model.y_tuned<-rf_random
-
+  
+  #model.y_tuned<-rf_random
+  model.y_tuned<-rf_default
+  
  
   # Do predictions
     
     ###
-  head(test_data_filt)
+  #head(test_data_filt_in)
   #y.pred <- stats::predict(model.y, df_test)
   
   y.pred <- stats::predict(model.y_tuned, df_test)
-
+  colnames(df)
   #### ON TEST SET 
   colnames(df_test)
   colnames(df)
@@ -235,47 +285,58 @@ all_preds<-function(data_filt, test_data_filt){
   #predictions<-as.data.frame(cbind(c(actual), c(predicted)))
   #colnames(predictions)=c('observed', 'predicted')
   conf<-confusionMatrix(confusion_mat)
-  print(conf$byClass)
-  
   print(confusion_mat)
-  round(importance(model.y), 2)
+  print(conf$byClass['Balanced Accuracy'])
+  important_feats<-round(importance(model.y), 2)
+  important_feats<-order(-important_feats)
+  params_train<-paste0(outdir, 'predict_', yvar, use_mofa, '_t_', QUANTILE_THRESH, 
+                 'add', add_conf , 'single_', run_single ,'smode_', single_mode , '_tune_', ntry, repeats)
+  write.csv(conf$byClass,  paste0( params_train, '_important.csv'))
+  write.csv(conf$byClass, paste0(params_train,   '_results.csv'))
+
+  length(dim(conf$byClass))
+  if (length(dim(conf$byClass))){
+    accuracy_w=conf$byClass[,'Balanced Accuracy']; 
+    accuracy_w=mean(accuracy_w, na.rm=TRUE)
+  }else{
+    accuracy_w=conf$byClass['Balanced Accuracy']; 
+    
+  }
+  df_stats=  c(yvar, use_mofa, QUANTILE_THRESH,
+                     add_conf, run_single,single_mode, method, ntry , repeats, mtry,
+                     seed, accuracy_w)
   
-  write.csv(conf$byClass, paste0(outdir, 'predict_', yvar, use_mofa, '_t_', QUANTILE_THRESH, 'add', add_conf  ,  '.csv'))
   
-  
-  return(confusion_mat)
-}
-add_conf=TRUE
-if add_conf{
-  all_preds(data_filt_conf, test_data_filt_conf)
-  
-}else{
-  all_preds(data_filt, test_data_filt)
-}
+  write.table(t(df_stats), paste0(outdir,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+  print(accuracy_w)
+  #return(conf)
+#}
 
 
 
 
 
-library(pROC)
-library(pROC)
 
-roc.mock <- roc(ifelse(predictions$observed==3, 3, 2), as.numeric(predictions$predicted))
-plot(roc.mock, col = "gray60")
-
+#library(pROC)
+#library(pROC)
+#
+#roc.mock <- roc(ifelse(predictions$observed==3, 3, 2), as.numeric(predictions$predicted))
+#plot(roc.mock, col = "gray60")
+#
 
 # example 2-class data and model training
 #install.packages('caret')
-library(caret)
-d <- iris[51:150,]
-d[,5] <- factor(d[,5])
-model <- train(x = d[,c(1,3)], y = d[,5], method = 'lda', metric = 'ROC', 
-               trControl=trainControl(method = 'repeatedcv', number = 10, 
-                                      repeats = 10, savePredictions = T, 
-                                      classProbs = T, summary = twoClassSummary))
-
-
-
-
-
-
+#library(caret)
+#d <- iris[51:150,]
+#d[,5] <- factor(d[,5])
+#model <- train(x = d[,c(1,3)], y = d[,5], method = 'lda', metric = 'ROC', 
+#               trControl=trainControl(method = 'repeatedcv', number = 10, 
+#                                      repeats = 10, savePredictions = T, 
+#                                      classProbs = T, summary = twoClassSummary))
+#
+#
+#
+#
+#
+#
+#

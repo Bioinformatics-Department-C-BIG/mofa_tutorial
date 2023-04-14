@@ -87,8 +87,9 @@ for (VISIT in c('V08', 'BL')){
   ##### Up till here it is generic, no filters yet. 
   
   
+  ### I moved this elsewhere 
+  # TODO: use se_filt$AGE_SCALED and test!!
   se_filt<-filter_se(se, VISIT, sel_coh)
-  
   ### OUTPUT THE FILTERED se_filt 
   
   ind<-which(is.na(se_filt$AGE_AT_VISIT))

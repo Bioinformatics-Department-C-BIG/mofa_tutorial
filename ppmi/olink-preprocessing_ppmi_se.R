@@ -21,6 +21,7 @@ script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/utils.R'))
 
 output_1=paste0('ppmi/plots/proteomics/')
 outdir_orig<-('ppmi/plots/')
@@ -71,6 +72,7 @@ TISSUE='CSF'
 VISIT=c('BL')
 VISIT=c('V06')
 TISSUE='Plasma'
+VISIT=c('V08')
 
 
 sel_coh <- c(1,2)## note in the raw counts the prodromal samples are not in so use normalized TRUE
@@ -88,6 +90,8 @@ p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
 p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
 p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
+process_mirnas=FALSE
+source(paste0(script_dir, '/config.R'))
 
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
@@ -184,9 +188,9 @@ head(sample)
 #exp_design
 
 #se <- make_se(data, data_columns,exp_design)
-
-
-proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
+## just a quick filter because it takes too much memory
+raw_counts_all_by_visit<-raw_counts_all[,grep(VISIT, colnames(raw_counts_all ))]
+proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all_by_visit, combined)
 dim(proteomics_se)
 
 head(is.nan(as.matrix(data)))

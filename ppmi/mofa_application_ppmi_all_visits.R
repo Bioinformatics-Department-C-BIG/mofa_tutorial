@@ -82,7 +82,8 @@ TOP_GN
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined
-
+which(is.na(combined_bl$AGE))
+combined_bl$AGE
 scale_views=TRUE
 
 #combined$Outcome
@@ -126,7 +127,6 @@ out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params
 split=TRUE 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
-
 
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
 fname
@@ -223,10 +223,10 @@ common_samples_in_assays=unique(colname)
 common_samples_in_assays
 ### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
-
-metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
+combined_bl$AGE_AT_VISIT
 
 metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
+metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
 
 rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
 
@@ -267,7 +267,7 @@ if (split){
 }
 dim(colData(mofa_multi_complete_train))[1]
 
-
+mofa_multi_complete_test$AGE_AT_VISIT
 
 ###################### RUN MOFA #########################
 ##### Setup MOFA model 
@@ -309,7 +309,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

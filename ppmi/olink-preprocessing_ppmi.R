@@ -11,9 +11,11 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 library(ggplot2)
+
 library("vsn")
 library("DEP")
 library("data.table")
+
 library("SummarizedExperiment")
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
@@ -21,6 +23,7 @@ script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/utils.R'))
 
 output_1=paste0('ppmi/plots/')
 output_files<-paste0('ppmi/output/')
@@ -44,8 +47,9 @@ VISIT='BL'
 TISSUE='Plasma'
 NORMALIZED=TRUE
 VISIT=c('V04')
-VISIT=c('BL')
+VISIT=c('V08')
 
+source(paste0(script_dir, '/mofa_config.R'))
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 

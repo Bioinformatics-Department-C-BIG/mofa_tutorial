@@ -1,99 +1,7 @@
 
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
-
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
-
-print(script_dir)
-library('R.filesets')
-library(DESeq2)
-library("SummarizedExperiment")
-library(data.table)
-library(dplyr)
-
-
-### TODO: Add volcano plot for each time point -DONE
-### TODO: add heatmap for all tps tpogether -DONE
-#source('ppmi/de')
-
-#load
-library("factoextra")
-library("FactoMineR")
-library('pheatmap')
-library('ggplot2')
-
-#### Run DE 
-
-
-#ddsSE <- DESeqDataSet(se_filt, 
-#                      design = ~PATNO)
-
-# TODO: assign the groups 
-#dds <- DESeqDataSetFromMatrix(
-# countData = assay(se_filt),
-#  colData = colData(se_filt),
-#  design = ~COHORT, tidy = F
-#)
-
-#source(paste0(script_dir, '/config.R'))
-
-### LOAD runs
-
-
-source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir, '/utils.R'))
-
-VISIT='BL'
-
-
-process_mirnas<-TRUE
-
-
-source(paste0(script_dir, '/config.R'))
-
-
-
-print(deseq_file)
-
-datalist=loadRDS(deseq_file)
-ddsSE=datalist[[1]]
-vsd=datalist[[2]]
-se_filt=datalist[[3]]
-deseq2Results=datalist[[4]]
-
-table(se_filt$COHORT_DEFINITION)
-
-# todo join strings
-# TODO: Report the number of samples too! 
-
-des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
-
-#if  (process_mirnas){
-#
-#  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
-#  
-#}else{
-#  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
-#  
-#}
-#outdir_s
-# RUN DIFFERENTIAL EXPRESSION ANALYSIS 
-
-
-### TODO: save the file so we don't have to fit the model each time!! 
-dds<-ddsSE
-
-
-
-#rm(deseq2Data)
-
-
-
-dir.create(outdir_s)
-#deseq2Data<-loadRDS(paste0(outdir_s, '/deseq_results.RDS'))
-#### First obtain the single omics significant RNAs 
-
+source('ppmi/deseq_analysis_setup.R')
 
 
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
@@ -108,7 +16,7 @@ write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 ### Up to here output can be used for other reasons
 ##
 
-
+RUN_DESEQ_ANALYSIS=FALSE
 
 # 
 run_ma<-FALSE
@@ -167,7 +75,7 @@ outdir_s
 mark_signficant<-function(deseq2ResDF, padj_T, log2fol_T){
   ## mark a significant column and write to file
   
-  signif_file<-paste0('/significant', padj_T, '_',log2fol_T, '.csv')
+  signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
   
   deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < padj_T , "Significant", NA)
   deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj <padj_T & abs(deseq2ResDF$log2FoldChange) >log2fol_T , "Significant", NA)
@@ -177,7 +85,7 @@ mark_signficant<-function(deseq2ResDF, padj_T, log2fol_T){
   # LARGER ONE not saved 
   sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
   sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
-  write.csv(sign_only_ordered,paste0(outdir_s,signif_file), row.names = TRUE)
+  write.csv(sign_only_ordered,signif_file, row.names = TRUE)
   ### create also a more strict file? 
   return(deseq2ResDF)
 }
@@ -196,7 +104,7 @@ log2fol_T_hv<-0.3
 ### this is also done later on -- save from there? 
 deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
 
-deseq2ResDF$mofa_sign
+#deseq2ResDF$mofa_sign
 
 signif_genes<-rownames(deseq2ResDF[!is.na(deseq2ResDF$mofa_sign),])
 length(signif_genes)
@@ -207,7 +115,6 @@ vsd_mat <- assay(vsd)
 
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
-highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
 for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
@@ -256,7 +163,6 @@ num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 #### PCA plots
 ### make the plot with higly variable AND significant genes 
 
-pca_files<-paste0(outdir_s, '/PCA/')
 
 
 
@@ -375,6 +281,7 @@ dds$Condition<-dds$COHORT
 # This uses the size factors estimated before 
 # TODO: you can run VST using a saved dispersion function
 #vsd <- varianceStabilizingTransformation(dds)
+graphics.off()
 run_heatmap=TRUE
 
 if (run_heatmap){
@@ -392,18 +299,18 @@ if (run_heatmap){
   
   #deseq2ResDF$padj 
   # Keep only the significantly differentiated genes where the fold-change was at least 3
-  log2fol_T<-0.15
-  padj_T<-.005
+  log2fol_T_hm<-0.15
+  padj_T_hm<-.005
   
-  sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T & abs(deseq2ResDF$log2FoldChange) > log2fol_T,])
+  sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T_hm & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm,])
   deseq2ResDF$Gene<-rownames(deseq2ResDF)
-  order_by_metric<-'log2pval'
   order_by_metric<-'abslog2pval'
+  order_by_metric<-'log2pval'
   
   
   
   
-  oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T  & abs(deseq2ResDF$log2FoldChange) > log2fol_T, ] 
+  oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm, ] 
   
   oSigGenes<-deseq2ResDF[rownames(deseq2ResDF) %in% rownames(highly_variable_sign_genes_mofa),]
   
@@ -413,8 +320,16 @@ if (run_heatmap){
   
   
   dim(orderedSigGenes)
-  n_sig<-50
-  n_sig=dim(orderedSigGenes)[1]
+  
+  n_sig_f='all'
+  
+  if (n_sig_f=='all'){
+    n_sig=dim(orderedSigGenes)[1]
+    
+  }else{
+    n_sig=50
+  }
+  
   sigGenes <- orderedSigGenes$Gene[1:n_sig]
   length(sigGenes);head(sigGenes)
   deseq2VST[deseq2VST$Gene %in% sigGenes,]
@@ -429,7 +344,6 @@ if (run_heatmap){
   deseq2VST_wide <- deseq2VST
   deseq2VST_long <- melt(deseq2VST_wide, id.vars=c("Gene"))
   
-  graphics.off()
   # Make a heatmap ## using the vst
   ## TODO add annotation
   
@@ -448,10 +362,11 @@ if (run_heatmap){
   df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-  graphics.off()
-  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T,'_', log2fol_T ,order_by_metric, '_', n_sig,'.jpeg')
-  jpeg(fname, width=2000, height=1500, res=200)
+  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
   
+  
+  #jpeg(fname, width=2000, height=1500, res=200)
+  graphics.off()
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
@@ -465,11 +380,10 @@ if (run_heatmap){
                             annotation_col=df
       )
       
-      my_pheatmap
+      show(my_pheatmap)
   
-  dev.off()
-  my_pheatmap
-  
+      ggsave(fname,plot=my_pheatmap, width=10, height=7)
+
 
   #P2<-pheatmap(assay(vsd_filt_genes), 
   #         cluster_rows=FALSE, 
@@ -559,7 +473,7 @@ ggsave(fname, width=7,height=8)
 #
 #fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
 #ggsave(fname, width=8, height=7)
-outdir_s
+source('ppmi/RNAseq enrichment.R')
 
 
 

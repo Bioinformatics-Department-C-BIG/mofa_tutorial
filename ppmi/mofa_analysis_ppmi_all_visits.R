@@ -563,7 +563,6 @@ for (i in seq(1,vps)){
   
 }
 
-sMOFAobject@samples_metadata$NHY
 
 
 
@@ -646,15 +645,15 @@ plot_data_heatmap(MOFAobject,
                   show_rownames = TRUE, show_colnames = FALSE,
                   scale = "row"
 )
-
-plot_data_heatmap(MOFAobject, 
-                  view = "proteomics",
-                  factor = 3,  
-                  features = 100,
-                  cluster_rows = FALSE, cluster_cols = TRUE,
-                  show_rownames = TRUE, show_colnames = FALSE,
-                  scale = "row"
-)
+#
+#plot_data_heatmap(MOFAobject, 
+#                  view = "proteomics",
+#                  factor = 3,  
+#                  features = 100,
+#                  cluster_rows = FALSE, cluster_cols = TRUE,
+#                  show_rownames = TRUE, show_colnames = FALSE,
+#                  scale = "row"
+#)
 
 
 ### So multi omics factors are more related to Stage than to subtype!!
@@ -825,8 +824,7 @@ jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_positive','.jpeg'), res=150, 
 plot_enrichment_heatmap(res.positive, 
                         alpha=0.5, 
                         cap=0.0005,
-                          colnames=TRUE, 
-                        show_rownames=TRUE)
+                          colnames=TRUE)
 dev.off()
 
 plot_enrichment_heatmap(res.positive$sigPathways, 

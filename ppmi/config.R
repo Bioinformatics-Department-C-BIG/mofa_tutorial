@@ -3,8 +3,8 @@
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
 print(script_dir)
-library(sys)
-library(data.table)
+suppressWarnings(library(sys))
+suppressWarnings(library(data.table))
 
 
 MIN_COUNT_G=100
@@ -43,10 +43,10 @@ param_str_g_f<-paste0('rnas_', VISIT_S,  '_', MIN_COUNT_G,  '_coh_', sel_coh_s, 
 
 
 #### specific to rna seq 
-output_1=paste0(data_dir, 'ppmi/output/')
+output_1=paste0(data_dir, '/ppmi/output/')
 output_files_orig<-output_1
 output_files<-output_1
-outdir_orig<-paste0(data_dir,'ppmi/plots/')
+outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 
 
 ### setup deseq formula 

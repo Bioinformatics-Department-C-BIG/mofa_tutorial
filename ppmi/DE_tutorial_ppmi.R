@@ -16,13 +16,22 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 
-VISIT='V08'
+#VISIT='V08'
 source('../bladder_cancer/preprocessing.R')
 source(paste0(script_dir, '/config.R' ))
+outdir_s_p
 
-
-##### START HERE WITH PROTEOMICS 
+##### START HERE WITH PROTEOMICS ## TODO: SAVE AND LOAD 
+# se_filt and vsn mat 
 tmp<- assays(se_filt)[[1]]
+
+
+if (run_vsn){
+  protein_matrix<-vsn_mat
+}else{
+  protein_matrix<-tmp
+  }
+
 tmp
 dim(proteomics)
 COHORT<-se_filt$COHORT
@@ -40,7 +49,10 @@ design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
 design <- model.matrix(~COHORT )
 design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
 
-fit <- lmFit(vsn_mat, design = design)
+
+fit <- lmFit(protein_matrix, design = design)
+
+
 #cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
 #cont.matrix <- makeContrasts(pd_control=2-1,levels=design)
 
@@ -55,7 +67,8 @@ summary(summa.fit)
 
 library(ggplot2)
 plotSA(fit)
-nfeats<-dim(vsn_mat)[1]
+nfeats<-dim(protein_matrix)[1]
+nfeats
 results_de<-topTable(fit.cont, number = nfeats, coef='COHORT' )
 #results_de<-topTable(fit.cont, coef='COHORT' )
 results_de
@@ -66,7 +79,7 @@ results_de
   ### write out results 
 # We want to highlight the significant genes. We can get this from decideTests.
 #par(mfrow=c(1))
-plotMD(fit.cont,coef=1,status=summa.fit[,"pd_control"], 
+plotMD(fit.cont,coef=1,status=summa.fit[, 'COHORT' ], 
        values = c(-1, 1), hl.col=c("blue","red"))
 dev.off()
 
@@ -80,20 +93,27 @@ vp<-volcanoplot(fit.cont,coef=1,highlight=50,names=rownames(fit.cont$coefficient
             main="pd_control"
             )
 dev.off()
-#ggsave(paste0(outdir_s_p,'volcano.png'), vp)
 
 dir.create(outdir_s_p)
 
-
+colnames(results_de)
 # TODO: enhanced volcano
 library(EnhancedVolcano)
-EnhancedVolcano(results_de)
+ylim=max(-log10(results_de$adj.P.Val))+1
+ylim
+EnhancedVolcano(results_de, 
+                lab = rownames(results_de),
+                x = 'logFC',
+                y = 'adj.P.Val', 
+                pCutoff = 10e-2,
+                FCcutoff = 0.5, 
+                ylim=c(0,4))
+ggsave(paste0(outdir_s_p,'Enchanced_volcano.png'), vp)
 
 ## Create a p-adjusted
 ## how many total proteins?
+dim(vsn_mat)
 
-fit.cont_sig<-fit.cont[fit.cont$p.value<0.05/dim(vsn_mat)[1],]
-all_sig_proteins<-rownames(fit.cont_sig$p.value)
 
 dim(vsn_mat)[1]
 
@@ -102,9 +122,7 @@ common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enrich)
 write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
-all_sig_proteins$
 
-fit.cont_sig
 
 #fit.cont_sig[common_de]
 #
@@ -125,25 +143,44 @@ library(OlinkAnalyze)
 #### ALSO TRY T-TEST
 data<-read_NPX(prot_files[1])
 data=prot_bl
-
+VISIT='BL'
 colnames(data)<- c( "PATNO" ,       "EVENT_ID"  ,   "Index"   ,     "OlinkID"    ,
                     "UniProt"     , "Assay"     ,   "MISSINGFREQ", "Panel"    , 
                     "PANEL_LOT_NR" ,"PLATEID"   ,   "QC_WARNING" ,  "LOD"    ,    
                     "NPX"   ,       "update_stamp")
 
+table(data$EVENT_ID)
+data_filt<-data[data$EVENT_ID %in% VISIT,]
+data_filt$EVENT_ID
 
+unique(data_filt$PATNO)
 outcome<-combined[,c('PATNO','COHORT', 'AGE_SCALED', 'SEX' )]
 outcome<-outcome[!duplicated(outcome$PATNO),]
 outcome<-outcome[outcome$COHORT %in% sel_coh,]
-data_merged<-merge(data, outcome, by='PATNO')
+
+### now merge the specific data visit and metadata
+data_merged<-merge(data_filt, outcome, by='PATNO')
 data_merged$COHORT<-as.factor(data_merged$COHORT)
 
 data_merged$SampleID<-data_merged$PATNO
 ttest_results<-olink_ttest(df = data_merged,
             variable = 'COHORT')
 
-ttest_results
+olink_wilcox_results<-olink_wilcox(df = data_merged,
+             variable = 'COHORT')
+
+olink_wilcox_results%>%
+  dplyr::filter(Threshold == 'Significant')
+
+
 library(dplyr)
+data_merged$SEX=as.factor(data_merged$SEX)
+data_merged_rescaled<-data_merged
+data_merged_rescaled$NPX=data_merged_rescaled$NPX*1e6
+anova_results_oneway <- olink_anova(df = data_merged_rescaled, 
+                                    variable = c('COHORT' ,'AGE_SCALED', 'SEX'))
+
+data_merged$COHORT=as.factor(data_merged$COHORT)
 anova_results_oneway <- olink_anova(df = data_merged, 
                                     variable = 'COHORT',
                                     covariates = c('AGE_SCALED', 'SEX'))
@@ -178,12 +215,11 @@ T=0.05
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
 order_statistic<-'log2pval'
-order_statistic<-'logFC'
 order_statistic<-'log2pval'
 order_statistic<-'adj.P.Val'
 order_statistic<-'signlog2pval'
-
-
+order_statistic<-'logFC'
+order_statistic<-'P.Value'
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
 
 
@@ -197,6 +233,7 @@ names(gene_list1)<-rownames(results_de)
 gene_list_ord=gene_list1[order(-gene_list)]
 
 gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<T]
+gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
@@ -220,7 +257,7 @@ gse_protein <- clusterProfiler::gseGO(gene_list_ord,
                               keyType = 'SYMBOL', 
                               OrgDb = 'org.Hs.eg.db', 
                               pvalueCutoff  = 0.05)
-gse@result
+gse_protein@result
 
 process_mirnas=TRUE
 write.csv(as.data.frame(gse_protein@result), paste0(outdir_s_p_enrich_file, '.csv'))
@@ -234,6 +271,7 @@ enrich_plots<-run_enrichment_plots(gse=gse_protein,results_file=outdir_s_p_enric
 run_ORA=TRUE
 #### IN ENRICHMENT WE filter by what is significant ONLY !! 
 run_anova=FALSE
+use_pval=TRUE
 if (run_anova){
   order_statistic<-'statistic'
   anova_results_oneway$a
@@ -241,9 +279,14 @@ if (run_anova){
   dplyr::filter(Adjusted_pval<T)
   gene_list_anova_signficant<-pull(anova_results_oneway_significant_en, Assay)
   gene_list_ora=gene_list_anova_signficant
-  length(gene_list_anova_signficant)
+  print(length(gene_list_anova_signficant))
 }else{
   gene_list_ora=gene_list_limma_significant
+  if (use_pval){
+    gene_list_ora=gene_list_limma_significant_pval
+    
+  }
+  
   length(gene_list_limma_significant)
 }
 gse_protein_enrich <- clusterProfiler::enrichGO(gene_list_ora, 
@@ -252,7 +295,8 @@ gse_protein_enrich <- clusterProfiler::enrichGO(gene_list_ora,
                                         OrgDb = 'org.Hs.eg.db', 
                                         pvalueCutoff  = 0.05)
 ## EMAP 15 is better for reporting - less crowded
-outdir_s_p_enrich_file_ora<-paste0(outdir_s_p_enrich, ONT,  '_ora_T_', T,'_anova_', run_anova )
+process_mirnas=TRUE
+outdir_s_p_enrich_file_ora<-paste0(outdir_s_p_enrich, ONT,  '_ora_T_', T,'_anova_', run_anova, 'pval_', use_pval )
 write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, '.csv'))
 enrich_plots<-run_enrichment_plots(gse=gse_protein_enrich,
                                    results_file=paste0(outdir_s_p_enrich_file_ora, 'enrich'), 
@@ -262,6 +306,7 @@ outdir_s_p_enrich_file_ora
 
 
 
+int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
 
 
 

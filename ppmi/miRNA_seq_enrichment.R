@@ -12,9 +12,9 @@ order_by_metric<-'log2pval'
 order_by_metric<-'abslog2pval'
 order_by_metric<-'log2FoldChange'
 order_by_metric<-'log2pval'
-
+VISIT
 use_anticor=FALSE
-
+## UPDATED TO 0,1--DO not filter the list of de mirnas, since it runs gsea it needs the complete list 
 if (VISIT=='V08'){
 
   padj_T=0.01
@@ -24,11 +24,12 @@ if (VISIT=='V08'){
   ## MORE STRICT IN V08
   padj_T=0.01
   log2fol_T=0.1
-  
+  padj_T=1
+  log2fol_T=0
   
 }else{
-  padj_T=0.05
-  log2fol_T=0.1
+  padj_T=1
+  log2fol_T=0
 }
   
 if (use_anticor){
@@ -51,7 +52,7 @@ dir.create(outdir_enrich)
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
 top_n=length(gene_list);
 #top_n=200
-
+top_n
 gene_list_cut<-gene_list[1:top_n]
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
@@ -165,24 +166,14 @@ enr <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
                                              pvalueCutoff = 0.05)
 
 # descriptionColname = "Subcategory",
-
-enr
-x2<-pairwise_termsim(enr)
-N=15
-p_emap<-emapplot(x2, showCategory =N )
-p_emap
-
-ggsave(paste0(mir_results_file_by_cat, '_conv_emap',  '.png'), height = 7, width=8)
-
-
-p2<-dotplot(enr, showCategory=25)
-p2
-ggsave(paste0(mir_results_file_by_cat, '_conv_dotplot',  '.png'), height = 7, width=8)
+gse@result
 
 gse=enr;
 results_file=mir_results_file_by_cat
+write.csv(gse@result, paste0(mir_results_file_by_cat, '.csv'))
+
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
-run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat)
+run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat, N_EMAP=15)
 
 
 ############

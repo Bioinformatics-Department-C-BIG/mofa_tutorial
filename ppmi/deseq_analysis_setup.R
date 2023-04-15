@@ -29,7 +29,7 @@ source(paste0(script_dir, '/utils.R'))
 VISIT='V08'
 
 
-process_mirnas<-FALSE
+process_mirnas<-TRUE
 
 
 source(paste0(script_dir, '/config.R'))
@@ -51,26 +51,8 @@ table(se_filt$COHORT_DEFINITION)
 
 des<-gsub(' ', '', paste0(as.character(design(ddsSE))[-1]))
 
-#if  (process_mirnas){
-#
-#  outdir_s<-paste0(outdir_orig, '/single/', param_str_m_f, des)
-#  
-#}else{
-#  outdir_s<-paste0(outdir_orig, '/single/', param_str_g_f, des)
-#  
-#}
-#outdir_s
-# RUN DIFFERENTIAL EXPRESSION ANALYSIS 
-
-
 ### TODO: save the file so we don't have to fit the model each time!! 
 dds<-ddsSE
-
-
-
-#rm(deseq2Data)
-
-
 
 suppressWarnings(dir.create(outdir_s))
 pca_files<-paste0(outdir_s, '/PCA/')

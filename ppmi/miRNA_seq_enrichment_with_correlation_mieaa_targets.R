@@ -9,7 +9,7 @@ library(data.table)
 library(targetscan.Hs.eg.db)
 
 
-use_anticor=TRUE
+use_anticor=FALSE
 
 
 log2fol_T=0.0

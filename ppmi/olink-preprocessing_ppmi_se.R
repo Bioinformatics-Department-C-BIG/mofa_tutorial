@@ -33,24 +33,6 @@ combined<-read.csv2(metadata_output)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 
-TOP_PN<-0.9
-
-param_str<-paste0(TOP_PN)
-
-
-
-
-
-TISSUE='CSF'
-
-
-VISIT='BL'
-
-VISIT='BL'
-VISIT='BL'
-TISSUE='Plasma'
-
-sel_coh <- c(1,4)
 
 
 
@@ -58,37 +40,16 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
 
-VISIT=c('V08')
-VISIT=c('V08')
-TISSUE='Plasma'
-NA_PERCENT=0.8
-
-
 ### TODO: filter out the cohort too before processig !! 
-sel_coh <- c(2)
-sel_coh <- c(1)
-VISIT=c('BL', 'V04','V06', 'V08');
-TISSUE='CSF'
+
 VISIT=c('BL')
-VISIT=c('V06')
-TISSUE='Plasma'
-VISIT=c('V08')
+process_mirnas=FALSE
+source(paste0(script_dir, '/config.R' ))
+
+param_str<-paste0(TOP_PN)
 
 
-sel_coh <- c(1,2)## note in the raw counts the prodromal samples are not in so use normalized TRUE
-NORMALIZED=TRUE;run_vsn=TRUE
 
-sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
-sel_coh_s
-VISIT_S=paste(VISIT,sep='_',collapse='-')
-
-## VISIT_S to allow this to be more than one visits at once!! 
-p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
-
-
-#### read in proteomics 
-p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
-p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 
 if (NORMALIZED){
@@ -96,15 +57,11 @@ if (NORMALIZED){
   # if we dont run vsn we want to take the log values 
   if (!run_vsn){
     in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '.csv')
-    
   }
-  
-  
 }else{
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
-
-
 }
+in_file_original
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 outdir<-outdir_orig
@@ -205,9 +162,7 @@ sel_coh
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
 cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
 
-se_filt$COHORT
-se_filt$EVENT_ID
-
+### TODO: save se filt here : with or without VISIT included..? 
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 

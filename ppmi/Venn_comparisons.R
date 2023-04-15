@@ -126,30 +126,41 @@ venn.diagram(listInput,
 ############################# COMPARE PATHWAYS ###################################
 ##################################################################################
 # for each visit across ALL modalities 
-VISIT='V08'
+VISIT='BL'; 
 outdir_mirs<-paste0(outdir_orig, '/single/', 'mirnas_',VISIT, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
 outdir_rnas<-paste0(outdir_orig, '/single/', 'rnas_',VISIT, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_',des)
-outdir_proteins<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_', sel_coh_s, '_', des, '/' )
-run_anova=TRUE
+#outdir_proteins<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_', sel_coh_s, '_', des, '/' )
+source(paste0(script_dir, '/config.R' ))
+outdir_proteins<-outdir_s_p
+outdir_proteins
 
-outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova)
+## parameters for the enrichment- could be specified elsewhere?
+run_anova=FALSE;use_pval=TRUE; 
+padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
+
+
+
+outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
+results_file<-paste0(outdir_rnas, '/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+
+
 
 
 padj_paths<-0.05
 enrich_rnas_file<-paste0(results_file, '.csv')
 enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
+enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
 
 enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora,'.csv')
 enrich_rna<-read.csv(enrich_rnas_file)
 enrich_mirnas<-read.csv(enrich_mirnas_file)
-enrich_mirnas$Subcategory
 enrich_proteins<-read.csv(enrich_proteins_file)
 
 
 
 enrich_rna_sig<-enrich_rna[enrich_rna$p.adjust<padj_paths,]
-enrich_mirnas_sig<-enrich_mirnas[enrich_mirnas$P.adjusted<padj_paths,]
-
+enrich_mirnas_sig<-enrich_mirnas[enrich_mirnas$p.adjust<padj_paths,]
+dim(enrich_mirnas_sig)
 enrich_proteins_sig<-enrich_proteins[enrich_proteins$p.adjust<padj_paths,]
 
 common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Description )
@@ -157,7 +168,7 @@ common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Descripti
 
 listInput_all_mods<-list(rna=enrich_rna_sig$Description,
                          prot=enrich_proteins_sig$Description, 
-                         mirnas=enrich_mirnas_sig$Subcategory)
+                         mirnas=enrich_mirnas_sig$Description)
 
 
 
@@ -165,10 +176,22 @@ listInput<-listInput_all_mods
 res_overlap<-calculate.overlap(listInput)
 
 intersection_all_three<-Reduce(intersect,listInput_all_mods)
-write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways.csv' ), row.names = FALSE)
+int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
+write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways' , int_params, '.csv') , row.names = FALSE)
 
-venn.diagram(listInput,   
-             filename = paste0(out_compare,'all_modalities_', padj_paths,  '_p_anova_',run_anova,'venn_diagramm.png'), output=TRUE)
+library(RColorBrewer)
+myCol <- brewer.pal(3, "Pastel2")
 
+
+venn.diagram(listInput,
+             # Circles
+             lwd = 2,
+             lty = 'blank',
+             fill = myCol,
+             cex=2.5,
+              
+             
+             
+             filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm.png'), output=TRUE)
 
 

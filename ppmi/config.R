@@ -91,6 +91,7 @@ TOP_PN<-0.9
 NA_PERCENT=0.9
 
 NORMALIZED=TRUE;run_vsn=FALSE
+run_vsn=TRUE
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 

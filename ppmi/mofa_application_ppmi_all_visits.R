@@ -47,7 +47,7 @@ TOP_GN
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 
 # TODO: move all to config file 
-split=TRUE 
+split=FALSE
 
 ### if we are using all modalities we might need to change TOP_GN
 TOP_PN=0.70
@@ -82,7 +82,7 @@ process_mirnas=FALSE
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
-
+NORMALIZED
 TOP_GN
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
@@ -129,6 +129,7 @@ highly_variable_proteins_outfile
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
+highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 
 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
@@ -219,7 +220,7 @@ assay_full=c(rep('miRNA', length(miRNA)),
              rep('proteomics', length(proteomics)))
 
 
-
+length(miRNA);length(RNA);length(proteomics)
 #colname = c(colnames(RNA), colnames(miRNA))
 colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
 
@@ -248,6 +249,8 @@ prot_to_impute<-assays(mofa_multi_complete)$proteomics
 head(assays(mofa_multi)$miRNA)
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 
+
+
 complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
 upsetSamples(mofa_multi)
@@ -261,7 +264,6 @@ nsamples
 
 
 ### Split the data
-split=TRUE
 if (split){
   seed_tr_test=150
   set.seed(seed_tr_test)
@@ -271,6 +273,8 @@ if (split){
   mofa_multi_complete=mofa_multi_complete_train
 }else{
   mofa_multi_complete=mofa_multi_complete_all
+  mofa_multi_complete=mofa_multi_complete_all
+  
 }
 dim(colData(mofa_multi_complete_train))[1]
 

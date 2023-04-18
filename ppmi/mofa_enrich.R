@@ -1,6 +1,6 @@
 
 
-
+source(paste0(script_dir, '/RNAseq enrichment.R'))
 #### Prerequisites are mofa analysis 
 ### and rna seq enrichment 
 
@@ -8,7 +8,7 @@ list1=list()
 nfactors<-MOFAobject@dimensions$K
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa.Rds')
 
-
+ONT='BP'
 
 if (file.exists(mofa_enrich_rds)){
   list1<-loadRDS(mofa_enrich_rds)

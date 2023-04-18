@@ -48,7 +48,7 @@ TOP_GN
 
 # TODO: move all to config file 
 split=FALSE
-
+run_rna_mirna=TRUE
 ### if we are using all modalities we might need to change TOP_GN
 TOP_PN=0.70
 
@@ -65,15 +65,15 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=10
+N_FACTORS=15
 
 if (split){
   N_FACTORS=8
 }
 VISIT=c('V08');
 run_vsn=TRUE
-TISSUE='Plasma';
 TISSUE='CSF'; 
+TISSUE='Plasma';
 
 
 NORMALIZED=TRUE;

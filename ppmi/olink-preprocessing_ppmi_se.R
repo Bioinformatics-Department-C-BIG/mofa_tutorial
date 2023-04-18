@@ -49,8 +49,8 @@ source(paste0(script_dir, '/config.R' ))
 param_str<-paste0(TOP_PN)
 
 
-
-
+run_vsn
+NORMALIZED
 
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
@@ -239,5 +239,5 @@ if (!run_vsn){
 }
 
 
-highly_variable_proteins_mofa
+highly_variable_proteins_outfile
 

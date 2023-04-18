@@ -2,7 +2,7 @@
 
 library('GOfuncR')
 require(DOSE)
-library('apeglm')
+#library('apeglm')
 library(clusterProfiler)
 library(AnnotationDbi)
 library(ensembldb)

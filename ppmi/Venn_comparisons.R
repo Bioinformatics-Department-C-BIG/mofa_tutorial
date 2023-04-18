@@ -126,22 +126,34 @@ venn.diagram(listInput,
 ############################# COMPARE PATHWAYS ###################################
 ##################################################################################
 # for each visit across ALL modalities 
-VISIT='BL'; 
+#### Load pathways from each of the modalities separately 
+VISIT='V08'; 
+source(paste0(script_dir, '/config.R' ))
 outdir_mirs<-paste0(outdir_orig, '/single/', 'mirnas_',VISIT, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
 outdir_rnas<-paste0(outdir_orig, '/single/', 'rnas_',VISIT, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_',des)
 #outdir_proteins<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_', sel_coh_s, '_', des, '/' )
-source(paste0(script_dir, '/config.R' ))
 outdir_proteins<-outdir_s_p
-outdir_proteins
+
+
 
 ## parameters for the enrichment- could be specified elsewhere?
 run_anova=FALSE;use_pval=TRUE; 
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
 
-
-
 outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
 results_file<-paste0(outdir_rnas, '/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+
+
+
+### obtain significant features from each one separately 
+log2fol_T_overall=0.1
+signif_rna<-read.csv(paste0(outdir_rnas,'/significant', padj_T_overall, '_',log2fol_T_overall, '.csv'))
+signif_mirs<-read.csv(paste0(outdir_mirs,'/significant', padj_T_overall, '_',log2fol_T_overall, '.csv'))
+signif_proteins<-read.csv(paste0(outdir_s_p,'/significant', padj_T_overall, '_',log2fol_T_overall, '.csv'))
+
+### THE SIGNIFICANT GENES ARE TOO MANY.. filter them somehow..? 
+
+
 
 
 
@@ -178,6 +190,24 @@ res_overlap<-calculate.overlap(listInput)
 intersection_all_three<-Reduce(intersect,listInput_all_mods)
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
 write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways' , int_params, '.csv') , row.names = FALSE)
+unique_rna<-enrich_rna %>% 
+  filter(Description %in% res_overlap$a1)
+dim(unique_rna)
+lapply(res_overlap, length)
+
+write.csv(unique_rna,
+          paste0(out_compare,'unique_rna_' , int_params, '.csv') , row.names = FALSE)
+
+write.csv(enrich_proteins %>% 
+            filter(Description %in% res_overlap$a3), 
+          paste0(out_compare,'unique_prot_' , int_params, '.csv') , row.names = FALSE)
+
+
+write.csv(enrich_mirnas %>% 
+            filter(Description %in%res_overlap$a7),
+          paste0(out_compare,'unique_mirs_' , int_params, '.csv') , row.names = FALSE)
+
+
 
 library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel2")

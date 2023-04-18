@@ -47,7 +47,9 @@ TOP_GN
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 
 # TODO: move all to config file 
+split=TRUE 
 
+### if we are using all modalities we might need to change TOP_GN
 TOP_PN=0.70
 
 FULL_SET=TRUE
@@ -65,10 +67,13 @@ TOP_PN=0.90
 
 N_FACTORS=10
 
+if (split){
+  N_FACTORS=8
+}
 VISIT=c('V08');
-TISSUE='CSF'; 
 run_vsn=TRUE
 TISSUE='Plasma';
+TISSUE='CSF'; 
 
 
 NORMALIZED=TRUE;
@@ -124,7 +129,8 @@ highly_variable_proteins_outfile
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-split=TRUE 
+
+
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 
@@ -194,27 +200,29 @@ create_hist(miRNA, 'miRNA')
 ########
 ########
 
-data = list(proteomics = as.matrix(prot_filt),
-            miRNA=as.matrix(miRNA_filt), 
-            RNA=as.matrix(RNA_filt) )
 
-data = list(
-  miRNA=as.matrix(miRNA_filt), 
-  RNA=as.matrix(RNA_filt) )
+#data = list(
+#  miRNA=as.matrix(miRNA_filt), 
+#  RNA=as.matrix(RNA_filt) )
 
 #### just trying a multi assay here to help with filtering.. 
-head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
+#head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
 ### might need to filter by what is common with meta
 data_full<-list(miRNA=as.matrix(miRNA), 
-                RNA=as.matrix(RNA) )
+                RNA=as.matrix(RNA),
+                proteomics=as.matrix(proteomics))
 
 
 assay_full=c(rep('miRNA', length(miRNA)),
-             rep('RNA', length(RNA)))
+             rep('RNA', length(RNA)),
+             rep('proteomics', length(proteomics)))
 
 
-colname = c(colnames(RNA), colnames(miRNA))
+
+#colname = c(colnames(RNA), colnames(miRNA))
+colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+
 primary=colname
 colname
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
@@ -235,7 +243,7 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  colData = metadata_filt, 
                                  sampleMap=sample_map)
 
-
+prot_to_impute<-assays(mofa_multi_complete)$proteomics
 
 head(assays(mofa_multi)$miRNA)
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
@@ -245,7 +253,6 @@ library('UpSetR')
 upsetSamples(mofa_multi)
 #mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 
-mofa_multi_V04
 
 ###  REMOVE NON ens ids 
 
@@ -256,8 +263,8 @@ nsamples
 ### Split the data
 split=TRUE
 if (split){
-  seed=123
-  set.seed(seed)
+  seed_tr_test=150
+  set.seed(seed_tr_test)
   train_ind<-sample(nsamples, nsamples*0.7)
   mofa_multi_complete_train = mofa_multi_complete_all[,train_ind]
   mofa_multi_complete_test = mofa_multi_complete_all[,-train_ind]

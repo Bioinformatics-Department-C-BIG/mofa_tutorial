@@ -127,6 +127,39 @@ get_symbols_vector<-function(ens ){
 
 
 
+######## DE ANALYSIS #######
+#results_de<-mark_signficant(
+  # test
+  #de_res= results_de
+  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='adj.P.Val'
+  #log2fc_name = 'logFC'   
+  #outdir_single=outdir_s_p
+
+mark_signficant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
+  ## mark a significant column and write to file
+  
+  signif_file<-paste0(outdir_single,'/significant', padj_T, '_',log2fol_T, '.csv')
+  
+  de_res$significant <- ifelse(de_res[,padj_name] < padj_T , "Significant", NA)
+  de_res$sign_lfc <- ifelse(de_res[,padj_name] < padj_T & abs(de_res[,log2fc_name]) >log2fol_T , "Significant", NA)
+  # Examine this data frame
+  # Order the significant to save as a new output file 
+  head(de_res)
+  # LARGER ONE not saved 
+  sign_only<-de_res[de_res$sign_lfc=='Significant',]
+  sign_only_ordered<-sign_only[order(sign_only[,padj_name], decreasing = FALSE),]
+  sign_only_ordered<-sign_only[order(-sign_only[,'abslog2pval'], decreasing = FALSE),]
+  
+  sign_only_ordered<-sign_only_ordered[!is.na(de_res$sign_lfc),]
+  write.csv(sign_only_ordered,signif_file, row.names = TRUE)
+  ### create also a more strict file? 
+  return(de_res)
+}
+
+
+
+######## ENRICHMENT ANALYSIS 
+
 
 get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
   

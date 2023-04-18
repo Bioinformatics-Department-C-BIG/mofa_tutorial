@@ -97,18 +97,26 @@ dev.off()
 dir.create(outdir_s_p)
 
 colnames(results_de)
+ns_full<-table(se_filt$COHORT_DEFINITION)
+ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
+
 # TODO: enhanced volcano
 library(EnhancedVolcano)
-ylim=max(-log10(results_de$adj.P.Val))+1
+ylim=max(-log10(results_de$adj.P.Val))+0.5
 ylim
-EnhancedVolcano(results_de, 
+pvol<-EnhancedVolcano(results_de, 
                 lab = rownames(results_de),
                 x = 'logFC',
                 y = 'adj.P.Val', 
                 pCutoff = 10e-2,
                 FCcutoff = 0.5, 
-                ylim=c(0,4))
-ggsave(paste0(outdir_s_p,'Enchanced_volcano.png'), vp)
+                ylim=c(0,ylim), 
+                title='', 
+                subtitle=ns
+)
+pvol
+fname<-paste0(outdir_s_p,'Enchanced_volcano_edited.jpeg')
+ggsave(fname,pvol, width=7,height=8)
 
 ## Create a p-adjusted
 ## how many total proteins?
@@ -117,10 +125,10 @@ dim(vsn_mat)
 
 dim(vsn_mat)[1]
 
-common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
+#common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enrich)
-write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
+#outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enrich)
+#write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
 
@@ -222,10 +230,22 @@ order_statistic<-'logFC'
 order_statistic<-'P.Value'
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
 
-
 results_de$log2pval<- -log10(results_de$adj.P.Val) * results_de$logFC
+results_de$abslog2pval<- abs(results_de$log2pval)
+
 results_de$log2pval_not_adj<- -log10(results_de$P.Value) * results_de$logFC
 results_de$signlog2pval<- -log10(results_de$adj.P.Val) * sign(results_de$logFC)
+
+
+write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
+
+
+log2fol_T_overall<-0.1
+padj_T_overall<-.05
+results_de_signif<-mark_signficant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
+                            padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
+
+results_de_signif$abslog2pval
 
 ################### run gsea with anova ######################
 gene_list1<-results_de[,order_statistic]

@@ -382,3 +382,14 @@ ppmi/.tmp.driveupload/55475
 ppmi/.tmp.driveupload/55473
 ppmi/.tmp.driveupload/55471
 ppmi/.tmp.driveupload/55469
+*.Rds
+.RData
+.Rhistory
+.Rproj.user/shared/notebooks/paths
+*.tsv
+*.xlsx
+.Rproj.user/shared/notebooks/paths
+*.cys
+*.svg
+ppmi/.tmp.driveupload/46868
+*.html

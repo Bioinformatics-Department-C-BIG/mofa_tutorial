@@ -293,8 +293,11 @@ p3<-merged_paths[,4];length(p3)
 
 hist(p1)
 hist(p2)
-
-fish <- combinePValues(p1, p2)
+add_mirs=FALSE
+if (add_mirs){
+  fish <- combinePValues(p1, p2, p3)
+  
+}
 
 merged_paths_fish<-cbind(merged_paths, fish)
 merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
@@ -309,10 +312,23 @@ merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<0.05,]
 
 
 merged_paths_fish_sig$fish_log10<--log10(merged_paths_fish_sig$fish)
-dim(merged_paths_fish_sig)
+merged_paths_fish_sig$p.adjust.x_log<--log10(merged_paths_fish_sig$p.adjust.x)
+merged_paths_fish_sig$p.adjust.y_log<--log10(merged_paths_fish_sig$p.adjust.y)
+merged_paths_fish_sig$p.adjust._log<--log10(merged_paths_fish_sig$p.adjust)
+
+colnames(merged_paths_fish_sig)
+merged_paths_fish_sig$p
+
+if (add_mirs){
+ choose_cols<- c('Description','p.adjust.x_log','p.adjust.y_log','p.adjust._log' , 'fish_log10'  )
+}else{
+  choose_cols<- c('Description','p.adjust.x_log','p.adjust.y_log', 'fish_log10'  )
+  
+}
+merged_paths_fish_sig_filt<-merged_paths_fish_sig[,choose_cols]
 
 
-mir_enrich_p<-ggplot(merged_paths_fish_sig[1:30,],aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
+mir_enrich_p<-ggplot(merged_paths_fish_sig_filt[1:30,],aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
   geom_bar(position='dodge', stat='identity')+
   theme(axis.title.y=element_blank(), 
         axis.text.y= element_text(size=15))+
@@ -320,5 +336,32 @@ mir_enrich_p<-ggplot(merged_paths_fish_sig[1:30,],aes( x=reorder(Description,fis
 mir_enrich_p
 ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
        width=7,height=8 )
+
+
+
+
+merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:15,])
+
+if (add_mirs){
+  labels<-c('protein', 'RNA', 'mirnas',  'Fisher\'s')
+  }else{ 
+    labels<-c('protein', 'RNA', 'Fisher\'s')}
+
+#ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
+# TODO: reorder by description 
+mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description, value), y=value, fill=variable))+
+  geom_bar(position='dodge', stat='identity', width=0.5)+
+  theme(axis.title.y=element_blank(), 
+        axis.text.y= element_text(size=15))+
+        
+  scale_fill_discrete(labels=labels)+
+  coord_flip()
+
+  ggsave(paste0(merged_path_file, add_mirs,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
+         width=10,height=7 )
+
+
+
+
 
 

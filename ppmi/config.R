@@ -82,33 +82,39 @@ deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds')
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 
+######## PROCESS PROTEINS 
+TISSUE='CSF'
+TISSUE='Plasma'
+TOP_PN=0.9
+
+TOP_PN<-0.9
+NA_PERCENT=0.9
+
+NORMALIZED=TRUE;run_vsn=FALSE
+run_vsn=TRUE
+sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
+VISIT_S=paste(VISIT,sep='_',collapse='-')
+
+## VISIT_S to allow this to be more than one visits at once!! 
+p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+#### read in proteomics 
+p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
+p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+
+
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_','_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), sel_coh_s, '_', des, '/' )
+
+
+
+## for mofa - run_vsn=TRUE
+
+
+
 
 
 ### mofa config 
 
 #script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 #source(paste0(script_dir, '/config.R'))
-
-use_signif=FALSE
-
-if (use_signif){
-  TOP_GN=0.50
-  TOP_MN=0.75
-}else{
-  TOP_GN=0.10
-  TOP_MN=0.5
-  TOP_MN=0.75
-}
-
-
-g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
-m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_') 
-
-param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
-param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
-
-
-
-
 
 

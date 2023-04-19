@@ -30,8 +30,6 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-source(paste0(script_dir,'/config.R'))
-source(paste0(script_dir,'/mofa_config.R'))
 TOP_GN
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
@@ -49,7 +47,9 @@ TOP_GN
 # prerequisites: mass spec preprocessing and desq2 preprocessing
 
 # TODO: move all to config file 
-
+split=FALSE
+run_rna_mirna=TRUE
+### if we are using all modalities we might need to change TOP_GN
 TOP_PN=0.70
 
 FULL_SET=TRUE
@@ -65,25 +65,30 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=10
+N_FACTORS=15
 
+if (split){
+  N_FACTORS=8
+}
 VISIT=c('V08');
-TISSUE='CSF'; 
 run_vsn=TRUE
+TISSUE='CSF'; 
 TISSUE='Plasma';
 
 
 NORMALIZED=TRUE;
 use_signif=FALSE
+process_mirnas=FALSE
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
-
+NORMALIZED
 TOP_GN
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined
-
+which(is.na(combined_bl$AGE))
+combined_bl$AGE
 scale_views=TRUE
 
 #combined$Outcome
@@ -124,7 +129,10 @@ highly_variable_proteins_outfile
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-outdir = paste0(outdir_orig,out_params , '/');outdir
+highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
+
+
+outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
@@ -193,27 +201,29 @@ create_hist(miRNA, 'miRNA')
 ########
 ########
 
-data = list(proteomics = as.matrix(prot_filt),
-            miRNA=as.matrix(miRNA_filt), 
-            RNA=as.matrix(RNA_filt) )
 
-data = list(
-  miRNA=as.matrix(miRNA_filt), 
-  RNA=as.matrix(RNA_filt) )
+#data = list(
+#  miRNA=as.matrix(miRNA_filt), 
+#  RNA=as.matrix(RNA_filt) )
 
 #### just trying a multi assay here to help with filtering.. 
-head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
+#head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
 ### might need to filter by what is common with meta
 data_full<-list(miRNA=as.matrix(miRNA), 
-                RNA=as.matrix(RNA) )
+                RNA=as.matrix(RNA),
+                proteomics=as.matrix(proteomics))
 
 
 assay_full=c(rep('miRNA', length(miRNA)),
-             rep('RNA', length(RNA)))
+             rep('RNA', length(RNA)),
+             rep('proteomics', length(proteomics)))
 
 
-colname = c(colnames(RNA), colnames(miRNA))
+length(miRNA);length(RNA);length(proteomics)
+#colname = c(colnames(RNA), colnames(miRNA))
+colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+
 primary=colname
 colname
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
@@ -222,10 +232,10 @@ common_samples_in_assays=unique(colname)
 common_samples_in_assays
 ### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
-
-metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
+combined_bl$AGE_AT_VISIT
 
 metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
+metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
 
 rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
 
@@ -234,25 +244,41 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  colData = metadata_filt, 
                                  sampleMap=sample_map)
 
-
+prot_to_impute<-assays(mofa_multi_complete)$proteomics
 
 head(assays(mofa_multi)$miRNA)
-mofa_multi_complete<-mofa_multi[,complete.cases(mofa_multi)]
-mofa_multi_complete
+mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+
+
+
 complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
 upsetSamples(mofa_multi)
-mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
+#mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 
-mofa_multi_V04
 
 ###  REMOVE NON ens ids 
 
-colData(mofa_multi_V04)
+nsamples<-dim(colData(mofa_multi_complete_all))[1]
+nsamples
 
 
+### Split the data
+if (split){
+  seed_tr_test=150
+  set.seed(seed_tr_test)
+  train_ind<-sample(nsamples, nsamples*0.7)
+  mofa_multi_complete_train = mofa_multi_complete_all[,train_ind]
+  mofa_multi_complete_test = mofa_multi_complete_all[,-train_ind]
+  mofa_multi_complete=mofa_multi_complete_train
+}else{
+  mofa_multi_complete=mofa_multi_complete_all
+  mofa_multi_complete=mofa_multi_complete_all
+  
+}
+dim(colData(mofa_multi_complete_train))[1]
 
-
+mofa_multi_complete_test$AGE_AT_VISIT
 
 ###################### RUN MOFA #########################
 ##### Setup MOFA model 
@@ -294,7 +320,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'))
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

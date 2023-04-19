@@ -6,7 +6,7 @@ library(data.table)
 
 input_data<-('ppmi/ppmi_data/')
 output_files<-'ppmi/output/'
-
+source('ppmi/utils.R')
 #all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
 
 #cl_1<-lapply(all_files, read.csv)
@@ -89,7 +89,17 @@ dim(combined)
 
 #which(!is.na(combined$Outcome))
 
-unique(motor_assess_all$PATNO)
+
+#### FIX age and sex
+### OUTPUT THE FILTERED se_filt 
+
+ind<-which(is.na(combined$AGE_AT_VISIT))
+combined$AGE<-combined$AGE_AT_VISIT
+combined[ind,'AGE' ]<-get_age_at_visit(combined[ind,])
+## Turn to factors for deseq
+combined$SEX<-as.factor(combined$SEX)
+combined$AGE_SCALED<-scale(combined$AGE)
+
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
 #combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
@@ -101,10 +111,11 @@ unique(motor_assess_all$PATNO)
 ### Add new features here
 
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
+combined$AGE
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
-
+dim
 combined$COHORT_DEFINITION
 #View(combined[combined$PATNO=='4125',])
 combined$NHY
@@ -117,8 +128,7 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
-
-
+S
 
 
 

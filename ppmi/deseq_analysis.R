@@ -1,8 +1,10 @@
 
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir, '/setup_os.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
-source('ppmi/deseq_analysis_setup.R')
-
+source(paste0(script_dir,'/deseq_analysis_setup.R'))
+VISIT
 
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
@@ -72,23 +74,6 @@ outdir_s
 
 
 
-mark_signficant<-function(deseq2ResDF, padj_T, log2fol_T){
-  ## mark a significant column and write to file
-  
-  signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
-  
-  deseq2ResDF$significant <- ifelse(deseq2ResDF$padj < padj_T , "Significant", NA)
-  deseq2ResDF$sign_lfc <- ifelse(deseq2ResDF$padj <padj_T & abs(deseq2ResDF$log2FoldChange) >log2fol_T , "Significant", NA)
-  # Examine this data frame
-  # Order the significant to save as a new output file 
-  head(deseq2ResDF)
-  # LARGER ONE not saved 
-  sign_only<-deseq2ResDF[which(deseq2ResDF$sign_lfc=='Significant'),]
-  sign_only_ordered<-sign_only[order(sign_only$'padj', decreasing = FALSE),]
-  write.csv(sign_only_ordered,signif_file, row.names = TRUE)
-  ### create also a more strict file? 
-  return(deseq2ResDF)
-}
 
 log2fol_T<-0.25
 padj_T<-.005
@@ -142,9 +127,7 @@ for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
-
-
-deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall)
+deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 
@@ -443,7 +426,7 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                 colAlpha = 1,
                 
                 # legend positions 
-                legendPosition = 'right',
+               # legendPosition = 'right',
                 
                 xlim=xlim, 
                 subtitle=ns, 
@@ -451,7 +434,9 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                )
 
 
-pvol
+
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited.jpeg')
+ggsave(fname,pvol, width=6,height=8)
 
 library(gridExtra)
 library(grid)
@@ -466,7 +451,7 @@ grid.arrange(pvol,
 
 
 fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
-ggsave(fname, width=7,height=8)
+ggsave(fname, width=9,height=8)
 #
 #library('EnhancedVolcano')
 #pvol+coord_flip()

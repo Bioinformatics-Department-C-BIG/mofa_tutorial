@@ -1,9 +1,10 @@
 
+script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
+os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
+data_dir<-os_dir
 #BiocManager::install('DEP')
 ## TODO: change all scripts to be agnostic of visit until mofa
-library(edgeR)
 library(limma)
-library(Glimma)
 #library(org.Mm.eg.db)
 
 library(gplots)
@@ -12,19 +13,19 @@ library(sys)
 library(sys)
 library(ggplot2)
 library("vsn")
-library("DEP")
 library("data.table")
 library("SummarizedExperiment")
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/utils.R'))
 
-output_1=paste0('ppmi/plots/proteomics/')
-outdir_orig<-('ppmi/plots/')
-output_files<-paste0('ppmi/output/')
+output_1=paste0(data_dir,'ppmi/plots/proteomics/')
+outdir_orig<-paste0(data_dir,'ppmi/plots/')
+output_files<-paste0(data_dir,'ppmi/output/')
 
 
 metadata_output<-paste0(output_files, 'combined.csv')
@@ -32,24 +33,6 @@ combined<-read.csv2(metadata_output)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 
-TOP_PN<-0.9
-
-param_str<-paste0(TOP_PN)
-
-
-
-
-
-TISSUE='CSF'
-
-
-VISIT='BL'
-
-VISIT='BL'
-VISIT='BL'
-TISSUE='Plasma'
-
-sel_coh <- c(1,4)
 
 
 
@@ -57,56 +40,32 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
 
-VISIT=c('V08')
-VISIT=c('V08')
-TISSUE='Plasma'
-NA_PERCENT=0.8
-
-
 ### TODO: filter out the cohort too before processig !! 
-sel_coh <- c(2)
-sel_coh <- c(1)
-VISIT=c('BL', 'V04','V06', 'V08');
-TISSUE='CSF'
-VISIT=c('BL')
-VISIT=c('V06')
-TISSUE='Plasma'
+
+VISIT=c('V08')
+process_mirnas=FALSE
+source(paste0(script_dir, '/config.R' ))
+
+param_str<-paste0(TOP_PN)
 
 
-sel_coh <- c(1,2)## note in the raw counts the prodromal samples are not in so use normalized TRUE
-NORMALIZED=TRUE;run_vsn=TRUE
-
-sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
-sel_coh_s
-VISIT_S=paste(VISIT,sep='_',collapse='-')
-
-## VISIT_S to allow this to be more than one visits at once!! 
-p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
-
-
-#### read in proteomics 
-p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
-p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-
+run_vsn
+NORMALIZED
 
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
   # if we dont run vsn we want to take the log values 
   if (!run_vsn){
     in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '.csv')
-    
   }
-  
-  
 }else{
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in, '.csv')
-
-
 }
+in_file_original
 
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 outdir<-outdir_orig
-
+print(highly_variable_proteins_outfile)
 
 #### Read in 
 prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
@@ -184,8 +143,8 @@ head(sample)
 #exp_design
 
 #se <- make_se(data, data_columns,exp_design)
-
-
+## just a quick filter because it takes too much memory
+#raw_counts_all_by_visit<-raw_counts_all[,grep(VISIT, colnames(raw_counts_all ))]
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 
@@ -194,7 +153,6 @@ boxplot(log(data[1:16]))
 head(raw_counts_all[2,])
 
 #View(head(assays(proteomics_se)[[1]]))
-data_columns
 
 
 cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
@@ -204,16 +162,13 @@ sel_coh
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
 cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
 
-se_filt$COHORT
-se_filt$EVENT_ID
-
-tail(assays(se_filt)[[1]])
+### TODO: save se filt here : with or without VISIT included..? 
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
 
 tmp<- assays(se_filt)[[1]]
-
+dim(tmp)
 
 # Filter and normalize
 ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
@@ -225,11 +180,10 @@ tmp<- assays(se_filt)[[1]]
 #ggsave(paste0(output_1,'meansd_normalize_vsn_', p_params_out,'.png' ))
 
 #normalized_data<-varianceStabilizingTransformation(tmp  )
-
-normalized_data<-justvsn(se_filt)
+### TODO: filter before normalization!!! 
+normalized_data<-justvsn(tmp)
 vsn::meanSdPlot(normalized_data)
 
-vsn_mat
 
 
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
@@ -237,31 +191,18 @@ ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, heig
 #View(normalized_data)
 
 
-
 vsn_mat<-normalized_data
-
-max(vsn_mat, na.rm=TRUE)
-
-#vsn_mat<-normalized_data
-head(rownames(vsn_mat))
-head(colnames(vsn_mat))
-hist(vsn_mat)
-
-boxplot(vsn_mat[,1:30])
-dim(normalized_data)
-
-
 
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
 highly_variable_proteins_mofa=selectMostVariable(vsn_mat, TOP_PN)
 
-dim(highly_variable_proteins_mofa)
-head(rownames(highly_variable_proteins_mofa))
-# Just plot to see the result of vsn
-png(paste0(output_1,'box_', p_params_out,'.png' ))
-boxplot(highly_variable_proteins_mofa[,1:30])
-dev.off()
+#dim(highly_variable_proteins_mofa)
+#head(rownames(highly_variable_proteins_mofa))
+## Just plot to see the result of vsn
+#png(paste0(output_1,'box_', p_params_out,'.png' ))
+#boxplot(highly_variable_proteins_mofa[,1:30])
+#dev.off()
 
 colnames(highly_variable_proteins_mofa)
 
@@ -276,6 +217,7 @@ dev.off()
 png(paste0(output_1,'hist_', p_params_out,'.png' ))
 hist(vsn_mat)
 dev.off()
+
 
 
 #dev.off()
@@ -297,5 +239,5 @@ if (!run_vsn){
 }
 
 
-highly_variable_proteins_mofa
+highly_variable_proteins_outfile
 

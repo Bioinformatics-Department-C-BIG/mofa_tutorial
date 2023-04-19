@@ -1,6 +1,7 @@
 
 
-
+source(paste0(script_dir, '/RNAseq enrichment.R'))
+### need to load or add the function first because it fails !! 
 #### Prerequisites are mofa analysis 
 ### and rna seq enrichment 
 
@@ -8,7 +9,7 @@ list1=list()
 nfactors<-MOFAobject@dimensions$K
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa.Rds')
 
-
+ONT='BP'
 
 if (file.exists(mofa_enrich_rds)){
   list1<-loadRDS(mofa_enrich_rds)
@@ -54,7 +55,7 @@ for (factor in 1:nfactors){
     
     results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
     gse_mofa=list1[[factor]]
-    write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
+    write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
     
     ### to run mofa results
     run_enrichment_plots(gse=gse_mofa, results_file = results_file_mofa)

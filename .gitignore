@@ -393,3 +393,4 @@ ppmi/.tmp.driveupload/55469
 *.svg
 ppmi/.tmp.driveupload/46868
 *.html
+.RData

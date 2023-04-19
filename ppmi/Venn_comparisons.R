@@ -160,12 +160,12 @@ signif_proteins<-read.csv(paste0(outdir_s_p,'/significant', padj_T_overall, '_',
 
 padj_paths<-0.05
 enrich_rnas_file<-paste0(results_file, '.csv')
-enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
-enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
+#enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
+enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval')
 
 enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora,'.csv')
 enrich_rna<-read.csv(enrich_rnas_file)
-enrich_mirnas<-read.csv(enrich_mirnas_file)
+enrich_mirnas<-read.csv(paste0(enrich_mirnas_file, '.csv'))
 enrich_proteins<-read.csv(enrich_proteins_file)
 
 
@@ -213,6 +213,7 @@ library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel2")
 
 
+
 venn.diagram(listInput,
              # Circles
              lwd = 2,
@@ -223,5 +224,101 @@ venn.diagram(listInput,
              
              
              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm.png'), output=TRUE)
+
+############### COMBINE PVALUES 
+
+listInput_all_mods
+
+listInput_all_mods<-list(rna=enrich_rna_sig$Description,
+                         prot=enrich_proteins_sig$Description, 
+                         mirnas=enrich_mirnas_sig$Description)
+#BiocManager::install('scran')
+library('scran')
+pvalueCutoff=1
+enrich_rnas_file<-paste0(results_file, pvalueCutoff,  '.csv')
+enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
+
+#enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
+#enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
+run_ORA=TRUE
+pvalueCutoff
+if (run_ORA){
+  enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff,'.csv')
+  
+}else{
+  enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
+}
+
+
+
+enrich_rna<-read.csv(enrich_rnas_file)
+dim(enrich_rna); dim(enrich_mirnas)
+#enrich_mirnas<-read.csv(enrich_mirnas_file)
+enrich_proteins<-read.csv(enrich_proteins_file)
+enrich_mirnas<-read.csv(enrich_mirnas_file)
+
+dim(enrich_proteins)
+enrich_rna$Description
+enrich_proteins[, c('pvalue', 'Description')]
+
+pval_to_use<-'p.adjust'
+pval_to_use<-'pvalue'
+pval_to_use<-'p.adjust'
+
+
+enrich_proteins_pvals<-enrich_proteins[, c(pval_to_use, 'Description')]
+enrich_rna_pvals<-enrich_rna[, c(pval_to_use, 'Description')]
+enrich_mirna_pvals<-enrich_mirnas[, c(pval_to_use, 'Description')]
+
+hist(enrich_proteins[,pval_to_use ])
+hist(enrich_rna[,pval_to_use ])
+hist(enrich_mirnas[,pval_to_use ])
+
+
+merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
+merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
+
+which(enrich_mirna_pvals$p.adjust>0.05)
+
+
+merge(enrich_proteins)
+
+
+p1<-merged_paths[,2]; length(p1)
+p2<-merged_paths[,3];length(p2)
+p3<-merged_paths[,4];length(p3)
+
+### TODO: FIX THERE ARE NO insig paths in mirs
+
+
+hist(p1)
+hist(p2)
+
+fish <- combinePValues(p1, p2)
+
+merged_paths_fish<-cbind(merged_paths, fish)
+merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
+
+merged_path_file<-paste0(out_compare, pvalueCutoff, pval_to_use,'_', run_ORA )
+write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
+
+dim(merged_paths_fish[merged_paths_fish$fish<0.05,])
+#View(merged_paths_fish[merged_paths_fish$fish<0.05,])
+merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<0.05,]
+
+
+
+merged_paths_fish_sig$fish_log10<--log10(merged_paths_fish_sig$fish)
+dim(merged_paths_fish_sig)
+
+
+mir_enrich_p<-ggplot(merged_paths_fish_sig[1:30,],aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
+  geom_bar(position='dodge', stat='identity')+
+  theme(axis.title.y=element_blank(), 
+        axis.text.y= element_text(size=15))+
+  coord_flip()
+mir_enrich_p
+ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
+       width=7,height=8 )
 
 

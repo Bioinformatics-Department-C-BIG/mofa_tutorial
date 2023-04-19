@@ -3,6 +3,9 @@
 library(rbioapi)
 library('VennDiagram')
 library(enrichplot)
+VISIT='BL'
+process_mirnas<-TRUE
+source(paste0(script_dir, '/config.R'))
 
 
 
@@ -79,7 +82,8 @@ if (file.exists(gsea_results_fname)){
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
                                      mirna_type = "mature",
                                      test_type = "GSEA",
-                                     species = 'Homo sapiens'
+                                     species = 'Homo sapiens',
+                                     sig_level=pvalueCutoff
   )
   ### write to file to load next time 
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
@@ -101,6 +105,9 @@ Category<-'GO Biological process (miRPathDB)';
 
 
 mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
+
+write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
+hist(mieaa_gsea_1$P.adjusted)
 
 mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
 mir_paths<-mieaa_gsea_1_cut[,c(2)]
@@ -159,18 +166,26 @@ mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
 mieaa_gsea_1$keyColname=mieaa_gsea_1$Subcategory
 mieaa_gsea_1_ord=mieaa_gsea_1[order(mieaa_gsea_1$P.adjusted),]
 #mieaa_gsea_1_ord_prob<-mieaa_gsea_1_ord
-enr <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
+enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
                                              keyColname =  'Subcategory',
                                              geneColname ='miRNAs.precursors',
                                              pvalueColname = 'P.adjusted', 
-                                             pvalueCutoff = 0.05)
+                                             pvalueCutoff = pvalueCutoff)
 
 # descriptionColname = "Subcategory",
-gse@result
 
-gse=enr;
+## double check why they are CUT 
+
 results_file=mir_results_file_by_cat
-write.csv(gse@result, paste0(mir_results_file_by_cat, '.csv'))
+mir_results_file_by_cat
+gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff)
+paste0(mir_results_file_by_cat, pvalueCutoff, '.csv')
+
+mir_results_file_by_cat
+
+#write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
+
+
 
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
 run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat, N_EMAP=15)

@@ -102,8 +102,12 @@ p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
 p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 
-outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_','_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), sel_coh_s, '_', des, '/' )
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_', des, '/' )
 
+
+p_params_FILE<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s )
+
+prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
 
 ## for mofa - run_vsn=TRUE

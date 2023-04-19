@@ -31,21 +31,11 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
 
-con = 4
-clin_con <- colnames(coldata[con])
-clin_con <-  paste("~",clin_con)
 
 
-
-dds <- DESeqDataSetFromMatrix(
-  countData = countdata,
-  colData = coldata,
-  design = as.formula(clin_con))
-
-
-
-
-for (VISIT in c('V08', 'BL')){
+#for (VISIT in c('V08', 'BL')){
+  for (VISIT in c('V08')){
+    
   
   source(paste0(script_dir, '/config.R'))
   
@@ -118,10 +108,15 @@ for (VISIT in c('V08', 'BL')){
     }else{
       print('Two cohorts detected, running deseq and vsd with design formula')
       ddsSE <- DESeqDataSet(se_filt, 
-                            design =formula_deseq2 )
+                            design =as.formula(formula_deseq2 ))
       ddsSE<-estimateSizeFactors(ddsSE)
       
+      
+      ### separate vsd? 
+     # se_filt[]
+     # vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
       vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+      
       
     }
   }else{

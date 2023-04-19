@@ -5,7 +5,7 @@ source(paste0(script_dir, '/setup_os.R'))
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 source(paste0(script_dir,'/deseq_analysis_setup.R'))
 VISIT
-
+process_mirnas
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
@@ -65,12 +65,11 @@ if (!process_mirnas){
 }
 
 
-
 #symbols[dup_ind]
 
 outdir_s
 
-
+deseq2ResDF$SYMBOL
 
 
 
@@ -83,8 +82,8 @@ deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 ####### MOFA deseq2  
 
-padj_T_hv<-0.001
-log2fol_T_hv<-0.3
+padj_T_hv<-0.05
+log2fol_T_hv<-0.1
 
 ### this is also done later on -- save from there? 
 deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
@@ -100,7 +99,7 @@ vsd_mat <- assay(vsd)
 
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
-for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
+for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
   highly_variable_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa.csv')
@@ -121,7 +120,7 @@ for (most_var in c(0.05, 0.1,0.2,0.3, 0.5, 0.75, 0.9)){
   
   
 } 
-
+dim(highly_variable_sign_genes_mofa)
 
 
 
@@ -280,11 +279,15 @@ if (run_heatmap){
   head(deseq2VST$Gene)
   
   
+  
+  
   #deseq2ResDF$padj 
   # Keep only the significantly differentiated genes where the fold-change was at least 3
-  log2fol_T_hm<-0.15
-  padj_T_hm<-.005
+  log2fol_T_hm<-0.1
+  padj_T_hm<-.05
   
+  deseq2ResDF$abslog2FC<-abs(deseq2ResDF$log2FoldChange)
+  colnames(deseq2ResDF)
   sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T_hm & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm,])
   deseq2ResDF$Gene<-rownames(deseq2ResDF)
   order_by_metric<-'abslog2pval'
@@ -292,27 +295,56 @@ if (run_heatmap){
   
   
   
+  # bring the low padj to the top!!
+  order_by_metric<-'abslog2pval'
+  order_by_metric<-'padj_reverse'
+  order_by_metric<-'abslog2'
+  order_by_metric<-'abslog2FC'
   
-  oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm, ] 
+  quant=0.9
+  mean_expr_T<-quantile(deseq2ResDF$baseMean, quant)
   
-  oSigGenes<-deseq2ResDF[rownames(deseq2ResDF) %in% rownames(highly_variable_sign_genes_mofa),]
+  deseq2ResDF$padj_reverse<--deseq2ResDF$padj
+  deseq2ResDF$padj_reverse
+  oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm, ] ; dim(oSigGenes)
   
+  oSigGenes
+  
+  
+  length(rownames(highly_variable_sign_genes_mofa))
+  #View(deseq2ResDF)
+  oSigGenes$padj
+  filter_highly_var=FALSE
+  if (filter_highly_var){
+    oSigGenes<-deseq2ResDF[rownames(deseq2ResDF) %in% rownames(highly_variable_sign_genes_mofa),]
+    
+    dim(oSigGenes)
+  }
+  ### also filter by mean > 0.75
+  oSigGenes<-oSigGenes[oSigGenes$baseMean>mean_expr_T,];dim(oSigGenes)
+  
+  
+  oSigGenes[,order_by_metric]
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
-
-  
+  orderedSigGenes
+  oSigGenes$padj_reverse
+  orderedSigGenes$padj
   
   
   dim(orderedSigGenes)
   
   n_sig_f='all'
+  n_sig_f=30
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
     
   }else{
-    n_sig=50
+    n_sig=n_sig_f
   }
   
+  
+  ## filter the top 50 significant genes 
   sigGenes <- orderedSigGenes$Gene[1:n_sig]
   length(sigGenes);head(sigGenes)
   deseq2VST[deseq2VST$Gene %in% sigGenes,]
@@ -332,7 +364,8 @@ if (run_heatmap){
   
   
   library('pheatmap')
-  
+ # detach('ComplexHeatmap',unload=TRUE)
+         
   df<-vsd_filt$COHORT
   assay(vsd_filt)
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
@@ -345,27 +378,37 @@ if (run_heatmap){
   df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
+  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+                filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
   
-  
+  fname
+  cluster_cols=TRUE
+  #ARRANGE
+  df_ord<-df[order(df$COHORT),]
+  hm<-assay(vsd_filt_genes)
+  hm_ord<-hm[,order(df$COHORT)]
   #jpeg(fname, width=2000, height=1500, res=200)
   graphics.off()
+  library(ggplot2)
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
   
-  
-      my_pheatmap<-pheatmap(assay(vsd_filt_genes), 
+      jpeg(fname, width=10*100, height=7*100, res=120)
+      my_pheatmap<-pheatmap(hm_ord, 
                             labels_row=lab,
                             cluster_rows=TRUE, 
                             show_rownames=TRUE,
-                            cluster_cols=FALSE,
-                            annotation_col=df
+                            cluster_cols=cluster_cols,
+                            annotation_col=df_ord
       )
       
-      show(my_pheatmap)
-  
-      ggsave(fname,plot=my_pheatmap, width=10, height=7)
+      
+     show(my_pheatmap)
+      dev.off() 
+     # ggsave(fname, width=10, height=7)
+      
+      #ggsave('plot.png',plot=my_pheatmap, width=10, height=7)
 
 
   #P2<-pheatmap(assay(vsd_filt_genes), 
@@ -393,7 +436,7 @@ if (run_heatmap){
 
 
 
-
+deseq2ResDF$SYMBOL
 
 library('EnhancedVolcano')
 if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
@@ -434,32 +477,35 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                )
 
 
-
+pvol
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited.jpeg')
 ggsave(fname,pvol, width=6,height=8)
 
-library(gridExtra)
-library(grid)
-#grid.arrange(pvol, p2,
-grid.arrange(pvol,
-             ncol=1,
-             top = textGrob('EnhancedVolcano',
-                            just = c('center'),
-                            gp = gpar(fontsize = 32))
-             )
-
-
-
-fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
-ggsave(fname, width=9,height=8)
+#library(gridExtra)
+#library(grid)
+##grid.arrange(pvol, p2,
+#grid.arrange(pvol,
+#             ncol=1,
+#             top = textGrob('EnhancedVolcano',
+#                            just = c('center'),
+#                            gp = gpar(fontsize = 32))
+#             )
 #
+#
+#
+#fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
+#ggsave(fname, width=9,height=8)
+##
 #library('EnhancedVolcano')
 #pvol+coord_flip()
 #
 #fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
 #ggsave(fname, width=8, height=7)
-source('ppmi/RNAseq enrichment.R')
-
+padj_paths<-Padj_T_paths
+if (!process_mirnas){
+  source('ppmi/RNAseq enrichment.R')
+  
+}
 
 
 

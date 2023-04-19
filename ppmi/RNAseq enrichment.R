@@ -18,61 +18,6 @@ source(paste0(script_dir, '/config.R'))
 
 
 
-padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
-
-deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
-deseq2ResDF <- as.data.frame(deseq2Results) 
-outdir_enrich<-paste0(outdir_s,'/enrichment/')
-dir.create(outdir_enrich)
-
-### setup
-
-
-gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-names(gene_list)<-gsub('\\..*', '',names(gene_list))
-length(gene_list)
-
-ONT='BP'
-
-
-
-results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
-
-res_path<-paste0(results_file, 'gse.RDS')
-
-if (file.exists(res_path)){
-  gse=loadRDS(res_path)
-  
-}else{
-  
-  
-  gse <- clusterProfiler::gseGO(gene_list, 
-                                ont=ONT, 
-                                keyType = 'ENSEMBL', 
-                                OrgDb = 'org.Hs.eg.db', 
-                                pvalueCutoff  = 0.05)
-  saveRDS(gse, res_path)
-  
-}
-
-write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
-
-
-
-#### 
-# run all results
-
-require(DOSE)
-library('enrichplot')
-
-results_file=results_file
-gse = gse
-
-results_file=mir_results_file_anticor
-gse = gse_mirnas
-
-
-
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE){
   N=25
   ## TODO: ADD FACET IF SIGNED 
@@ -85,25 +30,32 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
     
     write_n=FALSE
   }
+  
+  ### print a signed and unsigned dotplot 
+  # because it does not make sense if we dont rank by logFC
+  # or in the mofa case where we rank by importance in factor 
+  
+  N_DOT=15
+  dp<-dotplot(gse, showCategory=N_DOT)
+  dp<-dp+theme(axis.ticks=element_blank() , 
+               axis.text.x = element_blank())
+  show(dp)
   if (process_mirnas){
+    width=4}else{width=5}
+  
+  ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), plot=dp, width=width, height=N_DOT*0.4, 
+         dpi = 300)
+  
+  if (!process_mirnas){
     
-    #results_file=mir_results_file_anticor
-    #gse=gse_mirnas;
-    
-    dp<-dotplot(gse, showCategory=N_DOT)
-    
-  }else{
-    dp<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
+    dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
+    ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
     
   }
   
-  ggsave(paste0(results_file, '_dot',  '.jpeg'), width=8, height=N*0.7)
-  
   #### EMAP PLOT 
   options(ggrepel.max.overlaps = Inf)
-  
   x2 <- pairwise_termsim(gse )
-  x2
   #if (process_mirnas){N=15}
   p<-emapplot(x2,showCategory = N_EMAP,
               layout = "nicely")
@@ -178,14 +130,91 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 
 
 
+
+
+padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
+
+deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
+deseq2ResDF_2 <- as.data.frame(deseq2Results) 
+outdir_enrich<-paste0(outdir_s,'/enrichment/')
+dir.create(outdir_enrich)
+
+### setup
+
+
+gene_list<-get_ordered_gene_list(deseq2ResDF_2,  order_by_metric, padj_T=1, log2fol_T=0 )
+names(gene_list)<-gsub('\\..*', '',names(gene_list))
+length(gene_list)
+
+ONT='BP'
+
+
+
+results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+
+
+res_path<-paste0(results_file, 'gse.RDS')
+
+if (file.exists(res_path)){
+  gse=loadRDS(res_path)
+  
+}else{
+  
+  pvalueCutoff<-1
+  gse_full <- clusterProfiler::gseGO(gene_list, 
+                                ont=ONT, 
+                                keyType = 'ENSEMBL', 
+                                OrgDb = 'org.Hs.eg.db', 
+                                pvalueCutoff  = pvalueCutoff)
+  saveRDS(gse_full, res_path)
+  
+}
+
+write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
+pvalueCutoff_sig<-0.05
+gse_sig_result<-gse_full@result[gse_full@result$pvalue<pvalueCutoff_sig,]
+write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
+
+# rewrite
+dim(gse_full); dim(gse_sig_result)
+gse<-gse_full[gse_full@result$pvalue<pvalueCutoff_sig,]
+#### 
+# run all results
+
+require(DOSE)
+library('enrichplot')
+
+results_file=results_file
+gse = gse
+
+#results_file=mir_results_file_anticor
+#gse = gse_mirnas
+
+
 enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file )
 dp=enrich_plots[[1]]
 p_enrich=enrich_plots[[2]]
 p2_tree=enrich_plots[[3]]
 
 
-#### RUN ENRICHMENT WITH FILTERED PATHS FROM 3 MODALITIES ####
 
+
+#### 
+gse@result[gse@result$pvalue>0.05,]
+
+df<-gse@result
+hist_p<-ggplot(df, aes(x=-log10(pvalue))) + 
+  geom_histogram(color="black", fill="white")
+hist_p
+
+ggsave(paste0(results_file, '_pval_hist.png'),plot=last_plot() )
+
+
+
+
+#### RUN ENRICHMENT WITH FILTERED PATHS FROM 3 MODALITIES ####
+run_anova=FALSE
+use_pval=TRUE
 ### prerequisite: source venn diagrams
 out_compare<-'ppmi/plots/single/compare/'
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )

@@ -40,6 +40,7 @@ print(deseq_file)
 
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
+
 vsd=datalist[[2]]
 se_filt=datalist[[3]]
 deseq2Results=datalist[[4]]
@@ -56,6 +57,7 @@ dds<-ddsSE
 
 suppressWarnings(dir.create(outdir_s))
 pca_files<-paste0(outdir_s, '/PCA/')
+rownames(deseq2Results)
 
 #deseq2Data<-loadRDS(paste0(outdir_s, '/deseq_results.RDS'))
 #### First obtain the single omics significant RNAs 

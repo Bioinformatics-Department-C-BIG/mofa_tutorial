@@ -1,7 +1,14 @@
 
-script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
-os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
-data_dir<-os_dir
+#script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
+#os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
+
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir, '/setup_os.R'))
+source(paste0(script_dir, '/setup_os.R'))
+
+data_dir
+
+#data_dir<-os_dir
 #BiocManager::install('DEP')
 ## TODO: change all scripts to be agnostic of visit until mofa
 library(limma)
@@ -18,9 +25,11 @@ library("SummarizedExperiment")
 #script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 
+#### TODO: SAVE SE FILT SO WE CAN RELOAD in the next script 
+
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
-source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+#source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir,'/utils.R'))
 
 output_1=paste0(data_dir,'ppmi/plots/proteomics/')
@@ -51,6 +60,9 @@ param_str<-paste0(TOP_PN)
 
 run_vsn
 NORMALIZED
+
+
+
 
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
@@ -223,6 +235,13 @@ dev.off()
 #dev.off()
 colnames(highly_variable_proteins_mofa)
 
+
+
+
+#### save all and load 
+##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
+datalist=list( vsn_mat, se_filt)
+saveRDS(datalist,prot_vsn_se_filt_file)
 
 
 

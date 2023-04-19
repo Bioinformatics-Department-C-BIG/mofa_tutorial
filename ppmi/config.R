@@ -82,6 +82,10 @@ deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds')
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 
+######## PROCESS PROTEINS 
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_', sel_coh_s, '_', des, '/' )
+
+
 
 
 ### mofa config 

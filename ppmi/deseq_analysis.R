@@ -366,18 +366,25 @@ if (run_heatmap){
   
   
   #jpeg(fname, width=2000, height=1500, res=200)
+  
+  # reorder the columns /samples by control and disease 
+  hm<-assay(vsd_filt_genes)
+  dim(df);dim(hm)
+  hm_ord<-hm[,order(df$COHORT)]
+  df_ord<-df[order(df$COHORT), ]
+  
   graphics.off()
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
   
   
-      my_pheatmap<-pheatmap(assay(vsd_filt_genes), 
+      my_pheatmap<-pheatmap(hm_ord, 
                             labels_row=lab,
                             cluster_rows=TRUE, 
                             show_rownames=TRUE,
                             cluster_cols=FALSE,
-                            annotation_col=df
+                            annotation_col=df_ord
       )
       
       show(my_pheatmap)
@@ -443,7 +450,7 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                 colAlpha = 1,
                 
                 # legend positions 
-                legendPosition = 'right',
+               # legendPosition = 'right',
                 
                 xlim=xlim, 
                 subtitle=ns, 

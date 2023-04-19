@@ -121,14 +121,10 @@ highly_variable_proteins_outfile
 #vsn_file_m_df[,1]
 #rownames(vsn_file_m_df)<-vsn_file_m_df[,1]
 
-split=TRUE
-outdir=paste0(outdir, 'split_', split)
 
 
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-outdir = paste0(outdir_orig,out_params, 'split_', split , '/');outdir
-
-
+outdir = paste0(outdir_orig,out_params , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
@@ -240,8 +236,6 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
 
 
 
-
-
 head(assays(mofa_multi)$miRNA)
 mofa_multi_complete<-mofa_multi[,complete.cases(mofa_multi)]
 mofa_multi_complete
@@ -256,15 +250,10 @@ mofa_multi_V04
 
 colData(mofa_multi_V04)
 
-nsamples<-dim(colData(mofa_multi_complete))[1]
-set.seed(123)
 
-samples_train<-sample(nsamples,size=nsamples/2 )
 
-mofa_multi_complete_train=mofa_multi_complete[,samples_train ]
-mofa_multi_complete_test=mofa_multi_complete[,-samples_train ]
 
-#mofa_multi_complete_test=mofa_multi_complete[,samples_train ]
+
 ###################### RUN MOFA #########################
 ##### Setup MOFA model 
 ## model opts 
@@ -275,26 +264,10 @@ mofa_multi_complete_test=mofa_multi_complete[,-samples_train ]
 #N_FACTORS=8
 ### separate visits 
 outdir
-
-mofa_selected<-mofa_multi_complete
-
-
-if (split){
-  mofa_selected<-mofa_multi_complete_train
-  
-}
-
-assays(mofa_multi_complete)$miRNA[,'3216_V08']
-MOFAobject@data$miRNA$group1[,1]
-nx<-get_data(MOFAobject, views='miRNA')[[1]]$group1
-
-
-
-MOFAobject <- create_mofa(mofa_selected)
-
+MOFAobject <- create_mofa(mofa_multi_complete)
 
 if (length(VISIT)>1){
-  MOFAobject <- create_mofa(mofa_selected, groups= mofa_selected$EVENT_ID)
+  MOFAobject <- create_mofa(mofa_multi_complete, groups= mofa_multi_complete$EVENT_ID)
   
 }
 

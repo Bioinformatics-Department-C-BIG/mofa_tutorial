@@ -9,14 +9,9 @@ library('VennDiagram')
 library(grid)
 source(paste0(script_dir, '/utils.R'))
 
-process_mirnas=FALSE
-
 ### Table of samples from all visits 
-#### FOR EACH MODALITY SEAPARETELY 
+
 out_compare<-'ppmi/plots/single/compare/'
-source(paste0(script_dir, '/config.R'))
-
-
 dir.create(out_compare)
 
 log2fol_T<-0.1;padj_T<-.05;
@@ -65,7 +60,7 @@ if  (process_mirnas){
   outdir_all<-paste0(outdir_orig, '/single/', 'mirnas_',visits, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
   title_x='mirna'
 }else{
-  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_', des)
+  outdir_all<-paste0(outdir_orig, '/single/',  'rnas_',visits, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_', des)
   title_x='rna'
   
 }
@@ -91,8 +86,8 @@ list_of_mirs<-lapply(all_visits,function(df)
   return(df[df$sign_lfc2,]$X)
   }
 )
-#list_of_mirs[[1]]
-#merge(list_of_mirs, by='feats',all=TRUE)
+list_of_mirs[[1]]
+merge(list_of_mirs, by='feats',all=TRUE)
 
 
 listInput <- list(BL = list_of_mirs[[1]],
@@ -116,59 +111,6 @@ dev.off()
 calculate.overlap(listInput)
 
 venn.diagram(listInput,   
-             filename = paste0(out_compare,prefix,'14_venn_diagramm.png'), output=TRUE)
-
-
-
-
-############################# COMPARE PATHWAYS ###################################
-##################################################################################
-# for each visit across ALL modalities 
-VISIT='V08'
-outdir_mirs<-paste0(outdir_orig, '/single/', 'mirnas_',VISIT, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
-outdir_rnas<-paste0(outdir_orig, '/single/', 'rnas_',VISIT, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_',des)
-outdir_proteins<-outdir_s_p_enrich_file_ora
-
-padj_paths<-0.05
-enrich_rnas_file<-paste0(results_file, '.csv')
-enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
-
-enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora,'.csv')
-enrich_rna<-read.csv(enrich_rnas_file)
-enrich_mirnas<-read.csv(enrich_mirnas_file)
-enrich_mirnas$Subcategory
-enrich_mirnas$P
-enrich_proteins<-read.csv(enrich_proteins_file)
-
-
-
-enrich_rna_sig<-enrich_rna[enrich_rna$p.adjust<padj_paths,]
-enrich_mirnas_sig<-enrich_mirnas[enrich_mirnas$P.adjusted<padj_paths,]
-
-enrich_proteins_sig<-enrich_proteins[enrich_proteins$p.adjust<padj_paths,]
-
-common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Description )
-
-
-listInput_all_mods<-list(rna=enrich_rna_sig$Description,
-                         prot=enrich_proteins_sig$Description, 
-                         mirnas=enrich_mirnas_sig$Subcategory)
-
-
-
-listInput<-listInput_all_mods
-res_overlap<-calculate.overlap(listInput)
-
-intersection_all_three<-Reduce(intersect,listInput_all_mods)
-write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways.csv' ), row.names = FALSE)
-
-
-write.csv(prot, paste0(out_compare,'interesction_pathways.csv' ), row.names = FALSE)
-
-
-
-venn.diagram(listInput,   
-             filename = paste0(out_compare,'all_modalities_','venn_diagramm.png'), output=TRUE)
-
+             filename = paste0(out_compare,'14_venn_diagramm.png'), output=TRUE)
 
 

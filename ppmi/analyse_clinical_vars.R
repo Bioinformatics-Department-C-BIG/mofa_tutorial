@@ -25,7 +25,7 @@ get_averages<-function(combined,sub_pattern ){
   # groups and averages specific columns 
     # TODO somehwte it is considering NAs as zeros CHECK 
     sub_pattern=paste0(sub_pattern,'[1-9]')  #For testing
-    sub_pattern='SCAU[1-9]'
+    #sub_pattern='SCAU[1-9]'
   
     df<-combined[ , grepl( sub_pattern, colnames( combined ) )
                           & !grepl('TOT',  colnames( combined ) ) ]
@@ -48,11 +48,31 @@ get_averages<-function(combined,sub_pattern ){
 
 sca_assess<-combined[ , grepl( sub_pattern, colnames( combined ) ) ]
 colnames(sca_assess)
+library(stringr)
+sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2')
+sub_pattern=paste0(sub_patterns[1],'[1-9]')  #For testing
+sub_patterns_all<-paste(sub_patterns, collapse='|')
+sub_patterns_all  
+df$SCAU26C
+df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
+                & !grepl('TOT',  colnames( combined ) ) ]
+  df=as.data.frame(df)
+  df
+  df=df[sapply(df, is.numeric)]
+  df_log<-sapply(df, function(x) log2(x+10^-6))
+  
+  df_log
+  df_log=as.data.frame(df_log)
+  df_lognan_r<-sapply(df_log, is.nan)
+  df_log[df_lognan_r]<-NA
+  #combined_new<-merge(combined,df_log)
+  combined_new<-cbind(combined,df_log)
+  
+  metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
+  write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 
-sub_patterns=c( 'SCAU', 'STAIAD')
-
-#add gait 
-# conevrt to apply 
+  combined_new
+  # conevrt to apply 
 #combined[,sub_pattern]<-
   
 # ADD THE NEW averages   

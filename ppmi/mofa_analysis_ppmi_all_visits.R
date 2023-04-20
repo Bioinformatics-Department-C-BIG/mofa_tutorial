@@ -516,7 +516,7 @@ for (i in seq(1,vps)){
          #dev.off()
       #          
           ns<-dim(MOFAobject@samples_metadata)[1]
-          cor_T<-2
+          cor_T<-1
           rel_cors<-cors[ii,][cors[ii,]>cor_T ]
           rel_cors
           
@@ -525,9 +525,11 @@ for (i in seq(1,vps)){
           if (length(cors_sig)==0){
             cors_sig=c()
             
-          } else if (length(cors_sig)>7){
+          } else if (length(cors_sig)>1){
             FT=5
-            rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
+           # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
+            rel_cors_ordered<-rel_cors[order(-rel_cors)]
+            
             cors_sig<-names(rel_cors_ordered)
           }
          # exclude_vars= c('LAST_UPDATE_M4')
@@ -535,8 +537,8 @@ for (i in seq(1,vps)){
           
           res=100
          jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg'),
-              height=60*nfs, width=4*ns, res=200)
-               
+              height=60*nfs, width=20*ns+600*as.numeric(length(cors_sig)>0), res=200)
+         MOFAobject_gs@samples_metadata[cors_sig]
          p<-plot_data_heatmap(MOFAobject_gs, 
                                     view = views[i], 
                                     factor =  ii,  

@@ -71,12 +71,12 @@ mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 ############## RUN MIEAA ######################################
 
 gsea_results_fname<-paste0(mir_results_file,'_mieaa_res.csv' )
-
+pvalueCutoff=1
 
 if (file.exists(gsea_results_fname)){
   ### Load enrichment results if available
   mieaa_all_gsea<-read.csv(gsea_results_fname, header=TRUE)
-  
+  ### TODO: RERUN WITH UPDATED PBALUE CUTTOF
 }else{
   ## otherwise run GSEA analysis 
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
@@ -188,7 +188,7 @@ mir_results_file_by_cat
 
 
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
-run_enrichment_plots(gse=enr, results_file=mir_results_file_by_cat, N_EMAP=15)
+run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15)
 
 
 ############

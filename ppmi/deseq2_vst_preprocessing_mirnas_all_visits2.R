@@ -3,6 +3,7 @@
 #### This script performs filter by expression, size factor estimation and vsn on the whole matrix of 
 #### RNAs or miRNAS 
 #### parameters: MIN_COUNT_M, MIN_COUNT_G define the parameters for filtering out genes with low counts 
+### The parameters used are defined in the script config.R
 
 library(edgeR)
 library(limma)
@@ -11,28 +12,26 @@ library(gplots)
 library(RColorBrewer)
 library(sys)
 library(GenomicRanges)
-
-#remove.packages('Glimma') 
 library(DESeq2)
 library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
+
+
 ## Output directory
-output_de=paste0(output_1, 'gene')
-
-
+# output_de=paste0(output_1, 'gene')
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
-
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
 
+
+### Load metadata 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
 
-
-
+### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
   for (VISIT in c('V08')){
     
@@ -44,13 +43,7 @@ combined<-read.csv2(metadata_output)
   
   ##### Load required data 
   # TODO: input all the visits 
-  
-  ## TODO: move to config
-  ## CONFIGURATION 
-  
-  
   filter_common=TRUE
-  
   # MOVE ALL this to a configuration file!! 
   #### Remove low expression 
   
@@ -63,9 +56,6 @@ combined<-read.csv2(metadata_output)
   ## And create SE object with metadata
   #duplicate_samples<-colnames(mirnas_BL)[which(duplicated(colnames(mirnas_BL),fromLast = TRUE))]
   
-  
-  
-  
   class(raw_counts_all) <- "numeric"
   ## They seem to have taken averages for replicas so need to fix 
   raw_counts_all<-round(raw_counts_all)
@@ -77,21 +67,23 @@ combined<-read.csv2(metadata_output)
   ##### Up till here it is generic, no filters yet. 
   
   
-  ### I moved this elsewhere 
+  ### I moved the age scaling elsewhere 
   # TODO: use se_filt$AGE_SCALED and test!!
   se_filt<-filter_se(se, VISIT, sel_coh)
   ### OUTPUT THE FILTERED se_filt 
-  
   ind<-which(is.na(se_filt$AGE_AT_VISIT))
   se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
   
   ## Turn to factors for deseq
   se_filt$SEX<-as.factor(se_filt$SEX)
-  
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   
+  ## these are almost the same so it is okay to scale AGE earlier 
+  hist(se_filt$AGE_AT_VISIT)
+  hist(se_filt$AGE_SCALED)
   
   
+  ### Perform the appropriate test depending on what you want as prediction variable
   if (length(sel_coh)>1){
     
     if (length(VISIT)>1){
@@ -132,12 +124,15 @@ combined<-read.csv2(metadata_output)
   }
   
   deseq2Data <- DESeq(ddsSE)
+  ### Contrast disease-control: parkinsons = 1, control = 2 
+  se_filt$COHORT_DEFINITION; se_filt$COHORT
   deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
   datalist=list(ddsSE, vsd, se_filt, deseq2Results)
   saveRDS(datalist,deseq_file)
   
+  deseq2Results_sex <- results(deseq2Data, contrast=c('SEX', 0,1))
   
-  
+  deseq2Results_sex[order(deseq2Results_sex$padj),]
   
   # Compute normalization factors and vst 
   ### select mofa genes 

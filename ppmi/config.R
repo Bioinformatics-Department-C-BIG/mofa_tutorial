@@ -51,7 +51,7 @@ outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 
 ### setup deseq formula 
 
-formula_deseq<-'~AGE_AT_VISIT+SEX+COHORT+EVENT_ID'
+formula_deseq<-'~AGE_AT_VISIT+SEX+EVENT_ID+COHORT'
 formula_deseq2<-'~AGE_AT_VISIT+SEX+COHORT'
 formula_deseq3<-'~PATNO+AGE_AT_VISIT+SEX'
 

@@ -1,20 +1,44 @@
 
 
+#detach("package:AnnotationDbi", unload=TRUE)
+#detach("package:org.Hs.eg.db", unload=TRUE)
+
 library('GOfuncR')
 require(DOSE)
 #library('apeglm')
 library(clusterProfiler)
-library(AnnotationDbi)
-library(ensembldb)
-library('org.Hs.eg.db')
+#BiocManager::install('clusterProfiler')
+#library(AnnotationDbi)
+#library(ensembldb)
 #install.packages('ggridges')
 require(ggridges)
 suppressWarnings(library('R.filesets' ))
 library('enrichplot' )
 
-VISIT='V08'
-process_mirnas<-FALSE
-source(paste0(script_dir, '/config.R'))
+
+
+
+write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
+  
+  ### Takes the full gse results, ie. without threshold significance, 
+  # saves it, 
+  # filters it by pvalueCutoff_sig
+  # and saves the filter 
+  #' @param gse_full full gse results objects 
+  #' @param results_file the file name to write results  (without .csv)
+  #' @param pvalueCutoff the pvalue used to obtain the gse results 
+  
+  write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
+  pvalueCutoff_sig<-0.05
+  gse_sig_result<-gse_full@result[gse_full@result$pvalue<pvalueCutoff_sig,]
+  write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
+  
+  # rewrite
+  dim(gse_full); dim(gse_sig_result)
+  ## filter gse result to significant only 
+  gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
+  return(gse)
+}
 
 
 
@@ -132,20 +156,26 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 
 
 
-padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
+#### Configuration 
 
-deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
-deseq2ResDF_2 <- as.data.frame(deseq2Results) 
+VISIT='BL'
+process_mirnas<-FALSE
+source(paste0(script_dir, '/config.R'))
+padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
+#deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
+deseq2ResDF_2 = as.data.frame(read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1))
+
+#deseq2ResDF_2 <- as.data.frame(deseq2Results) 
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
 dir.create(outdir_enrich)
 
+
+
 ### setup
-
-
 gene_list<-get_ordered_gene_list(deseq2ResDF_2,  order_by_metric, padj_T=1, log2fol_T=0 )
 names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
-
+tail(gene_list)
 ONT='BP'
 
 
@@ -155,6 +185,8 @@ results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2f
 
 res_path<-paste0(results_file, 'gse.RDS')
 
+#### Run and return the whole set of p-values with pcutoff=1 
+## then filter 
 if (file.exists(res_path)){
   gse=loadRDS(res_path)
   
@@ -170,14 +202,9 @@ if (file.exists(res_path)){
   
 }
 
-write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
-pvalueCutoff_sig<-0.05
-gse_sig_result<-gse_full@result[gse_full@result$pvalue<pvalueCutoff_sig,]
-write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
+## Filter 
+gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
 
-# rewrite
-dim(gse_full); dim(gse_sig_result)
-gse<-gse_full[gse_full@result$pvalue<pvalueCutoff_sig,]
 #### 
 # run all results
 
@@ -189,6 +216,8 @@ gse = gse
 
 #results_file=mir_results_file_anticor
 #gse = gse_mirnas
+sel<-gse_full@result$pvalue<pvalueCutoff_sig
+gse=filter(gse_full, p.adjust < .05)
 
 
 enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file )

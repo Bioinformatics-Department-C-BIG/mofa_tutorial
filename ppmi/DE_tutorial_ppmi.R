@@ -16,16 +16,18 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 
-#VISIT='V08'
+VISIT='V08'
 source(paste0(script_dir, '/config.R' ))
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
 
 
-##### START HERE WITH PROTEOMICS ## TODO: SAVE AND LOAD 
+##### START HERE WITH PROTEOMICS 
+## TODO: SAVE AND LOAD 
 # se_filt and vsn mat 
 
 ### THIS IS ALREADY filtered by cohort and VISIT 
+# 
 datalist<-loadRDS(prot_vsn_se_filt_file)
 vsn_mat<-datalist[[1]]
 se_filt<-datalist[[2]]
@@ -122,8 +124,11 @@ pvol<-EnhancedVolcano(results_de,
                 subtitle=ns
 )
 pvol
-fname<-paste0(outdir_s_p,'Enchanced_volcano_edited.jpeg')
-ggsave(fname,pvol, width=7,height=8)
+prefix='prot_'
+fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,'.jpeg')
+ggsave(fname,pvol, width=6,height=8, dpi=300)
+#ggsave(fname,pvol, width=6,height=8, dpi=300)
+
 
 ## Create a p-adjusted
 ## how many total proteins?
@@ -336,7 +341,7 @@ enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_
 run_ORA=TRUE
 #### IN ENRICHMENT WE filter by what is significant ONLY !! 
 run_anova=FALSE
-use_pval=TRUE
+use_pval=FALSE
 if (run_anova){
   order_statistic<-'statistic'
   anova_results_oneway$a
@@ -357,23 +362,26 @@ if (run_anova){
 
 pvalueCutoff=1
 
-gse_protein_enrich <- clusterProfiler::enrichGO(gene_list_ora, 
+gse_protein_enrich_full <- clusterProfiler::enrichGO(gene_list_ora, 
                                         ont=ONT, 
                                         keyType = 'SYMBOL', 
                                         OrgDb = 'org.Hs.eg.db', 
                                         pvalueCutoff  = pvalueCutoff)
 ## EMAP 15 is better for reporting - less crowded
 process_mirnas=TRUE
+#gse_protein_enrich_full<-gse_protein_enrich
 outdir_s_p_enrich_file_ora<-paste0(outdir_s_p_enrich, ONT,  '_ora_T_', T,'_anova_', run_anova, 'pval_', use_pval )
 
+gse_protein_enrich=write_filter_gse_results(gse_protein_enrich_full, outdir_s_p_enrich_file_ora, pvalueCutoff)
+outdir_s_p_enrich_file_ora
 
 #write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, '.csv'))
-write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, pvalueCutoff, '.csv'))
-pvalueCutoff_sig<-0.05
-sig_gse_result<-gse_protein_enrich@result[gse_protein_enrich@result$pvalue<pvalueCutoff_sig,]
-write.csv(as.data.frame(sig_gse_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
-dim(gse_protein_enrich@result)
-dim(sig_gse_result)
+#write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, pvalueCutoff, '.csv'))
+#pvalueCutoff_sig<-0.05
+#sig_gse_result<-gse_protein_enrich@result[gse_protein_enrich@result$pvalue<pvalueCutoff_sig,]
+#write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file_ora, pvalueCutoff_sig, '.csv'))
+#dim(gse_protein_enrich@result)
+#dim(sig_gse_result)
 
 
 ## does it contain nonsign pvalues? 
@@ -387,6 +395,8 @@ outdir_s_p_enrich_file_ora
 
 dev.off()
 
+gse_protein_enrich$p.adjust
+
 ### draw histogram 
 df<-gse_protein_enrich@result
 hist_p<-ggplot(df, aes(x=-log10(pvalue))) + 
@@ -396,8 +406,6 @@ hist_p
 ggsave(paste0(outdir_s_p_enrich_file_ora, '_pval_hist.png'),plot=last_plot() )
 
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
-
-
 
 
 

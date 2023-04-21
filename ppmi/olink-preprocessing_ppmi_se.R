@@ -51,7 +51,7 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-VISIT=c('V08')
+VISIT=c('BL')
 process_mirnas=FALSE
 source(paste0(script_dir, '/config.R' ))
 

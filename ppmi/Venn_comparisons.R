@@ -137,7 +137,7 @@ outdir_proteins<-outdir_s_p
 
 
 ## parameters for the enrichment- could be specified elsewhere?
-run_anova=FALSE;use_pval=TRUE; 
+run_anova=FALSE;use_pval=FALSE; 
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
 
 outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
@@ -240,7 +240,7 @@ enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
 
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
-run_ORA=TRUE
+run_ORA=FALSE
 pvalueCutoff
 if (run_ORA){
   enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff,'.csv')
@@ -275,34 +275,43 @@ hist(enrich_rna[,pval_to_use ])
 hist(enrich_mirnas[,pval_to_use ])
 
 
-merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
-merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
+### WHETHER TO ADD MIRNA INFO
+add_mirs=FALSE
 
+merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
+if (add_mirs){
+  
+  merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
+}
 which(enrich_mirna_pvals$p.adjust>0.05)
 
 
-merge(enrich_proteins)
+#merge(enrich_proteins)
 
 
 p1<-merged_paths[,2]; length(p1)
 p2<-merged_paths[,3];length(p2)
-p3<-merged_paths[,4];length(p3)
 
 ### TODO: FIX THERE ARE NO insig paths in mirs
 
 
 hist(p1)
 hist(p2)
-add_mirs=FALSE
 if (add_mirs){
+  p3<-merged_paths[,4];length(p3)
   fish <- combinePValues(p1, p2, p3)
+  
+}else{
+  fish <- combinePValues(p1, p2)
   
 }
 
 merged_paths_fish<-cbind(merged_paths, fish)
 merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
 
-merged_path_file<-paste0(out_compare, pvalueCutoff, pval_to_use,'_', run_ORA )
+merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA )
+
+### Write significant results 
 write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
 
 dim(merged_paths_fish[merged_paths_fish$fish<0.05,])
@@ -314,7 +323,10 @@ merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<0.05,]
 merged_paths_fish_sig$fish_log10<--log10(merged_paths_fish_sig$fish)
 merged_paths_fish_sig$p.adjust.x_log<--log10(merged_paths_fish_sig$p.adjust.x)
 merged_paths_fish_sig$p.adjust.y_log<--log10(merged_paths_fish_sig$p.adjust.y)
-merged_paths_fish_sig$p.adjust._log<--log10(merged_paths_fish_sig$p.adjust)
+if (add_mirs){
+  merged_paths_fish_sig$p.adjust._log<--log10(merged_paths_fish_sig$p.adjust)
+  
+}
 
 colnames(merged_paths_fish_sig)
 merged_paths_fish_sig$p
@@ -338,9 +350,9 @@ ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
        width=7,height=8 )
 
 
+Npaths=20
 
-
-merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:15,])
+merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:Npaths,])
 
 if (add_mirs){
   labels<-c('protein', 'RNA', 'mirnas',  'Fisher\'s')
@@ -357,11 +369,62 @@ mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,
   scale_fill_discrete(labels=labels)+
   coord_flip()
 
-  ggsave(paste0(merged_path_file, add_mirs,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
+  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
          width=10,height=7 )
 
 
+  #################################### VISITS ##########################
+  
+  #### load both visits to compare: 
+  
 
+  
+  merged_path_file
 
+  v08_paths<-read.csv(paste0( out_compare, 'V081p.adjust_FALSE', '.csv'))
+  bl_paths<-read.csv(paste0( out_compare, 'BL1p.adjust_FALSE', '.csv'))
+  dim(v08_paths); dim(bl_paths)
+  
+  T_P<- 0.05
+  v08_paths_sig<-v08_paths[v08_paths$fish<T_P,]
+  bl_paths_sig<-bl_paths[bl_paths$fish<T_P,]
+  dim(v08_paths_sig)
+  dim(bl_paths_sig)
+  inter<-intersect(v08_paths_sig$Description,bl_paths_sig$Description )
+  #View(inter)  
+  
+  inter
+  
+  listInput_all_mods<-list(bl=bl_paths_sig$Description,
+                          v08=v08_paths_sig$Description)
+  
+  
+  
+  listInput<-listInput_all_mods
+  res_overlap<-calculate.overlap(listInput)
+  bl_only<-bl_paths_sig[!bl_paths_sig$Description %in% inter,]
+  v08_only<-v08_paths_sig[!v08_paths_sig$Description %in% inter,]
+  dim(v08_only)[1]
 
-
+  
+  View(bl_paths[bl_paths$Description %in% v08_only$Description,])
+  write.csv(bl_paths[bl_paths$Description %in% v08_only$Description,], 
+            paste0(out_compare,'V08_only_single', T_P, '.csv'))
+  
+  
+  
+  
+  myCol <- brewer.pal(3, "Pastel2")[1:2]
+  
+  venn.diagram(listInput,
+               # Circles
+               lwd = 2,
+               lty = 'blank',
+               fill = myCol,
+               cex=2.5,
+               
+               
+               
+               filename = paste0(out_compare,'all_modalities_','visits_venn_diagramm.png'), output=TRUE)
+  
+  

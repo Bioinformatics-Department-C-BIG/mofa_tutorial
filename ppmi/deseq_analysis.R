@@ -1,4 +1,6 @@
 
+
+
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
 
@@ -17,6 +19,10 @@ write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 ### Up to here output can be used for other reasons
 ##
+
+ddsSE@design
+
+deseq2Results@metadata
 
 RUN_DESEQ_ANALYSIS=FALSE
 
@@ -100,6 +106,8 @@ vsd_mat <- assay(vsd)
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
+#  for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
+    
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
   highly_variable_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa.csv')
@@ -376,13 +384,13 @@ if (run_heatmap){
   length(vsd_filt_genes$COHORT)
   
   df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
+  cluster_cols=TRUE
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
   fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
                 filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
   
   fname
-  cluster_cols=TRUE
   #ARRANGE
   df_ord<-df[order(df$COHORT),]
   hm<-assay(vsd_filt_genes)
@@ -459,14 +467,14 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                 
                 
                 ## format 
-                pointSize = 3,
+                pointSize = 2,
                 legendIconSize = 5,
                 labSize = 4,
                 
-                legendLabSize=11,
-                subtitleLabSize = 11,
-                axisLabSize=11,
-                colAlpha = 1,
+                legendLabSize=16,
+                subtitleLabSize = 13,
+                axisLabSize=17,
+                colAlpha = 0.5,
                 
                 # legend positions 
                # legendPosition = 'right',
@@ -478,8 +486,9 @@ pvol<-EnhancedVolcano(deseq2ResDF,
 
 
 pvol
-fname<-paste0(outdir_s, '/EnhancedVolcano_edited.jpeg')
-ggsave(fname,pvol, width=6,height=8)
+fname
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix,'.jpeg')
+ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
 #library(gridExtra)
 #library(grid)
@@ -501,6 +510,7 @@ ggsave(fname,pvol, width=6,height=8)
 #
 #fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
 #ggsave(fname, width=8, height=7)
+Padj_T_paths=0.05
 padj_paths<-Padj_T_paths
 if (!process_mirnas){
   source('ppmi/RNAseq enrichment.R')

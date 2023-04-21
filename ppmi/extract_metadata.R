@@ -128,7 +128,7 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
-S
+
 
 
 

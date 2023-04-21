@@ -69,7 +69,8 @@ write.table(format(vars_by_factor,digits = 2)
 vars_by_factor>0.1
 
 plot_variance_explained(MOFAobject, max_r2=20)
-ggsave(paste0(outdir, 'variance_explained','.png'), width = 4, height=4, dpi=100)
+ggsave(paste0(outdir, 'variance_explained','.png'), width = 1.5, height=N_FACTORS/3,
+       dpi=300)
 
 MOFAobject@samples_metadata$SEX
 
@@ -438,6 +439,13 @@ v_set=c()
 
 view='miRNA'
 factor=8
+
+fps=8
+vps
+fps
+seq(1,fps)
+seq(1,vps)
+
 plot_top_weights(MOFAobject,
                  view = view,
                  factor = factor,
@@ -446,13 +454,6 @@ plot_top_weights(MOFAobject,
 )
 ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
 dir.create(paste0(outdir, 'top_weights/'))
-
-fps=8
-vps
-fps
-seq(1,fps)
-seq(1,vps)
-
 
 
 graphics.off()
@@ -473,6 +474,8 @@ for (i in seq(1,vps)){
                            nfeatures = 10,     # Top number of features to highlight
                            scale = T           # Scale weights from -1 to 1
           )
+          ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
+                 width = 4, height=4, dpi=300)
           
           plot_weights(MOFAobject_gs, 
                        view = views[i], 
@@ -481,7 +484,8 @@ for (i in seq(1,vps)){
           )
          
             
-          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'), width = 4, height=4, dpi=100)
+          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'),
+                 width = 4, height=4, dpi=300)
       
           
           cluster_rows=TRUE;cluster_cols=TRUE
@@ -525,17 +529,20 @@ for (i in seq(1,vps)){
           if (length(cors_sig)==0){
             cors_sig=c()
             
-          } else if (length(cors_sig)>1){
+          } else if (length(cors_sig)>5){
             FT=5
            # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
             rel_cors_ordered<-rel_cors[order(-rel_cors)]
             
             cors_sig<-names(rel_cors_ordered)
           }
-         # exclude_vars= c('LAST_UPDATE_M4')
-          #cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]
-          
+         exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM')
+          cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]
           res=100
+          plot_heatmap_flag=FALSE
+          #MOFAobject_gs@samples_metadata[cors_sig][is.na(MOFAobject_gs@samples_metadata[cors_sig])]<-10^-6
+          #which(is.na(MOFAobject_gs@samples_metadata[cors_sig]))
+          if (plot_heatmap_flag){
          jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg'),
               height=60*nfs, width=20*ns+600*as.numeric(length(cors_sig)>0), res=200)
          MOFAobject_gs@samples_metadata[cors_sig]
@@ -554,6 +561,7 @@ for (i in seq(1,vps)){
             )
         
       dev.off()
+          }
           }
     # top weights
     # concat all 

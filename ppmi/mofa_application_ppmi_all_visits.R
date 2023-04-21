@@ -65,7 +65,7 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=10
+N_FACTORS=12
 
 if (split){
   N_FACTORS=8
@@ -213,10 +213,11 @@ create_hist(miRNA, 'miRNA')
 data_full<-list(miRNA=as.matrix(miRNA), 
                 RNA=as.matrix(RNA),
                 proteomics=as.matrix(proteomics))
+dim(miRNA)
+dim(proteomics)
 
-
-assay_full=c(rep('miRNA', length(miRNA)),
-             rep('RNA', length(RNA)),
+assay_full=c(rep('RNA', length(RNA)),
+             rep('miRNA', length(miRNA)),
              rep('proteomics', length(proteomics)))
 
 
@@ -225,8 +226,10 @@ length(miRNA);length(RNA);length(proteomics)
 colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
 
 primary=colname
-colname
+
+
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
+sample_map$primary
 
 common_samples_in_assays=unique(colname)
 common_samples_in_assays
@@ -244,7 +247,6 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  colData = metadata_filt, 
                                  sampleMap=sample_map)
 
-prot_to_impute<-assays(mofa_multi_complete)$proteomics
 
 head(assays(mofa_multi)$miRNA)
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
@@ -276,9 +278,9 @@ if (split){
   mofa_multi_complete=mofa_multi_complete_all
   
 }
-dim(colData(mofa_multi_complete_train))[1]
+#dim(colData(mofa_multi_complete_train))[1]
+prot_to_impute<-assays(mofa_multi_complete)$proteomics
 
-mofa_multi_complete_test$AGE_AT_VISIT
 
 ###################### RUN MOFA #########################
 ##### Setup MOFA model 
@@ -290,7 +292,7 @@ mofa_multi_complete_test$AGE_AT_VISIT
 #N_FACTORS=8
 ### separate visits 
 outdir
-MOFAobject <- create_mofa(mofa_multi_complete)
+MOFAobject <- create_mofa(mofa_multi)
 
 if (length(VISIT)>1){
   MOFAobject <- create_mofa(mofa_multi_complete, groups= mofa_multi_complete$EVENT_ID)

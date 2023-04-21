@@ -65,7 +65,7 @@ TOP_PN=0.90
 
 
 
-N_FACTORS=15
+N_FACTORS=10
 
 if (split){
   N_FACTORS=8
@@ -84,7 +84,7 @@ source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
 NORMALIZED
 TOP_GN
-metadata_output<-paste0(output_files, 'combined.csv')
+metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 combined_bl<-combined
 which(is.na(combined_bl$AGE))

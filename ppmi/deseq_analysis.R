@@ -105,7 +105,7 @@ vsd_mat <- assay(vsd)
 
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
-for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
+for (most_var in c(0.05, 0.5)){
 #  for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
     
 
@@ -407,6 +407,7 @@ if (run_heatmap){
                             labels_row=lab,
                             cluster_rows=TRUE, 
                             show_rownames=TRUE,
+                            scale='row', 
                             cluster_cols=cluster_cols,
                             annotation_col=df_ord
       )
@@ -487,7 +488,7 @@ pvol<-EnhancedVolcano(deseq2ResDF,
 
 pvol
 fname
-fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix,'.jpeg')
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
 #library(gridExtra)
@@ -512,6 +513,7 @@ ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 #ggsave(fname, width=8, height=7)
 Padj_T_paths=0.05
 padj_paths<-Padj_T_paths
+pvalueCutoff=1
 if (!process_mirnas){
   source('ppmi/RNAseq enrichment.R')
   

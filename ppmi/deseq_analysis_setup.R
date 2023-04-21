@@ -26,10 +26,10 @@ suppressWarnings(library('ggplot2'))
 source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, '/utils.R'))
 
-VISIT='BL'
+VISIT='V08'
 
 
-process_mirnas<-TRUE
+process_mirnas<-FALSE
 
 
 source(paste0(script_dir, '/config.R'))

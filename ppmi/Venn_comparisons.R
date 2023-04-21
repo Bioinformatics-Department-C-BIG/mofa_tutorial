@@ -240,7 +240,7 @@ enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
 
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
-run_ORA=FALSE
+run_ORA=TRUE
 pvalueCutoff
 if (run_ORA){
   enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff,'.csv')
@@ -276,7 +276,7 @@ hist(enrich_mirnas[,pval_to_use ])
 
 
 ### WHETHER TO ADD MIRNA INFO
-add_mirs=FALSE
+add_mirs=TRUE
 
 merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
 if (add_mirs){
@@ -299,7 +299,9 @@ hist(p1)
 hist(p2)
 if (add_mirs){
   p3<-merged_paths[,4];length(p3)
-  fish <- combinePValues(p1, p2, p3)
+  fish <- metapod::combineParallelPValues(list(p1, p2, p3),
+                                          method='stouffer', 
+                                          weights = c(1,1,0.3))$p.value
   
 }else{
   fish <- combinePValues(p1, p2)
@@ -350,27 +352,29 @@ ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
        width=7,height=8 )
 
 
-Npaths=20
+Npaths=18
 
 merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:Npaths,])
 
 if (add_mirs){
-  labels<-c('protein', 'RNA', 'mirnas',  'Fisher\'s')
+  labels<-c('proteomics', 'RNA', 'miRNA',  'Stouffer\'s')
   }else{ 
-    labels<-c('protein', 'RNA', 'Fisher\'s')}
+    labels<-c('proteomics', 'RNA', 'Stouffer\'s')}
 
 #ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
 # TODO: reorder by description 
 mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description, value), y=value, fill=variable))+
-  geom_bar(position='dodge', stat='identity', width=0.5)+
+  geom_bar(position='dodge', stat='identity', width=0.7)+
   theme(axis.title.y=element_blank(), 
-        axis.text.y= element_text(size=15))+
+        axis.text.y= element_text(size=15,color='black' ), 
+        legend.title =element_blank(), 
+        legend.text = element_text(size=15))+
         
   scale_fill_discrete(labels=labels)+
   coord_flip()
-
+mir_enrich_p_all
   ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
-         width=10,height=7 )
+         width=7,height=7 )
 
 
   #################################### VISITS ##########################

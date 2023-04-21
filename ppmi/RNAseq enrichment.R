@@ -60,14 +60,20 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   # or in the mofa case where we rank by importance in factor 
   
   N_DOT=15
-  dp<-dotplot(gse, showCategory=N_DOT)
+  dp<-dotplot(gse, showCategory=N_DOT, 
+              font.size=15
+              )
   dp<-dp+theme(axis.ticks=element_blank() , 
                axis.text.x = element_blank())
   show(dp)
+  
+  
+
   if (process_mirnas){
     width=4}else{width=5}
   
-  ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), plot=dp, width=width, height=N_DOT*0.4, 
+  ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), 
+         plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
   if (!process_mirnas){
@@ -136,16 +142,32 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
     ggsave(paste0(results_file, '_goplot_', node_label, '_',write_n, '.jpeg'), width=8, height=8)
     
   } 
+  library(ggtree)
+  library(ggplot2)
   
+  #install.packages('ggtree')
   
   #### heatmap
-  p1 <- treeplot(x2,showCategory =N_TREE)
-  p2_tree <- treeplot(x2, hclust_method = "average", showCategory =N_TREE )
+  N_TREE=16
+  p1 <- treeplot(x2,showCategory =N_TREE, nWords=0)
+  p1
+  p2_tree <- treeplot(x2, hclust_method = "average", 
+                      showCategory =N_TREE, nWords=0, 
+                      #offset_tiplab=5, 
+                      label_format =50, 
+                      fontsize = 300, 
+                      extend=-0.001, 
+                      offset=15, 
+                      hilight=FALSE, 
+                      branch.length=0.1)
+
   #aplot::plot_list(p1, p2_tree, tag_levels='A')
   #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
   
   p2_tree
-  ggsave(paste0(results_file, '_clusterplot_average_',write_n, '.jpeg'), width=12, height=8)
+  #write_n='test'
+  ggsave(paste0(results_file, '_clusterplot_average_',write_n, '.jpeg'),
+         width=10, height=0.4*N_TREE, dpi=300)
   
   
   return(list(dp, p_enrich, p2_tree))
@@ -158,7 +180,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 
 #### Configuration 
 
-VISIT='BL'
+VISIT='v08'
 process_mirnas<-FALSE
 source(paste0(script_dir, '/config.R'))
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
@@ -188,7 +210,7 @@ res_path<-paste0(results_file, 'gse.RDS')
 #### Run and return the whole set of p-values with pcutoff=1 
 ## then filter 
 if (file.exists(res_path)){
-  gse=loadRDS(res_path)
+  gse_full=loadRDS(res_path)
   
 }else{
   
@@ -216,17 +238,18 @@ gse = gse
 
 #results_file=mir_results_file_anticor
 #gse = gse_mirnas
+pvalueCutoff_sig=0.05
 sel<-gse_full@result$pvalue<pvalueCutoff_sig
 gse=filter(gse_full, p.adjust < .05)
 
 
-enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file )
+enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15 )
 dp=enrich_plots[[1]]
 p_enrich=enrich_plots[[2]]
 p2_tree=enrich_plots[[3]]
 
 
-
+results_file
 
 #### 
 gse@result[gse@result$pvalue>0.05,]

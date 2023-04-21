@@ -125,7 +125,7 @@ pvol<-EnhancedVolcano(results_de,
 )
 pvol
 prefix='prot_'
-fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,'.jpeg')
+fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,VISIT,'.jpeg')
 ggsave(fname,pvol, width=6,height=8, dpi=300)
 #ggsave(fname,pvol, width=6,height=8, dpi=300)
 

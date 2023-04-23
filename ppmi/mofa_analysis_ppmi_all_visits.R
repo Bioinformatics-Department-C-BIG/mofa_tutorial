@@ -74,7 +74,14 @@ ggsave(paste0(outdir, 'variance_explained','.png'), width = 1.5, height=N_FACTOR
 
 MOFAobject@samples_metadata$SEX
 
-colnames(MOFAobject@samples_metadata)[20:35]
+plot_data_overview(MOFAobject)+
+  theme(axis.title.x=element_text(size=16), 
+        axis.text.y=element_text(size=16), 
+        text  = element_text(size=16))
+outdir
+ggsave(paste0(outdir, 'data_overview.jpeg'), dpi=300, 
+       width=4, height=3)
+
 
 
 stats<-apply(MOFAobject@samples_metadata, 2,table )
@@ -103,9 +110,25 @@ cors<-correlate_factors_with_covariates(MOFAobject,
                                   return_data = TRUE
                                   
 )
-ids_to_plot<-which(apply(cors, 2, sum)>0)
-ids_to_plot<-which(apply(cors, 2, sum)>0)
+MOFAobject@samples_metadata$COHORT<-as.factor(MOFAobject@samples_metadata$COHORT)
+cors_pearson<-correlate_factors_with_covariates(MOFAobject,
+                                        covariates = names(non_na_vars), 
+                                        plot = "r", 
+                                        return_data = TRUE
+                                        
+)
+cors_pearson[,'CONCOHORT']
+
+cors_pearson
+ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
 ids_to_plot
+ids_to_plot<-which(apply(cors_pearson, 2, sum)>0)
+which(cors_pearson>0.1)
+
+ids_to_plot<-which(apply(cors, 2, sum)>0)
+ids_to_plot<-which(apply(cors, 2, sum)>0)
+tot_cor_t=5
+ids_to_plot_strict<-which(apply(cors, 2, sum)>tot_cor_t)
 names(non_na_vars)
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
@@ -125,6 +148,45 @@ correlate_factors_with_covariates(MOFAobject,
                                   
 )
 dev.off()
+
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero', tot_cor_t,'.jpeg'), width = length(ids_to_plot_strict)*22, height=1000, res=150)
+correlate_factors_with_covariates(MOFAobject,
+                                  covariates = names(non_na_vars)[ids_to_plot_strict], 
+                                  plot = "log_pval"
+                                  
+)
+dev.off()
+
+
+names(non_na_vars)[ids_to_plot]
+MOFAobject@samples_metadata$NP1T
+selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'SCAU', 'NHY', 'NP3BRADY', 'NP3RIGN')
+labels_col=c('COHORT', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'SCOPA', 'Hoehn & Yahr','BRADY','RIGN'  )
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
+correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",labels_col=labels_col )
+dev.off()
+
+
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
+correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "r",labels_col=labels_col )
+dev.off()
+
+
+correlate_factors_with_covariates(MOFAobject,covariates = names(non_na_vars)[ids_to_plot_strict],
+                                  plot = "r",labels_col=labels_col )
+
+correlate_factors_with_covariates(MOFAobject,covariates =ids_to_plot_cor,
+                                  plot = "r")
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*70, height=1000, res=300)
+
+correlate_factors_with_covariates(MOFAobject,covariates =selected_covars,
+                                  plot = "r", 
+                                  col.lim=c(-0.5, 0.5), 
+                                  is.cor=FALSE)
+dev.off()
+
+
 
 ### filter only the ones that are correlated 
 
@@ -214,9 +276,14 @@ for (i in seq(1,vps)){
   }
   }
 
-  
-  plot_variance_explained(MOFAobject, plot_total = T)[[2]]
-  ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, dpi=100)
+  dev.off()
+  p1<-plot_variance_explained(MOFAobject, plot_total = T)[[2]]
+  p1<-p1+theme(axis.text.x=element_text(size=16), 
+               axis.title.y=element_text(size=16), 
+               axis.text.y=element_text(size=16))
+  plot(p1)
+  ggsave(paste0(outdir, 'variance_explained_total','.png'),plot=p1, 
+         width = 3, height=3, dpi=300)
 #install.packages('psych')
 
   
@@ -445,21 +512,22 @@ vps
 fps
 seq(1,fps)
 seq(1,vps)
-
+factor=3; view='RNA'
 plot_top_weights(MOFAobject,
                  view = view,
-                 factor = factor,
+                 factor = 3,
                  nfeatures = 10,     # Top number of features to highlight
                  scale = T           # Scale weights from -1 to 1
 )
-ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=100)
+ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=300)
 dir.create(paste0(outdir, 'top_weights/'))
 
 
 graphics.off()
 
 dir.create(paste0(outdir, '/heatmap/'))
-
+views[i]
+i
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
@@ -467,13 +535,16 @@ for (i in seq(1,vps)){
     ### oNLY SAVE THE ones with high variance
     if (high_vars_by_factor[ii, i]){
       print(c(i,ii))
-      
+      cols <- c( "red", 'red')
           plot_top_weights(MOFAobject_gs,
-                           view = views[i],
+                           view = i,
                            factor = ii,
-                           nfeatures = 10,     # Top number of features to highlight
-                           scale = T           # Scale weights from -1 to 1
-          )
+                           nfeatures = 2,     # Top number of features to highlight
+                           scale = F           # Scale weights from -1 to 1
+          )+
+          scale_colour_(values=cols) 
+          
+            
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
                  width = 4, height=4, dpi=300)
           

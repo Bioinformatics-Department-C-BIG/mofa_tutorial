@@ -76,8 +76,9 @@ if (process_mirnas){
 
 
 input_file<-paste0(output_files, prefix, 'all_visits.csv')
+# se file with all visits
+se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
-
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds')
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
@@ -100,11 +101,7 @@ p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
 #### read in proteomics 
 p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
 p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-
-
 outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_', des, '/' )
-
-
 p_params_FILE<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s )
 
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')

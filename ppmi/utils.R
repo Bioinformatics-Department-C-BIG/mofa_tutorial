@@ -168,6 +168,8 @@ get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol
   #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
   #' @param order_by_metric metric to order the gene list by 
   res=deseq2ResDF
+  #res=deseq2ResDF_2
+  
   res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
   
   length(which(!is.na(res$sign_lfc )))

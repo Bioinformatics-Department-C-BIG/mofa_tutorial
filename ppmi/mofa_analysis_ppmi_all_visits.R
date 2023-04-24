@@ -181,7 +181,12 @@ names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$NP1T
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
 selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'SCAU', 'NHY', 'NP3BRADY', 'NP3RIGN')
-labels_col=c('COHORT', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'SCOPA', 'Hoehn & Yahr','BRADY','RIGN'  )
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'SCOPA', 'Hoehn & Yahr','BRADY','RIGN'  )
+
+names(MOFAobject@samples_metadata[selected_covars])<-labels_col
+MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
+
+colnames(MOFAobject@samples_metadata)[selected_covars]
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",labels_col=labels_col )
 dev.off()
@@ -199,7 +204,7 @@ correlate_factors_with_covariates(MOFAobject,covariates =ids_to_plot_cor,
                                   plot = "r")
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*70, height=1000, res=300)
 
-correlate_factors_with_covariates(MOFAobject,covariates =selected_covars,
+correlate_factors_with_covariates(MOFAobject,covariates =labels_col,
                                   plot = "r", 
                                   col.lim=c(-0.5, 0.5), 
                                   is.cor=FALSE)
@@ -547,6 +552,9 @@ graphics.off()
 dir.create(paste0(outdir, '/heatmap/'))
 views[i]
 i
+ii=4
+i=2
+views[i]
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
@@ -555,17 +563,22 @@ for (i in seq(1,vps)){
     if (high_vars_by_factor[ii, i]){
       print(c(i,ii))
       cols <- c( "red", 'red')
-          plot_top_weights(MOFAobject_gs,
+          p_ws<-plot_top_weights(MOFAobject_gs,
                            view = i,
                            factor = ii,
-                           nfeatures = 2,     # Top number of features to highlight
+                           nfeatures = 10,     # Top number of features to highlight
                            scale = F           # Scale weights from -1 to 1
-          )+
-          scale_colour_(values=cols) 
-          
+          )
+          if (views[i]=='RNA'){
+            print('rna')
+            p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
+          }
+          #scale_colour_(values=cols) 
+
             
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
-                 width = 4, height=4, dpi=300)
+                 plot=p_ws, 
+                 width = 3, height=3, dpi=300)
           
           plot_weights(MOFAobject_gs, 
                        view = views[i], 

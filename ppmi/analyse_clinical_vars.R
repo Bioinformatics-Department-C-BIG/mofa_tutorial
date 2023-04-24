@@ -66,12 +66,16 @@ df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
   df_lognan_r<-sapply(df_log, is.nan)
   df_log[df_lognan_r]<-NA
   #combined_new<-merge(combined,df_log)
-  combined_new<-cbind(combined,df_log)
-  
+  combined_new<-mutate(df_log,combined)
+
   metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 
-  combined_new
+  hist(combined_new$SCAU2)
+  hist(combined$SCAU2)
+  
+  hist(df_log$SCAU2)
+  
   # conevrt to apply 
 #combined[,sub_pattern]<-
   

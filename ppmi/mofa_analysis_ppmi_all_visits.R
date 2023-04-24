@@ -68,8 +68,11 @@ write.table(format(vars_by_factor,digits = 2)
 
 vars_by_factor>0.1
 
-plot_variance_explained(MOFAobject, max_r2=20)
-ggsave(paste0(outdir, 'variance_explained','.png'), width = 1.5, height=N_FACTORS/3,
+p3<-plot_variance_explained(MOFAobject, max_r2=20)+
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20))
+ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
+       width = 5, height=N_FACTORS/2,
        dpi=300)
 
 MOFAobject@samples_metadata$SEX
@@ -105,7 +108,7 @@ cors<-correlate_factors_with_covariates(MOFAobject,
 )
 ids_to_plot<-which(apply(cors, 2, sum)>0)
 ids_to_plot<-which(apply(cors, 2, sum)>0)
-ids_to_plot
+ids_to_plot_strict<-which(apply(cors, 2, sum)>2)
 names(non_na_vars)
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
@@ -125,6 +128,21 @@ correlate_factors_with_covariates(MOFAobject,
                                   
 )
 dev.off()
+#ids_to_plot_strict
+#ids_to_plot_strict=c('SEX', 'AGE_AT_VISIT')
+ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_to_plot_strict))]
+
+
+
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'),width = length(ids_to_plot_strict_1)*50,
+     height = 800, res=150)
+correlate_factors_with_covariates(MOFAobject,
+                                  covariates = names(non_na_vars)[ids_to_plot_strict_1], 
+                                  plot = "log_pval"
+                                  
+)
+dev.off()
+
 
 ### filter only the ones that are correlated 
 

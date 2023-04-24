@@ -129,6 +129,7 @@ combined<-read.csv2(metadata_output)
   deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
   datalist=list(ddsSE, vsd, se_filt, deseq2Results)
   saveRDS(datalist,deseq_file)
+  saveRDS(se, se_file)
   
   deseq2Results_sex <- results(deseq2Data, contrast=c('SEX', 0,1))
   

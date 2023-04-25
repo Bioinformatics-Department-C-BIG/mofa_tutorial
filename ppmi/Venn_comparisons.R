@@ -288,7 +288,9 @@ if (add_mirs){
   
   merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
 }
-which(enrich_mirna_pvals$p.adjust>0.05)
+length(which(enrich_rna_pvals$p.adjust<0.05))
+length(which(enrich_mirna_pvals$p.adjust<0.05))
+length(which(enrich_proteins_pvals$p.adjust<0.05))
 
 
 #merge(enrich_proteins)
@@ -297,34 +299,53 @@ which(enrich_mirna_pvals$p.adjust>0.05)
 p1<-merged_paths[,2]; length(p1)
 p2<-merged_paths[,3];length(p2)
 
+
+
 ### TODO: FIX THERE ARE NO insig paths in mirs
 
 #BiocManager::install('metapod')
 library(metapod)
 hist(p1)
 hist(p2)
+pmethod<-'stouffer'
 if (add_mirs){
   p3<-merged_paths[,4];length(p3)
   fish <- metapod::combineParallelPValues(list(p1, p2, p3),
-                                          method='stouffer', 
-                                          weights = c(1,1,0.9))$p.value
+                                          method=pmethod, 
+                                         weights = c(1,1,0.9))$p.value
+# pmethod<-'fisher'
+ 
+# fish <- metapod::combineParallelPValues(list(p1, p2, p3),
+#                                         method=pmethod, 
+#                                         weights = c(1,1,1))$p.value
   
 }else{
   fish <- combinePValues(p1, p2)
   
 }
 
+
 merged_paths_fish<-cbind(merged_paths, fish)
 merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
 
-merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA )
+merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod )
 
 ### Write significant results 
 write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
 
 dim(merged_paths_fish[merged_paths_fish$fish<0.05,])
 #View(merged_paths_fish[merged_paths_fish$fish<0.05,])
-merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<0.05,]
+combined_p_thresh<-0.01
+
+merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
+dim(merged_paths_fish_sig)
+
+### number from each 
+combined_p_thresh<-0.05
+length(which(merged_paths$p.adjust.x<combined_p_thresh))
+length(which(merged_paths$p.adjust.y<combined_p_thresh))
+length(which(merged_paths$p.adjust<combined_p_thresh))
+
 
 
 
@@ -345,6 +366,8 @@ if (add_mirs){
   choose_cols<- c('Description','p.adjust.x_log','p.adjust.y_log', 'fish_log10'  )
   
 }
+
+dim(merged_paths_fish_sig_filt)
 merged_paths_fish_sig_filt<-merged_paths_fish_sig[,choose_cols]
 
 
@@ -358,7 +381,7 @@ ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
        width=7,height=8 )
 
 
-Npaths=25
+Npaths=15
 
 merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:Npaths,], 
                                  varnames=c('modality','nlog10pvalue' ))
@@ -370,22 +393,63 @@ if (add_mirs){
 
 #ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
 # TODO: reorder by description 
-mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description, value),
+merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish_log10',]
+mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt_fish, aes( x=reorder(Description, value),
                                                           y=value, fill=variable))+
-  geom_bar(position='dodge', stat='identity', width=0.7)+
+  #geom_bar(position='dodge', stat='identity', width=0.7)+
+  geom_bar(position='dodge', stat='identity', width=0.7/4)+
+  
   theme(axis.title.y=element_blank(), 
         axis.text.y= element_text(size=15,color='black' ), 
         axis.text.x= element_text(size=15,color='black' ),
         legend.title =element_blank(), 
         legend.text = element_text(size=15))+
   labs(y='-log10pvalue')+
-    scale_fill_discrete(labels=labels)+
+   # scale_fill_discrete(labels=labels)+
+  scale_fill_discrete(labels=labels[4])+
+  
   coord_flip()
 mir_enrich_p_all
   ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
          width=Npaths/2,height=Npaths/2.5 )
 
+  
+  
+  
+  
+  
+  
+  #### COMPARE TO MOFA
+  single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))
+  listInput_single_mofa<-list( mofa=unique(all_ord$Description), single=single_paths)
+ mofa_overlap<-calculate.overlap(listInput_single_mofa)
+ unique_single<-mofa_overlap$a2[!(mofa_overlap$a2 %in%mofa_overlap$a3)]
+ unique_mofa<-mofa_overlap$a1[!(mofa_overlap$a1 %in%mofa_overlap$a3)]
+ 
+ 
+ #View(unique_mofa)
+# View(unique_single)
+ #View(mofa_overlap$a3)
+ venn.diagram(listInput_single_mofa, 
+               filename=paste0(out_compare, 'mofa_overlap.jpeg'))
+ mofa_overlap$a2
+ 
+ venn.diagram(listInput_single_mofa,
+              # Circles
+              lwd = 2,
+              lty = 'blank',
+              fill = myCol,
+              cex=2.5,
+              cat.cex=0,
+              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm_mofa.png'), 
+              output=TRUE)
 
+ 
+ 
+ 
+ 
+ 
+ 
   #################################### VISITS ##########################
   
   #### load both visits to compare: 

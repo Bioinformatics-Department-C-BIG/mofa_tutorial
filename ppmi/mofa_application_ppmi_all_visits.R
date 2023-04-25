@@ -322,7 +322,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi2.hdf5'), use_basilisk = TRUE)
+#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi2.hdf5'), use_basilisk = TRUE)
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

@@ -305,9 +305,10 @@ if (run_heatmap){
   
   # bring the low padj to the top!!
   order_by_metric<-'abslog2pval'
-  order_by_metric<-'padj_reverse'
   order_by_metric<-'abslog2'
   order_by_metric<-'abslog2FC'
+  
+  order_by_metric<-'padj_reverse'
   
   quant=0.9
   mean_expr_T<-quantile(deseq2ResDF$baseMean, quant)
@@ -342,7 +343,7 @@ if (run_heatmap){
   dim(orderedSigGenes)
   
   n_sig_f='all'
-  n_sig_f=30
+  n_sig_f=100
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
@@ -354,17 +355,14 @@ if (run_heatmap){
   
   ## filter the top 50 significant genes 
   sigGenes <- orderedSigGenes$Gene[1:n_sig]
-  length(sigGenes);head(sigGenes)
-  deseq2VST[deseq2VST$Gene %in% sigGenes,]
-  deseq2VST <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
-  dim(deseq2VST)
-  #deseq2VST$Gene
+  deseq2VST_sign <- deseq2VST[deseq2VST$Gene %in% sigGenes,]
   
+  dim(deseq2VST)
   #Convert the VST counts to long format for ggplot2
   library(reshape2)
   library(pheatmap)
   
-  deseq2VST_wide <- deseq2VST
+  deseq2VST_wide <- deseq2VST_sign
   deseq2VST_long <- melt(deseq2VST_wide, id.vars=c("Gene"))
   
   # Make a heatmap ## using the vst
@@ -383,7 +381,10 @@ if (run_heatmap){
   dim(vsd_filt_genes)
   length(vsd_filt_genes$COHORT)
   
+  
   df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
+  
+  
   cluster_cols=TRUE
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
@@ -395,6 +396,8 @@ if (run_heatmap){
   df_ord<-df[order(df$COHORT),]
   hm<-assay(vsd_filt_genes)
   hm_ord<-hm[,order(df$COHORT)]
+  
+  hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
   #jpeg(fname, width=2000, height=1500, res=200)
   graphics.off()
   library(ggplot2)
@@ -403,18 +406,20 @@ if (run_heatmap){
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
   
       jpeg(fname, width=10*100, height=7*100, res=120)
-      my_pheatmap<-pheatmap(hm_ord, 
+      my_pheatmap<-pheatmap(hm_scaled, 
                             labels_row=lab,
                             cluster_rows=TRUE, 
                             show_rownames=TRUE,
-                            scale='row', 
+                            #scale='row', 
                             cluster_cols=cluster_cols,
-                            annotation_col=df_ord
+                            annotation_col=df_ord, 
+                              clustering_method = 'ward.D2'
       )
       
       
      show(my_pheatmap)
       dev.off() 
+      my_pheatmap
      # ggsave(fname, width=10, height=7)
       
       #ggsave('plot.png',plot=my_pheatmap, width=10, height=7)
@@ -461,10 +466,10 @@ ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', n
 ns
 pvol<-EnhancedVolcano(deseq2ResDF,
                 lab = lab,
-                pCutoff = 10e-6,
+                pCutoff = 10e-2,
                 FCcutoff = 0.1,
                 x = 'log2FoldChange',
-                y = 'pvalue',
+                y = 'padj',
                 
                 
                 ## format 
@@ -481,6 +486,8 @@ pvol<-EnhancedVolcano(deseq2ResDF,
                # legendPosition = 'right',
                 
                 xlim=xlim, 
+               ylim=ylim, 
+               
                 subtitle=ns, 
                 title=''
                )

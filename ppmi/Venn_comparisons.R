@@ -151,7 +151,10 @@ outdir_proteins<-outdir_s_p
 run_anova=FALSE;use_pval=FALSE; 
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
 
-outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
+#outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
+outdir_s_p_enrich=paste0(outdir_proteins, '/enrichment/');order_statistic='logFC'
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
+
 results_file<-paste0(outdir_rnas, '/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 
 
@@ -169,13 +172,15 @@ signif_proteins<-read.csv(paste0(outdir_s_p,'/significant', padj_T_overall, '_',
 pvalueCutoff_sig=0.05
 
 padj_paths<-0.05
-enrich_rnas_file<-paste0(results_file, '.csv')
+pvalueCutoff=1
+results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+enrich_rnas_file<-paste0(results_file,pvalueCutoff ,'.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval')
 
-enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff_sig, '.csv')
+enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
 enrich_rna<-read.csv(enrich_rnas_file)
-enrich_mirnas<-read.csv(paste0(enrich_mirnas_file, '.csv'))
+enrich_mirnas<-read.csv(paste0(enrich_mirnas_file,pvalueCutoff, '.csv'))
 enrich_proteins<-read.csv(enrich_proteins_file)
 
 
@@ -245,7 +250,7 @@ enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
 
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
-run_ORA=TRUE
+run_ORA=FALSE
 pvalueCutoff
 if (run_ORA){
   enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff,'.csv')
@@ -266,10 +271,13 @@ dim(enrich_proteins)
 enrich_rna$Description
 enrich_proteins[, c('pvalue', 'Description')]
 
+pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
 
+enrich_proteins_pvals<-enrich_proteins[, c('pvalue', 'Description')]
+length(which(enrich_proteins_pvals[,'pvalue']<0.05))
 
 enrich_proteins_pvals<-enrich_proteins[, c(pval_to_use, 'Description')]
 enrich_rna_pvals<-enrich_rna[, c(pval_to_use, 'Description')]
@@ -283,14 +291,23 @@ hist(enrich_mirnas[,pval_to_use ])
 ### WHETHER TO ADD MIRNA INFO
 add_mirs=TRUE
 
+merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE)
 merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
+
+dim(merged_paths )
 if (add_mirs){
   
   merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
 }
-length(which(enrich_rna_pvals$p.adjust<0.05))
-length(which(enrich_mirna_pvals$p.adjust<0.05))
-length(which(enrich_proteins_pvals$p.adjust<0.05))
+dim(merged_paths )
+merged_paths$pvalue
+enrich_rna_pvals$p.adjust
+enrich_mirna_pvals$p.adjust
+sapply(list(enrich_rna_pvals,
+            enrich_mirna_pvals, 
+            enrich_proteins_pvals), function(df){  
+              length(which(df[, pval_to_use]<0.05))})
+
 
 
 #merge(enrich_proteins)
@@ -312,7 +329,7 @@ if (add_mirs){
   p3<-merged_paths[,4];length(p3)
   fish <- metapod::combineParallelPValues(list(p1, p2, p3),
                                           method=pmethod, 
-                                         weights = c(1,1,0.9))$p.value
+                                         weights = c(1,1,0.5))$p.value
 # pmethod<-'fisher'
  
 # fish <- metapod::combineParallelPValues(list(p1, p2, p3),
@@ -327,25 +344,27 @@ if (add_mirs){
 
 merged_paths_fish<-cbind(merged_paths, fish)
 merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
-
+dim(merged_paths_fish)
 merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod )
 
 ### Write significant results 
 write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
+dim(merged_paths_fish)
 
-dim(merged_paths_fish[merged_paths_fish$fish<0.05,])
-#View(merged_paths_fish[merged_paths_fish$fish<0.05,])
+dim(merged_paths_fish[merged_paths_fish$fish<0.01,])
 combined_p_thresh<-0.01
 
-merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
-dim(merged_paths_fish_sig)
 
 ### number from each 
 combined_p_thresh<-0.05
+combined_p_thresh<-0.01
+
 length(which(merged_paths$p.adjust.x<combined_p_thresh))
 length(which(merged_paths$p.adjust.y<combined_p_thresh))
 length(which(merged_paths$p.adjust<combined_p_thresh))
 
+merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
+dim(merged_paths_fish_sig)
 
 
 
@@ -394,10 +413,19 @@ if (add_mirs){
 #ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
 # TODO: reorder by description 
 merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish_log10',]
-mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt_fish, aes( x=reorder(Description, value),
+plot_all=FALSE
+if (plot_all){
+  merged_to_plot<-merged_paths_fish_sig_melt
+  labels_p<-labels; width_p<-0.7
+}else{
+  merged_to_plot<-merged_paths_fish_sig_melt_fish
+  labels_p=labels[4];width_p<-0.7/4
+}
+mir_enrich_p_all<-ggplot(merged_to_plot,
+                         aes( x=reorder(Description, value),
                                                           y=value, fill=variable))+
   #geom_bar(position='dodge', stat='identity', width=0.7)+
-  geom_bar(position='dodge', stat='identity', width=0.7/4)+
+  geom_bar(position='dodge', stat='identity', width=width_p)+
   
   theme(axis.title.y=element_blank(), 
         axis.text.y= element_text(size=15,color='black' ), 
@@ -405,16 +433,15 @@ mir_enrich_p_all<-ggplot(merged_paths_fish_sig_melt_fish, aes( x=reorder(Descrip
         legend.title =element_blank(), 
         legend.text = element_text(size=15))+
   labs(y='-log10pvalue')+
-   # scale_fill_discrete(labels=labels)+
-  scale_fill_discrete(labels=labels[4])+
+  scale_fill_discrete(labels=labels_p)+
   
   coord_flip()
 mir_enrich_p_all
-  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all.jpeg'),mir_enrich_p_all, dpi=300,
-         width=Npaths/2,height=Npaths/2.5 )
+  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all,'.jpeg'),mir_enrich_p_all, dpi=300,
+         width=Npaths*0.55,height=Npaths/2.5 )
 
   
-  
+  Npaths
   
   
   

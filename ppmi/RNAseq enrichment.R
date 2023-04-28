@@ -27,10 +27,10 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
   #' @param gse_full full gse results objects 
   #' @param results_file the file name to write results  (without .csv)
   #' @param pvalueCutoff the pvalue used to obtain the gse results 
-  
+  pval_to_use='p.adjust'
   write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
   pvalueCutoff_sig<-0.05
-  gse_sig_result<-gse_full@result[gse_full@result$pvalue<pvalueCutoff_sig,]
+  gse_sig_result<-gse_full@result[gse_full@result[,pval_to_use]<pvalueCutoff_sig,]
   write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
   
   # rewrite
@@ -76,7 +76,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
          plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
-  if (!process_mirnas){
+  if (!(process_mirnas || run_ORA)){
     
     dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
     ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
@@ -98,7 +98,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
   #### Ridge plot: NES shows what is at the bottom of the list
   
-  if (!process_mirnas){
+  if (!(process_mirnas||run_ORA)){
     r_p<-ridgeplot(gse)
     r_p
     ggsave(paste0(results_file, '_ridge_.jpeg'), width=8, height=8)

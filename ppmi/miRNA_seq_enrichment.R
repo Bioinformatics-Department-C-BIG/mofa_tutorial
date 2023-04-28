@@ -3,9 +3,10 @@
 library(rbioapi)
 library('VennDiagram')
 library(enrichplot)
-VISIT='BL'
+VISIT='V08'
 process_mirnas<-TRUE
 source(paste0(script_dir, '/config.R'))
+source(paste0(script_dir, '/utils.R'))
 
 
 
@@ -76,7 +77,7 @@ pvalueCutoff=1
 if (file.exists(gsea_results_fname)){
   ### Load enrichment results if available
   mieaa_all_gsea<-read.csv(gsea_results_fname, header=TRUE)
-  ### TODO: RERUN WITH UPDATED PBALUE CUTTOF
+  ### TODO: Rerun with updated pvalue cutoff 
 }else{
   ## otherwise run GSEA analysis 
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
@@ -89,8 +90,6 @@ if (file.exists(gsea_results_fname)){
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
-
-
 ## remove . and \ from mir names 
 colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
 colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))

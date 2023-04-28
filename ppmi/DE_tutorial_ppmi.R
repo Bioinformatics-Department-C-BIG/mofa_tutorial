@@ -249,7 +249,9 @@ order_statistic<-'logFC'
 order_statistic<-'P.Value'
 order_statistic<-'log2pval'
 #order_statistic<-'pval_reverse'
-#order_statistic<-'logFC'
+order_statistic<-'log2pval'
+order_statistic<-'logFC'
+order_statistic<-'log2pval'
 
 
 
@@ -295,10 +297,13 @@ length(gene_list_ord)
 
 
 ONT='BP'
+run_ORA=FALSE
 gene_list_ord
 
+pvalueCutoff=1
+#outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
 
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
 res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
 if (file.exists(res_path)){
   gse_protein_full=loadRDS(res_path)
@@ -316,22 +321,28 @@ if (file.exists(res_path)){
 }
 dim(gse_protein_full@result)
 hist(gse_protein_full@result$pvalue)
-sig_ind<-gse_protein_full@result$pvalue<0.05
-sig_ind
-process_mirnas=TRUE
+sig_ind<-gse_protein_full[gse_protein_full@result$pvalue<0.05,]
+sig_ind$p.adjust; dim(sig_ind)
+process_mirnas=FALSE
 
 write.csv(as.data.frame(gse_protein_full@result), paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv'))
 
+use_pval=FALSE
+gse_protein=write_filter_gse_results(gse_protein_full, outdir_s_p_enrich_file, pvalueCutoff)
+gse_protein
 dim(gse_protein@result)
+length(which(gse_protein_full@result$pvalue<0.05))
+
 sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCutoff_sig,]
 write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
 
-gse_protein_full[sig_ind,]
-gse_protein<-gse_protein_full[sig_ind,]
+gse_protein=filter(gse_full, pvalue < pvalueCutoff_sig)
+
+### supply the full result 
 enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=30, N_EMAP = 50)
 
 
-
+gse_protein_full
 
 
 
@@ -342,6 +353,8 @@ run_ORA=TRUE
 #### IN ENRICHMENT WE filter by what is significant ONLY !! 
 run_anova=FALSE
 use_pval=FALSE
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
+
 if (run_anova){
   order_statistic<-'statistic'
   anova_results_oneway$a
@@ -361,37 +374,32 @@ if (run_anova){
 }
 
 pvalueCutoff=1
+res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
+if (file.exists(res_path)){
+  gse_protein_full=loadRDS(res_path)
+}else{
+  
+      gse_protein_enrich_full <- clusterProfiler::enrichGO(gene_list_ora, 
+                                              ont=ONT, 
+                                              keyType = 'SYMBOL', 
+                                              OrgDb = 'org.Hs.eg.db', 
+                                              pvalueCutoff  = pvalueCutoff)
+      
+      saveRDS(gse_protein_enrich_full, res_path)
 
-gse_protein_enrich_full <- clusterProfiler::enrichGO(gene_list_ora, 
-                                        ont=ONT, 
-                                        keyType = 'SYMBOL', 
-                                        OrgDb = 'org.Hs.eg.db', 
-                                        pvalueCutoff  = pvalueCutoff)
+}
 ## EMAP 15 is better for reporting - less crowded
 process_mirnas=TRUE
-#gse_protein_enrich_full<-gse_protein_enrich
-outdir_s_p_enrich_file_ora<-paste0(outdir_s_p_enrich, ONT,  '_ora_T_', T,'_anova_', run_anova, 'pval_', use_pval )
-
-gse_protein_enrich=write_filter_gse_results(gse_protein_enrich_full, outdir_s_p_enrich_file_ora, pvalueCutoff)
-outdir_s_p_enrich_file_ora
-
-#write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, '.csv'))
-#write.csv(as.data.frame(gse_protein_enrich@result), paste0(outdir_s_p_enrich_file_ora, pvalueCutoff, '.csv'))
-#pvalueCutoff_sig<-0.05
-#sig_gse_result<-gse_protein_enrich@result[gse_protein_enrich@result$pvalue<pvalueCutoff_sig,]
-#write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file_ora, pvalueCutoff_sig, '.csv'))
-#dim(gse_protein_enrich@result)
-#dim(sig_gse_result)
-
-
+gse_protein_enrich=write_filter_gse_results(gse_protein_enrich_full, outdir_s_p_enrich_file, pvalueCutoff)
 ## does it contain nonsign pvalues? 
-gse_protein_enrich@result[gse_protein_enrich@result$pvalue>0.05,]
+gse_protein_enrich@result[gse_protein_enrich_full@result$pvalue>0.05,]
+length(which(gse_protein_enrich_full@result$pvalue<0.05))
 
+process_mirnas=FALSE
 enrich_plots<-run_enrichment_plots(gse=gse_protein_enrich,
-                                   results_file=paste0(outdir_s_p_enrich_file_ora, 'enrich'), 
-                                   N_DOT=30, N_EMAP = 15)
+                                   results_file=paste0(outdir_s_p_enrich_file, 'enrich'), 
+                                   N_DOT=15, N_EMAP = 15)
 
-outdir_s_p_enrich_file_ora
 
 dev.off()
 

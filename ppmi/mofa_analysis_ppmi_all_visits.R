@@ -821,7 +821,7 @@ subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
-  for (subcategory in c('CP:KEGG','GO:BP' )){
+  for (subcategory in c('GO:BP' )){
 
         gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
         
@@ -1058,6 +1058,7 @@ p <- plot_factors(MOFAobject,
                   dot_size = 2.5,
                   show_missing = T
 )
+
 
 show(p)
 dev.off()

@@ -6,7 +6,7 @@ source(paste0(script_dir, '/setup_os.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 source(paste0(script_dir,'/deseq_analysis_setup.R'))
-VISIT
+
 process_mirnas
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
@@ -390,7 +390,6 @@ if (run_heatmap){
   fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
                 filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
   
-  fname
   #ARRANGE
   df_ord<-df[order(df$COHORT),]
   hm<-assay(vsd_filt_genes)

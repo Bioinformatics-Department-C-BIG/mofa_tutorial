@@ -14,6 +14,8 @@ library(clusterProfiler)
 #library(ensembldb)
 #install.packages('ggridges')
 require(ggridges)
+library(ggplot2)
+
 suppressWarnings(library('R.filesets' ))
 library('enrichplot' )
 
@@ -41,7 +43,6 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
   gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
   return(gse)
 }
-
 
 
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE){
@@ -103,10 +104,12 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
   #### Ridge plot: NES shows what is at the bottom of the list
   
-  if (!(process_mirnas||run_ORA)){
-    r_p<-ridgeplot(gse)
+
+  N_RIDGE=25
+  if (!process_mirnas){
+    r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     r_p
-    ggsave(paste0(results_file, '_ridge_.jpeg'), width=8, height=8)
+    ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
   }
   
   
@@ -186,6 +189,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 #### Configuration 
 
 VISIT='V08'
+
 process_mirnas<-FALSE
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
 

@@ -152,10 +152,47 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 
 ################### HEATMAPS  ############
 
+#ARRANGE
+#df_ord<-df[order(df$COHORT),]
+ids<-rownames(vsn_mat) %in% gene_list_limma_significant
+hm<-vsn_mat[ids,]
+colnames(vsn_mat)
+dim(COHORT)
+se_filt$age
+df<-as.data.frame(c(se_filt$COHORT_DEFINITION))
+df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE' )])
+df$AGE
+rownames(df)<-se_filt$PATNO_EVENT_ID
+se_filt$COHORT
+dim(df)
+dim(hm)
+#hm_ord<-hm[,order(df$COHORT)]
 
 
+fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+              filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
 
+graphics.off()
+library(ggplot2)
+if(process_mirnas){
+  lab=rownames(rowData(vsd_filt_genes)) }else{
+    lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
 
+#jpeg(fname, width=10*100, height=10*100, res=150)
+my_pheatmap<-pheatmap(hm, 
+                      #labels_row=lab,
+                      cluster_rows=TRUE, 
+                      show_rownames=TRUE,
+                      scale='row', 
+                      cluster_cols=cluster_cols,
+                      annotation_col=df
+)
+dim(hm)
+
+show(my_pheatmap)
+dev.off()
+my_pheatmap
+ggsave(fname, my_pheatmap, dpi = 200, width=7, height=10)
 
 
 
@@ -238,6 +275,9 @@ if (run_olink){
 }
 
 T=0.05
+
+
+
 
 ################# ENRICHMENT - GSEA-GO #############
 order_statistic<-'log2pval'
@@ -414,6 +454,11 @@ hist_p
 ggsave(paste0(outdir_s_p_enrich_file_ora, '_pval_hist.png'),plot=last_plot() )
 
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
+
+
+
+
+
 
 
 

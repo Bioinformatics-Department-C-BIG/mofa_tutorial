@@ -1,3 +1,5 @@
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir,'/setup_os.R'))
 
 
 #detach("package:AnnotationDbi", unload=TRUE)
@@ -84,16 +86,19 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   }
   
   #### EMAP PLOT 
+  #N_EMAP=50
   options(ggrepel.max.overlaps = Inf)
   x2 <- pairwise_termsim(gse )
   #if (process_mirnas){N=15}
   p<-emapplot(x2,showCategory = N_EMAP,
-              layout = "nicely")
+              layout = "nicely", 
+              cex_label_category=0.8)
   p_enrich <- p + theme(text=element_text(size=12))
   p_enrich
   
   if (is.numeric(N_EMAP)){write_n=N_EMAP}
-  ggsave(paste0(results_file, '_emap_', write_n,  '.jpeg'), width=9, height=9)
+  ggsave(paste0(results_file, '_emap_', write_n,  '.jpeg'), width=9, height=9, 
+         dpi = 300)
   
   
   #### Ridge plot: NES shows what is at the bottom of the list
@@ -180,22 +185,32 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 
 #### Configuration 
 
-VISIT='v08'
+VISIT='V08'
 process_mirnas<-FALSE
-source(paste0(script_dir, '/config.R'))
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
-#deseq2Results = read.csv(paste0(outdir_s, '/results.csv'), row.names = 1)
-deseq2ResDF_2 = as.data.frame(read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1))
 
-#deseq2ResDF_2 <- as.data.frame(deseq2Results) 
+
+get_genelist_byVisit<-function(VISIT){
+  
+  ### Input visit AND return list 
+  ##'
+  ##'
+ 
+  deseq2ResDF_2 = as.data.frame(read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1))
+  gene_list<-get_ordered_gene_list(deseq2ResDF_2,  order_by_metric, padj_T=1, log2fol_T=0 )
+  names(gene_list)<-gsub('\\..*', '',names(gene_list))
+  return(gene_list)
+}
+VISIT='V08'
+source(paste0(script_dir, '/config.R'))
+gene_list<-get_genelist_byVisit(VISIT)
+
+
+source(paste0(script_dir, '/config.R'))
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
 dir.create(outdir_enrich)
 
-
-
 ### setup
-gene_list<-get_ordered_gene_list(deseq2ResDF_2,  order_by_metric, padj_T=1, log2fol_T=0 )
-names(gene_list)<-gsub('\\..*', '',names(gene_list))
 length(gene_list)
 tail(gene_list)
 ONT='BP'
@@ -203,8 +218,6 @@ ONT='BP'
 
 
 results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
-
-
 res_path<-paste0(results_file, 'gse.RDS')
 
 #### Run and return the whole set of p-values with pcutoff=1 
@@ -238,12 +251,12 @@ gse = gse
 
 #results_file=mir_results_file_anticor
 #gse = gse_mirnas
-pvalueCutoff_sig=0.05
+pvalueCutoff_sig=0.01
 sel<-gse_full@result$pvalue<pvalueCutoff_sig
-gse=filter(gse_full, p.adjust < .05)
+gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
 
 
-enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15 )
+enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15, N_EMAP=25 )
 dp=enrich_plots[[1]]
 p_enrich=enrich_plots[[2]]
 p2_tree=enrich_plots[[3]]
@@ -320,6 +333,11 @@ if (run_mofa){
     
   }
 }
+
+
+### CLUSTER COMPARE
+
+
 
 #### 
 #library(ggplot2)

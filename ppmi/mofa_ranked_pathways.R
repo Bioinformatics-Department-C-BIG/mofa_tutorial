@@ -4,6 +4,7 @@ dim(res.positive$pval.adj)
 length(cohort_cors)
 var_captured  <-vars_by_factor_all$r2_total[[1]]
 vars_by_factor_all$r2_total
+cor_t<-0.1
 cor_t<-0.15
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
@@ -59,6 +60,8 @@ get_weighted_pvals<-function(enrich_weights){
   write.csv(melted_ord_sig,paste0(out_compare, 'mofa_',pos,T, '.csv' ) )
   return(melted_ord_sig)
 }
+
+###   TODO: load res.positive from file
 mofa_file<-paste0(out_compare, 'mofa_',T, cor_t ) 
 pos_ord<-get_weighted_pvals(res.positive$pval.adj)
 neg_ord<-get_weighted_pvals(res.negative$pval.adj)
@@ -76,7 +79,7 @@ length(unique(all_ord$Var1))
 colnames(all_ord)[1]<-'Description'
 colnames(all_ord)
 
-
+write.csv(all_ord, paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv'), row.names = FALSE)
 N_paths<-20
 all_ord$p.adj
 all_ord$log10padj<--log10(all_ord$p.adj)

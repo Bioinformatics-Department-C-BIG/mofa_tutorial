@@ -173,7 +173,7 @@ pvalueCutoff_sig=0.05
 
 padj_paths<-0.05
 pvalueCutoff=1
-results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+results_file<-paste0(outdir_rnas,'/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 enrich_rnas_file<-paste0(results_file,pvalueCutoff ,'.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval')
@@ -210,6 +210,8 @@ unique_rna<-enrich_rna %>%
 dim(unique_rna)
 lapply(res_overlap, length)
 
+
+
 write.csv(unique_rna,
           paste0(out_compare,'unique_rna_' , int_params, '.csv') , row.names = FALSE)
 write.csv(enrich_proteins %>% 
@@ -243,7 +245,7 @@ listInput_all_mods<-list(rna=enrich_rna_sig$Description,
                          prot=enrich_proteins_sig$Description, 
                          mirnas=enrich_mirnas_sig$Description)
 #BiocManager::install('scran')
-library('scran')
+#library('scran')
 pvalueCutoff=1
 enrich_rnas_file<-paste0(results_file, pvalueCutoff,  '.csv')
 enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
@@ -386,8 +388,8 @@ if (add_mirs){
   
 }
 
-dim(merged_paths_fish_sig_filt)
 merged_paths_fish_sig_filt<-merged_paths_fish_sig[,choose_cols]
+dim(merged_paths_fish_sig_filt)
 
 
 mir_enrich_p<-ggplot(merged_paths_fish_sig_filt[1:30,],aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
@@ -447,8 +449,12 @@ mir_enrich_p_all
   
   
   #### COMPARE TO MOFA
+  cor_t<-0.15
+  
+  mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
+  all_ord_R<-read.csv(mofa_enrich_file, header=1)
   single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))
-  listInput_single_mofa<-list( mofa=unique(all_ord$Description), single=single_paths)
+  listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths)
  mofa_overlap<-calculate.overlap(listInput_single_mofa)
  unique_single<-mofa_overlap$a2[!(mofa_overlap$a2 %in%mofa_overlap$a3)]
  unique_mofa<-mofa_overlap$a1[!(mofa_overlap$a1 %in%mofa_overlap$a3)]
@@ -461,14 +467,17 @@ mir_enrich_p_all
                filename=paste0(out_compare, 'mofa_overlap.jpeg'))
  mofa_overlap$a2
  
+ 
+ myCol2 <- brewer.pal(3, "Pastel2")[1:2]
+ 
  venn.diagram(listInput_single_mofa,
               # Circles
               lwd = 2,
               lty = 'blank',
-              fill = myCol,
+              fill = myCol2,
               cex=2.5,
               cat.cex=0,
-              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm_mofa.png'), 
+              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm_mofa', cor_t, '.png'), 
               output=TRUE)
 
  

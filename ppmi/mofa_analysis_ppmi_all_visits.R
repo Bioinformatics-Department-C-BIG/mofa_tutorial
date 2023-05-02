@@ -200,7 +200,7 @@ dev.off()
 
 ### filter only the ones that are correlated 
 
-write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
+#write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
 
 

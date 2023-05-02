@@ -40,7 +40,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
   # rewrite
   dim(gse_full); dim(gse_sig_result)
   ## filter gse result to significant only 
-  gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
+  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
   return(gse)
 }
 
@@ -62,7 +62,6 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   # because it does not make sense if we dont rank by logFC
   # or in the mofa case where we rank by importance in factor 
   
-  N_DOT=15
   dp<-dotplot(gse, showCategory=N_DOT, 
               font.size=15
               )
@@ -106,7 +105,9 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
 
   N_RIDGE=25
-  if (!process_mirnas){
+  
+  if (!process_mirnas & !process_mofa){
+    print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     r_p
     ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)

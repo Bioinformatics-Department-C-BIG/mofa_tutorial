@@ -11,7 +11,7 @@ library(stats)
 
 list1=list()
 list_proteins=list()
-
+list_mirs=list()
 nfactors<-MOFAobject@dimensions$K
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
@@ -33,6 +33,7 @@ get_ranked_gene_list_mofa<-function(view, factor){
   return(gene_list_ord)
 }
 
+process_mofa=TRUE
 pvalueCutoff=1
 nfactors=8
 if (file.exists(mofa_enrich_rds)){
@@ -41,7 +42,7 @@ if (file.exists(mofa_enrich_rds)){
 }else{
   
       for (factor in 1:nfactors){
-            for (view in c('proteomics')){
+            for (view in c('miRNA')){
               #### Do the RNA view for whatever is high in rna 
               print(paste0(view, factor ))
               gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -71,6 +72,16 @@ if (file.exists(mofa_enrich_rds)){
                   list_proteins[[factor]]<-gse_protein_full
                   
                 }
+                if (view=='miRNA'){
+                  mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
+                                                     mirna_type = "mature",
+                                                     test_type = "GSEA",
+                                                     species = 'Homo sapiens',
+                                                     sig_level=pvalueCutoff
+                  )
+                  list_mirs[[factor]]<-mieaa_all_gsea
+                  
+                }
              
           
             
@@ -79,7 +90,7 @@ if (file.exists(mofa_enrich_rds)){
       
       }
       
-      saveRDS(list(list1,list_proteins),mofa_enrich_rds )
+      saveRDS(list(list1,list_proteins, list_mirs),mofa_enrich_rds )
 
       
 }
@@ -133,5 +144,38 @@ for (factor in 1:nfactors){
     }
       
 }
+
+
+for (factor in 1:nfactors){
+  
+  
+  
+  results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+  dir.create(paste0(outdir, '/enrichment/mirnas/'))
+  gse_mofa=list_mirs[[factor]]
+  gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff)
+  
+  
+  write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
+  
+  ### to run mofa results
+  
+  process_mirnas=FALSE
+  process_mofa=TRUE
+  dim(gse_mofa_sig)
+  #& vars_by_factor[,'proteomics'][factor]>1
+  if  (dim(gse_mofa_sig)[1]>2 ){
+    print(paste(factor,'sig'))
+    which(gse_mofa@result$p.adjust<0.05)
+    gse_mofa
+    enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
+                                       results_file=results_file_mofa, 
+                                       N_DOT=20, N_EMAP = 15)    
+    
+  }
+  
+}
+
+
 vars_by_factor[,'proteomics']
     

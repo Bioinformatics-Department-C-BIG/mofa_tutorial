@@ -22,8 +22,6 @@ source(paste0(data_dir, '/ppmi/deseq_analysis_setup.R'))
 
 
 outdir_mirs<-paste0(outdir_orig, '/single/', 'mirnas_',VISIT, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
-
-
 outdir_rnas<-paste0(outdir_orig, '/single/', 'rnas_',VISIT, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_',des)
 
 
@@ -91,20 +89,39 @@ padj_T=padj_T_overall
 log2fol_T=log2fol_T_overall
 deseq_table<-paste0(outdir_s, '/results_df.csv')
 deseq_res<-read.csv(deseq_table)
-signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
-deseq_table<-paste0(signif_file)
-ncols=10 
-deseq_res<-read.csv(deseq_table)[,1:ncols]
 
+
+outdirs_all=list(outdir_rnas,outdir_mirs, outdir_s_p )
+get_sig<-function(outdir_s){
+    signif_file<-paste0(outdir_s,'/significant', padj_T, '_',log2fol_T, '.csv')
+    deseq_table<-paste0(signif_file)
+    ncols=10 
+    deseq_res<-read.csv(deseq_table)[,1:ncols]
+    
+    padj_T_overall<-.01
+    deseq_res_strict<-deseq_res[deseq_res$padj<padj_T_overall,]
+    return(c(dim(deseq_res)[1], dim(deseq_res_strict)[1]))
+   
+  
+}
+
+table_sig<-sapply(outdirs_all, get_sig) 
 cat( 'log2foldChange > ', log2fol_T_overall,  ', padj < ', padj_T_overall,'\n',
-     'DE features: ', dim(deseq_res)[1])
+         'DE features: ', dim(deseq_res)[1])
+  
 
 #### bring the absolute high fol to the top 
-deseq_res_ord<-deseq_res %>%
-  arrange(., -abslog2pval)
+#deseq_res_ord<-deseq_res %>%
+#  arrange(., -abslog2pval)
+colnames(table_sig)<-c('RNA', 'miRNAs', 'proteomics')
+rownames(table_sig)<-c('0.05', '0.01')
 
-datatable(deseq_res_ord, options = list(scrollY = "300px"), class = "display", fillContainer = T, 
-       width = NULL, height = 1000, editable = FALSE) 
+table_sig %>% kable %>%
+  kable_styling("striped", full_width = F) 
+
+
+#datatable(deseq_res_ord, options = list(scrollY = "300px"), class = "display", fillContainer = T, 
+       #width = NULL, height = 1000, editable = FALSE) 
 
 #deseq_res_ord %>%
 #  kable %>%
@@ -112,10 +129,10 @@ datatable(deseq_res_ord, options = list(scrollY = "300px"), class = "display", f
 # scroll_box(width = "1000px", height = "300px")
 
 
-if (process_mirnas){COL='X'}else{COL='SYMBOL'}
+#if (process_mirnas){COL='X'}else{COL='SYMBOL'}
   
-  top<-deseq_res_ord[,COL][1:10]
-  cat('Top 10 markers: ', top)
+#  top<-deseq_res_ord[,COL][1:10]
+#  cat('Top 10 markers: ', top)
 
 
 
@@ -125,23 +142,38 @@ if (process_mirnas){COL='X'}else{COL='SYMBOL'}
 
 
 
-### Volcano plots
+### Heatmaps 
 ```{r heatmaps, echo=FALSE, fig.show="hold", fig.width=6, fig.height=8, out.width = "50%"}
 
-
-log2fol_T_hm<-0.15
-padj_T_hm<-.005
+log2fol_T_hm<-0.1
+padj_T_hm<-.05
 order_by_metric='log2pval'
-n_sig_f='all'
+order_by_metric='padj_reverse'
 
-fname_hm<-paste0(outdir_rnas, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
+cluster_cols=TRUE
+filter_highly_var=FALSE
+n_sig_f=30
+most_var_t=FALSE
+
+fname_hm<-paste0(outdir_rnas, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+              filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
 
 knitr::include_graphics(fname_hm, dpi = 96, )
 
 
-fname_hm<-paste0(outdir_mirs, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
+fname_hm<-paste0(outdir_mirs, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+              filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
+knitr::include_graphics(fname_hm, dpi = 96, )
+
+filter_highly_var=FALSE
+n_sig_f=30
+prefix='prot_';
+fname_hm<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+              filter_highly_var '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
 
 knitr::include_graphics(fname_hm, dpi = 96, )
+
+
 
 #source(paste0(data_dir,'/ppmi/RNAseq enrichment.R'))
 #show(dp)
@@ -217,14 +249,16 @@ if (process_mirnas){
 N=25
 dp_file<-paste0(results_file, '_dot',  '.jpeg')
 emap_file<-paste0(results_file, '_emap_', N,  '.jpeg')
-N=30
+N=30;N_RIDGE=25
 p2_tree_file<-paste0(results_file, '_clusterplot_average_',N, '.jpeg')
+r_p_file<-paste0(results_file, '_ridge_', N_RIDGE, '.jpeg')
 
 
 knitr::include_graphics(dp_file, dpi = 96, )
 knitr::include_graphics(emap_file, dpi = 96, )
 
 knitr::include_graphics(p2_tree_file, dpi = 96, )
+knitr::include_graphics(r_p_file, dpi = 96, )
 
 
 ```

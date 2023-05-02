@@ -1,6 +1,5 @@
 
 
-
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
 
@@ -105,8 +104,8 @@ vsd_mat <- assay(vsd)
 
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
-for (most_var in c(0.05, 0.5)){
-#  for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
+#for (most_var in c(0.05, 0.5)){
+  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
     
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
@@ -274,76 +273,57 @@ dds$Condition<-dds$COHORT
 graphics.off()
 run_heatmap=TRUE
 
+
+### TODO: MAKE A FUNCTION 
 if (run_heatmap){
   vsd_filt=vsd
+  ### INPUT FOR HEATMAP IS VSD
   deseq2VST <- as.data.frame( assay(vsd_filt))
-  
-  #### Filter data for visualization 
-  table(vsd_filt$COHORT)
-  ### First filter data 
-  rownames(vsd)
   rownames(deseq2VST)<-rownames(vsd)
   deseq2VST$Gene <- rownames(deseq2VST)
-  head(deseq2VST$Gene)
-  
-  
-  
+
   
   #deseq2ResDF$padj 
   # Keep only the significantly differentiated genes where the fold-change was at least 3
   log2fol_T_hm<-0.1
   padj_T_hm<-.05
-  
   deseq2ResDF$abslog2FC<-abs(deseq2ResDF$log2FoldChange)
-  colnames(deseq2ResDF)
   sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T_hm & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm,])
   deseq2ResDF$Gene<-rownames(deseq2ResDF)
   order_by_metric<-'abslog2pval'
   order_by_metric<-'log2pval'
-  
-  
-  
   # bring the low padj to the top!!
   order_by_metric<-'abslog2pval'
   order_by_metric<-'abslog2'
   order_by_metric<-'abslog2FC'
-  
   order_by_metric<-'padj_reverse'
   
   quant=0.9
   mean_expr_T<-quantile(deseq2ResDF$baseMean, quant)
-  
+  # DEFINE THE reverse of padj
   deseq2ResDF$padj_reverse<--deseq2ResDF$padj
   deseq2ResDF$padj_reverse
+
+  ### Filter the significant 
   oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm, ] ; dim(oSigGenes)
-  
-  oSigGenes
-  
-  
   length(rownames(highly_variable_sign_genes_mofa))
   #View(deseq2ResDF)
-  oSigGenes$padj
   filter_highly_var=FALSE
   if (filter_highly_var){
     oSigGenes<-deseq2ResDF[rownames(deseq2ResDF) %in% rownames(highly_variable_sign_genes_mofa),]
-    
     dim(oSigGenes)
+    most_var_t=most_var
+  }else{
+    most_var_t=FALSE
   }
   ### also filter by mean > 0.75
   oSigGenes<-oSigGenes[oSigGenes$baseMean>mean_expr_T,];dim(oSigGenes)
   
-  
-  oSigGenes[,order_by_metric]
+  ### Order using the order_by_metric 
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
-  orderedSigGenes
-  oSigGenes$padj_reverse
-  orderedSigGenes$padj
-  
-  
-  dim(orderedSigGenes)
-  
+
+  n_sig_f=30
   n_sig_f='all'
-  n_sig_f=100
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
@@ -375,28 +355,26 @@ if (run_heatmap){
   df<-vsd_filt$COHORT
   assay(vsd_filt)
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-  #vsd_filt
+
   
+  ### Add the annotations 
+  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'AGE', 'NHY')])
   
-  dim(vsd_filt_genes)
-  length(vsd_filt_genes$COHORT)
-  
-  
-  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'NHY')])
-  
-  
+  ## HEATMAP OPTIONS 
   cluster_cols=TRUE
-  
-  #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
+    #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
   fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-                filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
+                filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
   
   #ARRANGE
   df_ord<-df[order(df$COHORT),]
   hm<-assay(vsd_filt_genes)
   hm_ord<-hm[,order(df$COHORT)]
   
+  ### SCALE!! 
+  
   hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
+  dim(hm_ord)
   #jpeg(fname, width=2000, height=1500, res=200)
   graphics.off()
   library(ggplot2)
@@ -404,7 +382,7 @@ if (run_heatmap){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
   
-      jpeg(fname, width=10*100, height=7*100, res=120)
+      #jpeg(fname, width=10*100, height=7*100, res=300)
       my_pheatmap<-pheatmap(hm_scaled, 
                             labels_row=lab,
                             cluster_rows=TRUE, 
@@ -417,11 +395,10 @@ if (run_heatmap){
       
       
      show(my_pheatmap)
-      dev.off() 
       my_pheatmap
      # ggsave(fname, width=10, height=7)
       
-      #ggsave('plot.png',plot=my_pheatmap, width=10, height=7)
+      ggsave(fname,plot=my_pheatmap, width=7, height=7, dpi=300)
 
 
   #P2<-pheatmap(assay(vsd_filt_genes), 

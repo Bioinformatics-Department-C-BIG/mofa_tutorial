@@ -75,7 +75,6 @@ if (NORMALIZED){
 }
 in_file_original
 
-highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 outdir<-outdir_orig
 print(highly_variable_proteins_outfile)
 
@@ -207,20 +206,18 @@ vsn_mat<-normalized_data
 
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
-highly_variable_proteins_mofa=selectMostVariable(vsn_mat, TOP_PN)
-
-#dim(highly_variable_proteins_mofa)
-#head(rownames(highly_variable_proteins_mofa))
-## Just plot to see the result of vsn
-#png(paste0(output_1,'box_', p_params_out,'.png' ))
-#boxplot(highly_variable_proteins_mofa[,1:30])
-#dev.off()
-
-colnames(highly_variable_proteins_mofa)
-
-write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
-dim(highly_variable_proteins_mofa)
-
+TOP_PN
+for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
+     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+    highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
+  
+  
+    highly_variable_proteins_mofa=selectMostVariable(vsn_mat, TOP_PN)
+    
+    
+    write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
+    dim(highly_variable_proteins_mofa)
+}
 png(paste0(output_1,'hist_high_var_', p_params_out,'.png' ))
 hist(highly_variable_proteins_mofa)
 dev.off()

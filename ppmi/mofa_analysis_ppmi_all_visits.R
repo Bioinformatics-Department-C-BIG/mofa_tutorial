@@ -121,11 +121,11 @@ cors_pearson<-correlate_factors_with_covariates(MOFAobject,
                                         return_data = TRUE
                                         
 )
-cors_pearson[,'CONCOHORT']
+
+round(cors_pearson[,'CONCOHORT'], digits=2)
 
 cors_pearson
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
-ids_to_plot
 ids_to_plot<-which(apply(cors_pearson, 2, sum)>0)
 which(cors_pearson>0.1)
 
@@ -226,6 +226,7 @@ covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
                                   return_data = TRUE
 )
 write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
+write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
 
 
 view='proteomics'; factor=6

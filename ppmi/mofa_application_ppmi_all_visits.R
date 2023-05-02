@@ -48,7 +48,7 @@ TOP_GN
 
 # TODO: move all to config file 
 split=FALSE
-run_rna_mirna=TRUE
+run_rna_mirna=FALSE
 ### if we are using all modalities we might need to change TOP_GN
 TOP_PN=0.70
 
@@ -82,15 +82,21 @@ process_mirnas=FALSE
 
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/mofa_config.R'))
+
 NORMALIZED
-TOP_GN
+TOP_GN; TOP_MN
+metadata_output<-paste0(output_files, 'combined.csv')
+combined_all_original<-read.csv2(metadata_output)
+
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
+dim(combined)
+dim(combined_log)
+
 combined_bl<-combined
 which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
-
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 
@@ -111,6 +117,8 @@ if (use_signif){
   
 }
 
+
+
 highly_variable_mirnas_outfile
 highly_variable_genes_outfile
 highly_variable_proteins_outfile
@@ -127,14 +135,14 @@ highly_variable_proteins_outfile
 #rownames(vsn_file_m_df)<-vsn_file_m_df[,1]
 
 
-
+mofa_params;g_params
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 
 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
-
+outdir
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
 fname
 
@@ -229,13 +237,10 @@ primary=colname
 
 
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
-sample_map$primary
 
 common_samples_in_assays=unique(colname)
-common_samples_in_assays
 ### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
-combined_bl$AGE_AT_VISIT
 
 metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
 metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
@@ -248,12 +253,10 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  sampleMap=sample_map)
 
 
-head(assays(mofa_multi)$miRNA)
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 
 
 
-complete.cases(metadata_filt$EVENT_ID)
 library('UpSetR')
 upsetSamples(mofa_multi)
 #mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]

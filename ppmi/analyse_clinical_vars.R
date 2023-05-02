@@ -67,7 +67,7 @@ df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
   df_log[df_lognan_r]<-NA
   #combined_new<-merge(combined,df_log)
   combined_new<-mutate(df_log,combined)
-
+  dim(combined_new)
   metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 

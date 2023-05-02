@@ -42,7 +42,6 @@ if (run_vsn){
   }
 
 tmp
-dim(proteomics)
 COHORT<-se_filt$COHORT
 dim(se_filt)
 AGE=se_filt$AGE_SCALED
@@ -149,29 +148,47 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 
 
 
-
 ################### HEATMAPS  ############
 
 #ARRANGE
 #df_ord<-df[order(df$COHORT),]
-ids<-rownames(vsn_mat) %in% gene_list_limma_significant
+
+order_by_metric<-'padj_reverse'
+
+gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_overall & results_de$logFC>log2fol_T_overall]
+length(gene_list_limma_significant_heatmap)
+ids<-rownames(vsn_mat) %in% gene_list_limma_significant_heatmap
+
+
 hm<-vsn_mat[ids,]
-colnames(vsn_mat)
+results_de$padj_reverse<--results_de$adj.P.Val
+
+
+
+dim(hm)
 dim(COHORT)
 se_filt$age
 df<-as.data.frame(c(se_filt$COHORT_DEFINITION))
-df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE' )])
-df$AGE
-rownames(df)<-se_filt$PATNO_EVENT_ID
+df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )])
+rownames(df)<-df$PATNO_EVENT_ID
+df$PATNO_EVENT_ID<-NULL
+colnames(vsn_mat)
+rownames(df)
+#rownames(df)<-se_filt$PATNO_EVENT_ID
 se_filt$COHORT
 dim(df)
 dim(hm)
+
 #hm_ord<-hm[,order(df$COHORT)]
 
+#<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
+filter_highly_var=FALSE; most_var_t=FALSE
+cluster_cols=TRUE
+n_sig_f=30
 
 fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-              filter_highly_var,    '_', most_var, '_',  n_sig_f, cluster_cols, '.jpeg')
-
+              filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
+fname
 graphics.off()
 library(ggplot2)
 if(process_mirnas){

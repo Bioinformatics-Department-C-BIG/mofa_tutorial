@@ -31,8 +31,22 @@ if (run_rna_mirna){
   TOP_GN=0.30
   
 }else{
+  #  for (most_var in c(0.05, 0.1,0.2,0.3,  0.9,0.75,0.5)){
+  
+  ##
+  TOP_GN=0.05
+  TOP_MN=0.5
+  
   TOP_GN=0.10
   TOP_MN=0.5
+  
+  
+  TOP_GN=0.10
+  TOP_MN=0.3
+  TOP_MN=0.25
+  TOP_PN=0.75
+  
+  
 }
 
 
@@ -45,6 +59,8 @@ g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
 param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
 param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
 
+### file specifically for mofa run 
+p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 
 

@@ -321,9 +321,9 @@ if (run_heatmap){
   
   ### Order using the order_by_metric 
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
-
-  n_sig_f=30
+  
   n_sig_f='all'
+  n_sig_f=30
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
@@ -358,7 +358,7 @@ if (run_heatmap){
 
   
   ### Add the annotations 
-  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT","SEX", 'AGE', 'NHY')])
+  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT", "SEX", 'AGE', 'NHY')])
   
   ## HEATMAP OPTIONS 
   cluster_cols=TRUE
@@ -419,7 +419,7 @@ if (run_heatmap){
   #plot(hclust(dists))
 }
 
-
+my_pheatmap
 
 ### Add Volcano plots 
 ### Compare to their results 

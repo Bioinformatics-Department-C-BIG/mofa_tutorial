@@ -30,7 +30,6 @@ output_files<- paste0(data_dir,'ppmi/output/')
 
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
-TOP_GN
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
 
@@ -50,21 +49,9 @@ TOP_GN
 split=FALSE
 run_rna_mirna=FALSE
 ### if we are using all modalities we might need to change TOP_GN
-TOP_PN=0.70
-
 FULL_SET=TRUE
-
-NA_PERCENT=0.8
-
-
 VISIT_COMPARE='BL'
-TOP_PN=0.90
 # cohort 1 =prodromal 
-
-
-
-
-
 N_FACTORS=12
 
 if (split){
@@ -91,7 +78,6 @@ combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 dim(combined)
-dim(combined_log)
 
 combined_bl<-combined
 which(is.na(combined_bl$AGE))
@@ -99,7 +85,6 @@ combined_bl$AGE
 scale_views=TRUE
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
-
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
@@ -135,7 +120,7 @@ highly_variable_proteins_outfile
 #rownames(vsn_file_m_df)<-vsn_file_m_df[,1]
 
 
-mofa_params;g_params
+mofa_params;g_params;p_params;p_params_out
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
 highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
 
@@ -154,9 +139,10 @@ fname
 in_file<-highly_variable_proteins_outfile
 
 highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
+
 ### Start loading mofa data
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
-
+dim(highly_variable_proteins_mofa)
 
 ##### Load mirnas + RNAs 
 ### we use data.table because there are duplicate samples? 
@@ -325,7 +311,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi2.hdf5'), use_basilisk = TRUE)
+#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

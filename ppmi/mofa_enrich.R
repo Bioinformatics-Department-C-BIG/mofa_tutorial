@@ -1,15 +1,34 @@
 
 
 source(paste0(script_dir, '/RNAseq enrichment.R'))
+#BiocManager::install('stats')
+library(stats)
 ### need to load or add the function first because it fails !! 
 #### Prerequisites are mofa analysis 
 ### and rna seq enrichment 
+
+
 
 list1=list()
 nfactors<-MOFAobject@dimensions$K
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa.Rds')
 
 ONT='BP'
+vars_by_factor_all
+
+get_ranked_gene_list_mofa<-function(view, factor){
+  f1<-get_weights(MOFAobject, view=view, factor=factor)
+  gene_list<-f1[view][[1]] 
+  gene_list
+  hist(gene_list)
+  
+  order_ind<-order(-gene_list)
+  gene_list_ord<-gene_list[order_ind,]
+  names(gene_list_ord)<-rownames(gene_list)[order_ind]
+  return(gene_list_ord)
+}
+
+pvalueCutoff=1
 
 if (file.exists(mofa_enrich_rds)){
   list1<-loadRDS(mofa_enrich_rds)
@@ -17,24 +36,37 @@ if (file.exists(mofa_enrich_rds)){
 }else{
   
       for (factor in 1:nfactors){
-      
-            f1<-get_weights(MOFAobject, view='RNA', factor=factor)
-            gene_list<-f1['RNA'][[1]] 
-            hist(gene_list)
-            
-            order_ind<-order(-gene_list)
-            gene_list_ord<-gene_list[order_ind,]
-            names(gene_list_ord)<-rownames(gene_list)[order_ind]
-            names(gene_list_ord)
-      
-            gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
-                                        ont=ONT, 
-                                        keyType = 'ENSEMBL', 
-                                        OrgDb = 'org.Hs.eg.db', 
-                                        pvalueCutoff  = 0.05)
-      
-          list1[[factor]]<-gse_mofa
+            for (view in c('RNA','miRNA','proteomics')){
+              
+              if (view=='RNA'){
+                view='RNA'
+                #### Do the RNA view for whatever is high in rna 
+                gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
+                gene_list_ord
+                ### Run RNA 
+                gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
+                                                   ont=ONT, 
+                                                   keyType = 'ENSEMBL', 
+                                                   OrgDb = 'org.Hs.eg.db', 
+                                                   pvalueCutoff  = pvalueCutoff)
+              
+                list1[[factor]]<-gse_mofa
+                }
+             
           
+              
+            }
+            ### Run proteins 
+        if (view=='proteomics'){
+          gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                                     ont=ONT, 
+                                                     keyType = 'SYMBOL', 
+                                                     OrgDb = 'org.Hs.eg.db', 
+                                                     pvalueCutoff  = pvalueCutoff)
+        }
+           
+          
+            
           
           
       
@@ -44,6 +76,11 @@ if (file.exists(mofa_enrich_rds)){
 
       
 }
+
+
+#### Now run the prot view ? 
+
+
 
 
 #gse_mofa=list1[[factor]]

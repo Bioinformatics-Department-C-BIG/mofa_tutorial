@@ -1,11 +1,14 @@
 
+
+#### choose factors from MOFA and RANK the pathways accordingly 
 cohort_cors<-cors_pearson[,'CONCOHORT']
 dim(res.positive$pval.adj)
 length(cohort_cors)
 var_captured  <-vars_by_factor_all$r2_total[[1]]
 vars_by_factor_all$r2_total
 cor_t<-0.1
-cor_t<-0.15
+cor_t<-0.10
+
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 cohort_cors
@@ -13,6 +16,8 @@ cohort_cors
 sel_factors<-c('Factor3', 'Factor4', 'Factor5')
 sel_factors<-c('Factor3', 'Factor4', 'Factor5')
 sel_factors<-c( 'Factor3', 'Factor4')
+
+
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 paste0(sel_factors)
@@ -104,6 +109,7 @@ ggsave(paste(mofa_file, '.jpeg'),mofa_enrich_plot, dpi=300,
 
 mofa_enrich_plot
 
+unique(all_ord$Description)
 
 
 

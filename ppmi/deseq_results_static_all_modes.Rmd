@@ -169,7 +169,7 @@ filter_highly_var=FALSE
 n_sig_f=30
 prefix='prot_';
 fname_hm<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-              filter_highly_var '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
+              filter_highly_var, '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
 
 knitr::include_graphics(fname_hm, dpi = 96, )
 

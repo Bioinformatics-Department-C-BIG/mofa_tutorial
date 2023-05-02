@@ -95,18 +95,6 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 NROW(non_na_vars)
 #### Covariance of factors with metadata 
 
-
-#correlate_factors_with_covariates(MOFAobject,
-#                                  covariates = c("NP1ANXS", "NP1DPRS", 'NP1HALL', 'NP1APAT', 'NP1DDS', 'NP1RTOT'), 
-#                                  plot = "log_pval"
-#                                 
-#                                  
-#)
-#dev.off()
-
-
-
-## plot only factors that correlate? 
 cors<-correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars), 
                                   plot = "log_pval", 
@@ -128,8 +116,6 @@ cors_pearson
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
 ids_to_plot<-which(apply(cors_pearson, 2, sum)>0)
 which(cors_pearson>0.1)
-
-ids_to_plot<-which(apply(cors, 2, sum)>0)
 ids_to_plot<-which(apply(cors, 2, sum)>0)
 tot_cor_t=5
 ids_to_plot_strict<-which(apply(cors, 2, sum)>tot_cor_t)
@@ -214,17 +200,6 @@ dev.off()
 
 ### filter only the ones that are correlated 
 
-covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
-                                                         covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:70, 90:124)], 
-                                                         plot = "log_pval",
-                                                         return_data = TRUE
-)
-
-covariate_corelations<-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = colnames(MOFAobject@samples_metadata)[c(6:12,45:70, 90:124)], 
-                                  plot = "log_pval",
-                                  return_data = TRUE
-)
 write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
 
@@ -403,6 +378,21 @@ type(MOFAobject@samples_metadata$STAIAD3)
 
 plot_factors(MOFAobject, 
              factors = fs, 
+             show_missing = FALSE
+)
+color_by='COHORT'
+plot_factors(MOFAobject, 
+             factors =  c(2,4), 
+             color_by = color_by,
+             
+             show_missing = FALSE
+)
+
+
+plot_factor(MOFAobject, 
+             factors = c(2,4,6),
+            color_by = color_by,
+            
              show_missing = FALSE
 )
 

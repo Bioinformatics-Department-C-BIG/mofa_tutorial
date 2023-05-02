@@ -331,7 +331,7 @@ if (add_mirs){
   p3<-merged_paths[,4];length(p3)
   fish <- metapod::combineParallelPValues(list(p1, p2, p3),
                                           method=pmethod, 
-                                         weights = c(1,1,0.5))$p.value
+                                         weights = c(1,1,0.9))$p.value
 # pmethod<-'fisher'
  
 # fish <- metapod::combineParallelPValues(list(p1, p2, p3),
@@ -358,6 +358,7 @@ combined_p_thresh<-0.01
 
 
 ### number from each 
+combined_p_thresh<-0.01
 combined_p_thresh<-0.05
 combined_p_thresh<-0.01
 
@@ -449,8 +450,8 @@ mir_enrich_p_all
   
   
   #### COMPARE TO MOFA
-  cor_t<-0.15
-  
+  cor_t<-0.1
+  outdir
   mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
   all_ord_R<-read.csv(mofa_enrich_file, header=1)
   single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))

@@ -88,7 +88,7 @@ TISSUE='CSF'
 TISSUE='Plasma'
 TOP_PN=0.9
 
-TOP_PN<-0.9
+
 NA_PERCENT=0.9
 
 NORMALIZED=TRUE;run_vsn=FALSE
@@ -97,13 +97,12 @@ sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 
 ## VISIT_S to allow this to be more than one visits at once!! 
-p_params<- paste0(VISIT_S, '_', TISSUE, '_', TOP_PN, '_', NORMALIZED, '_')
+TOP_PN<-0.9
+
 #### read in proteomics 
 p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
-p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_', des, '/' )
 p_params_FILE<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s )
-
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
 

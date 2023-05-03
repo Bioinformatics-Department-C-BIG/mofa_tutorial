@@ -42,7 +42,7 @@ if (file.exists(mofa_enrich_rds)){
 }else{
   
       for (factor in 1:nfactors){
-            for (view in c('miRNA')){
+            for (view in c(  'proteomics')){
               #### Do the RNA view for whatever is high in rna 
               print(paste0(view, factor ))
               gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -72,16 +72,16 @@ if (file.exists(mofa_enrich_rds)){
                   list_proteins[[factor]]<-gse_protein_full
                   
                 }
-                if (view=='miRNA'){
-                  mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
-                                                     mirna_type = "mature",
-                                                     test_type = "GSEA",
-                                                     species = 'Homo sapiens',
-                                                     sig_level=pvalueCutoff
-                  )
-                  list_mirs[[factor]]<-mieaa_all_gsea
+               #if (view=='miRNA'){
+               #   mieaa_all_gsea <- rba_mieaa_enrich(test_set = gene_list_ord,
+               #                                      mirna_type = "mature",
+               #                                      test_type = "GSEA",
+               #                                      species = 'Homo sapiens',
+               #                                      sig_level=pvalueCutoff
+               #   )
+                #  list_mirs[[factor]]<-mieaa_all_gsea
                   
-                }
+               # }
              
           
             
@@ -106,7 +106,7 @@ list_proteins
 
 ## or LOAD GSE RESULTS HERE 
 for (factor in 1:nfactors){
-  
+  process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa=list1[[factor]]
   write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
@@ -115,10 +115,10 @@ for (factor in 1:nfactors){
   run_enrichment_plots(gse=gse_mofa, results_file = results_file_mofa)
 } 
 
+
+list_prote0ins[[1]]
+run_ORA=FALSE
 for (factor in 1:nfactors){
-    
-  
-    
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
     dir.create(paste0(outdir, '/enrichment/proteins/'))
     gse_mofa=list_proteins[[factor]]
@@ -139,7 +139,7 @@ for (factor in 1:nfactors){
       gse_mofa
           enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
                                              results_file=results_file_mofa, 
-                                             N_DOT=20, N_EMAP = 15)    
+                                             N_DOT=15, N_EMAP = 15)    
           
     }
       
@@ -147,8 +147,6 @@ for (factor in 1:nfactors){
 
 
 for (factor in 1:nfactors){
-  
-  
   
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
   dir.create(paste0(outdir, '/enrichment/mirnas/'))

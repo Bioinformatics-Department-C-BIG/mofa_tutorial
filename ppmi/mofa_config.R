@@ -40,11 +40,14 @@ if (run_rna_mirna){
   TOP_GN=0.10
   TOP_MN=0.5
   
-  
+  ### looks better with corelation to disease 
   TOP_GN=0.10
   TOP_MN=0.3
   TOP_MN=0.25
-  TOP_PN=0.75
+  
+  TOP_MN=0.90
+  TOP_GN=0.30
+  TOP_PN=0.9
   
   
 }

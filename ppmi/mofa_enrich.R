@@ -35,15 +35,16 @@ get_ranked_gene_list_mofa<-function(view, factor){
 
 process_mofa=TRUE
 pvalueCutoff=1
-nfactors=8
+nfactors=6
 if (file.exists(mofa_enrich_rds)){
   list1<-loadRDS(mofa_enrich_rds)
   
 }else{
   
       for (factor in 1:nfactors){
-            for (view in c(  'proteomics')){
-              #### Do the RNA view for whatever is high in rna 
+            for (view in c(  'miRNA')){
+              #### Do the RNA view for whatever is high in rna
+              factor=3
               print(paste0(view, factor ))
               gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
               gene_list_ord
@@ -72,16 +73,20 @@ if (file.exists(mofa_enrich_rds)){
                   list_proteins[[factor]]<-gse_protein_full
                   
                 }
-               #if (view=='miRNA'){
-               #   mieaa_all_gsea <- rba_mieaa_enrich(test_set = gene_list_ord,
-               #                                      mirna_type = "mature",
-               #                                      test_type = "GSEA",
-               #                                      species = 'Homo sapiens',
-               #                                      sig_level=pvalueCutoff
-               #   )
-                #  list_mirs[[factor]]<-mieaa_all_gsea
-                  
-               # }
+              if (view=='miRNA'){
+                
+                #gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
+                #gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
+                 mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
+                                                    mirna_type = "mature",
+                                                    test_type = "GSEA",
+                                                    species = 'Homo sapiens',
+                                                     # categories='GO Biological process (miRPathDB)',
+                                                    sig_level=pvalueCutoff
+                 )
+              #  list_mirs[[factor]]<-mieaa_all_gsea
+                
+               }
              
           
             
@@ -122,7 +127,7 @@ for (factor in 1:nfactors){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
     dir.create(paste0(outdir, '/enrichment/proteins/'))
     gse_mofa=list_proteins[[factor]]
-    gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff)
+    gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff, pvalueCutoff_sig=0.2)
     
     
     write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
@@ -151,6 +156,7 @@ for (factor in 1:nfactors){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
   dir.create(paste0(outdir, '/enrichment/mirnas/'))
   gse_mofa=list_mirs[[factor]]
+  
   gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff)
   
   

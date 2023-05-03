@@ -450,7 +450,7 @@ mir_enrich_p_all
   
   
   #### COMPARE TO MOFA
-  cor_t<-0.1
+  cor_t<-0.09
   outdir
   mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
   all_ord_R<-read.csv(mofa_enrich_file, header=1)

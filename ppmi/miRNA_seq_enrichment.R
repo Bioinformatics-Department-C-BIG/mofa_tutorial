@@ -55,9 +55,11 @@ dir.create(outdir_enrich)
 
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
 top_n=length(gene_list);
-#top_n=200
+#top_n=400
 top_n
-gene_list_cut<-gene_list[1:top_n]
+gene_list_cut<-gene_list[order(abs(gene_list))][1:top_n]
+gene_list_cut<-gene_list_cut[order(gene_list_cut, decreasing=TRUE)]
+
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
 mirs
@@ -66,7 +68,7 @@ mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
 #### Up to here we can take the output for other methods 
 
-
+gene_list_cut
 
 
 ############## RUN MIEAA ######################################
@@ -86,10 +88,24 @@ if (file.exists(gsea_results_fname)){
                                      species = 'Homo sapiens',
                                      sig_level=pvalueCutoff
   )
+  
+  
   ### write to file to load next time 
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
+
+### FROM HERE ONWARDS RUN MOFA 
+## TODO: MAKE THIS A FUNCTION that takes in arguments of mieaa_all_gsea and mir_results_file 
+process_mofa=FALSE
+if (process_mofa){
+  
+  mieaa_all_gsea=mieaa_all_gsea_mofa
+  mir_results_file=paste0(outdir, '/enrichment/mirs_')
+  outdir_enrich=paste0(outdir, '/enrichment/')
+}
+
+
 ## remove . and \ from mir names 
 colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
 colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
@@ -104,20 +120,15 @@ Category<-'GO Biological process (miRPathDB)';
 
 
 mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
-
 write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
 hist(mieaa_gsea_1$P.adjusted)
-
 mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
 mir_paths<-mieaa_gsea_1_cut[,c(2)]
-
-
 results_df<-paste0(mir_results_file, '_', Category)
-
 write.csv(mieaa_all_gsea, paste0(mir_results_file, '_', '.csv' ))
 
 
-
+mir_results_file
 
 ##### plot results 
 ##
@@ -142,7 +153,8 @@ mir_enrich_p<-ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=
   geom_bar(position='dodge', stat='identity')+
   coord_flip()
 
-
+dev.off()
+mir_enrich_p
 
 ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), height = 7, width=8)
 
@@ -165,21 +177,19 @@ mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
 mieaa_gsea_1$keyColname=mieaa_gsea_1$Subcategory
 mieaa_gsea_1_ord=mieaa_gsea_1[order(mieaa_gsea_1$P.adjusted),]
 #mieaa_gsea_1_ord_prob<-mieaa_gsea_1_ord
+
 enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
                                              keyColname =  'Subcategory',
                                              geneColname ='miRNAs.precursors',
                                              pvalueColname = 'P.adjusted', 
                                              pvalueCutoff = pvalueCutoff)
 
-# descriptionColname = "Subcategory",
-
-## double check why they are CUT 
 
 results_file=mir_results_file_by_cat
 mir_results_file_by_cat
 gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff)
 paste0(mir_results_file_by_cat, pvalueCutoff, '.csv')
-
+dim(gse_sig)
 mir_results_file_by_cat
 
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
@@ -187,7 +197,7 @@ mir_results_file_by_cat
 
 
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
-run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15)
+run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15)
 
 
 ############

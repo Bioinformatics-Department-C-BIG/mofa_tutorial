@@ -22,7 +22,7 @@ library('enrichplot' )
 
 
 
-write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
+write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCutoff_sig=0.05  ){
   
   ### Takes the full gse results, ie. without threshold significance, 
   # saves it, 
@@ -33,7 +33,6 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
   #' @param pvalueCutoff the pvalue used to obtain the gse results 
   pval_to_use='p.adjust'
   write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
-  pvalueCutoff_sig<-0.05
   gse_sig_result<-gse_full@result[gse_full@result[,pval_to_use]<pvalueCutoff_sig,]
   write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
   
@@ -72,7 +71,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
 
   if (process_mirnas){
-    width=4}else{width=6}
+    width=5}else{width=6}
   
   ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), 
          plot=dp, width=width, height=N_DOT*0.5, 

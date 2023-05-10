@@ -7,9 +7,9 @@
 library(data.table)
 #BiocManager::install('targetscan.Hs.eg.db')
 library(targetscan.Hs.eg.db)
+library(org.Hs.eg.db)
 
-
-use_anticor=FALSE
+use_anticor=TRUE
 
 
 log2fol_T=0.0
@@ -28,7 +28,7 @@ colnames(all_targets)
 dt<-data.table(all_targets)
 strsplit(all_targets$miRNAs.precursors, "\\; ")
 all_targets_wide<-dcast(dt[, {x1 <- strsplit(miRNAs.precursors, "\\; "); c(list(unlist(x1)), 
-                                                                           .SD[rep(seq_len(.N), lengths(x1))])}], Subcategory + miRNAs.precursors ~ V1, length)
+                               .SD[rep(seq_len(.N), lengths(x1))])}], Subcategory + miRNAs.precursors ~ V1, length)
 all_targets_wide$miRNAs.precursors<-NULL
 all_targets_long<-melt(all_targets_wide)
 all_targets_long_true<-all_targets_long[all_targets_long$value==1, ]
@@ -88,7 +88,7 @@ colnames(cor_results_long_all)<-c('target_ensembl', 'mature_mirna_id', 'cor')
 
 cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=T_cor,]
 
-
+cor_results_long_ints
 #cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=-0.3,]
 cor_results_long<-cor_results_long_ints
 turn_to_symb=TRUE
@@ -156,7 +156,7 @@ merged_targets_metric
 ############# REMOVE DUPLICATED ###################
 ## manual check to see that 
 ## Here we should expect high negative correlations to have positive metric (well unless fc is negative !! )
-mer_tars_ord
+
 mer_tars_ord<-merged_targets_metric[order(-merged_targets_metric$log2pval_negcor),]
 remove_dup_g=FALSE
 
@@ -175,7 +175,7 @@ dir.create(paste0(outdir_enrich, '/anticor/'))
 mir_results_file_anticor=paste0(outdir_enrich, '/T_cor_',enrich_params  , T_cor, 'dup', remove_dup_g )
 
 
-write.csv(mer_tars_ord_no_dup, paste0(mir_results_file_anticor, 'gene_targets_filtered_',run_tscan, '.csv'))
+write.csv(mer_tars_ord_no_dup, paste0(mir_results_file_anticor, 'gene_targets_filtered_',run_tscan, 'LAT', '.csv'))
 
 
 
@@ -188,8 +188,8 @@ write.csv(merged_targets, paste0(mir_results_file_anticor, 'gene_targets_filtere
 
 ONT='BP'
 
-
-
+gene_list_targets_ord
+### now we are filtering and using a targeted set of genes so run gse go!! 
 gse_mirnas <- clusterProfiler::gseGO(gene_list_targets_ord, 
                                    ont=ONT, 
                                    keyType = 'ENSEMBL', 
@@ -197,7 +197,10 @@ gse_mirnas <- clusterProfiler::gseGO(gene_list_targets_ord,
                                    pvalueCutoff  = 0.05)
 
 
-gse_mirnas@result
+
+
+
+
 #View(enrich_go_mirnas@result)
 write.csv(gse_mirnas@result, paste0(mir_results_file_anticor, 'results.csv'))
 
@@ -205,4 +208,10 @@ write.csv(gse_mirnas@result, paste0(mir_results_file_anticor, 'results.csv'))
 
 run_enrichment_plots(gse_mirnas, mir_results_file_anticor)
 ######################### RANKED BY NEGATIVE-CORELATION #########################
+
+dotplot(gse_mirnas, showCategory=30) + ggtitle("dotplot for ORA")
+
+
+gse_mirnas@result$p.adjust
+
 

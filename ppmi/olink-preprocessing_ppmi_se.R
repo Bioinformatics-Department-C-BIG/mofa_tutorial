@@ -76,7 +76,6 @@ if (NORMALIZED){
 in_file_original
 
 outdir<-outdir_orig
-print(highly_variable_proteins_outfile)
 
 #### Read in 
 prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)

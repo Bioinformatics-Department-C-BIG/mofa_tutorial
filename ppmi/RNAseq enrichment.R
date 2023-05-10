@@ -71,7 +71,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
 
   if (process_mirnas){
-    width=5}else{width=6}
+    width=6}else{width=6}
   
   ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), 
          plot=dp, width=width, height=N_DOT*0.5, 

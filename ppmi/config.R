@@ -26,21 +26,34 @@ sel_coh <- c(1,2)
 
 
 sel_coh=c(1,2);
+sel_subcoh=FALSE;
+sel_subcoh=FALSE
+sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
+sel_subcoh=c( 'INEXLRRK2', 'INEXSNCA');
+sel_subcoh=c('INEXPD');
+
+#1: INEXPD, INEXLRKK2, INEXSNCA 
+
 
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
+if ( length(sel_subcoh)==1 && is.logical(sel_subcoh) && sel_subcoh==FALSE ){
+  sel_subcoh_s=''
+}else{
+  sel_subcoh_s<-paste(sel_subcoh,sep='_',collapse='-')
+}
 
+sel_subcoh_s
 g_params<-paste0(TOP_GN, '_', MIN_COUNT_G, '_')
 m_params<-paste0(TOP_MN, '_', MIN_COUNT_M, '_') 
 
-param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_')
-param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  )
-
-param_str_m_f<-paste0('mirnas_', VISIT_S, '_',  MIN_COUNT_M, '_coh_',sel_coh_s, '_')
-param_str_g_f<-paste0('rnas_', VISIT_S,  '_', MIN_COUNT_G,  '_coh_', sel_coh_s, '_'  )
-
-
+param_str_m<-paste0('mirnas_',VISIT_S, '_', m_params ,'coh_',sel_coh_s, '_', sel_subcoh_s)
+param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_', sel_subcoh_s)
+param_str_m
+param_str_m_f<-paste0('mirnas_', VISIT_S, '_',  MIN_COUNT_M, '_coh_',sel_coh_s, '_', sel_subcoh_s)
+param_str_g_f<-paste0('rnas_', VISIT_S,  '_', MIN_COUNT_G,  '_coh_', sel_coh_s, '_' ,  sel_subcoh_s )
+param_str_m
 
 #### specific to rna seq 
 output_1=paste0(data_dir, '/ppmi/output/')
@@ -101,8 +114,9 @@ TOP_PN<-0.9
 
 #### read in proteomics 
 p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
-outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_', des, '/' )
-p_params_FILE<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s )
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_',
+                   sel_subcoh_s,  des, '/' )
+p_params_FILE<- paste0(VISIT, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
 

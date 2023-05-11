@@ -73,6 +73,20 @@ combined<-read.csv2(metadata_output)
   se_filt<-filter_se(se, VISIT, sel_coh)
   se_filt<-filter_se(se, VISIT, sel_coh, sel_ps)
   
+  
+  #### Do the filter by expression here! 
+  ## TODO: check if this works now 
+  raw_counts=assays(se_filt)[[1]]
+  
+  ## filterbyExpr takes cpm so remove from there 
+  idx <- edgeR::filterByExpr(raw_counts_all,min.count=min.count)
+  raw_counts <- as.matrix(raw_counts[idx, ])
+  dim(raw_counts)
+  se_filt=se_filt[idx]
+  
+  
+  
+  
   dim(se_filt)
   ### OUTPUT THE FILTERED se_filt 
   ind<-which(is.na(se_filt$AGE_AT_VISIT))

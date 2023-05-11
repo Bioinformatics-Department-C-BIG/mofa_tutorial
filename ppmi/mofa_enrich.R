@@ -17,7 +17,7 @@ vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 vars_by_factor_all
-mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa.Rds')
+mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
 ONT='BP'
 
@@ -37,14 +37,17 @@ process_mofa=TRUE
 pvalueCutoff=1
 nfactors=6
 if (file.exists(mofa_enrich_rds)){
-  list1<-loadRDS(mofa_enrich_rds)
+  list_all<-loadRDS(mofa_enrich_rds)
+  list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
+  list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+  list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
   
 }else{
   
       for (factor in 1:nfactors){
-            for (view in c(  'miRNA')){
+            for (view in c(  'proteomics')){
               #### Do the RNA view for whatever is high in rna
-              factor=3
+
               print(paste0(view, factor ))
               gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
               gene_list_ord
@@ -71,6 +74,8 @@ if (file.exists(mofa_enrich_rds)){
                                                              OrgDb = 'org.Hs.eg.db', 
                                                              pvalueCutoff  = pvalueCutoff)
                   list_proteins[[factor]]<-gse_protein_full
+                  saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
+                  
                   
                 }
               if (view=='miRNA'){
@@ -84,8 +89,10 @@ if (file.exists(mofa_enrich_rds)){
                                                      # categories='GO Biological process (miRPathDB)',
                                                     sig_level=pvalueCutoff
                  )
-              #  list_mirs[[factor]]<-mieaa_all_gsea
-                
+
+                 list_mirs[[factor]]<-mieaa_all_gsea_mofa
+                 saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
+                 
                }
              
           
@@ -101,7 +108,8 @@ if (file.exists(mofa_enrich_rds)){
 }
 
 
-list_proteins
+list1=listALL[[1]]
+
 #### Now run the prot view ? 
 
 

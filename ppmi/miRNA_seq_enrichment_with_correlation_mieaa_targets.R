@@ -79,9 +79,15 @@ if (run_tscan){
 T_cor=-0.1 ## if we dont then everything comes out at the same value... 
 TOP_GN_all=0.9; TOP_MN_all=0.9
 cor_results_read<-read.csv(paste0(outdir_s, '/',   TOP_GN_all, '_', TOP_MN_all, '_','cor_results.csv')) ## not sure try it 
+cor_results_read<-read.csv(paste0(outdir_s, '/',   TOP_GN, '_', TOP_MN, '_','cor_results.csv')) ## not sure try it 
+
 cor_results_long_all<-melt(cor_results_read, varnames = c('target_ensembl', 'mature_mirna_id'), value.name = 'cor' )
+
 colnames(cor_results_long_all)
+cor_results_long_all
 colnames(cor_results_long_all)<-c('target_ensembl', 'mature_mirna_id', 'cor')
+colnames(cor_results_long_all)<-c('mature_mirna_id', 'target_ensembl', 'cor')
+
 #cor_results_long_all<-cor_results_long
 # could filter here
 ### filter using binary threhsold 
@@ -181,6 +187,7 @@ write.csv(mer_tars_ord_no_dup, paste0(mir_results_file_anticor, 'gene_targets_fi
 
 ##### ORDER THE GENE LIST ############################
 gene_list_targets<-mer_tars_ord_no_dup[,order_metric]
+head(gene_list_targets)
 names(gene_list_targets)<-mer_tars_ord_no_dup$target_ensembl
 gene_list_targets_ord<-gene_list_targets[order(-gene_list_targets)]
 write.csv(merged_targets, paste0(mir_results_file_anticor, 'gene_targets_filtered_TSCAN.csv'))

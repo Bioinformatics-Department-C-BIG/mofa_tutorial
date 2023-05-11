@@ -9,6 +9,8 @@
 
 
 library(limma)
+library(pheatmap)
+library(R.filesets)
 #library(org.Mm.eg.db)
 
 library(gplots)
@@ -16,7 +18,7 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 
-VISIT='V08'
+
 source(paste0(script_dir, '/config.R' ))
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
@@ -60,7 +62,6 @@ design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
 
 fit <- lmFit(protein_matrix, design = design)
 
-
 #cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
 #cont.matrix <- makeContrasts(pd_control=2-1,levels=design)
 
@@ -73,11 +74,13 @@ summa.fit <- decideTests(fit.cont)
 summary(summa.fit)
 
 
+
 library(ggplot2)
 plotSA(fit)
 nfeats<-dim(protein_matrix)[1]
 nfeats
-results_de<-topTable(fit.cont, number = nfeats, coef='COHORT' )
+
+results_de<-topTable(fit.cont, number = nfeats, coef='COHORT2' )
 #results_de<-topTable(fit.cont, coef='COHORT' )
 results_de
 #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
@@ -104,7 +107,6 @@ dev.off()
 
 dir.create(outdir_s_p)
 
-colnames(results_de)
 ns_full<-table(se_filt$COHORT_DEFINITION)
 ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
 
@@ -152,10 +154,18 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 
 #ARRANGE
 #df_ord<-df[order(df$COHORT),]
-
+pvol
 order_by_metric<-'padj_reverse'
-
+if (TISSUE=='CSF' & VISIT=='V08'){
+  log2fol_T_overall=1
+  
+}
+log2fol_T_overall=0
+padj_T_overall
+results_de
 gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_overall & results_de$logFC>log2fol_T_overall]
+gene_list_limma_significant_heatmap
+
 length(gene_list_limma_significant_heatmap)
 ids<-rownames(vsn_mat) %in% gene_list_limma_significant_heatmap
 
@@ -165,12 +175,8 @@ results_de$padj_reverse<--results_de$adj.P.Val
 
 
 
-dim(hm)
-dim(COHORT)
-se_filt$age
-df<-as.data.frame(c(se_filt$COHORT_DEFINITION))
-df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )])
-rownames(df)<-df$PATNO_EVENT_ID
+
+df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )]); rownames(df)<-df$PATNO_EVENT_ID
 df$PATNO_EVENT_ID<-NULL
 colnames(vsn_mat)
 rownames(df)
@@ -195,16 +201,18 @@ if(process_mirnas){
   lab=rownames(rowData(vsd_filt_genes)) }else{
     lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
 
-#jpeg(fname, width=10*100, height=10*100, res=150)
-my_pheatmap<-pheatmap(hm, 
-                      #labels_row=lab,
-                      cluster_rows=TRUE, 
-                      show_rownames=TRUE,
-                      scale='row', 
-                      cluster_cols=cluster_cols,
-                      annotation_col=df
-)
-dim(hm)
+        #jpeg(fname, width=10*100, height=10*100, res=150)
+        my_pheatmap<-pheatmap(hm, 
+                              #labels_row=lab,
+                              cluster_rows=TRUE, 
+                              show_rownames=TRUE,
+                              scale='row', 
+                              cluster_cols=cluster_cols,
+                              annotation_col=df, 
+                              clustering_method = 'complete', 
+                              clustering_distance_cols = 'euclidean'
+        )
+        dim(hm)
 
 show(my_pheatmap)
 dev.off()
@@ -393,10 +401,16 @@ length(which(gse_protein_full@result$pvalue<0.05))
 sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCutoff_sig,]
 write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
 
-gse_protein=filter(gse_full, pvalue < pvalueCutoff_sig)
+
+if (use_pval){
+  gse_protein=filter(gse_full, pvalue < pvalueCutoff_sig)
+}else{
+  gse_protein=filter(gse_full, p < pvalueCutoff_sig)
+  
+}
 
 ### supply the full result 
-enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=30, N_EMAP = 50)
+enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
 
 
 gse_protein_full

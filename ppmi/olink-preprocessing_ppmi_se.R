@@ -51,7 +51,7 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-VISIT=c('V08')
+VISIT=c('BL')
 process_mirnas=FALSE
 source(paste0(script_dir, '/config.R' ))
 
@@ -170,6 +170,12 @@ cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
 sel_coh
 ##### filter here by visits
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
+
+se_filt<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
+
+dim(se_filt)
+table(se_filt$COHORT)
+
 cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
 
 ### TODO: save se filt here : with or without VISIT included..? 
@@ -207,7 +213,7 @@ vsn_mat<-normalized_data
 ## TODO: fix the bug in selectMostVariable
 TOP_PN
 for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
-     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
   
   

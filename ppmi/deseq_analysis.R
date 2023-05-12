@@ -119,7 +119,8 @@ vsd_mat <- assay(vsd)
   highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
   
-  write.csv(highly_variable_genes_mofa, highly_variable_outfile); 
+  write.csv(highly_variable_genes_mofa, highly_variable_outfile);
+  
   write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
   

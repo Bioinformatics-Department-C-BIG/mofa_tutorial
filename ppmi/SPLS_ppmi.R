@@ -56,7 +56,7 @@ list.keepY <- c(3:10)
 tune.spls.ppmi <- tune.spls(X1_t, X2_t, ncomp = 2,
                              test.keepX = list.keepX,
                              test.keepY = list.keepY,
-                             nrepeat = 5, folds = 2, # use 10 folds
+                             nrepeat = 3, folds = 2, # use 10 folds
                              mode = 'regression', measure = 'cor',
                             progressBar = TRUE) 
 plot(tune.spls.ppmi)    

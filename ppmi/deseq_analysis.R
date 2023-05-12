@@ -108,7 +108,7 @@ vsd_mat <- assay(vsd)
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 #for (most_var in c(0.05, 0.5)){
 #  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
-    for (most_var in c(0.05, 0.5, 0.9, 0.2,0.3)){
+    for (most_var in c(0.05,0.1, 0.5, 0.9, 0.2,0.3)){
     
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
@@ -119,7 +119,8 @@ vsd_mat <- assay(vsd)
   highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
   
-  write.csv(highly_variable_genes_mofa, highly_variable_outfile); 
+  write.csv(highly_variable_genes_mofa, highly_variable_outfile);
+  
   write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
   
@@ -243,26 +244,6 @@ contrasts<-c('Condition', 'EVENT_ID')
 dds$Condition<-dds$COHORT
   
 # Extract counts for the gene otop2
-
-
-# Plot the data using ggplot2
-# this is more useful for paired datasets !! 
-# TODO: otherwise do a box plot 
-#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-#                           group=Sample)) + geom_point() + geom_line() +
-#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-#
-#
-#p
-#
-#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-#                           group=Sample)) + geom_point() + geom_line() +
-#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-#
-#
-#p
 
 ##### 
 # Compute normalization factors and vst 

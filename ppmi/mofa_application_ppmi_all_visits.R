@@ -299,7 +299,6 @@ MOFAobject <- prepare_mofa(MOFAobject,
 
 
 
-plot_data_overview(MOFAobject)
 outdir
 ggsave(paste0(outdir, 'data_overview.jpeg'))
 

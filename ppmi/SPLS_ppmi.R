@@ -84,5 +84,66 @@ plotIndiv(final.spls.liver, ind.names = FALSE,
 
 
 
+########### DIABLO
+
+
+
+data = list(RNA = X1_t, 
+            miRNA = X2_t )
+
+Y<- mofa_multi_rna_mir_complete$COHORT_DEFINITION
+
+
+
+design = matrix(0.1, ncol = length(data), nrow = length(data), 
+                dimnames = list(names(data), names(data)))
+diag(design) = 0
+
+design 
+
+# tune components
+sgccda.res = block.splsda(X = data, Y = Y, ncomp = 7, 
+                          design = design)
+
+set.seed(123) # for reproducibility, only when the `cpus' argument is not used
+# this code takes a couple of min to run
+
+## This chooses the components 
+perf.diablo = perf(sgccda.res, validation = 'Mfold', folds = 4, 
+                   nrepeat = 4, progressBar = TRUE)
+
+#perf.diablo  # lists the different outputs
+plot(perf.diablo) 
+
+perf.diablo$choice.ncomp$WeightedVote
+ncomp <- perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"]
+
+ncomp
+
+## This chooses the number of features 
+test.keepX <- list(RNA = c(6:9, seq(10, 25, 10)),
+                   miRNA = c(6:9, seq(10, 20, 5)))
+
+tune.diablo <- tune.block.splsda(data, Y, ncomp = ncomp, 
+                                      test.keepX = test.keepX, design = design,
+                                      validation = 'Mfold', folds = 3, nrepeat = 1, 
+                                      BPPARAM = BiocParallel::SnowParam(workers = 3),
+                                      dist = "centroids.dist")
+
+list.keepX <- tune.diablo.tcga$choice.keepX
+
+
+
+### SHOW most important variables 
+sgccda.res$design
+selectVar(sgccda.res, block = 'RNA', comp = 1)$RNA$name 
+
+
+
+
+plotDiablo(perf.diablo, ncomp = 1)
+plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
+
+
 
 

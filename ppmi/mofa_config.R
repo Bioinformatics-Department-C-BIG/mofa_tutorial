@@ -49,6 +49,11 @@ if (run_rna_mirna){
   TOP_GN=0.30
   TOP_PN=0.9
   
+  ##mixomics
+  TOP_MN=0.5
+  TOP_GN=0.1
+  TOP_PN=0.9
+  
   
 }
 

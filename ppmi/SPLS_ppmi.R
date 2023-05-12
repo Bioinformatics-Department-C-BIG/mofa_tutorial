@@ -87,6 +87,16 @@ plotIndiv(final.spls.liver, ind.names = FALSE,
 ########### DIABLO
 
 
+ens <- colnames(X1_t);
+ens<-gsub('\\..*', '',ens)
+
+symbols_ordered<-get_symbols_vector(ens)
+SYMBOL<-symbols_ordered
+names(SYMBOL)=NULL
+SYMBOL
+colnames(X1_t)<-SYMBOL
+colnames(X1_t)
+
 
 data = list(RNA = X1_t, 
             miRNA = X2_t )
@@ -116,34 +126,60 @@ perf.diablo = perf(sgccda.res, validation = 'Mfold', folds = 4,
 plot(perf.diablo) 
 
 perf.diablo$choice.ncomp$WeightedVote
-ncomp <- perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"]
+#ncomp <- perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"]
 
-ncomp
+#ncomp
 
+#ncomp=3
 ## This chooses the number of features 
-test.keepX <- list(RNA = c(6:9, seq(10, 25, 10)),
-                   miRNA = c(6:9, seq(10, 20, 5)))
+
+test.keepX <- list(RNA = c(c(6,8), seq(10, 50, 5)),
+                   miRNA = c(c(3,6), seq(10, 20, 5)))
 
 tune.diablo <- tune.block.splsda(data, Y, ncomp = ncomp, 
                                       test.keepX = test.keepX, design = design,
-                                      validation = 'Mfold', folds = 3, nrepeat = 1, 
+                                      validation = 'Mfold', folds = 3, nrepeat = 3, 
                                       BPPARAM = BiocParallel::SnowParam(workers = 3),
-                                      dist = "centroids.dist")
+                                      dist = "centroids.dist", 
+                                 progressBar = TRUE)
 
-list.keepX <- tune.diablo.tcga$choice.keepX
 
+## 1. TODO: save the resulting optimal numbers 
+
+list.keepX <- tune.diablo$choice.keepX
+list.keepX
 
 
 ### SHOW most important variables 
 sgccda.res$design
 selectVar(sgccda.res, block = 'RNA', comp = 1)$RNA$name 
 
+diablo.ppmi <- block.splsda(data, Y, ncomp = ncomp, 
+                keepX = list.keepX, design = design)
 
 
 
-plotDiablo(perf.diablo, ncomp = 1)
-plotIndiv(sgccda.res, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
+plotIndiv(diablo.ppmi, ind.names = FALSE, legend = TRUE, title = 'DIABLO')
 
 
+selectVar(diablo.ppmi, block = 'RNA', comp = 1)
 
+
+###  
+plotDiablo(diablo.ppmi, ncomp = 1)
+
+plotIndiv(diablo.ppmi, ind.names = FALSE, legend = TRUE, 
+          title = 'TCGA, DIABLO comp 1 - 2')
+
+
+#### cREATE NOW a network of important molecules 
+network(diablo.ppmi, 
+        comp=list(RNA=1,miRNA=1),
+        blocks = c(1,2), 
+        cutoff = 0.7,
+        color.node = c('darkorchid', 'lightblue'),
+        
+        # To save the plot, uncomment below line
+        #save = 'png', name.save = 'diablo-network'
+)
 

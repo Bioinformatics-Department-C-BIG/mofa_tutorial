@@ -45,6 +45,14 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 
 
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE){
+  
+  require(clusterProfiler)
+  
+  require('GOfuncR')
+  require(DOSE)
+  
+  
+  
   N=25
   ## TODO: ADD FACET IF SIGNED 
   if (length(showCategory_list)>1){

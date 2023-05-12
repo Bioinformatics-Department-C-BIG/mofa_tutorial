@@ -42,7 +42,6 @@ install.packages('lattice')
 
 install.packages('iCluster')
 
-install.packages('EdgeR')
 
 
 

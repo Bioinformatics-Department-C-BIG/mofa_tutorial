@@ -28,7 +28,7 @@ sel_coh=c(1,2);
 
 
 
-VISIT=c( 'V08')
+VISIT=c( 'V06')
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
@@ -79,3 +79,4 @@ if (process_mirnas){
 }
 deseq_file
 raw_counts_all=raw_counts
+

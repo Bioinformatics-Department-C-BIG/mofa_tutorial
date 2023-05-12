@@ -1,8 +1,9 @@
 
 *.pper
-*.Rdata/*
+*.RData/*
 *.Rhistory/
-*.Rdata
+*.RData
+.Rhistory/
 # History files
 .Rhistory
 .Rapp.history

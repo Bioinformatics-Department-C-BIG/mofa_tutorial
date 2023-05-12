@@ -49,7 +49,7 @@ BiocManager::install('cluster')
 
 
 
-###### Single layer
+M###### Single layer
 
 
 
@@ -64,7 +64,7 @@ install.packages('UpSetR')
 
 #### MOFA
 BiocManager::install('MOFAdata')
-
+BiocManager::install('MultiAssayExperiment')
 
 
 

@@ -1,0 +1,105 @@
+---
+title: "deseq"
+output:
+  html_document: default
+  pdf_document: default
+date: "2023-04-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r Enrichment,  results='hide', echo=FALSE }
+
+data_dir='D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
+print(getwd())
+source(paste0(data_dir, '/ppmi/deseq_analysis.R'))
+
+
+
+#source('ppmi/RNAseq enrichment.R')
+
+#
+#p_enrich
+ns<-table(se_filt$COHORT_DEFINITION)
+ns<-paste(rownames(ns)[1], ns[1],', ',names(ns)[2],ns[2])
+
+
+
+```
+
+```{r main}
+
+
+
+
+cat(ns)
+cat(VISIT)
+
+
+
+```
+
+
+
+
+
+
+```{r logplot,echo=FALSE,  fig.width=5, fig.height=4}
+
+
+
+show(p_log_plot)
+
+
+
+
+```
+
+
+```{r plot, echo=FALSE, fig.width=10, fig.height=7}
+
+
+
+
+show(pvol)
+
+
+
+
+```
+
+```{r run_enrich, echo=FALSE, fig.show="hold", fig.width=6, fig.height=8}
+
+
+source(paste0(data_dir,'/ppmi/RNAseq enrichment.R'))
+show(dp)
+show(p_enrich)
+show(p2_tree)
+
+
+
+
+```
+
+```{r run_enrich2, echo=FALSE, fig.width=8, fig.height=6}
+
+
+show(p_enrich)
+
+
+
+```

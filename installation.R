@@ -43,5 +43,37 @@ install.packages('lattice')
 install.packages('iCluster')
 
 
+BiocManager::install('edgeR')
+BiocManager::install('cluster')
 
+
+
+
+###### Single layer
+
+
+
+install.packages('R.filesets')
+BiocManager::install('DESeq2')
+BiocManager::install("SummarizedExperiment")
+install.packages('data.table')
+install.packages('dplyr')
+
+
+install.packages('UpSetR')
+
+#### MOFA
+BiocManager::install('MOFAdata')
+
+
+
+
+### Enrichment 
+
+BiocManager::install('clusterProfiler')
+BiocManager::install('DOSE')
+#install.packages('ggnewscale')
+BiocManager::install('GOfuncR')
+BiocManager::install('ensembldb')
+BiocManager::install('org.Hs.eg.db')
 

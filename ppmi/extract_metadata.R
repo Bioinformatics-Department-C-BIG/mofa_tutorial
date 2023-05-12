@@ -6,7 +6,7 @@ library(data.table)
 
 input_data<-('ppmi/ppmi_data/')
 output_files<-'ppmi/output/'
-
+source('ppmi/utils.R')
 #all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
 
 #cl_1<-lapply(all_files, read.csv)
@@ -52,8 +52,12 @@ dim(characteristics)
 # todo: add more motor mds-updrs
 motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
 motor_assess_II<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS_UPDRS_Part_II__Patient_Questionnaire.csv'))
-motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III.csv'))
+
+#motor_assess_III<-read.csv2(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III.csv'), sep=',', stringsAsFactors = FALSE)
+motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III-short-date.csv'))
+
 motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_IV__Motor_Complications.csv'))
+motor_assess_III$ONEXAMDT
 
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
 non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
@@ -89,7 +93,25 @@ dim(combined)
 
 #which(!is.na(combined$Outcome))
 
-unique(motor_assess_all$PATNO)
+
+#### FIX age and sex
+### OUTPUT THE FILTERED se_filt 
+
+ind<-which(is.na(combined$AGE_AT_VISIT))
+combined$AGE<-combined$AGE_AT_VISIT
+combined[ind,'AGE' ]<-get_age_at_visit(combined[ind,])
+## Turn to factors for deseq
+combined$SEX<-as.factor(combined$SEX)
+combined$AGE_SCALED<-scale(combined$AGE)
+
+
+combined$OFFPDMEDDT
+combined$INFODT_M1
+combined$OFFEXAMDT
+combined$HRPOSTMED ### hours since last dose 
+
+combined[,c('ONEXAM', 'OFFEXAM','PDMEDYN','ORIG_ENTRY_M3',  'INFODT_M3','NTEXAMDT',  'OFFEXAMDT' ,'OFFEXAMTM', 'OFFPDMEDDT', 'OFFPDMEDTM')]
+
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
 #combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
@@ -101,10 +123,11 @@ unique(motor_assess_all$PATNO)
 ### Add new features here
 
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
+combined$AGE
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
-
+dim
 combined$COHORT_DEFINITION
 #View(combined[combined$PATNO=='4125',])
 combined$NHY
@@ -117,8 +140,6 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
-
-
 
 
 

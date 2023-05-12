@@ -82,7 +82,9 @@ bladder_metadata$sample<-samples_metadata(MOFAobject)$sample
 
 samples_metadata(MOFAobject)<-bladder_metadata
 
-MOFAobject <- run_mofa(MOFAobject)
+outfile = file.path(tempdir(),"model.hdf5")
+
+MOFAobject <- run_mofa(MOFAobject, outfile)
 
 saveRDS(MOFAobject, 'mofa.RDS')
 
@@ -94,6 +96,6 @@ ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 4, height=4, d
 
 
 ###
-get_weights(MOFAobject)
+
 
 

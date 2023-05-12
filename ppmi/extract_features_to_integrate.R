@@ -151,23 +151,22 @@ TISSUE='Plasma'
 NORMALIZED=TRUE
 
 
-output_files<-'ppmi/output/'
 setwd(os_dir)
 Visits
 
 
-output_files<-'ppmi/output/'
+output_files<-paste0(data_dir, 'ppmi/output/')
 NORMALIZED=TRUE
 
 Visits=c('BL', 'V04', 'V06', 'V08')
 
 #### ALL VISITS # include alla visits again
 
-  prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+  prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
                          full.names = TRUE)
   
   if (NORMALIZED){
-    prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+    prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
                            full.names = TRUE)
     
     pv='NPX'
@@ -210,6 +209,8 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
   print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
   prot_bl<-ppmi_prot
+  
+  
   
   #ppmi_prot<-as.data.frame(ppmi_prot) %>% 
   #               mutate(across('PATNO', str_replace, 

@@ -1,6 +1,6 @@
 
 
-
+######## Compare markers  with known datasets from gda?
 output_1='ppmi/output/'
 output_files_orig<-'ppmi/output/'
 getwd()

@@ -1,9 +1,12 @@
 
+script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
+os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
+
+data_dir<-os_dir
+
 #BiocManager::install('DEP')
 ## TODO: change all scripts to be agnostic of visit until mofa
-library(edgeR)
 library(limma)
-library(Glimma)
 #library(org.Mm.eg.db)
 
 library(gplots)
@@ -11,19 +14,21 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 library(ggplot2)
+
 library("vsn")
+BiocManager::install('DEP')
 library("DEP")
 library("data.table")
-library("SummarizedExperiment")
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
+library("SummarizedExperiment")
 
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/utils.R'))
 
-output_1=paste0('ppmi/plots/')
-output_files<-paste0('ppmi/output/')
+output_1=paste0(data_dir,'ppmi/plots/')
+output_files<-paste0(data_dir,'ppmi/output/')
 
 
 TOP_PN<-0.7
@@ -44,7 +49,7 @@ VISIT='BL'
 TISSUE='Plasma'
 NORMALIZED=TRUE
 VISIT=c('V04')
-VISIT=c('BL')
+VISIT=c('V08')
 
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')

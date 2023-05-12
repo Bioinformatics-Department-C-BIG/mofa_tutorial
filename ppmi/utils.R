@@ -44,8 +44,9 @@ filter_se<-function(se, VISIT, sel_coh){
   
   ##### 2.   start filtering the experiment  to normalize as appropriate 
   ## Option 1: normalize cohort and EVENT separately!! 
+  # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
   
-  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ))]
+  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
   se_filt$EVENT_ID; se_filt$COHORT
   Sample<-colnames(se_filt)
   sample_info<-DataFrame(Sample=Sample)
@@ -99,5 +100,100 @@ get_age_at_visit<-function(new){
 #x_age <- age_calc( as.Date(new$BIRTHDT),          # Convert birth to age
 ##                   as.Date(new$STATUS_DATE),
 #                  units = "years")
+
+
+
+
+
+#### data specifc 
+get_symbols_vector<-function(ens ){
+  #' @param ens ensemble ids to conver to symbols 
+  #' @returns symbols_ordered the total 
+  #'  
+  #'  
+  
+  symbols <- mapIds(org.Hs.eg.db, keys = ens,
+                    column = c('SYMBOL'), keytype = 'ENSEMBL')
+  symbols <- symbols[!is.na(symbols)]
+  symbols_ordered <- symbols[match(ens, names(symbols))]
+  na_ind<-is.na(symbols_ordered);
+  
+  # Add ensembl ids if no symbol found
+  symbols_ordered[na_ind]=ens[na_ind]
+  return(symbols_ordered)
+  
+  
+}
+
+
+
+######## DE ANALYSIS #######
+#results_de<-mark_signficant(
+  # test
+  #de_res= results_de
+  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='adj.P.Val'
+  #log2fc_name = 'logFC'   
+  #outdir_single=outdir_s_p
+
+mark_signficant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
+  ## mark a significant column and write to file
+  
+  signif_file<-paste0(outdir_single,'/significant', padj_T, '_',log2fol_T, '.csv')
+  
+  de_res$significant <- ifelse(de_res[,padj_name] < padj_T , "Significant", NA)
+  de_res$sign_lfc <- ifelse(de_res[,padj_name] < padj_T & abs(de_res[,log2fc_name]) >log2fol_T , "Significant", NA)
+  # Examine this data frame
+  # Order the significant to save as a new output file 
+  head(de_res)
+  # LARGER ONE not saved 
+  sign_only<-de_res[de_res$sign_lfc=='Significant',]
+  sign_only_ordered<-sign_only[order(sign_only[,padj_name], decreasing = FALSE),]
+  sign_only_ordered<-sign_only[order(-sign_only[,'abslog2pval'], decreasing = FALSE),]
+  
+  sign_only_ordered<-sign_only_ordered[!is.na(de_res$sign_lfc),]
+  write.csv(sign_only_ordered,signif_file, row.names = TRUE)
+  ### create also a more strict file? 
+  return(de_res)
+}
+
+
+
+######## ENRICHMENT ANALYSIS 
+
+
+get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 ){
+  
+  #### Gives a gene list cut by the thresholds padj_T and log2fol and orders by specific metric supplied 
+  #' @param padj_T filter the genes by metric padj_T
+  #' @param log2fol_T  filter the genes by metric  log2fol_T, default: 0
+  #' @param order_by_metric metric to order the gene list by 
+  res=deseq2ResDF
+  #res=deseq2ResDF_2
+  
+  res$sign_lfc <- ifelse(res$padj <padj_T & abs(res$log2FoldChange) >log2fol_T , "Significant", NA)
+  
+  length(which(!is.na(res$sign_lfc )))
+  res=res[res$sign_lfc=='Significant'& !is.na(res$sign_lfc),]
+  
+  
+  # Order the DE gene list by the stat statistic 
+  #remove negatives thatw ere introduced with vst transofrmations
+  
+  res$log2pval<-res$log2FoldChange*-log10(res$padj)
+  res$signlog2pval<-sign(res$log2FoldChange)*-log10(res$padj)
+  res<-res[res$baseMean>0,]
+  
+  #res <- res[order(-res$stat),]
+  res <- res[order(-res[,order_by_metric]),]
+  gene_list<-res[, order_by_metric]
+  names(gene_list)<-rownames(res)
+  
+  return(gene_list)
+  
+  
+  
+}
+
+
 
 

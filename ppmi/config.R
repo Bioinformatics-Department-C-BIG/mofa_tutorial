@@ -36,12 +36,10 @@ sel_subcoh=c('INEXPD');
 
 
 
-<<<<<<< HEAD
 
-VISIT=c( 'V06')
+VISIT=c( 'V08')
 
-=======
->>>>>>> a2a68d1fd3832c412beb9c87661f5cfcac5df37e
+
 VISIT_S=paste(VISIT,sep='_',collapse='-')
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 if ( length(sel_subcoh)==1 && is.logical(sel_subcoh) && sel_subcoh==FALSE ){
@@ -92,10 +90,7 @@ if (process_mirnas){
    param_str=param_str_g_f
    param_str_f=param_str_g_f
 }
-<<<<<<< HEAD
-deseq_file
-raw_counts_all=raw_counts
-=======
+
 
 
 input_file<-paste0(output_files, prefix, 'all_visits.csv')
@@ -107,10 +102,10 @@ outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 
 ######## PROCESS PROTEINS 
+TISSUE='CSF'
 
 TISSUE='Plasma'
 TOP_PN=0.9
-TISSUE='CSF'
 
 
 NA_PERCENT=0.9
@@ -142,5 +137,4 @@ prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 #script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 #source(paste0(script_dir, '/config.R'))
 
->>>>>>> a2a68d1fd3832c412beb9c87661f5cfcac5df37e
 

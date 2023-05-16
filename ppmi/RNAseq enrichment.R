@@ -21,7 +21,7 @@ library('enrichplot' )
 
 
 
-
+gse_full=gse_protein_full
 write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCutoff_sig=0.05  ){
   
   ### Takes the full gse results, ie. without threshold significance, 
@@ -44,7 +44,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE){
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE){
   
   require(clusterProfiler)
   
@@ -85,7 +85,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
          plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
-  if (!(process_mirnas || run_ORA)){
+  if (!(process_mirnas) & !(run_ORA)){
     
     dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
     ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
@@ -113,7 +113,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
 
   N_RIDGE=25
   
-  if (!process_mirnas & !process_mofa){
+  if ( (!process_mirnas) & (!process_mofa) & (!run_ORA)){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     r_p

@@ -100,7 +100,7 @@ if (file.exists(gsea_results_fname)){
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
-
+View(mieaa_all_gsea)
 ### FROM HERE ONWARDS RUN MOFA 
 ## TODO: MAKE THIS A FUNCTION that takes in arguments of mieaa_all_gsea and mir_results_file 
 process_mofa=FALSE

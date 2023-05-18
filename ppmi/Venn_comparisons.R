@@ -135,25 +135,29 @@ venn.diagram(listInput,
 # for each visit across ALL modalities 
 #### Load pathways from each of the modalities separately 
 VISIT='V08'; 
-source(paste0(script_dir, '/config.R' ))
+process_mirnas=TRUE; source(paste0(script_dir, '/config.R' ))
+outdir_mirs<-outdir_s; outdir_s
+process_mirnas=FALSE; source(paste0(script_dir, '/config.R' ))
+outdir_rnas<-outdir_s; outdir_s
+
+
 source(paste0(script_dir, '/deseq_analysis_setup.R' ))
+outdir_proteins<-outdir_s_p
 padj_T_overall=0.05
 log2fol_T_overall=0.1
-
-outdir_mirs<-paste0(outdir_orig, '/single/', 'mirnas_',VISIT, '_',MIN_COUNT_M, '_coh_',sel_coh_s, '_',des)
-outdir_rnas<-paste0(outdir_orig, '/single/', 'rnas_',VISIT, '_',MIN_COUNT_G, '_coh_',sel_coh_s, '_',des)
-#outdir_proteins<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_coh_', sel_coh_s, '_', des, '/' )
-outdir_proteins<-outdir_s_p
-
 
 
 ## parameters for the enrichment- could be specified elsewhere?
 run_anova=FALSE;use_pval=FALSE; 
+run_ORA=FALSE; use_protein_pval=TRUE
+run_ORA=TRUE
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
+
+
 
 #outdir_s_p_enrich_file_ora<-paste0(outdir_proteins, '/enrichment/', 'BP_ora_T_0.05_anova_', run_anova,'pval_', use_pval)
 outdir_s_p_enrich=paste0(outdir_proteins, '/enrichment/');order_statistic='logFC'
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'ppval_', use_protein_pval, '_anova_', run_anova, 'pval_', use_pval )
 
 results_file<-paste0(outdir_rnas, '/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 
@@ -165,18 +169,18 @@ signif_mirs<-read.csv(paste0(outdir_mirs,'/significant', padj_T_overall, '_',log
 signif_proteins<-read.csv(paste0(outdir_s_p,'/significant', padj_T_overall, '_',log2fol_T_overall, '.csv'))
 
 ### THE SIGNIFICANT GENES ARE TOO MANY.. filter them somehow..? 
-
+signif_proteins
 
 
 
 pvalueCutoff_sig=0.05
-
 padj_paths<-0.05
-pvalueCutoff=1
+pvalueCutoff=1; order_by_metric<-'log2pval'
 results_file<-paste0(outdir_rnas,'/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 enrich_rnas_file<-paste0(results_file,pvalueCutoff ,'.csv')
+enrich_rnas_file
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
-enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval')
+enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pvalGSEA600')
 
 enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
 enrich_rna<-read.csv(enrich_rnas_file)
@@ -197,7 +201,30 @@ listInput_all_mods<-list(rna=enrich_rna_sig$Description,
                          prot=enrich_proteins_sig$Description, 
                          mirnas=enrich_mirnas_sig$Description)
 
+enrich_proteins_sig$p.adjust
+listInput_all_mods
+get_ids(enrich_mirnas$ID[1])
+fixInNamespace('GOfuncR')
 
+
+
+
+
+###get parents: 
+library(GOfuncR)
+rna_parents<-get_parent_nodes(enrich_rna_sig$ID)
+prot_parents<-get_parent_nodes(enrich_proteins_sig$ID)
+mir_parents<-get_parent_nodes(enrich_mirnas_sig$ID)
+
+rna_par_01<-rna_parents[rna_parents$distance==c(1),]
+prot_parents_01<-prot_parents[prot_parents$distance==c(1),]
+mir_parents_01<-prot_parents[mir_parents$distance==c(1),]
+
+intersect(rna_par_01$child_go_id, prot_parents_01$child_go_id)
+inter<-intersect(rna_par_01$parent_go_id, prot_parents_01$parent_go_id)
+prot_parents_01[prot_parents_01$parent_go_id %in% inter,]
+
+prot_parents_01
 
 listInput<-listInput_all_mods
 res_overlap<-calculate.overlap(listInput)
@@ -403,7 +430,7 @@ ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
        width=7,height=8 )
 
 
-Npaths=15
+Npaths=25
 
 merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:Npaths,], 
                                  varnames=c('modality','nlog10pvalue' ))
@@ -416,7 +443,8 @@ if (add_mirs){
 #ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
 # TODO: reorder by description 
 merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish_log10',]
-plot_all=FALSE
+plot_all=TRUE
+
 if (plot_all){
   merged_to_plot<-merged_paths_fish_sig_melt
   labels_p<-labels; width_p<-0.7

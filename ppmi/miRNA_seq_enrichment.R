@@ -10,7 +10,7 @@ VISIT='V08'
 process_mirnas<-TRUE
 source(paste0(script_dir, '/config.R'))
 source(paste0(script_dir, '/utils.R'))
-
+library(ggplot2)
 
 
 order_by_metric<-'abslog2pval'
@@ -53,20 +53,26 @@ log2fol_T
 Padj_T_paths=0.01
 
 deseq2ResDF = read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1)
+de_mirs<-deseq2ResDF
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
 dir.create(outdir_enrich)
 
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
-top_n=length(gene_list);
+test_type='ORA'; top_n=100
+
+test_type='GSEA';top_n=length(gene_list);
 #top_n=400
-top_n
+
 gene_list_cut<-gene_list[order(abs(gene_list))][1:top_n]
 gene_list_cut<-gene_list_cut[order(gene_list_cut, decreasing=TRUE)]
 
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
 mirs
-enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric)
+
+
+mirs
+enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric,test_type,  top_n)
 mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
 #### Up to here we can take the output for other methods 
@@ -87,17 +93,17 @@ if (file.exists(gsea_results_fname)){
   ## otherwise run GSEA analysis 
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
                                      mirna_type = "mature",
-                                     test_type = "GSEA",
+                                     test_type = test_type,
                                      species = 'Homo sapiens',
                                      sig_level=pvalueCutoff
   )
-  
-  
+
+
   ### write to file to load next time 
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
-
+View(mieaa_all_gsea)
 ### FROM HERE ONWARDS RUN MOFA 
 ## TODO: MAKE THIS A FUNCTION that takes in arguments of mieaa_all_gsea and mir_results_file 
 process_mofa=FALSE
@@ -105,7 +111,7 @@ if (process_mofa){
   
   mieaa_all_gsea=mieaa_all_gsea_mofa
   mir_results_file=paste0(outdir, '/enrichment/mirs_')
-  outdir_enrich=paste0(outdir, '/enrichment/')
+  outdir_enrich=paste0(outdir, '/enrichment/', factor)
 }
 
 
@@ -117,14 +123,13 @@ colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
 
 
 #table(mieaa_all_gsea$Category)
-Category<-'Annotation (Gene Ontology)';
 Category<-'Gene Ontology (miRWalk)';
+Category<-'Annotation (Gene Ontology)';
 Category<-'GO Biological process (miRPathDB)';
 
 
 mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
 write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
-hist(mieaa_gsea_1$P.adjusted)
 mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
 mir_paths<-mieaa_gsea_1_cut[,c(2)]
 results_df<-paste0(mir_results_file, '_', Category)
@@ -201,7 +206,7 @@ mir_results_file_by_cat
 
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
 run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15)
-
+dim(gse_sig)
 
 ############
 ###########

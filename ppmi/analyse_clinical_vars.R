@@ -13,6 +13,26 @@ combined$COHORT_DEFINITION
 combined[which(combined$NHY==101),]$NHY<-NA
 
 
+
+#### 
+library(ggplot2)
+combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
+combined_choose<-combined[combined$COHORT %in% c(1,2) & combined$INEXPAGE %in% c('INEXPD', 'INEXHC', 'INEXSNCA', 'INEXLRRK2'),]
+
+combined$INEXPAGE
+group_by_var<-'INEXPAGE'
+ggplot(combined_choose)+
+  geom_density(aes_string(x='AGE_AT_VISIT', fill=group_by_var,
+                   color=group_by_var, group=group_by_var), 
+               alpha=0.5)
+
+
+
+ggplot(combined)+
+  geom_histogram(aes(x=AGE_AT_VISIT, fill=as.factor(COHORT), color=COHORT))
+
+
+
 library(ggplot2)
 
 graphics.off()
@@ -218,6 +238,8 @@ combined_filt<-combined
 
 table(combined_filt$PAG_NAME_M3)
 combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+
+
 combined_filt$line_group
 combined_filt$COHORT_DEFINITION
 
@@ -268,43 +290,62 @@ tps[,1]<-gsub(' ','', tps[,1] )
 inds<-match(combined_filt$EVENT_ID, as.character( tps[,1]))
 combined_filt$months<-as.numeric(tps[inds,2])
 x='months'
-
+combined$INEX
 combined_to_plot<-combined_filt%>% select(c( y, x, group,
                                              scales, 'line_group', 'PATNO' , 'PAG_NAME_M3',
-                                'AGE_AT_VISIT', 'COHORT_DEFINITION'))
-
-
+                                'AGE_AT_VISIT', 'COHORT_DEFINITION', 
+                                'INEXPAGE', 'PDSTATE', 'PAG_NAME_M4'))
+combined_filt$PD
 combined_filt$COHORT_DEFINITION
 combined_to_plot$COHORT_DEFINITION
 fw<-'COHORT_DEFINITION'
 
-
+combined_filt$line_group
 ### create an average of all clin vars 
 
 
 combined_filt[combined_filt$COHORT==4,]$STAGE_LOG_SCALE_AV
-
+group
 y='STAGE_LOG_AV'
+colour_by<-'PAG_NAME_M4'
+colour_by<-'PAG_NAME_M3'
+colour_by<-'PDSTATE'
 
 
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV')
+
 scales<-c( 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+y='STAGE_AV'
+formula_1<-as.formula('~COHORT_DEFINITION')
+formula_1<-as.formula('~INEXPAGE')
+formula_1<-as.formula('~PDSTATE')
+
+
+combined_filt$PAG_NAME_M3
+combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c('INEXHC', 'INEXPD'),]
 
 for (y in scales){
 
-  p<-ggplot(combined_to_plot, aes_string( x=x, color='line_group', group='line_group'))+
-  geom_point(aes_string(y=y,color=group, shape=shape))+
-    geom_line(aes_string(y=y,col=group, group=group)) +
-  theme(legend.position="none")
+  p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
+  geom_point(aes_string(y=y,color=colour_by, shape=shape))+
+    geom_line(aes_string(y=y,color=colour_by, group=group))+
+    guides( shape='none', group='none')#+
+  
+  
+  
+  p
+  #theme(legend.position="none")
       #theme(legend.position="bottom", legend.text=element_text(size=2))+
     #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
           
-  p+facet_wrap(~COHORT_DEFINITION, nrow = 4)
-  ggsave(paste0(outdir_orig,'metadata/lines_',y,'.jpeg' ), width=10, height=7)
-
+  p+facet_wrap(formula_1, nrow = 4)
+  p
+  ggsave(paste0(outdir_orig,'metadata/lines_',paste0(formula_1, collapse=''),group, colour_by, y,'.jpeg' ), width=10, height=7)
   
   
-  p<-ggplot(combined_to_plot, aes_string( x=x, color='line_group', group='line_group'))+
+  
+  p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
     geom_point(aes_string(y=y,color=group, shape=shape))+
     #geom_line(aes_string(y=y,col=group, group=group)) +
     #geom_boxplot(aes_string(x=x, y=y))+
@@ -315,8 +356,8 @@ for (y in scales){
   #theme(legend.position="bottom", legend.text=element_text(size=2))+
   #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
   
-  p+facet_wrap(~COHORT_DEFINITION, nrow = 4)
-  ggsave(paste0(outdir_orig,'metadata/box_',y,'.jpeg' ), width=10, height=7)
+  p+facet_wrap(formula_1, nrow = 4)
+  ggsave(paste0(outdir_orig,'metadata/box_',paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
   
   
   

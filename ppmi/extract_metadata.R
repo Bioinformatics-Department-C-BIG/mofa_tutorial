@@ -52,8 +52,12 @@ dim(characteristics)
 # todo: add more motor mds-updrs
 motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
 motor_assess_II<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS_UPDRS_Part_II__Patient_Questionnaire.csv'))
-motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III.csv'))
+
+#motor_assess_III<-read.csv2(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III.csv'), sep=',', stringsAsFactors = FALSE)
+motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III-short-date.csv'))
+
 motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_IV__Motor_Complications.csv'))
+motor_assess_III$ONEXAMDT
 
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
 non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
@@ -100,6 +104,14 @@ combined[ind,'AGE' ]<-get_age_at_visit(combined[ind,])
 combined$SEX<-as.factor(combined$SEX)
 combined$AGE_SCALED<-scale(combined$AGE)
 
+
+combined$OFFPDMEDDT
+combined$INFODT_M1
+combined$OFFEXAMDT
+combined$HRPOSTMED ### hours since last dose 
+
+combined[,c('ONEXAM', 'OFFEXAM','PDMEDYN','ORIG_ENTRY_M3',  'INFODT_M3','NTEXAMDT',  'OFFEXAMDT' ,'OFFEXAMTM', 'OFFPDMEDDT', 'OFFPDMEDTM')]
+
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
 #combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
@@ -128,7 +140,6 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
-
 
 
 

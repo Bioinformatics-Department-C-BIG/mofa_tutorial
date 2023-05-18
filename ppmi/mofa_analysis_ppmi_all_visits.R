@@ -308,48 +308,50 @@ for (i in 1:dim(positive_cors)[2]){
 
   names<-colnames(positive_cors)
   x_cors<-positive_cors[,i]
+  
+  ### Which factors have more than two variables so we can plot them together 
   pos_factors<-names(which(x_cors>0))
   x_cor_t=5
   pos_factors<-names(which(x_cors>x_cor_t))
+  pos_factors
   # Order by 
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
   print(paste(i, pos_factors))
+  if (length(pos_factors)){
   
-  
-  #TODO: print also other factors combinations
-  #combn(pos_factors,2)
-  
-  fs<-c(pos_factors[1],pos_factors[2])
-  color_by<-names[i]
-  print(color_by)
-   
-  plot_factors(MOFAobject, 
-               factors = fs, 
-               shape_by=color_by,
-               color_by = 'group',
-                 show_missing = FALSE
-  )
-  
-  fss<-paste(fs,sep='_',collapse='-')
-  dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
-  
-  FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
-  
-  
-  ggsave(FNAME, width = 4, height=4, dpi=100)
-  
-  shape_by='NHY'
-  #shape_by='AGE_AT_VISIT'
-  
-  plot_factors(MOFAobject, 
-               factors = fs, 
-               color_by=color_by,
-                shape_by= shape_by,
-               show_missing = FALSE
-  )
-  FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
-    ggsave(FNAME, width = 4, height=4, dpi=100)
-  
+          #TODO: print also other factors combinations
+          #combn(pos_factors,2)
+          fs= ifelse(length(pos_factors)>1, c(pos_factors[1],pos_factors[2]), pos_factors[1])
+          
+          color_by<-names[i]
+          print(color_by)
+          plot_factors(MOFAobject, 
+                       factors = fs, 
+                       shape_by=color_by,
+                       color_by = 'group',
+                         show_missing = FALSE
+          )
+          
+          fss<-paste(fs,sep='_',collapse='-')
+          dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
+          
+          FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
+          
+          
+          ggsave(FNAME, width = 4, height=4, dpi=100)
+          
+          shape_by='NHY'
+          #shape_by='AGE_AT_VISIT'
+          fs
+          plot_factors(MOFAobject, 
+                       factors = fs, 
+                       color_by=color_by,
+                        shape_by= shape_by,
+                       show_missing = FALSE
+          )
+          FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
+            ggsave(FNAME, width = 4, height=4, dpi=100)
+  }
 }
 dev.off()
 
@@ -376,10 +378,6 @@ type(MOFAobject@samples_metadata$STAIAD3)
 #  
 #}
 
-plot_factors(MOFAobject, 
-             factors = fs, 
-             show_missing = FALSE
-)
 color_by='COHORT'
 plot_factors(MOFAobject, 
              factors =  c(2,4), 
@@ -607,7 +605,7 @@ for (i in seq(1,vps)){
     
     
     ###### Heatmaps 
-    nfs=20
+    nfs=10
     #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     # Plot heatmaps for each factor only for miRNA 
     
@@ -636,21 +634,29 @@ for (i in seq(1,vps)){
       cors_sig<-names(rel_cors_ordered)
     }
     cors_sig
-    exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st', 'OFFEXAMTM', 'OFFEXAMDT', 'OFFPDMEDT', 
-                    'INFO')
+    exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st')
+    #'OFFEXAMTM', 
+     #               'OFFEXAMDT', 'OFFPDMEDT', 'INFO')
     cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]; cors_sig
-    cors_sig<-cors_sig[!grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|PAG', cors_sig)]
+    cors_sig<-cors_sig[!grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|PAG_', cors_sig)]
     
     plot_heatmap_flag=TRUE
     #MOFAobject_gs@samples_metadata[cors_sig][is.na(MOFAobject_gs@samples_metadata[cors_sig])]<-10^-6v
     MOFAobject_gs@samples_metadata[,cors_sig]
     MOFAobject_gs@samples_metadata[,cors_sig]
     
-    cors_sig_non_na<-names(which(!apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
-    if(length(cors_sig_non_na)==0){
-      cors_sig_non_na=c()
-    }
-    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
+    #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
+    
+    
+    #cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),1,any )))
+    
+    #if(length(cors_sig_non_na)==0){
+    #  cors_sig_non_na=c()
+    #}
+    
+    cors_sig_non_na=cors_sig
+    #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
+    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     
     MOFAobject_gs@samples_metadata[cors_sig_non_na]
     p<-plot_data_heatmap(MOFAobject_gs, 
@@ -667,7 +673,8 @@ for (i in seq(1,vps)){
                          
     )
     #ggsave(hname, plot=p,height=nfs/2, width=(ns+as.numeric(length(cors_sig_non_na) )) )
-    ggsave(hname, plot=p,height=nfs/2, width=ns/50, dpi=250) 
+    width=ifelse( length(cors_sig_non_na)> 0,ns/50+2,ns/50)
+    ggsave(hname, plot=p,height=nfs/2, width=width, dpi=250) 
     
     
   }

@@ -28,7 +28,7 @@ for (f in 1:10){
 }
 
 
-
+##### 
 
 sexample1 <- get_multimir(mirna =mirs[N], summary = TRUE)
 write.csv(example1@data, paste0(mir_results_file, 'gene_targets.csv'))
@@ -54,4 +54,29 @@ head(all_targets);head(anticor_long_ints)
 merged_targets<-merge(all_targets, anticor_long_ints, by=c('mature_mirna_id', 'target_ensembl'))
 
 write.csv(merged_targets, paste0(mir_results_file, 'gene_targets_filtered', N, '.csv'))
+
+
+
+######
+
+
+BiocManager::install('biotools')
+library("biotools")
+
+install.packages("remotes")
+
+library(mirtarbase)
+
+
+biotools::findSubsample()
+
+
+### TARGET SCAN 
+
+all_tars<-mget(names(mirs_to_test), revmap(targetscan.Hs.egTARGETS))
+targetscan.Hs.egTARGETS
+
+
+
+
 

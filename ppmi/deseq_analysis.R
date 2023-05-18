@@ -68,6 +68,7 @@ if (!process_mirnas){
   
   
 }
+write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
 #symbols[dup_ind]
@@ -82,6 +83,7 @@ deseq2ResDF$SYMBOL
 log2fol_T<-0.25
 padj_T<-.005
 
+deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
 
 
@@ -105,10 +107,11 @@ vsd_mat <- assay(vsd)
 
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 #for (most_var in c(0.05, 0.5)){
-  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
+#  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
+    for (most_var in c(0.05,0.1, 0.5, 0.9, 0.2,0.3)){
     
 
-  param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_'  )
+  param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
   highly_variable_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa.csv')
   highly_variable_sign_outfile<-paste0(output_files, param_str_tmp,'_highly_variable_genes_mofa_signif.csv')
 
@@ -116,7 +119,8 @@ vsd_mat <- assay(vsd)
   highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
   
-  write.csv(highly_variable_genes_mofa, highly_variable_outfile); 
+  write.csv(highly_variable_genes_mofa, highly_variable_outfile);
+  
   write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
   
@@ -133,6 +137,7 @@ dim(highly_variable_sign_genes_mofa)
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
+deseq2ResDF
 deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
@@ -240,26 +245,6 @@ dds$Condition<-dds$COHORT
   
 # Extract counts for the gene otop2
 
-
-# Plot the data using ggplot2
-# this is more useful for paired datasets !! 
-# TODO: otherwise do a box plot 
-#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-#                           group=Sample)) + geom_point() + geom_line() +
-#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-#
-#
-#p
-#
-#p<-ggplot(otop2Counts, aes(x=Condition, y=count, colour=Sample, 
-#                           group=Sample)) + geom_point() + geom_line() +
-#  theme_bw() + theme(axis.text.x=element_text(angle=15, hjust=1)) +
-#  guides(colour=guide_legend(ncol=3)) + ggtitle("OTOP2")
-#
-#
-#p
-
 ##### 
 # Compute normalization factors and vst 
 
@@ -306,6 +291,14 @@ if (run_heatmap){
 
   ### Filter the significant 
   oSigGenes<-deseq2ResDF[deseq2ResDF$padj <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm, ] ; dim(oSigGenes)
+  if (dim(oSigGenes)[1]<1){
+    log2fol_T_hm<-0
+    padj_T_hm<-.05
+    oSigGenes<-deseq2ResDF[deseq2ResDF$pvalue <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange), ] ; dim(oSigGenes)
+    
+  }
+  oSigGenes
+  
   length(rownames(highly_variable_sign_genes_mofa))
   #View(deseq2ResDF)
   filter_highly_var=FALSE
@@ -317,11 +310,12 @@ if (run_heatmap){
     most_var_t=FALSE
   }
   ### also filter by mean > 0.75
-  oSigGenes<-oSigGenes[oSigGenes$baseMean>mean_expr_T,];dim(oSigGenes)
+  ## DO NOT FILTER BY MEAN 
+  #oSigGenes<-oSigGenes[oSigGenes$baseMean>mean_expr_T,];dim(oSigGenes)
   
   ### Order using the order_by_metric 
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
-  
+  orderedSigGenes
   n_sig_f='all'
   n_sig_f=30
   
@@ -368,20 +362,23 @@ if (run_heatmap){
   
   #ARRANGE
   df_ord<-df[order(df$COHORT),]
+  df_ord$COHORT
   hm<-assay(vsd_filt_genes)
   hm_ord<-hm[,order(df$COHORT)]
   
   ### SCALE!! 
-  
   hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
   dim(hm_ord)
+  cluster_cols=TRUE
+  hm_scaled
   #jpeg(fname, width=2000, height=1500, res=200)
   graphics.off()
   library(ggplot2)
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
-  
+    cluster_cols
+    hm_scaled
       #jpeg(fname, width=10*100, height=7*100, res=300)
       my_pheatmap<-pheatmap(hm_scaled, 
                             labels_row=lab,
@@ -390,7 +387,8 @@ if (run_heatmap){
                             #scale='row', 
                             cluster_cols=cluster_cols,
                             annotation_col=df_ord, 
-                              clustering_method = 'ward.D2'
+
+                            clustering_method = 'ward.D2'
       )
       
       
@@ -435,7 +433,7 @@ mfc<-max(abs(deseq2ResDF$log2FoldChange))
 pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
 pmax
 xlim = c(-mfc-0.2,mfc+0.2)
-#ylim = c(0,pmax+1)
+ylim = c(0,pmax+1)
 
 ns_full<-table(se_filt$COHORT_DEFINITION)
 ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])

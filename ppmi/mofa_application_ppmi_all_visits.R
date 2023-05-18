@@ -52,7 +52,7 @@ run_rna_mirna=FALSE
 FULL_SET=TRUE
 VISIT_COMPARE='BL'
 # cohort 1 =prodromal 
-N_FACTORS=12
+N_FACTORS=10
 
 if (split){
   N_FACTORS=8
@@ -204,26 +204,20 @@ create_hist(miRNA, 'miRNA')
 #head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
 ### might need to filter by what is common with meta
+
+
 data_full<-list(miRNA=as.matrix(miRNA), 
                 RNA=as.matrix(RNA),
                 proteomics=as.matrix(proteomics))
-dim(miRNA)
-dim(proteomics)
+
 
 assay_full=c(rep('RNA', length(RNA)),
              rep('miRNA', length(miRNA)),
              rep('proteomics', length(proteomics)))
 
-
-length(miRNA);length(RNA);length(proteomics)
-#colname = c(colnames(RNA), colnames(miRNA))
 colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
-
 primary=colname
-
-
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
-
 common_samples_in_assays=unique(colname)
 ### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
@@ -240,8 +234,10 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
 
 
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 
-
+mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
+mofa_multi_rna_mir_complete<-mofa_multi_rna_mir[,complete.cases(mofa_multi_rna_mir)]
 
 library('UpSetR')
 upsetSamples(mofa_multi)
@@ -283,6 +279,8 @@ prot_to_impute<-assays(mofa_multi_complete)$proteomics
 outdir
 MOFAobject <- create_mofa(mofa_multi)
 
+mofa_multi
+
 if (length(VISIT)>1){
   MOFAobject <- create_mofa(mofa_multi_complete, groups= mofa_multi_complete$EVENT_ID)
   
@@ -301,7 +299,6 @@ MOFAobject <- prepare_mofa(MOFAobject,
 
 
 
-plot_data_overview(MOFAobject)
 outdir
 ggsave(paste0(outdir, 'data_overview.jpeg'))
 

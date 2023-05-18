@@ -42,13 +42,14 @@ install.packages('lattice')
 
 install.packages('iCluster')
 
+
 BiocManager::install('edgeR')
 BiocManager::install('cluster')
 
 
 
 
-###### Single layer
+M###### Single layer
 
 
 
@@ -75,6 +76,7 @@ BiocManager::install('MOFAdata')
 ### proteins
 BiocManager::install('DEP')
 BiocManager::install('vsn')
+BiocManager::install('MultiAssayExperiment')
 
 
 

@@ -32,10 +32,8 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
 }
 
-
-
 ## Create the summarized experiment by selecting VISITS and cohorts 
-filter_se<-function(se, VISIT, sel_coh){
+filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   
   #' Takes the raw file with all counts
   #' Filters summarized experiment by selecting VISITS and cohorts 
@@ -46,20 +44,33 @@ filter_se<-function(se, VISIT, sel_coh){
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
   
-  se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
-  se_filt$EVENT_ID; se_filt$COHORT
+  
+  if (length(sel_subcoh)==1 && sel_subcoh==FALSE){
+        se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
+    
+  }else{
+      se_visit<-se[,se$EVENT_ID %in% VISIT]
+
+      if (1 %in% sel_coh){ 
+        ids<-c(se_visit$INEXPAGE %in% sel_subcoh ) ## filter the ids in parkinsons 
+      }
+      if (2 %in% sel_coh){
+        ids<- c(ids | se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+        
+      }
+      se_filt<-se_visit[, ids]
+      
+      
+    
+  }
+     
+  dim(se_filt)     
+
+  
   Sample<-colnames(se_filt)
   sample_info<-DataFrame(Sample=Sample)
   
-  raw_counts=assays(se_filt)[[1]]
-  
-  ## filterbyExpr takes cpm so remove from there 
-  idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
-  
-  length(which(idx))
-  raw_counts <- as.matrix(raw_counts[idx, ])
-  dim(raw_counts)
-  se_filt=se_filt[idx]
+ 
   
   ##### Define
   

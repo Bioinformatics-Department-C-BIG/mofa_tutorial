@@ -7,7 +7,7 @@ length(cohort_cors)
 var_captured  <-vars_by_factor_all$r2_total[[1]]
 vars_by_factor_all$r2_total
 cor_t<-0.1
-cor_t<-0.1
+cor_t<-0.15
 
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
@@ -18,10 +18,10 @@ sel_factors<-c('Factor3', 'Factor4', 'Factor5')
 sel_factors<-c( 'Factor3', 'Factor4')
 
 
+
+sel_factors<-c('Factor3', 'Factor4', 'Factor7')
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
-sel_factors<-c('Factor3', 'Factor4', 'Factor7')
-
 paste0(sel_factors)
 cohort_cors[sel_factors]
 var_captured

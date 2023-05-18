@@ -850,7 +850,8 @@ utils::data(reactomeGS)
 
 head((reactomeGS))
 
-
+## TODO: if enrichment is already run then just load results
+## load res.positive to be used in the next script
 
 subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
@@ -1085,7 +1086,7 @@ View(confusion_mat)
 round(importance(model.y), 2)
 
 
-install.packages('GGally')
+#install.packages('GGally')
 library('GGally')
 ### Plot predictions
 p <- plot_factors(MOFAobject, 

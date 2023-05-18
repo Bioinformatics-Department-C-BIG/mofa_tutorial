@@ -621,8 +621,16 @@ for (i in seq(1,vps)){
     
     
     ns<-dim(MOFAobject@samples_metadata)[1]
-    cor_T<-1.5; cor_p_T<-0.1
+    if (run_mofa_complete){
+      cor_T<-1.5; cor_p_T<-0.1
+      
+    }else{
+      cor_T<-2; cor_p_T<-0.1
+      
+    }
+    
     abs(cors_pearson)>0.15
+    
     
     dim(cors_pearson)
     dim(cors)
@@ -634,8 +642,8 @@ for (i in seq(1,vps)){
     if (length(cors_sig)==0){
       cors_sig=c()
       
-    } else if (length(cors_sig)>7){
-      FT=7
+    } else if (length(cors_sig)>10){
+      FT=10
        rel_cors_ordered<-rel_cors[order(-rel_cors)][1:FT]
       #rel_cors_ordered<-rel_cors[order(-rel_cors)]
       
@@ -685,7 +693,14 @@ for (i in seq(1,vps)){
                          
     )
     #ggsave(hname, plot=p,height=nfs/2, width=(ns+as.numeric(length(cors_sig_non_na) )) )
-    width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
+    if (run_mofa_complete){
+      width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
+      
+    }else{
+      width=ifelse( length(cors_sig_non_na)> 0,ns/80+6,ns/80+4)
+      
+    }
+    
     ggsave(hname, plot=p,height=nfs/5+2, width=width, dpi=250) 
     
     

@@ -478,9 +478,11 @@ mir_enrich_p_all
   
   
   #### COMPARE TO MOFA
-  cor_t<-0.09
+  cor_t<-0.15
   outdir
-  mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
+  
+  mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
+  mofa_enrich_file<-paste0(mofa_enrich_dir, '.csv')
   all_ord_R<-read.csv(mofa_enrich_file, header=1)
   single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))
   listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths)

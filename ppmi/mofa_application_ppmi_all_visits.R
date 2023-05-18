@@ -82,7 +82,7 @@ combined_bl<-combined
 which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
-run_mofa_complete<-TRUE
+run_mofa_complete<-FALSE
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 

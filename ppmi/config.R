@@ -104,8 +104,8 @@ outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 ######## PROCESS PROTEINS 
 
-TISSUE='Plasma'
 TISSUE='CSF'
+TISSUE='Plasma'
 
 TOP_PN=0.9
 

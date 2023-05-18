@@ -57,6 +57,8 @@ BiocManager::install('DESeq2')
 BiocManager::install("SummarizedExperiment")
 install.packages('data.table')
 install.packages('dplyr')
+BiocManager::install('EnhancedVolcano')
+
 
 
 install.packages('UpSetR')
@@ -64,6 +66,15 @@ install.packages('UpSetR')
 #### MOFA
 BiocManager::install('MOFAdata')
 
+#BiocManager::install('MultiAssayExperiment')
+#BiocManager::install("MOFA2")
+#devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"), force = TRUE)
+#browseVignettes("MOFA2")
+#BiocManager::install("MOFAdata")'
+
+### proteins
+BiocManager::install('DEP')
+BiocManager::install('vsn')
 
 
 

@@ -337,7 +337,7 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer'){
     p3<-merged_paths[,4];length(p3)
     fish <- metapod::combineParallelPValues(list(p1, p2, p3),
                                             method=pmethod, 
-                                            weights = c(1,1,0.9))$p.value
+                                            weights = c(1,1,0.5))$p.value
     
   }else{
     fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
@@ -387,7 +387,7 @@ use_mofa=TRUE
 if (use_mofa){
   
   ### use all not just the significant p-value
-  fn=2
+  fn=1
   dim(gse_mofa_rna@result)
   gse_mofa_rna=list1[[sel_factors[fn]]]
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
@@ -398,7 +398,11 @@ if (use_mofa){
   enrich_mirnas=gse_mofa_mirs@result
 }
 
+which(enrich_rna$p.adjust<0.05);
+which(enrich_proteins$p.adjust<0.05);
+which(enrich_mirnas$p.adjust<0.05);
 
+enrich_mirnas
 ################# ACTUALLY RUN THE combination #### 
 if (add_mirs){
   merged_paths=concatenate_pvals(enrich_proteins,enrich_rna,enrich_mirnas, pval_to_use )
@@ -408,6 +412,7 @@ if (add_mirs){
   
 }
 head(merged_paths)
+merged_paths$Description
 ### WHETHER TO ADD MIRNA INFO
 sapply(list(enrich_rna_pvals,
             enrich_mirna_pvals, 
@@ -418,7 +423,7 @@ use_mofa
 use_mofa_s=ifelse(isTRUE(use_mofa), sel_factors[fn],use_mofa )
 #merge(enrich_proteins)
 pmethod<-'stouffer'
-merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod, 'mofa_',  use_mofa_s  )
+merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod, 'mofa_',  use_mofa_s  )
 #BiocManager::install('metapod')
 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
@@ -431,7 +436,7 @@ length(which(merged_paths$p.adjust<combined_p_thresh))
 
 merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
 merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]
-
+merged_paths_fish_log_sig
 
 ############################################
 #### Create plots of combined p-values ####
@@ -480,7 +485,7 @@ mir_enrich_p_all<-ggplot(merged_to_plot,
   
   coord_flip()
 mir_enrich_p_all
-  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all,'.jpeg'),mir_enrich_p_all, dpi=300,
+  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
          width=Npaths*0.55,height=Npaths/2.5 )
 
   

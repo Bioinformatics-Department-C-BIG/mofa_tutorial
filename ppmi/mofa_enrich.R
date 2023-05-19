@@ -1,7 +1,9 @@
 
 
-#source(paste0(script_dir, '/RNAseq enrichment.R'))
-source(paste0(script_dir, '/miRNA_seq_enrichment.R'))
+source(paste0(script_dir, '/RNAseq enrichment.R'))
+source(paste0(script_dir, '/Utils.R'))
+
+
 library(R.filesets)
 #BiocManager::install('stats')
 library(stats)
@@ -20,6 +22,14 @@ group=1
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 vars_by_factor_all
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
+
+
+cors_pearson_l<-read.csv(paste0(outdir, '/covariate_corelations_pearson.csv'))
+cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
+sel_factors<-which(abs(cohort_cors)>cor_t)
+sel_factors
+cohort_cors[sel_factors]
+
 
 ONT='BP'
 
@@ -40,63 +50,80 @@ pvalueCutoff=1
 nfactors=8
 if (file.exists(mofa_enrich_rds)){
   list_all<-loadRDS(mofa_enrich_rds)
-  list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
-  list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
-  list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
+ # list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+#  list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
   
 }else{
   
-      for (factor in 1:nfactors){
-            for (view in c( 'RNA')){
-           #   for (view in c( 'miRNA')){
+      for (factor in sel_factors){
+           # for (view in c( 'proteomics')){
+              for (view in c( 'RNA', 'miRNA', 'proteomics')){
                 
               #### Do the RNA view for whatever is high in rna
 
               print(paste0(view, factor ))
               gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
               gene_list_ord
-              if (view=='RNA'){
-               
-                ### Run RNA 
-                    gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
-                                                       ont=ONT, 
-                                                       keyType = 'ENSEMBL', 
-                                                       OrgDb = 'org.Hs.eg.db', 
-                                                       pvalueCutoff  = pvalueCutoff)
-                  
-                    list1[[factor]]<-gse_mofa
-                    }
-                 
-          
+                    if (view=='RNA'){
+                     
+                      ### Run RNA 
+                          if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                            list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
+                          }else{
+                                gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
+                                                                   ont=ONT, 
+                                                                   keyType = 'ENSEMBL', 
+                                                                   OrgDb = 'org.Hs.eg.db', 
+                                                                   pvalueCutoff  = pvalueCutoff)
+                                
+                                list1[[factor]]<-gse_mofa
+                                saveRDS(list1, paste0(mofa_enrich_rds, 'gene'))
+                            
+                          }
+                    
+                    
               
                 }
                   ### Run proteins 
                 if (view=='proteomics'){
-                  gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                                                             ont=ONT, 
-                                                             keyType = 'SYMBOL', 
-                                                             OrgDb = 'org.Hs.eg.db', 
-                                                             pvalueCutoff  = pvalueCutoff)
-                  list_proteins[[factor]]<-gse_protein_full
-                  saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
                   
+                  if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+                  }else{
                   
+                          
+                          gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                                                     ont=ONT, 
+                                                                     keyType = 'SYMBOL', 
+                                                                     OrgDb = 'org.Hs.eg.db', 
+                                                                     pvalueCutoff  = pvalueCutoff)
+                          list_proteins[[factor]]<-gse_protein_full
+                          saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
+                  
+                  }
                 }
               if (view=='miRNA'){
                 
-                #gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
-                #gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
-                 mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
-                                                    mirna_type = "mature",
-                                                    test_type = "GSEA",
-                                                    species = 'Homo sapiens',
-                                                     # categories='GO Biological process (miRPathDB)',
-                                                    sig_level=pvalueCutoff
-                 )
-
-                 list_mirs[[factor]]<-mieaa_all_gsea_mofa
-                 saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
-                 
+                
+                if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                  list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
+                
+                         
+                }else{
+                
+                        #gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
+                        #gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
+                         mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
+                                                            mirna_type = "mature",
+                                                            test_type = "GSEA",
+                                                            species = 'Homo sapiens',
+                                                             # categories='GO Biological process (miRPathDB)',
+                                                            sig_level=pvalueCutoff
+                         )
+        
+                         list_mirs[[factor]]<-mieaa_all_gsea_mofa
+                         saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
+                }
                }
              
           
@@ -104,6 +131,7 @@ if (file.exists(mofa_enrich_rds)){
           
 
       
+              }
       }
       
       saveRDS(list(list1,list_proteins, list_mirs),mofa_enrich_rds )
@@ -122,7 +150,7 @@ if (file.exists(mofa_enrich_rds)){
 #gse_mofa=list1[[factor]]
 sel_factors
 ## or LOAD GSE RESULTS HERE 
-for (factor in 1:nfactors){
+for (factor in sel_factors){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa_rna=list1[[factor]]
@@ -136,11 +164,11 @@ for (factor in 1:nfactors){
 list_proteins[[1]]
 run_ORA=FALSE
 process_mofa=TRUE
-for (factor in 1:nfactors){
+for (factor in sel_factors){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
     dir.create(paste0(outdir, '/enrichment/proteins/'))
     gse_mofa=list_proteins[[factor]]
-    gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff, pvalueCutoff_sig=0.2)
+    gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, 0.2)
     
     
     write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
@@ -164,7 +192,7 @@ for (factor in 1:nfactors){
 }
 
 list_mirs_enrich=list()
-for (factor in 1:nfactors){
+for (factor in sel_factors){
       results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
       dir.create(paste0(outdir, '/enrichment/mirnas/'))
       gse_mofa_mirs=list_mirs[[factor]]

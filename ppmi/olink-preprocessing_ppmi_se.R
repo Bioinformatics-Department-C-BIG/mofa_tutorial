@@ -214,10 +214,10 @@ vsn_mat<-normalized_data
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
 TOP_PN
-for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
+for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3, 0.9,0.75,0.5)){
      # TODO: IF YOU CHANGE THIS MAKE SURE TO CHANGE THE ONE IN MOFA 
     #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-  
+   most_var
     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
   

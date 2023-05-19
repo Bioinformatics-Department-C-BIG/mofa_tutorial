@@ -432,3 +432,75 @@ if (file.exists(res_path)){
 }
 
 
+
+
+
+#### mirna enrich ####
+
+
+#install.packages('VennDiagram')
+library(rbioapi)
+library('VennDiagram')
+library(enrichplot)
+
+
+
+
+#table(mieaa_all_gsea$Category)
+Category<-'Gene Ontology (miRWalk)';
+Category<-'Annotation (Gene Ontology)';
+Category<-'GO Biological process (miRPathDB)';
+
+
+
+
+#install.packages("remotes")
+#remotes::install_github("jmw86069/jamenrich")
+library('multienrichjam')
+library('clusterProfiler')
+
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)'){
+  
+  #' post-process mieaa enrichment analysis results 
+  #' convert to enrich result to be able to use with cluster profiler plotting functions
+  #' @param mieaa_all_gsea output from mieaa
+  #' @param Category which category to choose from enrich dbs eg.  'GO Biological process (miRPathDB)'
+  #'
+  colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
+  colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
+  
+  
+  
+  mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
+  ## write output results 
+  write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
+  
+  ### cut filtered datasets only
+  mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
+  mir_paths<-mieaa_gsea_1_cut[,c(2)]
+  results_df<-paste0(mir_results_file, '_', Category)
+  write.csv(mieaa_all_gsea, paste0(mir_results_file, '_', '.csv' ))
+  
+  
+  ### Convert and return enrich result 
+  mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
+  
+  
+  mieaa_gsea_1$keyColname=mieaa_gsea_1$Subcategory
+  mieaa_gsea_1_ord=mieaa_gsea_1[order(mieaa_gsea_1$P.adjusted),]
+  #mieaa_gsea_1_ord_prob<-mieaa_gsea_1_ord
+  
+  enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
+                                                    keyColname =  'Subcategory',
+                                                    geneColname ='miRNAs.precursors',
+                                                    pvalueColname = 'P.adjusted', 
+                                                    pvalueCutoff = pvalueCutoff)
+  
+  
+  
+  return(list(mieaa_gsea_1, enr_full))
+  
+}
+
+
+

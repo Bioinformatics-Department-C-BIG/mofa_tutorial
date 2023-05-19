@@ -82,7 +82,7 @@ combined_bl<-combined
 which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
-run_mofa_complete<-FALSE
+run_mofa_complete<-TRUE
 
 ## MORE samples, more factors ! 
 # TODO: need a better way to decide how to run this 
@@ -137,15 +137,16 @@ highly_variable_proteins_outfile
 
 
 mofa_params;g_params;p_params;p_params_out
+p_params
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
 highly_variable_proteins_outfile<-paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-
+out_params
 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
 outdir
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
-fname
+
 
 
 
@@ -160,6 +161,7 @@ highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
 proteomics<-as.data.frame(highly_variable_proteins_mofa)
 dim(highly_variable_proteins_mofa)
 
+test2<-proteomics['GLO1',]
 ##### Load mirnas + RNAs 
 ### we use data.table because there are duplicate samples? 
 ### problem with saving of rownmaes 

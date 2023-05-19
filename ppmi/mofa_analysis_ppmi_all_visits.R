@@ -398,35 +398,12 @@ plot_factors(MOFAobject,
 )
 
 
-plot_factor(MOFAobject, 
-             factors = c(2,4,6),
-            color_by = color_by,
-            
-             show_missing = FALSE
-)
-
-
-
-
-##### Plot molecular signatures in the input data
-
-
-
-plot_weights(MOFAobject,
-             view = "miRNA",
-             factor = 2,
-             nfeatures = 10,     # Top number of features to highlight
-             scale = T           # Scale weights from -1 to 1
-)
-
 
 
 
 
 ### Age, gender , stage does not discriminate factors
 #Conclusion here:# factor 1 correlates with grade
-
-  
 for (ii in seq(1,fps)){
   ### Plot factors against a clinical variable 
   x_cor_t=4
@@ -467,7 +444,6 @@ length(yvar)
 f1[yvar_name]<-yvar
 f1[,yvar_name]=as.numeric(f1[,yvar_name])
 ggplot(f1, aes_string(x='Factor1', y=yvar_name) )+ geom_point()
-
 
 
 # Factor 2 associates with proteomic Subtype 
@@ -596,7 +572,7 @@ for (i in seq(1,vps)){
 
 
 vps
-# rename because it is too long
+# rename because value is too long in the legend
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 

@@ -52,15 +52,15 @@ run_rna_mirna=FALSE
 FULL_SET=TRUE
 VISIT_COMPARE='BL'
 # cohort 1 =prodromal 
-N_FACTORS=10
+N_FACTORS=9
 
 if (split){
   N_FACTORS=8
 }
 VISIT=c('V08');
 run_vsn=TRUE
-TISSUE='CSF'; 
 TISSUE='Plasma';
+TISSUE='CSF'; 
 
 
 NORMALIZED=TRUE;
@@ -85,7 +85,7 @@ combined_bl$AGE
 scale_views=TRUE
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
-p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+#p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )

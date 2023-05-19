@@ -4,7 +4,8 @@
 
 #install.packages("remotes")
 #remotes::install_github("bioFAM/MOFAdata")
-##### 
+#####  MOFA ANALYSIS 
+
 ### this one depends on mofa application to inherit: 
 ### 1. MOFAobject, 2. factors, 
 # 3. clinical variables
@@ -12,6 +13,14 @@
 # 5. csf/plasma/untargeted flags
 
 #source('enrichment.R')
+
+
+#### MOFA ANALYSIS ####
+### 1. get correlations with covariates 
+
+###### CORRELATIONS WITH COVARIATES ##########
+##### Corelations
+
 
 
 library(ggplot2)
@@ -164,10 +173,10 @@ dev.off()
 
 
 names(non_na_vars)[ids_to_plot]
-MOFAobject@samples_metadata$NP1T
+MOFAobject@samples_metadata$SCAU
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'SCAU', 'NHY', 'NP3BRADY', 'NP3RIGN')
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'SCOPA', 'Hoehn & Yahr','BRADY','RIGN'  )
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN')
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN'  )
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
@@ -253,6 +262,9 @@ for (i in seq(1,vps)){
 
 outdir
 high_vars_by_factor<-vars_by_factor>0.1
+
+
+#### 2. Save highly weighted features #####
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     
@@ -395,20 +407,7 @@ plot_factor(MOFAobject,
 )
 
 
-plot_factors(MOFAobject, 
-             factors = c('Factor1', 'Factor2'), 
-             color_by = color_by,
-             show_missing = FALSE
-)
 
-# Plot top variables with top factors?  
-plot_factors(MOFAobject, 
-             factors = c(3,4), 
-             dot_size = 2.5, 
-             color_by = 'NHY'
-             
-)
-dev.off()
 
 ##### Plot molecular signatures in the input data
 
@@ -420,7 +419,6 @@ plot_weights(MOFAobject,
              nfeatures = 10,     # Top number of features to highlight
              scale = T           # Scale weights from -1 to 1
 )
-
 
 
 
@@ -538,6 +536,8 @@ dir.create(paste0(outdir, 'top_weights/'))
 
 graphics.off()
 
+
+#### 3. Save heatmaps and top weighted feaqtures ####
 dir.create(paste0(outdir, '/heatmap/'))
 views[i]
 i
@@ -593,6 +593,7 @@ for (i in seq(1,vps)){
  
 
 
+#### 3. Save heatmaps and top weighted feaqtures ####
 
 
 
@@ -611,14 +612,15 @@ for (i in seq(1,vps)){
     
     var_captured<-round(vars_by_factor[ii,i], digits=2)
     main_t<-paste0('Factor ', ii, ', Variance = ',var_captured, '%')
-    
+    #log10(0.005) = 2.3
     ns<-dim(MOFAobject@samples_metadata)[1]
-    cor_T<-2; cor_p_T<-0.1
+    cor_T<- -log10(0.005); cor_p_T<-0.15
     abs(cors_pearson)>0.15
     
     dim(cors_pearson)
     dim(cors)
-    rel_cors<-cors[ii,][cors[ii,]>cor_T &  cors_pearson[ii,]>cor_p_T ]
+    rel_cors<-cors[ii,][cors[ii,]>cor_T &  abs(cors_pearson[ii,])>cor_p_T ]
+
     rel_cors
     
     cors_sig=names(which(cors[ii,]>cor_T))
@@ -626,8 +628,8 @@ for (i in seq(1,vps)){
     if (length(cors_sig)==0){
       cors_sig=c()
       
-    } else if (length(cors_sig)>5){
-      FT=5
+    } else if (length(cors_sig)>10){
+      FT=10
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
       rel_cors_ordered<-rel_cors[order(-rel_cors)]
       
@@ -646,25 +648,31 @@ for (i in seq(1,vps)){
     MOFAobject_gs@samples_metadata[,cors_sig]
     
     #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
+    cors_sig
     
-    
-    #cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),1,any )))
-    
-    #if(length(cors_sig_non_na)==0){
-    #  cors_sig_non_na=c()
-    #}
-    
-    cors_sig_non_na=cors_sig
+    ### if the col contains only NA
+    cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
+    which(apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any ))
+    MOFAobject_gs@samples_metadata$PDSTATE
+    if(length(cors_sig_non_na)==0){
+      cors_sig_non_na=c()
+    }
+      which(cors_sig_non_na=='PDSTATE')
+      cors_sig_non_na=cors_sig_non_na[-3]
+   # cors_sig_non_na=cors_sig
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', FT, '.jpeg')
+
     
-    MOFAobject_gs@samples_metadata[cors_sig_non_na]
+    #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
+    
     p<-plot_data_heatmap(MOFAobject_gs, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,
                          denoise = TRUE,
-                         cluster_rows = cluster_rows, cluster_cols = cluster_cols,
+                         cluster_rows = cluster_rows, 
+                         cluster_cols = cluster_cols,
                          show_rownames = TRUE, show_colnames = TRUE,
                          scale = "row",
                          annotation_samples = cors_sig_non_na,
@@ -805,8 +813,8 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 
 
-### 
-## GENE SET ENRICHMENT! 
+####
+##### 5. GENE SET ENRICHMENT! #####
 ## AND reactome gsa enrichment!!
 
 

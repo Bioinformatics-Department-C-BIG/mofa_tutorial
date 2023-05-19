@@ -1,16 +1,15 @@
 
 
-#### choose factors from MOFA and RANK the pathways accordingly 
+#### Choose factors from MOFA and RANK the pathways accordingly ####
 cohort_cors<-cors_pearson[,'CONCOHORT']
 dim(res.positive$pval.adj)
 length(cohort_cors)
+cohort_cors
 var_captured  <-vars_by_factor_all$r2_total[[1]]
 vars_by_factor_all$r2_total
-cor_t<-0.1
-cor_t<-0.1
+cor_t<-0.15
+cor_t<-0.15
 
-sel_factors<-which(abs(cohort_cors)>cor_t)
-sel_factors
 cohort_cors
 
 sel_factors<-c('Factor3', 'Factor4', 'Factor5')
@@ -18,13 +17,16 @@ sel_factors<-c('Factor3', 'Factor4', 'Factor5')
 sel_factors<-c( 'Factor3', 'Factor4')
 
 
-sel_factors<-which(abs(cohort_cors)>cor_t)
-sel_factors
+
 sel_factors<-c('Factor3', 'Factor4', 'Factor7')
+
+sel_factors<-which(abs(cohort_cors)>cor_t)
 
 paste0(sel_factors)
 cohort_cors[sel_factors]
 var_captured
+sel_factors<-which(abs(cohort_cors)>cor_t)
+sel_factors
 ### TODO: add var captured
 cohort_cors[sel_factors]
 
@@ -70,6 +72,7 @@ get_weighted_pvals<-function(enrich_weights){
 
 ###   TODO: load res.positive from file
 mofa_file<-paste0(out_compare, 'mofa_',T, cor_t ) 
+mofa_file
 pos_ord<-get_weighted_pvals(res.positive$pval.adj)
 neg_ord<-get_weighted_pvals(res.negative$pval.adj)
 
@@ -87,7 +90,9 @@ colnames(all_ord)[1]<-'Description'
 colnames(all_ord)
 
 write.csv(all_ord, paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv'), row.names = FALSE)
-N_paths<-20
+#mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
+
+N_paths<-40
 all_ord$p.adj
 all_ord$log10padj<--log10(all_ord$p.adj)
 
@@ -106,7 +111,7 @@ geom_bar(position='dodge', stat='identity', width=0.7/4, fill='darkgreen')+
 
   coord_flip()
 mofa_enrich_plot
-ggsave(paste(mofa_file, '.jpeg'),mofa_enrich_plot, dpi=300,
+ggsave(paste(mofa_file, N_paths, '.jpeg'),mofa_enrich_plot, dpi=300,
      width=Npaths/2+1,height=Npaths/2.5 )
 
 mofa_enrich_plot

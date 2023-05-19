@@ -204,7 +204,6 @@ listInput_all_mods<-list(rna=enrich_rna_sig$Description,
 enrich_proteins_sig$p.adjust
 listInput_all_mods
 get_ids(enrich_mirnas$ID[1])
-fixInNamespace('GOfuncR')
 
 
 
@@ -478,9 +477,12 @@ mir_enrich_p_all
   
   
   #### COMPARE TO MOFA
-  cor_t<-0.09
+  #cor_t<-0.09
+  cor_t<-0.1
   outdir
   mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
+  mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
+  
   all_ord_R<-read.csv(mofa_enrich_file, header=1)
   single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))
   listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths)

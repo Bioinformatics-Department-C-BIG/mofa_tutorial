@@ -316,9 +316,9 @@ order_statistic<-'log2pval'
 #order_statistic<-'pval_reverse'
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
-order_statistic<-'log2pval'
 order_statistic<-'logFC'
 
+order_statistic<-'log2pval'
 
 
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
@@ -419,15 +419,16 @@ process_mirnas=FALSE
 
 write.csv(as.data.frame(gse_protein_full@result), paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv'))
 
+# EXTRACT THE SIG ONLY 
 gse_protein=write_filter_gse_results(gse_protein_full, outdir_s_p_enrich_file, pvalueCutoff)
-gse_protein
-dim(gse_protein@result)
+
 length(which(gse_protein_full@result$pvalue<0.05))
 
 sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCutoff_sig,]
 write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
 
 sig_gse_result
+use_pval=TRUE
 if (use_pval){
   gse_protein=filter(gse_protein_full, pvalue < pvalueCutoff_sig)
 }else{

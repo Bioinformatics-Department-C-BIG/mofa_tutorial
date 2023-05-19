@@ -118,7 +118,7 @@ cors_pearson<-correlate_factors_with_covariates(MOFAobject,
                                         return_data = TRUE
                                         
 )
-
+cors_pearson
 round(cors_pearson[,'CONCOHORT'], digits=2)
 
 cors_pearson
@@ -212,7 +212,7 @@ dev.off()
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
 
-
+cors_pearson$view
 view='proteomics'; factor=6
 
 vps=length(MOFAobject@dimensions$D)
@@ -457,7 +457,7 @@ for (ii in seq(1,fps)){
   
   
 }
-
+cors_pearson[,'COHORT']
 f1<-get_factors(MOFAobject,factors=1)
 f1<-as.data.frame(get_factors(MOFAobject,factors=1)['group1'])
 
@@ -596,34 +596,49 @@ for (i in seq(1,vps)){
 #### 3. Save heatmaps and top weighted feaqtures ####
 
 
+vps
+# rename because it is too long
+MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
+MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
 graphics.off()
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
-    
+    print(paste('Modality', i, 'factor', ii))
     cluster_rows=TRUE;cluster_cols=TRUE
     
     
     
     ###### Heatmaps 
-    nfs=10
+    nfs=20
     #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     # Plot heatmaps for each factor only for miRNA 
     
     var_captured<-round(vars_by_factor[ii,i], digits=2)
     main_t<-paste0('Factor ', ii, ', Variance = ',var_captured, '%')
     #log10(0.005) = 2.3
+    #cor_T<- -log10(0.005); cor_p_T<-0.15
+    modality=names(MOFAobject@dimensions$D)[i]
+    if (names(MOFAobject@dimensions$D)[i]=='proteomics'){modality=paste(TISSUE, modality )  }
+    main_t<-paste0('Factor ', ii, ', Mod ',modality, ', Variance = ',var_captured, '%')
+    
+    
+    
     ns<-dim(MOFAobject@samples_metadata)[1]
-    cor_T<- -log10(0.005); cor_p_T<-0.15
+    if (run_mofa_complete){
+      cor_T<-1.5; cor_p_T<-0.1
+      
+    }else{
+      cor_T<-2; cor_p_T<-0.1
+      
+    }
+    
     abs(cors_pearson)>0.15
     
-    dim(cors_pearson)
-    dim(cors)
     rel_cors<-cors[ii,][cors[ii,]>cor_T &  abs(cors_pearson[ii,])>cor_p_T ]
 
-    rel_cors
-    
-    cors_sig=names(which(cors[ii,]>cor_T))
+    # sig holds the names only 
+    cors_sig=names(rel_cors); cors_sig
     FT=0
     if (length(cors_sig)==0){
       cors_sig=c()
@@ -632,7 +647,9 @@ for (i in seq(1,vps)){
       FT=10
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
       rel_cors_ordered<-rel_cors[order(-rel_cors)]
-      
+       rel_cors_ordered<-rel_cors[order(-rel_cors)][1:FT]
+      #rel_cors_ordered<-rel_cors[order(-rel_cors)]
+
       cors_sig<-names(rel_cors_ordered)
     }
     cors_sig
@@ -648,8 +665,7 @@ for (i in seq(1,vps)){
     MOFAobject_gs@samples_metadata[,cors_sig]
     
     #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
-    cors_sig
-    
+
     ### if the col contains only NA
     cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
     which(apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any ))
@@ -660,6 +676,18 @@ for (i in seq(1,vps)){
       which(cors_sig_non_na=='PDSTATE')
       cors_sig_non_na=cors_sig_non_na[-3]
    # cors_sig_non_na=cors_sig
+    if (length(cors_sig)>1){
+      cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
+      
+    }else{
+      cors_sig_non_na=cors_sig 
+    }
+    cors_sig_non_na
+    if( length(cors_sig_non_na)==0){
+      cors_sig_non_na=c()
+    }
+    
+    #cors_sig_non_na=cors_sig
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', FT, '.jpeg')
 
@@ -681,8 +709,15 @@ for (i in seq(1,vps)){
                          
     )
     #ggsave(hname, plot=p,height=nfs/2, width=(ns+as.numeric(length(cors_sig_non_na) )) )
-    width=ifelse( length(cors_sig_non_na)> 0,ns/50+2,ns/50)
-    ggsave(hname, plot=p,height=nfs/2, width=width, dpi=250) 
+    if (run_mofa_complete){
+      width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
+      
+    }else{
+      width=ifelse( length(cors_sig_non_na)> 0,ns/80+6,ns/80+4)
+      
+    }
+    
+    ggsave(hname, plot=p,height=nfs/5+2, width=width, dpi=250) 
     
     
   }
@@ -831,7 +866,8 @@ utils::data(reactomeGS)
 
 head((reactomeGS))
 
-
+## TODO: if enrichment is already run then just load results
+## load res.positive to be used in the next script
 
 subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
@@ -1066,7 +1102,7 @@ View(confusion_mat)
 round(importance(model.y), 2)
 
 
-install.packages('GGally')
+#install.packages('GGally')
 library('GGally')
 ### Plot predictions
 p <- plot_factors(MOFAobject, 

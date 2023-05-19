@@ -161,9 +161,13 @@ if (TISSUE=='CSF' & VISIT=='V08'){
   
 }
 log2fol_T_overall=0
+log2fol_T_hm=1
 padj_T_overall=0.05
+padj_T_hm=0.05
+
 results_de
-gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_overall & results_de$logFC>log2fol_T_overall]
+gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_hm & 
+                                                           results_de$logFC>log2fol_T_hm]
 gene_list_limma_significant_heatmap
 
 length(gene_list_limma_significant_heatmap)
@@ -191,7 +195,6 @@ dim(hm)
 filter_highly_var=FALSE; most_var_t=FALSE
 cluster_cols=TRUE
 n_sig_f=30
-padj_T_hm=0.05
 fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
               filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
 fname
@@ -217,7 +220,7 @@ library(ggplot2)
 show(my_pheatmap)
 dev.off()
 my_pheatmap
-ggsave(fname, my_pheatmap, dpi = 200, width=7, height=10)
+ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
 
 
 
@@ -303,7 +306,6 @@ if (run_olink){
 T=0.05
 
 
-source(paste0(script_dir,'/RNAseq enrichment.R'))
 
 ################# ENRICHMENT - GSEA-GO #############
 order_statistic<-'log2pval'
@@ -317,6 +319,7 @@ order_statistic<-'log2pval'
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
 order_statistic<-'logFC'
+order_statistic<-'log2pval'
 
 order_statistic<-'log2pval'
 
@@ -351,7 +354,11 @@ gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
-use_protein_pval=TRUE
+run_ORA=FALSE; use_protein_pval=FALSE
+use_pval=FALSE
+
+
+pvalueCutoff_sig=0.05
 if (run_anova){
   order_statistic<-'statistic'
   gene_list2<-pull(anova_results_oneway, statistic)
@@ -361,7 +368,6 @@ if (run_anova){
   
 }
 length(gene_list_ord)
-use_protein_pval=TRUE
 gene_list_ora=gene_list_limma_significant
 if (use_protein_pval){
   gene_list_ora=gene_list_limma_significant_pval
@@ -376,8 +382,7 @@ pvalueCutoff=1
 #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
 
 
-run_ORA=FALSE
-use_pval=FALSE
+
 outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, '_anova_', run_anova, 'pval_', use_pval )
 outdir_s_p_enrich_file
 res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
@@ -405,7 +410,10 @@ if (file.exists(res_path)){
                                   OrgDb = 'org.Hs.eg.db', 
                                   pvalueCutoff  = pvalueCutoff)
 
+    
+    
   }
+  use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
   saveRDS(gse_protein_full, res_path)
   
   
@@ -442,9 +450,9 @@ gse_protein@result$p.adjust
 process_mirnas=FALSE
 enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
 
-View(gse_protein_full@result)
 
 
 
 
 ### run enrichGo with anova
+

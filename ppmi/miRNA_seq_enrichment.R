@@ -1,3 +1,6 @@
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir,'/setup_os.R'))
+
 
 #install.packages('VennDiagram')
 library(rbioapi)

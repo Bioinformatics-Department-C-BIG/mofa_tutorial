@@ -1,14 +1,17 @@
 
+## ## TODO: if enrichment is already run then just load results
+## load res. positive
+# load cohort cors
 
-#### Choose factors from MOFA and RANK the pathways accordingly ####
-cohort_cors<-cors_pearson[,'CONCOHORT']
+
+#### choose factors from MOFA and RANK the pathways accordingly 
+cohort_cors<-cors_pearson[,'CONCOHORT'] # TODO: LOAD or recalc
 dim(res.positive$pval.adj)
 length(cohort_cors)
-cohort_cors
-var_captured  <-vars_by_factor_all$r2_total[[1]]
+var_captured  <-vars_by_factor_all$r2_total[[1]] # TODO: LOAD or recalc
 vars_by_factor_all$r2_total
-cor_t<-0.15
-cor_t<-0.15
+cor_t<-0.1
+cor_t<-0.17
 
 cohort_cors
 
@@ -22,6 +25,9 @@ sel_factors<-c('Factor3', 'Factor4', 'Factor7')
 
 sel_factors<-which(abs(cohort_cors)>cor_t)
 
+
+sel_factors<-which(abs(cohort_cors)>cor_t)
+sel_factors
 paste0(sel_factors)
 cohort_cors[sel_factors]
 var_captured
@@ -32,7 +38,7 @@ cohort_cors[sel_factors]
 
 pos=TRUE
 if (pos){
-  enrich_weights<-res.positive$pval.adj
+  enrich_weights<-res.positive$pval.adj # todo: load res.positive 
 }else{
   enrich_weights<-res.negative$pval.adj
   
@@ -71,8 +77,10 @@ get_weighted_pvals<-function(enrich_weights){
 }
 
 ###   TODO: load res.positive from file
-mofa_file<-paste0(out_compare, 'mofa_',T, cor_t ) 
-mofa_file
+
+
+
+mofa_file<-paste0(out_compare, 'mofa_',T, cor_t , mofa_params, TISSUE) 
 pos_ord<-get_weighted_pvals(res.positive$pval.adj)
 neg_ord<-get_weighted_pvals(res.negative$pval.adj)
 
@@ -89,14 +97,16 @@ length(unique(all_ord$Var1))
 colnames(all_ord)[1]<-'Description'
 colnames(all_ord)
 
-write.csv(all_ord, paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv'), row.names = FALSE)
 #mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
 
-N_paths<-40
+mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
+
+write.csv(all_ord, paste0(mofa_enrich_dir,'.csv'), row.names = FALSE)
+Npaths<-25
 all_ord$p.adj
 all_ord$log10padj<--log10(all_ord$p.adj)
 
-mofa_enrich_plot<-ggplot(all_ord[1:N_paths, ], 
+mofa_enrich_plot<-ggplot(all_ord[1:Npaths, ], 
                          aes( x=reorder(Description, weighted),
                                                          y=log10padj))+
 geom_bar(position='dodge', stat='identity', width=0.7/4, fill='darkgreen')+
@@ -111,12 +121,19 @@ geom_bar(position='dodge', stat='identity', width=0.7/4, fill='darkgreen')+
 
   coord_flip()
 mofa_enrich_plot
-ggsave(paste(mofa_file, N_paths, '.jpeg'),mofa_enrich_plot, dpi=300,
+
+##subtitle <- textGrob("subtitle", x=0, hjust=0, gp=gpar( fontface="italic"))
+## TODO: add legends
+ggsave(paste(mofa_enrich_dir, '.jpeg'),mofa_enrich_plot, dpi=300,
      width=Npaths/2+1,height=Npaths/2.5 )
+
+ggsave(paste(mofa_file, '.jpeg'),mofa_enrich_plot, dpi=300,
+       width=Npaths/2+1,height=Npaths/2.5 )
 
 mofa_enrich_plot
 
 unique(all_ord$Description)
+
 
 
 

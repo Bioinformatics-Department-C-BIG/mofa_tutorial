@@ -53,6 +53,8 @@ combined<-read.csv2(metadata_output)
 
 VISIT=c('BL')
 process_mirnas=FALSE
+#TISSUE='CSF'
+
 source(paste0(script_dir, '/config.R' ))
 
 param_str<-paste0(TOP_PN)
@@ -61,9 +63,9 @@ param_str<-paste0(TOP_PN)
 run_vsn
 NORMALIZED
 
-
-
-
+output_files
+p_params_in
+TISSUE
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
   # if we dont run vsn we want to take the log values 

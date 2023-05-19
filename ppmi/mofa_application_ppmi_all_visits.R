@@ -59,8 +59,8 @@ if (split){
 }
 VISIT=c('V08');
 run_vsn=TRUE
-TISSUE='Plasma';
-TISSUE='CSF'; 
+
+## tissue is set in the config
 
 
 NORMALIZED=TRUE;
@@ -83,11 +83,16 @@ combined_bl<-combined
 which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
+run_mofa_complete<-FALSE
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
+
 #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
-mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif )
+
+
+mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
+
 #param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
 #
 
@@ -122,7 +127,7 @@ highly_variable_proteins_outfile
 
 mofa_params;g_params;p_params;p_params_out
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
+highly_variable_proteins_outfile<-paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
 
 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
@@ -277,7 +282,14 @@ prot_to_impute<-assays(mofa_multi_complete)$proteomics
 #N_FACTORS=8
 ### separate visits 
 outdir
-MOFAobject <- create_mofa(mofa_multi)
+
+if (run_mofa_complete){
+  MOFAobject <- create_mofa(mofa_multi_complete)
+  
+}else{
+  MOFAobject <- create_mofa(mofa_multi)
+  
+}
 
 mofa_multi
 
@@ -308,7 +320,7 @@ outdir
 dir.create(outdir, showWarnings = FALSE)
 ##### run the model 
 
-#MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
+MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
 
 
 mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')

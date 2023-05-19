@@ -52,7 +52,6 @@ run_rna_mirna=FALSE
 FULL_SET=TRUE
 VISIT_COMPARE='BL'
 # cohort 1 =prodromal 
-N_FACTORS=9
 
 if (split){
   N_FACTORS=8
@@ -84,6 +83,18 @@ which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
 run_mofa_complete<-FALSE
+
+## MORE samples, more factors ! 
+# TODO: need a better way to decide how to run this 
+if (run_mofa_complete){
+  N_FACTORS=9
+  
+}else{
+  N_FACTORS=12
+  
+}
+
+
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 

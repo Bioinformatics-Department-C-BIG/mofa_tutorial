@@ -212,7 +212,6 @@ dev.off()
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
 
-cors_pearson$view
 view='proteomics'; factor=6
 
 vps=length(MOFAobject@dimensions$D)
@@ -667,15 +666,9 @@ for (i in seq(1,vps)){
     #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
 
     ### if the col contains only NA
-    cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
-    which(apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any ))
-    MOFAobject_gs@samples_metadata$PDSTATE
-    if(length(cors_sig_non_na)==0){
-      cors_sig_non_na=c()
-    }
-      which(cors_sig_non_na=='PDSTATE')
-      cors_sig_non_na=cors_sig_non_na[-3]
-   # cors_sig_non_na=cors_sig
+    
+    #which(cors_sig_non_na=='PDSTATE')
+    #cors_sig_non_na=cors_sig_non_na[-3]
     if (length(cors_sig)>1){
       cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
       
@@ -686,19 +679,20 @@ for (i in seq(1,vps)){
     if( length(cors_sig_non_na)==0){
       cors_sig_non_na=c()
     }
+    denoise=FALSE
     
     #cors_sig_non_na=cors_sig
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
-    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', FT, '.jpeg')
+    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', 
+                  FT, 'den_', denoise, '.jpeg')
 
     
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
-    
     p<-plot_data_heatmap(MOFAobject_gs, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,
-                         denoise = TRUE,
+                         denoise = denoise,
                          cluster_rows = cluster_rows, 
                          cluster_cols = cluster_cols,
                          show_rownames = TRUE, show_colnames = TRUE,
@@ -728,7 +722,22 @@ for (i in seq(1,vps)){
   
 }
 
+views[3]
 
+p<-plot_data_heatmap(MOFAobject_gs, 
+                     view = views[3], 
+                     factor =  ii,  
+                     features = nfs,
+                     denoise = FALSE,
+                     cluster_rows = cluster_rows, 
+                     cluster_cols = cluster_cols,
+                     show_rownames = TRUE, show_colnames = TRUE,
+                     scale = "row",
+                     annotation_samples = cors_sig_non_na,
+                     main=main_t
+                     
+                     
+)
 
 
 
@@ -797,10 +806,10 @@ if (n_groups>1){
 
 
 library(gridExtra)
-grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
-do.call('grid.arrange', c(list(p1,p2)) )
+#grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
+#do.call('grid.arrange', c(list(p1,p2)) )
 
-dev.off()
+#dev.off()
 
 
 plot_data_heatmap(MOFAobject, 
@@ -959,6 +968,8 @@ dir.create(paste0(outdir, '/enrichment/'))
           all_fs_merged2<-do.call(rbind, all_fs_unlisted )
           
           write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f.csv' ))
+          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f' ))
+          
           #all_fs_merged2
          # all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
           
@@ -971,6 +982,8 @@ dir.create(paste0(outdir, '/enrichment/'))
         all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
         write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
+        saveRDS(res.positive,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f' ))
+        
         
         
        

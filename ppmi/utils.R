@@ -295,8 +295,8 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   
   
   N_RIDGE=25
-  
-  if ( (!process_mirnas) & (!process_mofa) & (!run_ORA)){
+  # only if all 3 are false run it 
+  if ( !(process_mirnas) && !(process_mofa) && !(run_ORA)){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     r_p

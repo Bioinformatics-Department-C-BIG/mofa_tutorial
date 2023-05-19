@@ -197,13 +197,6 @@ enrich_proteins_sig<-enrich_proteins[enrich_proteins$p.adjust<padj_paths,]
 common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Description )
 
 
-listInput_all_mods<-list(rna=enrich_rna_sig$Description,
-                         prot=enrich_proteins_sig$Description, 
-                         mirnas=enrich_mirnas_sig$Description)
-
-enrich_proteins_sig$p.adjust
-listInput_all_mods
-get_ids(enrich_mirnas$ID[1])
 
 
 
@@ -225,7 +218,23 @@ prot_parents_01[prot_parents_01$parent_go_id %in% inter,]
 
 prot_parents_01
 
+##### function
+
+### 
+
+listInput_all_mods<-list(rna=enrich_rna_sig$Description,
+                         prot=enrich_proteins_sig$Description, 
+                         mirnas=enrich_mirnas_sig$Description)
 listInput<-listInput_all_mods
+
+
+
+
+enrich_proteins_sig$p.adjust
+get_ids(enrich_mirnas$ID[1])
+
+
+
 res_overlap<-calculate.overlap(listInput)
 
 intersection_all_three<-Reduce(intersect,listInput_all_mods)
@@ -289,149 +298,147 @@ if (run_ORA){
 
 
 
+concatenate_pvals<-function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, pval_to_use='p.adjust') {
+  #' supply the three enrichment datasets 
+  #' chooose pval
+  #' 
+  #' 
+  enrich_proteins_pvals<-enrich_proteins[, c(pval_to_use, 'Description')]
+  enrich_rna_pvals<-enrich_rna[, c(pval_to_use, 'Description')]
+  
+  hist(enrich_proteins[,pval_to_use ])
+  hist(enrich_rna[,pval_to_use ])
+  # all=TRUE does not work well many mirna high are coming up 
+  merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE);dim(merged_paths)
+  merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description');dim(merged_paths)
+  if (add_mirs){
+    enrich_mirna_pvals<-enrich_mirnas[, c(pval_to_use, 'Description')]
+    hist(enrich_mirnas[,pval_to_use ])
+    
+    ## PROBLEM here if add all then something that is only in mirs it will come up 
+    merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
+  }
+  return(merged_paths)
+  
+}
+
+
+get_combined_pvalue=function(merged_paths, pmethod='stouffer'){
+  library(metapod)
+  
+  p1<-merged_paths[,2]; length(p1)
+  p2<-merged_paths[,3];length(p2)
+  
+  
+  
+  hist(p1)
+  hist(p2)
+  if (add_mirs){
+    p3<-merged_paths[,4];length(p3)
+    fish <- metapod::combineParallelPValues(list(p1, p2, p3),
+                                            method=pmethod, 
+                                            weights = c(1,1,0.9))$p.value
+    
+  }else{
+    fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
+    
+  }
+  
+  ### Add the combined to the original frame 
+  merged_paths_fish<-cbind(merged_paths, fish)
+  # and order
+  merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
+  write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
+  
+  ### Write significant results 
+  dim(merged_paths_fish)
+  
+  dim(merged_paths_fish[merged_paths_fish$fish<0.01,])
+  
+  cols_ch=c('fish', 'p.adjust.x', 'p.adjust.y' )
+  merged_paths_fish_log=merged_paths_fish
+  merged_paths_fish_log[cols_ch]=lapply(merged_paths_fish[cols_ch], 
+                                        function(x){-log10(x)})
+  
+  if (add_mirs){
+    merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
+    
+  }
+  return(list(merged_paths_fish, merged_paths_fish_log))
+  
+}
+
+
+
+
+
+#### Here is the input for the combination  ####
 enrich_rna<-read.csv(enrich_rnas_file)
+enrich_rna
 dim(enrich_rna); dim(enrich_mirnas)
 #enrich_mirnas<-read.csv(enrich_mirnas_file)
 enrich_proteins<-read.csv(enrich_proteins_file)
 enrich_mirnas<-read.csv(enrich_mirnas_file)
-
-dim(enrich_proteins)
-enrich_rna$Description
-enrich_proteins[, c('pvalue', 'Description')]
-
 pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
-pval_to_use<-'pvalue'
-pval_to_use<-'p.adjust'
-
-enrich_proteins_pvals<-enrich_proteins[, c('pvalue', 'Description')]
-length(which(enrich_proteins_pvals[,'pvalue']<0.05))
-
-enrich_proteins_pvals<-enrich_proteins[, c(pval_to_use, 'Description')]
-enrich_rna_pvals<-enrich_rna[, c(pval_to_use, 'Description')]
-enrich_mirna_pvals<-enrich_mirnas[, c(pval_to_use, 'Description')]
-
-hist(enrich_proteins[,pval_to_use ])
-hist(enrich_rna[,pval_to_use ])
-hist(enrich_mirnas[,pval_to_use ])
-
-
-### WHETHER TO ADD MIRNA INFO
 add_mirs=TRUE
+use_mofa=TRUE
 
-merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE)
-merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description')
-
-dim(merged_paths )
-if (add_mirs){
+if (use_mofa){
   
-  merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
+  ### use all not just the significant p-value
+  fn=2
+  dim(gse_mofa_rna@result)
+  gse_mofa_rna=list1[[sel_factors[fn]]]
+  gse_mofa_prot=list_proteins[[sel_factors[fn]]]
+  gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
+  
+  enrich_rna<-gse_mofa_rna@result
+  enrich_proteins=gse_mofa_prot@result
+  enrich_mirnas=gse_mofa_mirs@result
 }
-dim(merged_paths )
-merged_paths$pvalue
-enrich_rna_pvals$p.adjust
-enrich_mirna_pvals$p.adjust
+
+
+################# ACTUALLY RUN THE combination #### 
+if (add_mirs){
+  merged_paths=concatenate_pvals(enrich_proteins,enrich_rna,enrich_mirnas, pval_to_use )
+  
+}else{
+  merged_paths=concatenate_pvals(enrich_proteins,enrich_rna, pval_to_use )
+  
+}
+head(merged_paths)
+### WHETHER TO ADD MIRNA INFO
 sapply(list(enrich_rna_pvals,
             enrich_mirna_pvals, 
             enrich_proteins_pvals), function(df){  
               length(which(df[, pval_to_use]<0.05))})
 
-
-
+use_mofa
+use_mofa_s=ifelse(isTRUE(use_mofa), sel_factors[fn],use_mofa )
 #merge(enrich_proteins)
-
-
-p1<-merged_paths[,2]; length(p1)
-p2<-merged_paths[,3];length(p2)
-
-
-
-### TODO: FIX THERE ARE NO insig paths in mirs
-
-#BiocManager::install('metapod')
-library(metapod)
-hist(p1)
-hist(p2)
 pmethod<-'stouffer'
-if (add_mirs){
-  p3<-merged_paths[,4];length(p3)
-  fish <- metapod::combineParallelPValues(list(p1, p2, p3),
-                                          method=pmethod, 
-                                         weights = c(1,1,0.9))$p.value
-# pmethod<-'fisher'
- 
-# fish <- metapod::combineParallelPValues(list(p1, p2, p3),
-#                                         method=pmethod, 
-#                                         weights = c(1,1,1))$p.value
-  
-}else{
-  fish <- combinePValues(p1, p2)
-  
-}
+merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod, 'mofa_',  use_mofa_s  )
+#BiocManager::install('metapod')
+merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
+merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
+merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 
-
-merged_paths_fish<-cbind(merged_paths, fish)
-merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
-dim(merged_paths_fish)
-merged_path_file<-paste0(out_compare, VISIT,  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod )
-
-### Write significant results 
-write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
-dim(merged_paths_fish)
-
-dim(merged_paths_fish[merged_paths_fish$fish<0.01,])
-combined_p_thresh<-0.01
-
-
-### number from each 
-combined_p_thresh<-0.01
 combined_p_thresh<-0.05
-combined_p_thresh<-0.01
-
 length(which(merged_paths$p.adjust.x<combined_p_thresh))
 length(which(merged_paths$p.adjust.y<combined_p_thresh))
 length(which(merged_paths$p.adjust<combined_p_thresh))
 
 merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
-dim(merged_paths_fish_sig)
+merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]
 
 
-
-merged_paths_fish_sig$fish_log10<--log10(merged_paths_fish_sig$fish)
-merged_paths_fish_sig$p.adjust.x_log<--log10(merged_paths_fish_sig$p.adjust.x)
-merged_paths_fish_sig$p.adjust.y_log<--log10(merged_paths_fish_sig$p.adjust.y)
-if (add_mirs){
-  merged_paths_fish_sig$p.adjust._log<--log10(merged_paths_fish_sig$p.adjust)
-  
-}
-
-colnames(merged_paths_fish_sig)
-merged_paths_fish_sig$p
-
-if (add_mirs){
- choose_cols<- c('Description','p.adjust.x_log','p.adjust.y_log','p.adjust._log' , 'fish_log10'  )
-}else{
-  choose_cols<- c('Description','p.adjust.x_log','p.adjust.y_log', 'fish_log10'  )
-  
-}
-
-merged_paths_fish_sig_filt<-merged_paths_fish_sig[,choose_cols]
-dim(merged_paths_fish_sig_filt)
-
-
-mir_enrich_p<-ggplot(merged_paths_fish_sig_filt[1:30,],aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
-  geom_bar(position='dodge', stat='identity')+
-  theme(axis.title.y=element_blank(), 
-        axis.text.y= element_text(size=15))+
-  coord_flip()
-mir_enrich_p
-ggsave(paste0(merged_path_file, '.jpeg'),mir_enrich_p, dpi=300,
-       width=7,height=8 )
-
+############################################
+#### Create plots of combined p-values ####
 
 Npaths=25
 
-merged_paths_fish_sig_melt<-melt(merged_paths_fish_sig_filt[1:Npaths,], 
+merged_paths_fish_sig_melt<-reshape2::melt(merged_paths_fish_log_sig[1:Npaths,], 
                                  varnames=c('modality','nlog10pvalue' ))
 
 if (add_mirs){
@@ -439,9 +446,9 @@ if (add_mirs){
   }else{ 
     labels<-c('proteomics', 'RNA', 'Stouffer\'s')}
 
-#ggplot(merged_paths_fish_sig_melt, aes( x=reorder(Description,fish_log10), y=fish_log10, fill=fish_log10))+
-# TODO: reorder by description 
-merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish_log10',]
+
+merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish',]
+merged_paths_fish_sig_melt_fish
 plot_all=TRUE
 
 if (plot_all){
@@ -451,6 +458,11 @@ if (plot_all){
   merged_to_plot<-merged_paths_fish_sig_melt_fish
   labels_p=labels[4];width_p<-0.7/4
 }
+
+## print the total number of paths 
+un_paths<-dim(merged_paths_fish_sig)[1]
+text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways')
+
 mir_enrich_p_all<-ggplot(merged_to_plot,
                          aes( x=reorder(Description, value),
                                                           y=value, fill=variable))+
@@ -461,8 +473,9 @@ mir_enrich_p_all<-ggplot(merged_to_plot,
         axis.text.y= element_text(size=15,color='black' ), 
         axis.text.x= element_text(size=15,color='black' ),
         legend.title =element_blank(), 
-        legend.text = element_text(size=15))+
-  labs(y='-log10pvalue')+
+        legend.text = element_text(size=15), 
+        plot.caption= element_text(hjust = 0, face = "italic", size=20))+
+  labs(y='-log10pvalue', caption=text_p)+
   scale_fill_discrete(labels=labels_p)+
   
   coord_flip()

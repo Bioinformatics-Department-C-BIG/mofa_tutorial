@@ -1,6 +1,8 @@
 
 
-source(paste0(script_dir, '/RNAseq enrichment.R'))
+#source(paste0(script_dir, '/RNAseq enrichment.R'))
+source(paste0(script_dir, '/miRNA_seq_enrichment.R'))
+library(R.filesets)
 #BiocManager::install('stats')
 library(stats)
 ### need to load or add the function first because it fails !! 
@@ -35,7 +37,7 @@ get_ranked_gene_list_mofa<-function(view, factor){
 
 process_mofa=TRUE
 pvalueCutoff=1
-nfactors=6
+nfactors=8
 if (file.exists(mofa_enrich_rds)){
   list_all<-loadRDS(mofa_enrich_rds)
   list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
@@ -45,7 +47,9 @@ if (file.exists(mofa_enrich_rds)){
 }else{
   
       for (factor in 1:nfactors){
-            for (view in c(  'proteomics')){
+            for (view in c( 'RNA')){
+           #   for (view in c( 'miRNA')){
+                
               #### Do the RNA view for whatever is high in rna
 
               print(paste0(view, factor ))
@@ -108,7 +112,7 @@ if (file.exists(mofa_enrich_rds)){
 }
 
 
-list1=listALL[[1]]
+#list1=listALL[[1]]
 
 #### Now run the prot view ? 
 
@@ -116,21 +120,22 @@ list1=listALL[[1]]
 
 
 #gse_mofa=list1[[factor]]
-
+sel_factors
 ## or LOAD GSE RESULTS HERE 
 for (factor in 1:nfactors){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
-  gse_mofa=list1[[factor]]
+  gse_mofa_rna=list1[[factor]]
   write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
   
   ### to run mofa results
-  run_enrichment_plots(gse=gse_mofa, results_file = results_file_mofa)
+  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa)
 } 
 
 
-list_prote0ins[[1]]
+list_proteins[[1]]
 run_ORA=FALSE
+process_mofa=TRUE
 for (factor in 1:nfactors){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
     dir.create(paste0(outdir, '/enrichment/proteins/'))
@@ -158,36 +163,45 @@ for (factor in 1:nfactors){
       
 }
 
-
+list_mirs_enrich=list()
 for (factor in 1:nfactors){
-  
-  results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
-  dir.create(paste0(outdir, '/enrichment/mirnas/'))
-  gse_mofa=list_mirs[[factor]]
-  
-  gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff)
-  
-  
-  write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
-  
-  ### to run mofa results
-  
-  process_mirnas=FALSE
-  process_mofa=TRUE
-  dim(gse_mofa_sig)
-  #& vars_by_factor[,'proteomics'][factor]>1
-  if  (dim(gse_mofa_sig)[1]>2 ){
-    print(paste(factor,'sig'))
-    which(gse_mofa@result$p.adjust<0.05)
-    gse_mofa
-    enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
-                                       results_file=results_file_mofa, 
-                                       N_DOT=20, N_EMAP = 15)    
+      results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+      dir.create(paste0(outdir, '/enrichment/mirnas/'))
+      gse_mofa_mirs=list_mirs[[factor]]
+      
+      mieaa_all_gsea=gse_mofa_mirs
+      mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea)
+      mieaa_gsea_1=mieaa_res[[1]]
+      enr_full=mieaa_res[[2]]
+      
+      
+      list_mirs_enrich[[factor]]=enr_full
+        
+      print(any(enr_full@result$p.adjust<0.05))
+      
     
-  }
-  
+      gse_mofa_sig=write_filter_gse_results(enr_full, results_file_mofa, pvalueCutoff)
+      
+      write.csv(as.data.frame(gse_mofa_sig@result), paste0(results_file_mofa, '.csv'))
+      
+      ### to run mofa results
+      
+      process_mirnas=TRUE
+      process_mofa=TRUE
+      dim(gse_mofa_sig)
+      #& vars_by_factor[,'proteomics'][factor]>1
+      type(gse_mofa_sig)
+      dim(gse_mofa_sig)[1]>2
+      if  (dim(gse_mofa_sig)[1]>2 ){
+        print(dim(gse_mofa_sig)[1])
+        print(paste(factor,'sig'))
+        enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
+                                           results_file=results_file_mofa, 
+                                           N_DOT=20, N_EMAP = 15)    
+        
+      }
+      
 }
 
 
-vars_by_factor[,'proteomics']
-    
+

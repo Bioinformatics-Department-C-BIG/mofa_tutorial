@@ -145,8 +145,8 @@ library(tidyr)
 
 
 
-TISSUE='CSF'
 TISSUE='Plasma'
+TISSUE='CSF'
 
 NORMALIZED=TRUE
 
@@ -179,13 +179,11 @@ Visits=c('BL', 'V04', 'V06', 'V08')
     
   }
   
-  #prot_files_1<-read.csv('ppmi/ppmi_data/proteomics/targeted_olink/Plasma/PPMI_Project_196_Plasma_Cardio_NPX.csv')
-  #prot_files_2<-read.csv('ppmi/ppmi_data/proteomics/targeted_olink/Plasma/PPMI_Project_196_Plasma_Cardio_Counts.csv')
-  
-  #intersect(unique(prot_files_1$PATNO),unique(prot_files_2$PATNO))
-  
+ 
   
   prot_files
+  
+  ### names of output files 
   outname<-paste0(output_files, 'proteomics_', TISSUE, '_',NORMALIZED,  '.csv')
   outname2<-paste0(output_files, 'proteomics_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
   

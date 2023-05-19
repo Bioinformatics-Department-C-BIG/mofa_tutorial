@@ -116,11 +116,6 @@ if (process_mofa){
 
 
 ## remove . and \ from mir names 
-colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
-colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
-
-
-
 
 #table(mieaa_all_gsea$Category)
 Category<-'Gene Ontology (miRWalk)';
@@ -128,50 +123,6 @@ Category<-'Annotation (Gene Ontology)';
 Category<-'GO Biological process (miRPathDB)';
 
 
-mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
-write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
-mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
-mir_paths<-mieaa_gsea_1_cut[,c(2)]
-results_df<-paste0(mir_results_file, '_', Category)
-write.csv(mieaa_all_gsea, paste0(mir_results_file, '_', '.csv' ))
-
-
-mir_results_file
-
-##### plot results 
-##
-#DOSE::enrichResult
-#  EnrichResult(mieaa_all_gsea)
-
-  
-
-df=mieaa_gsea_1
-df$P.adjusted<-as.numeric(df$P.adjusted)
-df$padj<-as.numeric(df$P.adjusted)
-
-
-df$Observed<-as.numeric(df$Observed)
-
-df_ord<-df[order(df$padj),]
-
-df_ord<-df_ord[1:40,]
-#df_ord$padj
-
-mir_enrich_p<-ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=padj))+
-  geom_bar(position='dodge', stat='identity')+
-  coord_flip()
-
-dev.off()
-mir_enrich_p
-
-ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), height = 7, width=8)
-
-dir.create(paste0(outdir_enrich, Category))
-
-mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
-
-
-######### convert to enrichResult to use gsego functios
 
 
 #install.packages("remotes")
@@ -179,25 +130,106 @@ mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich
 library('multienrichjam')
 library('clusterProfiler')
 
-mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)'){
+  
+  #' post-process mieaa enrichment analysis results 
+  #' convert to enrich result to be able to use with cluster profiler plotting functions
+  #' @param mieaa_all_gsea output from mieaa
+  #' @param Category which category to choose from enrich dbs eg.  'GO Biological process (miRPathDB)'
+  #'
+  colnames(mieaa_all_gsea)<-gsub('-','.', colnames(mieaa_all_gsea))
+  colnames(mieaa_all_gsea)<-gsub('/','.', colnames(mieaa_all_gsea))
+  
+  
+  
+  mieaa_gsea_1<-mieaa_all_gsea[mieaa_all_gsea$Category==Category,]
+  ## write output results 
+  write.csv(mieaa_gsea_1, paste0(mir_results_file, '_', pvalueCutoff,'.csv' ))
+  
+  ### cut filtered datasets only
+  mieaa_gsea_1_cut<-mieaa_gsea_1[mieaa_gsea_1$P.adjusted<Padj_T_paths, ]
+  mir_paths<-mieaa_gsea_1_cut[,c(2)]
+  results_df<-paste0(mir_results_file, '_', Category)
+  write.csv(mieaa_all_gsea, paste0(mir_results_file, '_', '.csv' ))
+  
+  
+  ### Convert and return enrich result 
+  mieaa_gsea_1$P.adjusted<-as.numeric(mieaa_gsea_1$P.adjusted)
+  
+  
+  mieaa_gsea_1$keyColname=mieaa_gsea_1$Subcategory
+  mieaa_gsea_1_ord=mieaa_gsea_1[order(mieaa_gsea_1$P.adjusted),]
+  #mieaa_gsea_1_ord_prob<-mieaa_gsea_1_ord
+  
+  enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
+                                                    keyColname =  'Subcategory',
+                                                    geneColname ='miRNAs.precursors',
+                                                    pvalueColname = 'P.adjusted', 
+                                                    pvalueCutoff = pvalueCutoff)
+  
+  
+  
+  return(list(mieaa_gsea_1, enr_full))
+  
+}
 
 
-mieaa_gsea_1$keyColname=mieaa_gsea_1$Subcategory
-mieaa_gsea_1_ord=mieaa_gsea_1[order(mieaa_gsea_1$P.adjusted),]
-#mieaa_gsea_1_ord_prob<-mieaa_gsea_1_ord
+use_mofa=FALSE
+if (use_mofa){
+  for (fn in 1:nfactors){
+    gse_mofa_mirs=list_mirs[[fn]]
+    
+    mieaa_all_gsea=gse_mofa_mirs
+    
+    mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category)
+    mieaa_gsea_1=mieaa_res[[1]]
+    enr_full=mieaa_res[[2]]
+    print(any(enr_full@result$p.adjust<0.05))
+  }
+}
 
-enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(mieaa_gsea_1_ord),
-                                             keyColname =  'Subcategory',
-                                             geneColname ='miRNAs.precursors',
-                                             pvalueColname = 'P.adjusted', 
-                                             pvalueCutoff = pvalueCutoff)
+
+##### plot results 
+##
+#DOSE::enrichResult
+#  EnrichResult(mieaa_all_gsea)
+### intermediate plot --- remove..??
+df=mieaa_gsea_1
+df$P.adjusted<-as.numeric(df$P.adjusted)
+df$padj<-as.numeric(df$P.adjusted)
+df$Observed<-as.numeric(df$Observed)
+df_ord<-df[order(df$padj),]
+df_ord<-df_ord[1:40,]
+
+mir_enrich_p<-ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=padj))+
+  geom_bar(position='dodge', stat='identity')+
+  coord_flip()
+ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), plot=mir_enrich_p, height = 7, width=8)
+
+dir.create(paste0(outdir_enrich, Category))
+
+mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
+######### convert to enrichResult to use gsego functios
+
 
 
 results_file=mir_results_file_by_cat
+
+
 mir_results_file_by_cat
-gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff)
+
+### Posto process and return enrichresult 
+mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category)
+mieaa_gsea_1=mieaa_res[[1]]
+enr_full=mieaa_res[[2]]
+
+
+gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff_sig)
+
+gse_sig@result$p.adjust
+
 paste0(mir_results_file_by_cat, pvalueCutoff, '.csv')
-dim(gse_sig)
+
 mir_results_file_by_cat
 
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))

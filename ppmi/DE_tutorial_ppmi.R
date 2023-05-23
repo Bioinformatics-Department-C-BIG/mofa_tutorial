@@ -7,7 +7,10 @@
 
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
 
+source(paste0(script_dir, '/setup_os.R'))
 library(limma)
 library(pheatmap)
 library(R.filesets)
@@ -18,8 +21,10 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 
-
+process_mirnas=FALSE
 source(paste0(script_dir, '/config.R' ))
+source(paste0(script_dir,'/utils.R'))
+
 source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
 
 
@@ -319,9 +324,7 @@ order_statistic<-'log2pval'
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
 order_statistic<-'logFC'
-order_statistic<-'log2pval'
 
-order_statistic<-'log2pval'
 
 
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
@@ -339,7 +342,7 @@ write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
-results_de_signif<-mark_signficant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
+results_de_signif<-mark_significant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
                             padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
 
 results_de_signif$abslog2pval
@@ -349,13 +352,14 @@ gene_list1<-results_de[,order_statistic]
 names(gene_list1)<-rownames(results_de)
 gene_list_ord=gene_list1[order(-gene_list1)]
 gene_list_ord
-gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<T]
+gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
 gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
-run_ORA=FALSE; use_protein_pval=FALSE
-use_pval=FALSE
+run_ORA=FALSE; 
+use_protein_pval=FALSE ## Proteins to use a sinput 
+use_pval=FALSE  ### WHAT TO PLOT
 
 
 pvalueCutoff_sig=0.05
@@ -383,41 +387,43 @@ pvalueCutoff=1
 
 
 
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, '_anova_', run_anova, 'pval_', use_pval )
-outdir_s_p_enrich_file
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
+                               '_anova_', run_anova, 'pval_', use_pval )
 res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
 
 
-if (file.exists(res_path)){
-  gse_protein_full=loadRDS(res_path)
-}else{
-  if (run_ORA){
-    
-    gse_protein_full <- clusterProfiler::enrichGO(gene_list_ora, 
-                                                  ont=ONT, 
-                                                  keyType = 'SYMBOL', 
-                                                  OrgDb = 'org.Hs.eg.db', 
-                                                  pvalueCutoff  = pvalueCutoff)
-    
-  }else{
-    
-  
-    
-    #### TODO: ALSO RUN ENRICHMENT using ANOVA from 
-    gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                                  ont=ONT, 
-                                  keyType = 'SYMBOL', 
-                                  OrgDb = 'org.Hs.eg.db', 
-                                  pvalueCutoff  = pvalueCutoff)
-
-    
-    
-  }
-  use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
+#if (file.exists(res_path)){
+#  gse_protein_full=loadRDS(res_path)
+#}else{
+        if (run_ORA){
+          
+          gse_protein_full <- clusterProfiler::enrichGO(gene_list_ora, 
+                                                        ont=ONT, 
+                                                        keyType = 'SYMBOL', 
+                                                        OrgDb = 'org.Hs.eg.db', 
+                                                        pvalueCutoff  = pvalueCutoff)
+          
+        }else{
+          
+        
+          
+          #### TODO: ALSO RUN ENRICHMENT using ANOVA from 
+          gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                        ont=ONT, 
+                                        keyType = 'SYMBOL', 
+                                        OrgDb = 'org.Hs.eg.db', 
+                                        pvalueCutoff  = pvalueCutoff, 
+                                          )
+      
+          
+          
+          use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
+          
+        }
   saveRDS(gse_protein_full, res_path)
   
   
-}
+#}
 gse_protein_full
 dim(gse_protein_full@result)
 hist(gse_protein_full@result$pvalue)
@@ -436,23 +442,36 @@ sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCut
 write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
 
 sig_gse_result
-use_pval=TRUE
+
+gse_protein_pval=filter(gse_protein_full, pvalue < pvalueCutoff_sig)
+gse_protein_padj=filter(gse_protein_full, p.adjust < pvalueCutoff_sig)
+
 if (use_pval){
-  gse_protein=filter(gse_protein_full, pvalue < pvalueCutoff_sig)
+  gse_protein=gse_protein_pval
 }else{
-  gse_protein=filter(gse_protein_full, p.adjust < pvalueCutoff_sig)
-  
+  gse_protein=gse_protein_padj
 }
 gse_protein@result$p.adjust
 
 ### supply the full result 
 ##enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
 process_mirnas=FALSE
-enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
+un_paths<-dim(gse_protein@result)[1]
+un_paths
+text_p1=ifelse(run_ORA,paste0('\n DE proteins: ',  length(gene_list_ora)), '')
+
+
+text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', dim(gse_protein_padj@result)[1], 
+               '\n p-val.< ', pvalueCutoff_sig,': ', dim(gse_protein_pval@result)[1])
+
+
+text_p=paste0(text_p1, text_p2)
+enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , 
+                                   N_DOT=15, N_EMAP = 25,N_TREE=25, text_p=text_p)
 
 
 
-
+enrich_plots
 
 ### run enrichGo with anova
 

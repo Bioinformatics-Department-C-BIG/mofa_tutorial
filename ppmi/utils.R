@@ -146,7 +146,7 @@ get_symbols_vector<-function(ens ){
   #log2fc_name = 'logFC'   
   #outdir_single=outdir_s_p
 
-mark_signficant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
+mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
   ## mark a significant column and write to file
   
   signif_file<-paste0(outdir_single,'/significant', padj_T, '_',log2fol_T, '.csv')
@@ -205,6 +205,20 @@ get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol
   
 }
 
+
+#### enrichment packages 
+library('GOfuncR')
+require(DOSE)
+library(clusterProfiler)
+library(ggplot2)
+
+suppressWarnings(library('R.filesets' ))
+library('enrichplot' )
+require(DOSE)
+library('enrichplot')
+
+
+
 write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCutoff_sig=0.05  ){
   
   ### Takes the full gse results, ie. without threshold significance, 
@@ -227,7 +241,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE){
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p=''){
   
   require(clusterProfiler)
   
@@ -251,12 +265,19 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   ### print a signed and unsigned dotplot 
   # because it does not make sense if we dont rank by logFC
   # or in the mofa case where we rank by importance in factor 
-  
+
   dp<-dotplot(gse, showCategory=N_DOT, 
               font.size=15
   )
   dp<-dp+theme(axis.ticks=element_blank() , 
-               axis.text.x = element_blank())
+               axis.text.x = element_blank(),
+               plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
+    labs(caption=text_p)
+
+  
+    
+  
+  
   show(dp)
   
   
@@ -347,7 +368,6 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   #install.packages('ggtree')
   
   #### heatmap
-  N_TREE=16
   p1 <- treeplot(x2,showCategory =N_TREE, nWords=0)
   p1
   p2_tree <- treeplot(x2, hclust_method = "average", 
@@ -363,10 +383,11 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=30,
   #aplot::plot_list(p1, p2_tree, tag_levels='A')
   #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
   
-  p2_tree
+  p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
+  labs(caption=text_p)
   #write_n='test'
-  ggsave(paste0(results_file, '_clusterplot_average_',write_n, '.jpeg'),
-         width=10, height=0.4*N_TREE, dpi=300)
+  ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
+         width=10, height=0.5*log(N_TREE)+3, dpi=300)
   
   
   return(list(dp, p_enrich, p2_tree))
@@ -395,43 +416,6 @@ get_genelist_byVisit<-function(VISIT){
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
   return(gene_list)
 }
-VISIT='V08'
-source(paste0(script_dir, '/config.R'))
-gene_list<-get_genelist_byVisit(VISIT)
-
-
-source(paste0(script_dir, '/config.R'))
-outdir_enrich<-paste0(outdir_s,'/enrichment/')
-dir.create(outdir_enrich)
-
-### setup
-length(gene_list)
-tail(gene_list)
-ONT='BP'
-
-
-
-results_file_rnas<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
-res_path_rnas<-paste0(results_file_rnas, 'gse.RDS')
-
-#### Run and return the whole set of p-values with pcutoff=1 
-## then filter 
-if (file.exists(res_path)){
-  gse_full=loadRDS(res_path)
-  
-}else{
-  
-  pvalueCutoff<-1
-  gse_full <- clusterProfiler::gseGO(gene_list, 
-                                     ont=ONT, 
-                                     keyType = 'ENSEMBL', 
-                                     OrgDb = 'org.Hs.eg.db', 
-                                     pvalueCutoff  = pvalueCutoff)
-  saveRDS(gse_full, res_path)
-  
-}
-
-
 
 
 

@@ -1,6 +1,5 @@
 
 
-source(paste0(script_dir, '/RNAseq enrichment.R'))
 source(paste0(script_dir, '/Utils.R'))
 
 

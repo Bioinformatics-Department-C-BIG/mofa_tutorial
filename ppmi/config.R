@@ -1,6 +1,6 @@
 #install.packages('rstudioapi')
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, '/setup_os.R'))
 print(script_dir)
 suppressWarnings(library(sys))
@@ -109,8 +109,8 @@ TISSUE='CSF'
 
 TOP_PN=0.9
 
-TISSUE='Plasma'
 TISSUE='CSF'
+TISSUE='Plasma'
 
 NA_PERCENT=0.9
 

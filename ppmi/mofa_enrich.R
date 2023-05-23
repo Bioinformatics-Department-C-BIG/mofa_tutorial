@@ -1,7 +1,11 @@
 
 
-source(paste0(script_dir, '/Utils.R'))
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
 
+source(paste0(script_dir, '/utils.R'))
+source(paste0(script_dir,'/setup_os.R'))
+source(paste0(script_dir,'/mofa_application_ppmi_all_visits.R'))
 
 library(R.filesets)
 #BiocManager::install('stats')
@@ -12,9 +16,12 @@ library(stats)
 
 
 
-list1=list()
-list_proteins=list()
-list_mirs=list()
+#### Take a mofa directory and run enrichment for important factors ####
+#### 1. Run for factors with cor> cor_T
+#### 2. 
+
+
+
 nfactors<-MOFAobject@dimensions$K
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
@@ -25,6 +32,7 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
 cors_pearson_l<-read.csv(paste0(outdir, '/covariate_corelations_pearson.csv'))
 cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
+cor_t=0.17
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 cohort_cors[sel_factors]
@@ -47,22 +55,27 @@ get_ranked_gene_list_mofa<-function(view, factor){
 process_mofa=TRUE
 pvalueCutoff=1
 nfactors=8
-if (file.exists(mofa_enrich_rds)){
-  list_all<-loadRDS(mofa_enrich_rds)
+list1= vector("list", length = nfactors)
+list_proteins= vector("list", length = nfactors)
+list_mirs= vector("list", length = nfactors)
+
+sel_factors=c(4)
+#if (file.exists(mofa_enrich_rds)){
+ # list_all<-loadRDS(mofa_enrich_rds)
  # list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
 #  list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
   
-}else{
+#}else{
   
       for (factor in sel_factors){
            # for (view in c( 'proteomics')){
-              for (view in c( 'RNA', 'miRNA', 'proteomics')){
-                
+              #for (view in c( 'RNA', 'miRNA', 'proteomics')){
+               for (view in c( 'RNA', 'miRNA', 'proteomics')){
+                  
               #### Do the RNA view for whatever is high in rna
-
-              print(paste0(view, factor ))
-              gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
-              gene_list_ord
+                    print(paste0(view,' ', factor ))
+                    gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
+                    gene_list_ord
                     if (view=='RNA'){
                      
                       ### Run RNA 
@@ -86,6 +99,7 @@ if (file.exists(mofa_enrich_rds)){
                   ### Run proteins 
                 if (view=='proteomics'){
                   
+                  
                   if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
@@ -104,7 +118,7 @@ if (file.exists(mofa_enrich_rds)){
               if (view=='miRNA'){
                 
                 
-                if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
                 
                          
@@ -133,27 +147,29 @@ if (file.exists(mofa_enrich_rds)){
               }
       }
       
-      saveRDS(list(list1,list_proteins, list_mirs),mofa_enrich_rds )
+#      saveRDS(list(list1,list_proteins, list_mirs),mofa_enrich_rds )
 
       
-}
+#}
 
 
 #list1=listALL[[1]]
 
 #### Now run the prot view ? 
 
+run_plots=FALSE
 
-
+if (run_plots){
 
 #gse_mofa=list1[[factor]]
 sel_factors
+run_ORA=FALSE
 ## or LOAD GSE RESULTS HERE 
 for (factor in sel_factors){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa_rna=list1[[factor]]
-  write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
+  write.csv(as.data.frame(gse_mofa_rna@result), paste0(results_file_mofa, '.csv'))
   
   ### to run mofa results
   run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa)
@@ -161,7 +177,7 @@ for (factor in sel_factors){
 
 
 list_proteins[[1]]
-run_ORA=FALSE
+
 process_mofa=TRUE
 for (factor in sel_factors){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
@@ -232,3 +248,5 @@ for (factor in sel_factors){
 
 
 
+
+}

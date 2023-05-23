@@ -59,7 +59,7 @@ list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
 
-sel_factors=c(4)
+#sel_factors=c(4)
 #if (file.exists(mofa_enrich_rds)){
  # list_all<-loadRDS(mofa_enrich_rds)
  # list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
@@ -70,8 +70,9 @@ sel_factors=c(4)
       for (factor in sel_factors){
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
-               for (view in c( 'RNA', 'miRNA', 'proteomics')){
-                  
+             #  for (view in c( 'RNA', 'miRNA', 'proteomics')){
+             for (view in c( 'miRNA')){
+          
               #### Do the RNA view for whatever is high in rna
                     print(paste0(view,' ', factor ))
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -79,7 +80,10 @@ sel_factors=c(4)
                     if (view=='RNA'){
                      
                       ### Run RNA 
-                          if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                      if (FALSE){
+                        
+                          #if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                            ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                           }else{
                                 gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
@@ -100,7 +104,9 @@ sel_factors=c(4)
                 if (view=='proteomics'){
                   
                   
-                  if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                #  if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                  if (FALSE){
+                    
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
                   
@@ -118,7 +124,9 @@ sel_factors=c(4)
               if (view=='miRNA'){
                 
                 
-                if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
+                #if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
+                if (FALSE){
+                  
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
                 
                          
@@ -165,6 +173,7 @@ if (run_plots){
 sel_factors
 run_ORA=FALSE
 ## or LOAD GSE RESULTS HERE 
+
 for (factor in sel_factors){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
@@ -213,7 +222,7 @@ for (factor in sel_factors){
       gse_mofa_mirs=list_mirs[[factor]]
       
       mieaa_all_gsea=gse_mofa_mirs
-      mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea)
+      mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
       mieaa_gsea_1=mieaa_res[[1]]
       enr_full=mieaa_res[[2]]
       
@@ -250,3 +259,4 @@ for (factor in sel_factors){
 
 
 }
+

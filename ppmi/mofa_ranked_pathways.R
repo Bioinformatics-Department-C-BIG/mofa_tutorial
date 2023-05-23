@@ -30,7 +30,7 @@ sel_factors
 vars_by_factor_all$r2_per_factor[[1]][sel_factors,]
 
 ### TODO: add var captured
-cohort_cors[sel_factors]
+round(cohort_cors[sel_factors], digits=2)
 
 pos=TRUE
 if (pos){

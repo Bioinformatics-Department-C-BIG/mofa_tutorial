@@ -90,7 +90,7 @@ combined_bl<-combined
 which(is.na(combined_bl$AGE))
 combined_bl$AGE
 scale_views=TRUE
-run_mofa_complete<-TRUE
+run_mofa_complete<-FALSE
 
 ## MORE samples, more factors ! 
 # TODO: need a better way to decide how to run this 

@@ -13,7 +13,7 @@ cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
 dim(res.positive$pval.adj)
 length(cohort_cors)
 var_captured  <-vars_by_factor_all$r2_total[[1]] # TODO: LOAD or recalc
-
+var_captured_all  <-vars_by_factor_all$r2_per_factor[[1]] # TODO: LOAD or recalc
 cor_t<-0.1
 cor_t<-0.17
 
@@ -111,7 +111,7 @@ write.csv(all_ord, paste0(mofa_enrich_dir,'.csv'), row.names = FALSE)
 Npaths<-25
 all_ord$p.adj
 all_ord$log10padj<--log10(all_ord$p.adj)
-T
+
 text_p<-paste0('\n p-adj.< ', T,': ', un_paths, ' pathways')
 mofa_enrich_plot<-ggplot(all_ord[1:Npaths, ], 
                          aes( x=reorder(Description, weighted),

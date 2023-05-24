@@ -1,6 +1,6 @@
 
 
-script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
+#script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 source(paste0(script_dir, '/utils.R'))
@@ -80,9 +80,9 @@ list_mirs= vector("list", length = nfactors)
                     if (view=='RNA'){
                      
                       ### Run RNA 
-                    #  if (FALSE){
+                      if (FALSE){
                         
-                          if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                    #      if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                           }else{
@@ -104,8 +104,8 @@ list_mirs= vector("list", length = nfactors)
                 if (view=='proteomics'){
                   
                   
-                 if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
-                 # if (FALSE){
+                 #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                  if (FALSE){
                     
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
@@ -124,8 +124,8 @@ list_mirs= vector("list", length = nfactors)
               if (view=='miRNA'){
                 
                 
-                if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
-                #if (FALSE){
+                #if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
+                if (FALSE){
                   
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
                 
@@ -161,7 +161,6 @@ list_mirs= vector("list", length = nfactors)
 #}
 
 list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
-
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
 list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
 
@@ -169,7 +168,7 @@ list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
 
 #### Now run the prot view ? 
 
-run_plots=FALSE
+run_plots=TRUE
 
 if (run_plots){
 

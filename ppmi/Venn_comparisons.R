@@ -434,8 +434,9 @@ merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
 merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 
 combined_p_thresh<-0.05
-## these numebrs are different...
-length(which(merged_paths$p.adjust.x<combined_p_thresh)); length(which(merged_paths$p.adjust.y<combined_p_thresh)); length(which(merged_paths$p.adjust<combined_p_thresh))
+length(which(merged_paths$p.adjust.x<combined_p_thresh))
+length(which(merged_paths$p.adjust.y<combined_p_thresh))
+length(which(merged_paths$p.adjust<combined_p_thresh))
 
 merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
 merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]

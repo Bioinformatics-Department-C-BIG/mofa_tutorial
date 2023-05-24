@@ -443,7 +443,7 @@ Category<-'GO Biological process (miRPathDB)';
 library('multienrichjam')
 library('clusterProfiler')
 
-mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)'){
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)',mir_results_file){
   
   #' post-process mieaa enrichment analysis results 
   #' convert to enrich result to be able to use with cluster profiler plotting functions

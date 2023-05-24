@@ -80,9 +80,9 @@ list_mirs= vector("list", length = nfactors)
                     if (view=='RNA'){
                      
                       ### Run RNA 
-                      if (FALSE){
+                    #  if (FALSE){
                         
-                         # if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                          if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                           }else{

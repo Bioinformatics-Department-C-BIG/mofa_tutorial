@@ -6,7 +6,7 @@
 
 source(paste0('ppmi/setup_os.R'))
 
-
+script_dir
 # TODO: update to receive the whole matrices and start filtering here depending on the test we want to do
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control

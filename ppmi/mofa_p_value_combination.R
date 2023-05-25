@@ -1,7 +1,7 @@
 
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir,'/setup_os.R'))
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir,'ppmi/setup_os.R'))
 
 
 #### Metascripts 
@@ -11,8 +11,8 @@ library('dplyr')
 
 library('VennDiagram')
 library(grid)
-source(paste0(script_dir, '/utils.R'))
-source(paste0(script_dir,'/deseq_analysis_setup.R'))
+#source(paste0(script_dir, 'ppmi/utils.R'))
+#source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 
 process_mirnas=FALSE
 
@@ -112,7 +112,9 @@ dim(enrich_rna); dim(enrich_mirnas)
 enrich_proteins<-read.csv(enrich_proteins_file)
 enrich_mirnas<-read.csv(enrich_mirnas_file)
 pval_to_use<-'pvalue'
+pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
+pval_to_use<-'pvalue'
 
 add_mirs=TRUE
 use_mofa=TRUE
@@ -123,10 +125,11 @@ if (use_mofa){
   
   
   ### use all not just the significant p-value
-  fn=3
+  fn=1
   gse_mofa_rna=list1[[sel_factors[fn]]]
   dim(gse_mofa_rna@result)
   cohort_cors[sel_factors[fn]]
+  cohort_cors
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
   ## WARNING: RUN THE WHOLE enrich_mofa script to convert mirs 
   gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
@@ -163,11 +166,13 @@ merged_paths
 ### Define files and parameters
 use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
 #merge(enrich_proteins)
+run_ORA=FALSE
 pmethod<-'stouffer'
+run_weighted=TRUE
 merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                         'mofa_',  use_mofa_s  )
+                         'mofa_',  use_mofa_s, 'w_', run_weighted  )
 merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                          'mofa_',  use_mofa_s  )
+                          'mofa_',  use_mofa_s , 'w_', run_weighted  )
 
 
 ### Obtain the combined value and the log pvals
@@ -175,16 +180,22 @@ merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalue
 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 t_var<-sum(vars_by_mod)
 vars_by_mod
-weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/5 )
+mir_div=10
+weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/mir_div )
+weights_Var<-weights_Var/sum(weights_Var)*100
 #weights_Var=log(weights_Var*100)
 weights_Var
 merged_paths[merged_paths$Description=='inflammatory response' ,]
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
+merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
+run_weighted
+if (run_weighted){
+  merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
+  
+}
 
+weights_Var
 #merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
-
-merged_paths_fish_padj<-is.numeric(merged_paths_fish)/dim(merged_paths_fish)[1]
 merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 head(merged_paths_fish)
 merged_paths_fish[merged_paths_fish$Description=='inflammatory response' ,]
@@ -202,11 +213,13 @@ dim(merged_paths_fish_log_sig)
 ############################################
 #### Create plots of combined p-values ####
 
-Npaths=25
+merged_paths_fish_sig
+NN=25
+nsig<-dim(merged_paths_fish_sig)[1]
+Npaths=ifelse(nsig<NN,nsig,NN)
 
-merged_paths_fish_sig_melt<-reshape2::melt(merged_paths_fish_log_sig[1:Npaths,], 
-                                           varnames=c('modality','nlog10pvalue' ))
-
+merged_paths_fish_sig_melt<-reshape2::melt(merged_paths_fish_log_sig[1:Npaths,])
+merged_paths_fish_sig_melt
 if (add_mirs){
   labels<-c('proteomics', 'RNA', 'miRNA',  'Stouffer\'s')
 }else{ 
@@ -231,10 +244,19 @@ merged_paths_fish_sig[merged_paths_fish_sig$Description=='inflammatory response'
 un_paths<-dim(merged_paths_fish_sig)[1]
 text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways \n')
 if (use_mofa){
-  text_p<-paste0(text_p,'cohort cor: ',  round(cohort_cors[sel_factors[fn]], digits=2), 
-                 '\n prot, RNA, miRNA \n', paste(round(weights_Var, digits=2),sep=' ',collapse=', '))
+  
+  text_p<-paste0(text_p,
+                'weighted: ', run_weighted, ', pval: ', pval_to_use, 
+                 '\n mofa settings: ', TOP_PN,' ', TOP_GN,' ',TOP_MN)
 }
 text_p
+title_p<-paste( 'Factor ', sel_factors[fn],
+  ', cohort cor: ',  round(cohort_cors[sel_factors[fn]], digits=2), 
+               # '\n prot, RNA, miRNA \n', paste(round(weights_Var, digits=2),sep=' ',collapse=', '), 
+               '\n prot, RNA, miRNA \n', paste(round(vars_by_mod[c(3,2,1)], digits=2),sep=' ',collapse=', ')
+  
+)
+title_p
 mir_enrich_p_all<-ggplot(merged_to_plot,
                          aes( x=reorder(Description, value),
                               y=value, fill=variable))+
@@ -245,18 +267,21 @@ mir_enrich_p_all<-ggplot(merged_to_plot,
         axis.text.y= element_text(size=15,color='black' ), 
         axis.text.x= element_text(size=15,color='black' ),
         legend.title =element_blank(), 
-        legend.text = element_text(size=15), 
-        plot.caption= element_text(hjust = 0, face = "italic", size=20))+
-  labs(y='-log10pvalue', caption=text_p)+
+        legend.position="top",
+        plot.title =element_text(size=15, color='black'), 
+        legend.text = element_text(size=10), 
+        plot.caption= element_text(hjust = 0, face = "italic", size=15))+
+  labs(y='-log10pvalue', caption=text_p, 
+       title =title_p)+
   scale_fill_discrete(labels=labels_p)+
   
   coord_flip()
 mir_enrich_p_all
 ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
-       width=Npaths*0.55,height=Npaths/2.5 )
+       width=floor(log10(Npaths))*3+7,height=log10(Npaths)*3+3 )
 
 ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
-       width=Npaths*0.55,height=Npaths/2.5 )
+       width=log10(Npaths)*3+7,height=log10(Npaths)*3+3)
 
 mir_enrich_p_all
 Npaths

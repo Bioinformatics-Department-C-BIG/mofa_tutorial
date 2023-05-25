@@ -16,7 +16,7 @@ library(stats)
 
 
 
-nfactors<-MOFAobject@dimensions$K
+nfactors<-MOFAobject@dimensions$K;nfactors
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
@@ -27,13 +27,22 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
 #cors_pearson_l<-read.csv(paste0(outdir, '/covariate_corelations_pearson.csv'))
 cors_pearson_l<-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c('CONCOHORT'), 
+                                  covariates = c('CONCOHORT', 'INEXPAGE'), 
                                   plot = "r", 
                                   return_data = TRUE
                                   
 )
+cors_pval<-correlate_factors_with_covariates(MOFAobject,
+                                                  covariates = c('CONCOHORT','INEXPAGE'), 
+                                                  plot = "log_pval", 
+                                                  return_data = TRUE
+                                                  
+)
+
 
 cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
+cors_pearson_l[,'INEXPAGE'] 
+cors_pval[,'CONCOHORT']
 cohort_cors
 cor_t=0.15
 sel_factors<-which(abs(cohort_cors)>cor_t)
@@ -58,7 +67,7 @@ get_ranked_gene_list_mofa<-function(view, factor){
 
 process_mofa=TRUE
 pvalueCutoff=1
-nfactors=8
+#nfactors=12
 list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
@@ -81,7 +90,8 @@ if (!isRStudio){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
                for (view in c( 'RNA', 'miRNA', 'proteomics')){
              #for (view in c(  'miRNA', 'proteomics')){
-          
+              view='RNA'
+              factor=7
               #### Do the RNA view for whatever is high in rna
                     print(paste0(view,' ', factor ))
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -95,12 +105,21 @@ if (!isRStudio){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                           }else{
+                            gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
+                            
                                 gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
                                                                    ont=ONT, 
                                                                    keyType = 'ENSEMBL', 
                                                                    OrgDb = 'org.Hs.eg.db', 
                                                                    pvalueCutoff  = pvalueCutoff)
                                 
+                                gse_mofa <- clusterProfiler::enrichGO(names(gene_list_ora)[1:50], 
+                                                                   ont=ONT, 
+                                                                   keyType = 'ENSEMBL', 
+                                                                   OrgDb = 'org.Hs.eg.db', 
+                                                                   pvalueCutoff  = pvalueCutoff)
+                                
+                                gse_mofa@result$Description[which(gse_mofa@result$p.adjust<0.05)]
                                 list1[[factor]]<-gse_mofa
                                 saveRDS(list1, paste0(mofa_enrich_rds, 'gene'))
                             
@@ -173,26 +192,20 @@ if (!isRStudio){
 list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
 list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
-list1;list_mirs;list_proteins
-#list1=listALL[[1]]
+as.logical(lapply(list1, is.null))
+as.logical(lapply(list_mirs, is.null))
+as.logical(lapply(list_proteins, is.null))
 
-#### Now run the prot view ? 
 
-run_plots=TRUE
-
-if (run_plots){
-
-run_ORA=FALSE
-## or LOAD GSE RESULTS HERE 
 list_mirs_enrich=list()
 sel_factors_to_p<-sel_factors
 sel_factors
-sel_factors_to_p<-c(3)
-
+sel_factors_to_p<-sel_factors[1:2]
+sel_factors_to_p
 
 for (factor in sel_factors){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
-  dir.create(paste0(outdir, '/enrichment/mirnas/'))
+  suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
   gse_mofa_mirs=list_mirs[[factor]]
   
   mieaa_all_gsea=gse_mofa_mirs
@@ -204,6 +217,21 @@ for (factor in sel_factors){
   
   list_mirs_enrich[[factor]]<-enr_full
 }
+
+as.logical(lapply(list_mirs_enrich, is.null))
+
+list_proteins
+
+#list1=listALL[[1]]
+
+#### Now run the prot view ? 
+run_plots=ifelse(isRStudio, FALSE, TRUE)
+
+
+if (run_plots){
+
+run_ORA=FALSE
+## or LOAD GSE RESULTS HERE 
 
 
 for (factor in sel_factors_to_p){
@@ -247,7 +275,7 @@ for (factor in sel_factors_to_p){
 }
 
 
-
+sel_factors_to_p
 for (factor in sel_factors_to_p){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')

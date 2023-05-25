@@ -15,7 +15,7 @@ length(cohort_cors)
 var_captured  <-vars_by_factor_all$r2_total[[1]] # TODO: LOAD or recalc
 var_captured_all  <-vars_by_factor_all$r2_per_factor[[1]] # TODO: LOAD or recalc
 cor_t<-0.1
-cor_t<-0.17
+cor_t<-0.15
 
 cohort_cors
 
@@ -27,10 +27,11 @@ cohort_cors[sel_factors]
 var_captured
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
-vars_by_factor_all$r2_per_factor[[1]][sel_factors,]
-
+rna_high<-names(which(vars_by_factor_all$r2_per_factor[[1]][sel_factors,'RNA']>1))
+rna_high
 ### TODO: add var captured
 round(cohort_cors[sel_factors], digits=2)
+
 
 pos=TRUE
 if (pos){
@@ -49,10 +50,13 @@ T=0.05
 
 enrich_weights=res.positive$pval.adj
 enrich_weights
-get_weighted_pvals<-function(enrich_weights, T=0.01){
-  weighted_pvals<--log10(enrich_weights[, sel_factors])*abs(cohort_cors[sel_factors])
+sel_factors_c=rna_high
+get_weighted_pvals<-function(enrich_weights, T=0.01, sel_factors_c){
+  weighted_pvals<--log10(enrich_weights[, sel_factors_c])
+  #*abs(cohort_cors[sel_factors_c])
+  #*vars_by_factor_all$r2_per_factor$group1[ sel_factors,'RNA']
   head(weighted_pvals)
-  pvals_mofa<-enrich_weights[, sel_factors]
+  pvals_mofa<-enrich_weights[, sel_factors_c]
   pvals_mofa_melted<-melt(pvals_mofa,value.name='p.adj')
   
   
@@ -60,23 +64,28 @@ get_weighted_pvals<-function(enrich_weights, T=0.01){
   head(pvals_mofa_melted)
   melted
   head(melted)
-  if (length(sel_factors)>1){
+  if (length(sel_factors_c)>1){
     melted_merged<-merge(pvals_mofa_melted,melted, by=c('Var1', 'Var2') )
+    melted_ord<-melted_merged[order(abs(melted_merged$weighted), decreasing=TRUE),]
+    melted_ord_sig<-melted_ord[melted_ord$p.adj>-log10(T),]
     
   }else{
     melted_merged=melted
+    rownames(melted_merged)=rownames(melted)
+    melted_ord<-melted_merged[sort(melted_merged$weighted, decreasing=TRUE),]
+    melted_ord_sig<-melted_ord[melted_ord>-log10(T)]
+    melted_ord_sig
+    
+    
   }
-  
+  melted_ord_sig
   head(melted_merged)
   log2(0.2)
   
   ### RANKING
-  melted_ord<-melted_merged[order(abs(melted_merged$weighted), decreasing=TRUE),]
-  melted_ord_sig<-melted_ord[melted_ord$p.adj<T,]
   
   dim(melted_ord_sig)
-  length(unique(melted_ord_sig$Var1))
-  
+
   write.csv(melted_ord_sig,paste0(out_compare, 'mofa_',pos,T, '.csv' ) )
   return(melted_ord_sig)
 }
@@ -84,16 +93,17 @@ get_weighted_pvals<-function(enrich_weights, T=0.01){
 ###   TODO: load res.positive from file
 
 
-
 mofa_file<-paste0(out_compare, 'mofa_',T, cor_t , mofa_params, TISSUE) 
-pos_ord<-get_weighted_pvals(res.positive$pval.adj, T=T)
-neg_ord<-get_weighted_pvals(res.negative$pval.adj,T=T)
-
+pos_ord<-get_weighted_pvals(res.positive$pval.adj, T=T, sel_factors_c=rna_high)
+neg_ord<-get_weighted_pvals(res.negative$pval.adj,T=T,sel_factors_c=rna_high)
+neg_ord
 all_ord<-rbind(neg_ord,pos_ord )
+all_ord<-cbind(neg_ord,pos_ord )
+
 all_ord<-all_ord[order(all_ord$weighted),]
 ### melted_ord<-melted_merged[order(-abs(melted_merged$p.adj), decreasing=TRUE),]
 
-all_ord<-all_ord[order(all_ord$weighted, decreasing = TRUE),]
+#all_ord<-all_ord[order(all_ord$weighted, decreasing = TRUE),]
 
 
 all_ord$Var1<-gsub('GOBP_', '', all_ord$Var1)
@@ -104,7 +114,8 @@ colnames(all_ord)
 
 #mofa_enrich_file<-paste0(outdir,'/enrichment/', 'ranked_list', cor_t, '.csv')
 
-mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
+mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t, '_',paste0(rna_high, collapse='-'))
+mofa_enrich_dir
 un_paths<-length(unique(all_ord$Description))
 
 write.csv(all_ord, paste0(mofa_enrich_dir,'.csv'), row.names = FALSE)
@@ -114,7 +125,7 @@ all_ord$log10padj<--log10(all_ord$p.adj)
 
 text_p<-paste0('\n p-adj.< ', T,': ', un_paths, ' pathways')
 mofa_enrich_plot<-ggplot(all_ord[1:Npaths, ], 
-                         aes( x=reorder(Description, weighted),
+                         aes( x=reorder(Description, log10padj),
                                                          y=log10padj))+
 geom_bar(position='dodge', stat='identity', width=0.7/4, fill='darkgreen')+
   theme(axis.title.y=element_blank(), 

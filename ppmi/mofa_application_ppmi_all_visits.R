@@ -90,8 +90,7 @@ if (run_mofa_complete){
   N_FACTORS=9
 }else{
   N_FACTORS=12
-  N_FACTORS=9
-  
+
 }
 
 

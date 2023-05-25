@@ -1,5 +1,26 @@
 
 
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(script_dir,'/setup_os.R'))
+
+
+#### Metascripts 
+#('UpSetR')
+library('UpSetR')
+library('dplyr')
+
+library('VennDiagram')
+library(grid)
+source(paste0(script_dir, '/utils.R'))
+source(paste0(script_dir,'/deseq_analysis_setup.R'))
+
+process_mirnas=FALSE
+
+### Table of samples from all visits 
+#### For each modality separately
+out_compare<-'ppmi/plots/single/compare/'
+
+
 cohort_cors
 concatenate_pvals<-function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, pval_to_use='p.adjust') {
   #' supply the three enrichment datasets 
@@ -90,19 +111,22 @@ dim(enrich_rna); dim(enrich_mirnas)
 #enrich_mirnas<-read.csv(enrich_mirnas_file)
 enrich_proteins<-read.csv(enrich_proteins_file)
 enrich_mirnas<-read.csv(enrich_mirnas_file)
-pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
+pval_to_use<-'p.adjust'
 
 add_mirs=TRUE
 use_mofa=TRUE
 
+
+## TODO: run for each factor 
 if (use_mofa){
   
+  
   ### use all not just the significant p-value
-  fn=1
+  fn=3
   gse_mofa_rna=list1[[sel_factors[fn]]]
   dim(gse_mofa_rna@result)
-  
+  cohort_cors[sel_factors[fn]]
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
   ## WARNING: RUN THE WHOLE enrich_mofa script to convert mirs 
   gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
@@ -150,7 +174,8 @@ merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalue
 #  TODO: CAREFUL what happens if i dont give mirna
 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 t_var<-sum(vars_by_mod)
-weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/30 )
+vars_by_mod
+weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/5 )
 #weights_Var=log(weights_Var*100)
 weights_Var
 merged_paths[merged_paths$Description=='inflammatory response' ,]
@@ -204,8 +229,12 @@ if (plot_all){
 merged_paths_fish_sig[merged_paths_fish_sig$Description=='inflammatory response',]
 ## print the total number of paths 
 un_paths<-dim(merged_paths_fish_sig)[1]
-text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways')
-
+text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways \n')
+if (use_mofa){
+  text_p<-paste0(text_p,'cohort cor: ',  round(cohort_cors[sel_factors[fn]], digits=2), 
+                 '\n prot, RNA, miRNA \n', paste(round(weights_Var, digits=2),sep=' ',collapse=', '))
+}
+text_p
 mir_enrich_p_all<-ggplot(merged_to_plot,
                          aes( x=reorder(Description, value),
                               y=value, fill=variable))+
@@ -229,6 +258,6 @@ ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combin
 ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
        width=Npaths*0.55,height=Npaths/2.5 )
 
-
+mir_enrich_p_all
 Npaths
 

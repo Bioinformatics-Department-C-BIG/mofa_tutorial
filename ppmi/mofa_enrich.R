@@ -185,7 +185,28 @@ if (run_plots){
 run_ORA=FALSE
 ## or LOAD GSE RESULTS HERE 
 list_mirs_enrich=list()
+sel_factors_to_p<-sel_factors
+sel_factors
+sel_factors_to_p<-c(3)
+
+
 for (factor in sel_factors){
+  results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+  dir.create(paste0(outdir, '/enrichment/mirnas/'))
+  gse_mofa_mirs=list_mirs[[factor]]
+  
+  mieaa_all_gsea=gse_mofa_mirs
+  Padj_T_paths=0.05
+  mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
+  mieaa_gsea_1=mieaa_res[[1]]
+  enr_full=mieaa_res[[2]]
+  
+  
+  list_mirs_enrich[[factor]]<-enr_full
+}
+
+
+for (factor in sel_factors_to_p){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
   dir.create(paste0(outdir, '/enrichment/mirnas/'))
   gse_mofa_mirs=list_mirs[[factor]]
@@ -227,7 +248,7 @@ for (factor in sel_factors){
 
 
 
-for (factor in sel_factors){
+for (factor in sel_factors_to_p){
   process_mirnas=FALSE
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa_rna=list1[[factor]]
@@ -241,7 +262,7 @@ for (factor in sel_factors){
 list_proteins[[1]]
 
 process_mofa=TRUE
-for (factor in sel_factors){
+for (factor in sel_factors_to_p){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
     dir.create(paste0(outdir, '/enrichment/proteins/'))
     gse_mofa=list_proteins[[factor]]

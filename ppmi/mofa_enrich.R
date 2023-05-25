@@ -21,6 +21,7 @@ vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 vars_by_factor_all
+dir.create(paste0(outdir, '/enrichment/'))
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
 

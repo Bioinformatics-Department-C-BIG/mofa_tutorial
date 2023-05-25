@@ -20,6 +20,8 @@
 
 ###### CORRELATIONS WITH COVARIATES ##########
 ##### Corelations
+## TODO: load mofa object from outdir 
+
 
 
 
@@ -28,13 +30,6 @@ library(ggplot2)
 library(EnsDb.Hsapiens.v79)
 
 graphics.off()
-MOFAobject@features_metadata
-features_names(MOFAobject)
-#getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
-
-
-
-print(outdir)
 
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
@@ -68,6 +63,7 @@ features_names(MOFAobject_gs)$RNA<-ens_ids
 
 ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
+
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
@@ -119,6 +115,8 @@ cors_pearson<-correlate_factors_with_covariates(MOFAobject,
                                         
 )
 cors_pearson
+
+
 round(cors_pearson[,'CONCOHORT'], digits=2)
 
 cors_pearson

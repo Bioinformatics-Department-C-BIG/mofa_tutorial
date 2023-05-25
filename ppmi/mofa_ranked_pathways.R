@@ -3,7 +3,7 @@
 ## load res. positive
 # load cohort cors
 
-out_compare<-'ppmi/plots/single/compare/'
+out_compare<-paste0(data_dir,'/ppmi/plots/single/compare/')
 
 #### choose factors from MOFA and RANK the pathways accordingly 
 ### 1. LOAD corelations with cohort

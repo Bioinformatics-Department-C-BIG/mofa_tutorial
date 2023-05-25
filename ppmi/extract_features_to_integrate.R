@@ -3,8 +3,7 @@
 library(dplyr)
 library(data.table)
 library(stringr)
-source(paste0(script_dir,'/setup_os.R'))
-os_dir='os_dir'
+source(paste0('ppmi/setup_os.R'))
 #rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
 #### too many files so we separate each time points 
 ##### Maybe do them one by one in a function

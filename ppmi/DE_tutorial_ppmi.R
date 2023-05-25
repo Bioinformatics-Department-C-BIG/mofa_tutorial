@@ -8,9 +8,8 @@
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
 #script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
 
-source(paste0(script_dir, '/setup_os.R'))
+source(paste0('ppmi/setup_os.R'))
 library(limma)
 library(pheatmap)
 library(R.filesets)
@@ -22,10 +21,11 @@ library(sys)
 library(sys)
 
 process_mirnas=FALSE
-source(paste0(script_dir, '/config.R' ))
-source(paste0(script_dir,'/utils.R'))
 
-source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, 'ppmi/config.R' ))
+source(paste0(script_dir,'ppmi/utils.R'))
+
+source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 
 

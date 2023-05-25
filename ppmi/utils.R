@@ -277,8 +277,10 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
     
   
-  
-  show(dp)
+  if (isRStudio){
+    show(dp)
+    
+  }
   
   
   

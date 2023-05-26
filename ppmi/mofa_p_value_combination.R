@@ -72,7 +72,6 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5
   merged_paths_fish<-cbind(merged_paths, fish)
   # and order
   merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
-  write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
   
   ### Write significant results 
   
@@ -96,6 +95,12 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5
   #  merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
   #  
   #}
+  if (use_mofa){
+    write.csv(merged_paths_fish,paste0( merged_path_file2, '.csv'))
+    
+  }
+  write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
+  
   return(list(merged_paths_fish, merged_paths_fish_log))
   
 }
@@ -115,9 +120,14 @@ pval_to_use<-'pvalue'
 pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
-
 add_mirs=TRUE
+
 use_mofa=TRUE
+v2=TRUE
+if (v2){
+  add_mirs=FALSE
+  pval_to_use='p.adjust'
+}
 
 
 ## TODO: run for each factor 
@@ -125,9 +135,8 @@ if (use_mofa){
   
   
   ### use all not just the significant p-value
-  fn=1
+  fn=2
   gse_mofa_rna=list1[[sel_factors[fn]]]
-  dim(gse_mofa_rna@result)
   cohort_cors[sel_factors[fn]]
   cohort_cors
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
@@ -140,10 +149,46 @@ if (use_mofa){
   
   vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
   vars_by_mod
+  vars_by_mod/sum(vars_by_mod) *100
+  
 }
 
-vars_by_mod/sum(vars_by_mod) *100
 
+get_paths<-function(mode){
+  prot_paths1<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
+                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
+  prot_paths2<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
+                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
+  prot_paths=rbind(prot_paths1,prot_paths2)
+  colnames(prot_paths)<-c('X', 'Description', 'Factor', 'p.adjust')
+  
+  return(prot_paths)
+}
+prot_paths<-get_paths('proteomics')
+rna_paths<-get_paths('RNA')
+prot_paths
+
+if (use_mofa){
+  ### METHOD 2: PCGSE 
+  fn=2
+  ### use all not just the significant p-value
+  cohort_cors[sel_factors[fn]]
+  cohort_cors
+  enrich_proteins=prot_paths[prot_paths$Factor==paste0('Factor', sel_factors[fn]),]
+  enrich_rna<-rna_paths[rna_paths$Factor==paste0('Factor', sel_factors[fn]),]
+  colnames(enrich_proteins)
+
+  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
+  vars_by_mod
+  vars_by_mod/sum(vars_by_mod) *100
+  
+}
+#merged_paths_fish[merged_paths_fish$p.adjust.y<0.05,]
+#prot_paths[prot_paths$Description %in% 'GOBP_ACUTE_INFLAMMATORY_RESPONSE',]
+
+
+
+enrich_rna
 ################# ACTUALLY RUN THE combination #### 
 
 ### WHETHER TO ADD MIRNA INFO
@@ -162,43 +207,57 @@ sapply(list(enrich_rna,
 
 use_mofa
 merged_paths
-
 ### Define files and parameters
 use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
 #merge(enrich_proteins)
 run_ORA=FALSE
 pmethod<-'stouffer'
-run_weighted=TRUE
+
+if (use_mofa){
+  run_weighted=TRUE
+  # also write to extra file
+  merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+                            'mofa_',  use_mofa_s , 'w_', run_weighted  )
+}else{
+  run_weighted=FALSE
+  
+}
 merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
                          'mofa_',  use_mofa_s, 'w_', run_weighted  )
-merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                          'mofa_',  use_mofa_s , 'w_', run_weighted  )
 
 
 ### Obtain the combined value and the log pvals
 #  TODO: CAREFUL what happens if i dont give mirna
 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
-t_var<-sum(vars_by_mod)
-vars_by_mod
-mir_div=10
-weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/mir_div )
-weights_Var<-weights_Var/sum(weights_Var)*100
-#weights_Var=log(weights_Var*100)
-weights_Var
-merged_paths[merged_paths$Description=='inflammatory response' ,]
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
+
+if (use_mofa){
+  
+  ## also weight by modality variance
+  t_var<-sum(vars_by_mod)
+  vars_by_mod
+  mir_div=10
+  weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/mir_div )
+  weights_Var<-weights_Var/sum(weights_Var)*100
+  #weights_Var=log(weights_Var*100)
+  weights_Var
+  merged_paths[merged_paths$Description=='inflammatory response' ,]
+  run_weighted
+}else{
+  run_weighted=FALSE
+}
 run_weighted
 if (run_weighted){
   merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
   
 }
 
-weights_Var
-#merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
 merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 head(merged_paths_fish)
 merged_paths_fish[merged_paths_fish$Description=='inflammatory response' ,]
+merged_paths_fish[merged_paths_fish$Description=='GOBP_INFLAMMATORY_RESPONSE' ,]
+
+merged_paths_fish[merged_paths_fish$p.adjust.y<0.05,]
 
 dim(merged_paths_fish)[1]
 combined_p_thresh<-0.05
@@ -248,14 +307,17 @@ if (use_mofa){
   text_p<-paste0(text_p,
                 'weighted: ', run_weighted, ', pval: ', pval_to_use, 
                  '\n mofa settings: ', TOP_PN,' ', TOP_GN,' ',TOP_MN)
-}
-text_p
-title_p<-paste( 'Factor ', sel_factors[fn],
-  ', cohort cor: ',  round(cohort_cors[sel_factors[fn]], digits=2), 
-               # '\n prot, RNA, miRNA \n', paste(round(weights_Var, digits=2),sep=' ',collapse=', '), 
-               '\n prot, RNA, miRNA \n', paste(round(vars_by_mod[c(3,2,1)], digits=2),sep=' ',collapse=', ')
   
-)
+  title_p<-paste( 'Factor ', sel_factors[fn],
+                  ', cohort cor: ',  round(cohort_cors[sel_factors[fn]], digits=2), 
+                  # '\n prot, RNA, miRNA \n', paste(round(weights_Var, digits=2),sep=' ',collapse=', '), 
+                  '\n prot, RNA, miRNA \n', paste(round(vars_by_mod[c(3,2,1)], digits=2),sep=' ',collapse=', '))
+                  
+}else{
+  title_p=''
+}
+
+
 title_p
 mir_enrich_p_all<-ggplot(merged_to_plot,
                          aes( x=reorder(Description, value),
@@ -279,10 +341,112 @@ mir_enrich_p_all<-ggplot(merged_to_plot,
 mir_enrich_p_all
 ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
        width=floor(log10(Npaths))*3+7,height=log10(Npaths)*3+3 )
+if (use_mofa){
+  ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
+         width=log10(Npaths)*3+7,height=log10(Npaths)*3+3)
+}
 
-ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
-       width=log10(Npaths)*3+7,height=log10(Npaths)*3+3)
 
 mir_enrich_p_all
 Npaths
+
+
+
+merged_path_file2
+####### NOW MERGE THE RESULTS ####
+f_pvals<-list()
+for (fn in c(1,2)){
+  use_mofa=TRUE;run_weighted=TRUE
+  
+  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+  merged_path_file_load<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+                            'mofa_',  use_mofa_s , 'w_', run_weighted  )
+  
+  f_pvals[[fn]]<-read.csv(paste0( merged_path_file_load, '.csv'), row.names = 1)
+  
+  
+}
+merged_factors_mofa<-do.call(rbind,f_pvals)
+merged_factors_mofa
+#### Merge factors together??? #### 
+dim(merged_factors_mofa[merged_factors_mofa$fish<0.05,])
+dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
+
+
+###  LOAD SINGLE 
+
+use_mofa=FALSE;run_weighted=FALSE
+
+use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+                         'mofa_',  use_mofa_s, 'w_', run_weighted  )
+
+
+single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
+
+
+single_ps
+
+
+
+
+
+
+###########
+
+
+#### COMPARE TO MOFA ####
+
+cor_t<-0.15
+outdir
+
+mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
+mofa_enrich_file<-paste0(mofa_enrich_dir, '.csv')
+all_ord_R<-read.csv(mofa_enrich_file, header=1)
+
+
+### compare to merged 
+all_ord_R<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
+single_paths<-single_ps[single_ps$fish<0.05,]
+dim(all_ord_R)
+
+single_paths$Description<-gsub('-', ' ', tolower(single_paths$Description))
+all_ord_R$Description<-gsub('-', ' ', tolower(all_ord_R$Description))
+
+'cytokine mediated signaling pathway' %in% all_ord_R$Description
+'cytokine mediated signaling pathway' %in% single_paths$Description
+
+dim(single_paths)
+dim(all_ord_R)
+listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths$Description)
+mofa_overlap<-calculate.overlap(listInput_single_mofa)
+unique_single<-mofa_overlap$a2[!(mofa_overlap$a2 %in%mofa_overlap$a3)]
+unique_mofa<-mofa_overlap$a1[!(mofa_overlap$a1 %in%mofa_overlap$a3)]
+mofa_overlap
+unique_mofa
+unique_single
+
+mofa_overlap$a2
+# common 
+mofa_overlap$a3
+
+
+myCol2 <- brewer.pal(3, "Pastel2")[1:2]
+
+venn.diagram(listInput_single_mofa,
+             # Circles
+             lwd = 2,
+             lty = 'blank',
+             fill = myCol2,
+             cex=2.5,
+             cat.cex=1,
+             filename = paste0(out_compare,'all_modalities_', 
+                               int_params ,'venn_diagramm_mofa', cor_t, '.png'), 
+             output=TRUE)
+
+
+
+
+
+
 

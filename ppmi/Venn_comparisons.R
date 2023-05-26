@@ -11,8 +11,8 @@ library('dplyr')
 
 library('VennDiagram')
 library(grid)
-source(paste0(script_dir, '/utils.R'))
-source(paste0(script_dir,'/deseq_analysis_setup.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
+source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 
 process_mirnas=FALSE
 
@@ -135,13 +135,13 @@ venn.diagram(listInput,
 # for each visit across ALL modalities 
 #### Load pathways from each of the modalities separately 
 VISIT='V08'; 
-process_mirnas=TRUE; source(paste0(script_dir, '/config.R' ))
+process_mirnas=TRUE; source(paste0(script_dir, 'ppmi/config.R' ))
 outdir_mirs<-outdir_s; outdir_s
-process_mirnas=FALSE; source(paste0(script_dir, '/config.R' ))
+process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R' ))
 outdir_rnas<-outdir_s; outdir_s
 
 
-source(paste0(script_dir, '/deseq_analysis_setup.R' ))
+source(paste0(script_dir, 'ppmi/deseq_analysis_setup.R' ))
 outdir_proteins<-outdir_s_p
 padj_T_overall=0.05
 log2fol_T_overall=0.1
@@ -202,21 +202,6 @@ common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Descripti
 
 
 
-###get parents: 
-library(GOfuncR)
-rna_parents<-get_parent_nodes(enrich_rna_sig$ID)
-prot_parents<-get_parent_nodes(enrich_proteins_sig$ID)
-mir_parents<-get_parent_nodes(enrich_mirnas_sig$ID)
-
-rna_par_01<-rna_parents[rna_parents$distance==c(1),]
-prot_parents_01<-prot_parents[prot_parents$distance==c(1),]
-mir_parents_01<-prot_parents[mir_parents$distance==c(1),]
-
-intersect(rna_par_01$child_go_id, prot_parents_01$child_go_id)
-inter<-intersect(rna_par_01$parent_go_id, prot_parents_01$parent_go_id)
-prot_parents_01[prot_parents_01$parent_go_id %in% inter,]
-
-prot_parents_01
 
 ##### function
 
@@ -390,186 +375,14 @@ enrich_mirnas<-read.csv(enrich_mirnas_file)
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
 
-add_mirs=TRUE
-use_mofa=TRUE
 
-if (use_mofa){
+
+
+
+
+
+
   
-  ### use all not just the significant p-value
-  fn=1
-  gse_mofa_rna=list1[[sel_factors[fn]]]
-  dim(gse_mofa_rna@result)
-  
-  gse_mofa_prot=list_proteins[[sel_factors[fn]]]
-  ## WARNING: RUN THE WHOLE enrich_mofa script to convert mirs 
-  gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
-  
-  enrich_rna<-gse_mofa_rna@result
-  enrich_proteins=gse_mofa_prot@result
-  enrich_mirnas=gse_mofa_mirs@result
-  
-  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
-  vars_by_mod
-}
-
-
-################# ACTUALLY RUN THE combination #### 
-
-### WHETHER TO ADD MIRNA INFO
-
-if (add_mirs){
-  merged_paths=concatenate_pvals(enrich_proteins,enrich_rna,enrich_mirnas, pval_to_use )
-  
-}else{
-  merged_paths=concatenate_pvals(enrich_proteins,enrich_rna, pval_to_use )
-  
-}
-sapply(list(enrich_rna,
-            enrich_mirnas, 
-            enrich_proteins), function(df){  
-              length(which(df[, pval_to_use]<0.05))})
-
-use_mofa
-merged_paths
-
-### Define files and parameters
-use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-#merge(enrich_proteins)
-pmethod<-'stouffer'
-merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                         'mofa_',  use_mofa_s  )
-merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                         'mofa_',  use_mofa_s  )
-
-
-### Obtain the combined value and the log pvals
-#  TODO: CAREFUL what happens if i dont give mirna
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
-t_var<-sum(vars_by_mod)
-weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/300 )
-#weights_Var=log(weights_Var*100)
-weights_Var
-merged_paths[merged_paths$Description=='inflammatory response' ,]
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= c(0.00001,1,0.000001))
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
-
-#merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
-merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
-
-merged_paths_fish_padj<-is.numeric(merged_paths_fish)/dim(merged_paths_fish)[1]
-merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
-head(merged_paths_fish)
-merged_paths_fish[merged_paths_fish$Description=='inflammatory response' ,]
-
-dim(merged_paths_fish)[1]
-combined_p_thresh<-0.05
-length(which(merged_paths$p.adjust.x<combined_p_thresh))
-length(which(merged_paths$p.adjust.y<combined_p_thresh))
-length(which(merged_paths$p.adjust<combined_p_thresh))
-
-merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
-merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]
-dim(merged_paths_fish_log_sig)
-
-############################################
-#### Create plots of combined p-values ####
-
-Npaths=25
-
-merged_paths_fish_sig_melt<-reshape2::melt(merged_paths_fish_log_sig[1:Npaths,], 
-                                 varnames=c('modality','nlog10pvalue' ))
-
-if (add_mirs){
-  labels<-c('proteomics', 'RNA', 'miRNA',  'Stouffer\'s')
-  }else{ 
-    labels<-c('proteomics', 'RNA', 'Stouffer\'s')}
-
-
-merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish',]
-merged_paths_fish_sig_melt_fish
-plot_all=TRUE
-
-if (plot_all){
-  merged_to_plot<-merged_paths_fish_sig_melt
-  labels_p<-labels; width_p<-0.7
-}else{
-  merged_to_plot<-merged_paths_fish_sig_melt_fish
-  labels_p=labels[4];width_p<-0.7/4
-}
-
-
-merged_paths_fish_sig[merged_paths_fish_sig$Description=='inflammatory response',]
-## print the total number of paths 
-un_paths<-dim(merged_paths_fish_sig)[1]
-text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways')
-
-mir_enrich_p_all<-ggplot(merged_to_plot,
-                         aes( x=reorder(Description, value),
-                                                          y=value, fill=variable))+
-  #geom_bar(position='dodge', stat='identity', width=0.7)+
-  geom_bar(position='dodge', stat='identity', width=width_p)+
-  
-  theme(axis.title.y=element_blank(), 
-        axis.text.y= element_text(size=15,color='black' ), 
-        axis.text.x= element_text(size=15,color='black' ),
-        legend.title =element_blank(), 
-        legend.text = element_text(size=15), 
-        plot.caption= element_text(hjust = 0, face = "italic", size=20))+
-  labs(y='-log10pvalue', caption=text_p)+
-  scale_fill_discrete(labels=labels_p)+
-  
-  coord_flip()
-mir_enrich_p_all
-  ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
-         width=Npaths*0.55,height=Npaths/2.5 )
-
-  ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
-         width=Npaths*0.55,height=Npaths/2.5 )
-  
-  
-  Npaths
-  
-  
-  vars_by_mod
-  
-  #### COMPARE TO MOFA
-
-  cor_t<-0.15
-  outdir
-  
-  mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
-  mofa_enrich_file<-paste0(mofa_enrich_dir, '.csv')
-  all_ord_R<-read.csv(mofa_enrich_file, header=1)
-  single_paths<-gsub('-', ' ', tolower(merged_paths_fish_sig$Description))
-  listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths)
- mofa_overlap<-calculate.overlap(listInput_single_mofa)
- unique_single<-mofa_overlap$a2[!(mofa_overlap$a2 %in%mofa_overlap$a3)]
- unique_mofa<-mofa_overlap$a1[!(mofa_overlap$a1 %in%mofa_overlap$a3)]
- 
- 
- #View(unique_mofa)
-# View(unique_single)
- #View(mofa_overlap$a3)
- venn.diagram(listInput_single_mofa, 
-               filename=paste0(out_compare, 'mofa_overlap.jpeg'))
- mofa_overlap$a2
- 
- 
- myCol2 <- brewer.pal(3, "Pastel2")[1:2]
- 
- venn.diagram(listInput_single_mofa,
-              # Circles
-              lwd = 2,
-              lty = 'blank',
-              fill = myCol2,
-              cex=2.5,
-              cat.cex=0,
-              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm_mofa', cor_t, '.png'), 
-              output=TRUE)
-
- 
- 
- 
  
  
  
@@ -627,4 +440,37 @@ mir_enrich_p_all
                
                filename = paste0(out_compare,'all_modalities_','visits_venn_diagramm.png'), output=TRUE)
   
+  
+  
+  
+  #### 
+  
+  
+  
+  ###get parents: 
+  library(GOfuncR)
+  
+  
+  ### TODO: get the ids from my rna/prot files? 
+  ### And get the parents or find where they are in the hierarchy
+  ### is mofa giving me only upper? 
+  rna_parents<-get_parent_nodes(enrich_rna_sig$ID)
+  prot_parents<-get_parent_nodes(enrich_proteins_sig$ID)
+  mir_parents<-get_parent_nodes(enrich_mirnas_sig$ID)
+  
+  rna_par_01<-rna_parents[rna_parents$distance==c(1),]
+  prot_parents_01<-prot_parents[prot_parents$distance==c(1),]
+  mir_parents_01<-prot_parents[mir_parents$distance==c(1),]
+  
+  intersect(rna_par_01$child_go_id, prot_parents_01$child_go_id)
+  inter<-intersect(rna_par_01$parent_go_id, prot_parents_01$parent_go_id)
+  prot_parents_01[prot_parents_01$parent_go_id %in% inter,]
+  
+  prot_parents_01
+  ### we need the id, not the description 
+  rna_parents<-get_parent_nodes(merged_factors_mofa$Description)
+  
+  
+  
+  ### 
   

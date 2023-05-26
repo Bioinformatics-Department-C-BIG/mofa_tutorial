@@ -74,6 +74,30 @@ if (run_rna_mirna){
     TOP_GN=0.2
     TOP_PN=0.9
     
+    ### OPTIMAL SO FAR 
+    TOP_MN=0.50
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
+    TOP_MN=0.50
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
+    #
+    TOP_MN=0.75
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
+    #
+    TOP_MN=0.50
+    TOP_GN=0.40
+    TOP_PN=0.9
+    
+    #
+    TOP_MN=0.50
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
   
   }
 
@@ -100,3 +124,8 @@ highly_variable_outfile<-paste0(output_files, param_str,'_highly_variable_genes_
 highly_variable_sign_outfile<-paste0(output_files, param_str,'_highly_variable_genes_mofa_signif.csv')
 
 
+outdir_orig=paste0(data_dir,'ppmi/plots/')
+output_files<- paste0(data_dir,'ppmi/output/')
+
+
+NORMALIZED=TRUE

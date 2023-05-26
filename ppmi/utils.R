@@ -445,8 +445,9 @@ Category<-'GO Biological process (miRPathDB)';
 library('multienrichjam')
 library('clusterProfiler')
 
-mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)',mir_results_file){
-  
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Category='GO Biological process (miRPathDB)'){
+#mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)',mir_results_file){
+
   #' post-process mieaa enrichment analysis results 
   #' convert to enrich result to be able to use with cluster profiler plotting functions
   #' @param mieaa_all_gsea output from mieaa
@@ -488,5 +489,114 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological
   
 }
 
+
+
+################ MOFA ####
+
+
+prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
+  #### Takes in the parameters of the input files and loads them 
+  #' return: data_full: a list with the 3 modalities 
+  # TODO: simplify the reading and setting the feature column to null? 
+  #' @param  p_params, param_str_g, param_str_m : these are set by the config.R
+  #' 
+  highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
+  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
+  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+  
+  if (use_signif){
+    highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+    highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  }
+  
+  
+  in_file<-highly_variable_proteins_outfile
+  highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
+  ### Start loading mofa data
+  proteomics<-as.data.frame(highly_variable_proteins_mofa)
+  
+  ##### Load mirnas + RNAs 
+  ### we use data.table because there are duplicate samples? 
+  ### problem with saving of rownmaes 
+  highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
+  colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
+  rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
+  
+  # EITHER input to vst or put as is normalized
+  miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
+  rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
+  
+  ##### Load RNA seq: 
+  
+  highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
+  colnames(highly_variable_genes_mofa)[1]<-'rnas'
+  rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
+  dim(highly_variable_genes_mofa)
+  # or input to vst or put as is normalized
+  
+  RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
+  rownames(RNA)<-rownames(highly_variable_genes_mofa)
+  head(rownames(RNA)); head(colnames(RNA))
+  
+  data_full<-list(miRNA=as.matrix(miRNA), 
+                  RNA=as.matrix(RNA),
+                  proteomics=as.matrix(proteomics))
+  
+  
+  return(data_full)
+  
+  
+}
+
+
+
+
+create_multi_experiment<-function(data_full, combined_bl){
+  
+  ### take a list of three and create the multiassay experiment 
+  #' also take metadata and align
+  #' @param data_full:  list of threematrices 
+  #' @param metadata:
+  #' @return mofa_multi, multi assay experiment
+  
+  RNA= data_full[['RNA']]
+  miRNA= data_full[['miRNA']]
+  proteomics= data_full[['proteomics']]
+  assay_full=c(rep('RNA', dim(RNA)[2]),
+               rep('miRNA', dim(miRNA)[2]),
+               rep('proteomics', dim(proteomics)[2]))
+  
+  
+  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+  primary=colname
+  sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
+  common_samples_in_assays=unique(colname)
+  ### TODO: is it a problem for duplicates when i make PATNO_EVENT_ID the key column? 
+  ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
+  
+  metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
+  metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
+  
+  rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
+  
+  
+  mofa_multi<-MultiAssayExperiment(experiments=data_full,
+                                   colData = metadata_filt, 
+                                   sampleMap=sample_map)
+  
+  
+  return(mofa_multi)
+}
+
+
+
+
+create_hist<-function(df, name){
+  
+  dfm<-melt(df)
+  
+  p1<-ggplot(dfm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+  ggsave(paste0(outdir, 'data_histograms',name,  '.jpeg' ), width = 10, height=8)
+}
 
 

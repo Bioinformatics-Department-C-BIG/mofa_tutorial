@@ -44,7 +44,7 @@ cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
 cors_pearson_l[,'INEXPAGE'] 
 cors_pval[,'CONCOHORT']
 cohort_cors
-cor_t=0.15
+cor_t=0.05
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 cohort_cors[sel_factors]
@@ -72,6 +72,9 @@ list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
 
+
+mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
+
 #sel_factors=c(4)
 #if (file.exists(mofa_enrich_rds)){
  # list_all<-loadRDS(mofa_enrich_rds)
@@ -83,16 +86,12 @@ list_mirs= vector("list", length = nfactors)
 #sel_factors=1:8
 if (!isRStudio){
   
-
-
       for (factor in sel_factors){
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
-               for (view in c( 'RNA', 'miRNA', 'proteomics')){
-             #for (view in c(  'miRNA', 'proteomics')){
-              view='RNA'
-              factor=7
-              #### Do the RNA view for whatever is high in rna
+               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
+                 for (view in c( 'RNA')){
+                   
                     print(paste0(view,' ', factor ))
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
                     gene_list_ord
@@ -107,17 +106,18 @@ if (!isRStudio){
                           }else{
                             gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
                             
+                                #gse_mofa <- clusterProfiler::enrichGO(names(gene_list_ora)[1:50], 
+                                #                                  ont=ONT, 
+                                #                                  keyType = 'ENSEMBL', 
+                                #                                  OrgDb = 'org.Hs.eg.db', 
+                                #                                  pvalueCutoff  = pvalueCutoff)
                                 gse_mofa <- clusterProfiler::gseGO(gene_list_ord, 
                                                                    ont=ONT, 
                                                                    keyType = 'ENSEMBL', 
                                                                    OrgDb = 'org.Hs.eg.db', 
                                                                    pvalueCutoff  = pvalueCutoff)
                                 
-                                gse_mofa <- clusterProfiler::enrichGO(names(gene_list_ora)[1:50], 
-                                                                   ont=ONT, 
-                                                                   keyType = 'ENSEMBL', 
-                                                                   OrgDb = 'org.Hs.eg.db', 
-                                                                   pvalueCutoff  = pvalueCutoff)
+                              
                                 
                                 gse_mofa@result$Description[which(gse_mofa@result$p.adjust<0.05)]
                                 list1[[factor]]<-gse_mofa
@@ -226,7 +226,7 @@ list_proteins
 
 #### Now run the prot view ? 
 run_plots=ifelse(isRStudio, FALSE, TRUE)
-
+#run_plots=TRUE
 
 if (run_plots){
 
@@ -278,6 +278,7 @@ for (factor in sel_factors_to_p){
 sel_factors_to_p
 for (factor in sel_factors_to_p){
   process_mirnas=FALSE
+  
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa_rna=list1[[factor]]
   write.csv(as.data.frame(gse_mofa_rna@result), paste0(results_file_mofa, '.csv'))

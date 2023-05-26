@@ -387,9 +387,10 @@ use_mofa=TRUE
 if (use_mofa){
   
   ### use all not just the significant p-value
-  fn=1
-  dim(gse_mofa_rna@result)
+  fn=2
   gse_mofa_rna=list1[[sel_factors[fn]]]
+  dim(gse_mofa_rna@result)
+  
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
   gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
   
@@ -398,12 +399,11 @@ if (use_mofa){
   enrich_mirnas=gse_mofa_mirs@result
 }
 
-which(enrich_rna$p.adjust<0.05);
-which(enrich_proteins$p.adjust<0.05);
-which(enrich_mirnas$p.adjust<0.05);
 
-enrich_mirnas
 ################# ACTUALLY RUN THE combination #### 
+
+### WHETHER TO ADD MIRNA INFO
+
 if (add_mirs){
   merged_paths=concatenate_pvals(enrich_proteins,enrich_rna,enrich_mirnas, pval_to_use )
   
@@ -411,32 +411,35 @@ if (add_mirs){
   merged_paths=concatenate_pvals(enrich_proteins,enrich_rna, pval_to_use )
   
 }
-head(merged_paths)
-merged_paths$Description
-### WHETHER TO ADD MIRNA INFO
-sapply(list(enrich_rna_pvals,
-            enrich_mirna_pvals, 
-            enrich_proteins_pvals), function(df){  
+sapply(list(enrich_rna,
+            enrich_mirnas, 
+            enrich_proteins), function(df){  
               length(which(df[, pval_to_use]<0.05))})
 
 use_mofa
-use_mofa_s=ifelse(isTRUE(use_mofa), sel_factors[fn],use_mofa )
+
+### Define files and parameters
+use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
 #merge(enrich_proteins)
 pmethod<-'stouffer'
-merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod, 'mofa_',  use_mofa_s  )
-#BiocManager::install('metapod')
+merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+                         'mofa_',  use_mofa_s  )
+merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+                         'mofa_',  use_mofa_s  )
+
+
+### Obtain the combined value and the log pvals
 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
 merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 
 combined_p_thresh<-0.05
-length(which(merged_paths$p.adjust.x<combined_p_thresh))
-length(which(merged_paths$p.adjust.y<combined_p_thresh))
-length(which(merged_paths$p.adjust<combined_p_thresh))
+## these numebrs are different...
+length(which(merged_paths$p.adjust.x<combined_p_thresh)); length(which(merged_paths$p.adjust.y<combined_p_thresh)); length(which(merged_paths$p.adjust<combined_p_thresh))
 
 merged_paths_fish_sig<-merged_paths_fish[merged_paths_fish$fish<combined_p_thresh,]
 merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]
-merged_paths_fish_log_sig
+dim(merged_paths_fish_log_sig)
 
 ############################################
 #### Create plots of combined p-values ####
@@ -488,6 +491,9 @@ mir_enrich_p_all
   ggsave(paste0(merged_path_file, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
          width=Npaths*0.55,height=Npaths/2.5 )
 
+  ggsave(paste0(merged_path_file2, add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh, '.jpeg'),mir_enrich_p_all, dpi=300,
+         width=Npaths*0.55,height=Npaths/2.5 )
+  
   
   Npaths
   

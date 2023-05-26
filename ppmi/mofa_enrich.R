@@ -1,7 +1,7 @@
 
 
-#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
+script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
 source(paste0(script_dir, '/utils.R'))
 source(paste0(script_dir,'/setup_os.R'))
@@ -71,7 +71,7 @@ list_mirs= vector("list", length = nfactors)
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
              #  for (view in c( 'RNA', 'miRNA', 'proteomics')){
-             for (view in c( 'miRNA')){
+             for (view in c( 'RNA')){
           
               #### Do the RNA view for whatever is high in rna
                     print(paste0(view,' ', factor ))
@@ -82,7 +82,7 @@ list_mirs= vector("list", length = nfactors)
                       ### Run RNA 
                       if (FALSE){
                         
-                          #if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
+                         # if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                           }else{
@@ -104,8 +104,8 @@ list_mirs= vector("list", length = nfactors)
                 if (view=='proteomics'){
                   
                   
-                #  if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
-                  if (FALSE){
+                 if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
+                 # if (FALSE){
                     
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
@@ -124,8 +124,8 @@ list_mirs= vector("list", length = nfactors)
               if (view=='miRNA'){
                 
                 
-                #if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
-                if (FALSE){
+                if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
+                #if (FALSE){
                   
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
                 
@@ -160,6 +160,10 @@ list_mirs= vector("list", length = nfactors)
       
 #}
 
+list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
+
+list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
+list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
 
 #list1=listALL[[1]]
 
@@ -222,6 +226,7 @@ for (factor in sel_factors){
       gse_mofa_mirs=list_mirs[[factor]]
       
       mieaa_all_gsea=gse_mofa_mirs
+      Padj_T_paths=0.05
       mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
       mieaa_gsea_1=mieaa_res[[1]]
       enr_full=mieaa_res[[2]]

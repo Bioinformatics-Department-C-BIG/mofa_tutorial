@@ -1,3 +1,4 @@
+
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 ## run mofa / or just load model 
@@ -100,6 +101,7 @@ if (!isRStudio){
                       ### Run RNA 
                       if (FALSE){
                         
+                         # if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                     #      if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
@@ -134,7 +136,7 @@ if (!isRStudio){
                   
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
                   if (FALSE){
-                    
+
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
                   
@@ -152,7 +154,6 @@ if (!isRStudio){
               if (view=='miRNA'){
                 
                 
-                #if (file.exists(paste0(mofa_enrich_rds, 'mirs'))){
                 if (FALSE){
                   
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
@@ -190,8 +191,11 @@ if (!isRStudio){
 ### now load already executed analysis on the server
 
 list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
+
+
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
 list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+
 as.logical(lapply(list1, is.null))
 as.logical(lapply(list_mirs, is.null))
 as.logical(lapply(list_proteins, is.null))
@@ -220,7 +224,6 @@ for (factor in sel_factors){
 
 as.logical(lapply(list_mirs_enrich, is.null))
 
-list_proteins
 
 #list1=listALL[[1]]
 
@@ -317,8 +320,6 @@ for (factor in sel_factors_to_p){
     }
       
 }
-
-
 
 
 

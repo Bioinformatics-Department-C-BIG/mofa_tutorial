@@ -20,6 +20,8 @@
 
 ###### CORRELATIONS WITH COVARIATES ##########
 ##### Corelations
+## TODO: load mofa object from outdir 
+
 
 
 
@@ -28,13 +30,6 @@ library(ggplot2)
 library(EnsDb.Hsapiens.v79)
 
 graphics.off()
-MOFAobject@features_metadata
-features_names(MOFAobject)
-#getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
-
-
-
-print(outdir)
 
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
@@ -68,6 +63,7 @@ features_names(MOFAobject_gs)$RNA<-ens_ids
 
 ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
+
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
@@ -119,7 +115,14 @@ cors_pearson<-correlate_factors_with_covariates(MOFAobject,
                                         
 )
 cors_pearson
+
+
 round(cors_pearson[,'CONCOHORT'], digits=2)
+
+
+
+######
+
 
 cors_pearson
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
@@ -938,26 +941,28 @@ dir.create(paste0(outdir, '/enrichment/'))
         
         
         results_enrich<-res.negative$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
-        if (length(all_fs_enrichment)>0){
+        #all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
           all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-          all_fs_merged2<-do.call(rbind, all_fs_unlisted )
-          
-          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f.csv' ))
-          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f' ))
+          all_fs_merged2<-reshape::melt(results_enrich)
+          colnames(all_fs_merged2)
+          all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
+          all_fs_merged2<-all_fs_merged2[
+            with(all_fs_merged2, order(X2, value)),]
+          write.csv(format(all_fs_merged2, digits=3),paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals.csv' ))
+          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals' ))
           
           #all_fs_merged2
          # all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
           
-        }
         
+      
         
         results_enrich<-res.positive$pval.adj
         all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
         all_fs_unlisted<-lapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
         all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
-        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
+        write.csv(format(all_fs_merged1, digits=3),paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
         saveRDS(res.positive,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f' ))
         
         

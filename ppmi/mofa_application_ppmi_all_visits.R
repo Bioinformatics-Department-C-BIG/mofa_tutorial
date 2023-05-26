@@ -2,17 +2,11 @@
 #  install.packages("BiocManager")
 
 
-isRStudio <- Sys.getenv("RSTUDIO") == "1"
-if (isRStudio){
-  script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-}else{
-  script_dir<- "D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi"
-  
-}
-
-source(paste0(script_dir,'/setup_os.R'))
 
 
+source(paste0('ppmi/setup_os.R'))
+
+script_dir
 # TODO: update to receive the whole matrices and start filtering here depending on the test we want to do
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
@@ -36,7 +30,7 @@ library('MultiAssayExperiment')
 outdir_orig=paste0(data_dir,'ppmi/plots/')
 output_files<- paste0(data_dir,'ppmi/output/')
 
-source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 #source('preprocessing.R')
 #source('ppmi/deseq2_vst_preprocessing_mirnas.R')
@@ -73,33 +67,30 @@ run_vsn=TRUE
 NORMALIZED=TRUE;
 use_signif=FALSE
 process_mirnas=FALSE
+run_mofa_complete<-FALSE
 
-source(paste0(script_dir, '/config.R'))
-source(paste0(script_dir, '/mofa_config.R'))
+source(paste0(script_dir, '/ppmi/config.R'))
 
-NORMALIZED
-TOP_GN; TOP_MN
+source(paste0(script_dir, '/ppmi/mofa_config.R'))
+
+# metada source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
-
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
-dim(combined)
 
 combined_bl<-combined
 which(is.na(combined_bl$AGE))
-combined_bl$AGE
+
 scale_views=TRUE
-run_mofa_complete<-FALSE
 
 ## MORE samples, more factors ! 
 # TODO: need a better way to decide how to run this 
 if (run_mofa_complete){
   N_FACTORS=9
-  
 }else{
   N_FACTORS=12
-  
+
 }
 
 
@@ -152,7 +143,8 @@ out_params
 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
-outdir
+
+
 fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
 
 
@@ -265,8 +257,10 @@ mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
 mofa_multi_rna_mir_complete<-mofa_multi_rna_mir[,complete.cases(mofa_multi_rna_mir)]
 
-library('UpSetR')
-upsetSamples(mofa_multi)
+#library('UpSetR')
+#p2<-upsetSamples(mofa_multi)  
+
+#ggsave(paste0(outdir, 'intersection.pdf'), plot=p2)
 #mofa_multi_V04=mofa_multi[,mofa_multi$EVENT_ID %in% VISIT]
 
 
@@ -329,11 +323,7 @@ MOFAobject <- prepare_mofa(MOFAobject,
                            data_options = data_opts
 )
 
-
-
-
-outdir
-ggsave(paste0(outdir, 'data_overview.jpeg'))
+#ggsave(paste0(outdir, 'data_overview.jpeg'))
 
 #### TODO FIX THE DATAFRAME 
 #outdir = paste0(outdir_orig,out_params , '_', VISIT, '/');
@@ -359,7 +349,6 @@ plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 7, height=4, dpi=100)
 
 
-samples_metadata(MOFAobject)$Outcome
 
 
 

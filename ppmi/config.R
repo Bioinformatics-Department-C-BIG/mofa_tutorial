@@ -1,7 +1,7 @@
 #install.packages('rstudioapi')
 
 #script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
+source(paste0(script_dir, 'ppmi/setup_os.R'))
 print(script_dir)
 suppressWarnings(library(sys))
 suppressWarnings(library(data.table))

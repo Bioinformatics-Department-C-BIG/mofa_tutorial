@@ -323,7 +323,7 @@ concatenate_pvals<-function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, pva
 }
 
 
-get_combined_pvalue=function(merged_paths, pmethod='stouffer'){
+get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5)){
   library(metapod)
   
   p1<-merged_paths[,2]; length(p1)
@@ -337,7 +337,7 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer'){
     p3<-merged_paths[,4];length(p3)
     fish <- metapod::combineParallelPValues(list(p1, p2, p3),
                                             method=pmethod, 
-                                            weights = c(1,1,0.5))$p.value
+                                            weights = weights)$p.value
     
   }else{
     fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
@@ -351,19 +351,27 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer'){
   write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
   
   ### Write significant results 
-  dim(merged_paths_fish)
   
-  dim(merged_paths_fish[merged_paths_fish$fish<0.01,])
+  cols_ch=colnames(merged_paths_fish)
+  cols_ch=cols_ch[cols_ch!='Description']
   
-  cols_ch=c('fish', 'p.adjust.x', 'p.adjust.y' )
+  if (pval_to_use=='pvalue'){
+    # adjust afterwards 
+    merged_paths_fish_adj=merged_paths_fish
+    merged_paths_fish_adj[cols_ch]=merged_paths_fish_adj[cols_ch]*dim(merged_paths_fish_adj)[1]
+    merged_paths_fish_adj[cols_ch]=replace(merged_paths_fish_adj[cols_ch], merged_paths_fish_adj[cols_ch]>1, 1)
+    merged_paths_fish=merged_paths_fish_adj
+  }
   merged_paths_fish_log=merged_paths_fish
+  
+  
   merged_paths_fish_log[cols_ch]=lapply(merged_paths_fish[cols_ch], 
                                         function(x){-log10(x)})
   
-  if (add_mirs){
-    merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
-    
-  }
+  #if (add_mirs){
+  #  merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
+  #  
+  #}
   return(list(merged_paths_fish, merged_paths_fish_log))
   
 }
@@ -379,8 +387,9 @@ dim(enrich_rna); dim(enrich_mirnas)
 #enrich_mirnas<-read.csv(enrich_mirnas_file)
 enrich_proteins<-read.csv(enrich_proteins_file)
 enrich_mirnas<-read.csv(enrich_mirnas_file)
-pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
+pval_to_use<-'pvalue'
+
 add_mirs=TRUE
 use_mofa=TRUE
 
@@ -388,15 +397,20 @@ if (use_mofa){
   
   ### use all not just the significant p-value
   fn=2
+
   gse_mofa_rna=list1[[sel_factors[fn]]]
   dim(gse_mofa_rna@result)
   
   gse_mofa_prot=list_proteins[[sel_factors[fn]]]
+  ## WARNING: RUN THE WHOLE enrich_mofa script to convert mirs 
   gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
   
   enrich_rna<-gse_mofa_rna@result
   enrich_proteins=gse_mofa_prot@result
   enrich_mirnas=gse_mofa_mirs@result
+  
+  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
+  vars_by_mod
 }
 
 
@@ -416,7 +430,7 @@ sapply(list(enrich_rna,
             enrich_proteins), function(df){  
               length(which(df[, pval_to_use]<0.05))})
 
-use_mofa
+
 
 ### Define files and parameters
 use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
@@ -433,6 +447,25 @@ merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
 merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
 merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
 
+
+#  TODO: CAREFUL what happens if i dont give mirna
+t_var<-sum(vars_by_mod)
+weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/300 )
+#weights_Var=log(weights_Var*100)
+weights_Var
+merged_paths[merged_paths$Description=='inflammatory response' ,]
+merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= c(0.00001,1,0.000001))
+merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
+
+#merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths)
+merged_paths_fish=merged_paths_fish_res[[1]];dim(merged_paths_fish)
+
+merged_paths_fish_padj<-is.numeric(merged_paths_fish)/dim(merged_paths_fish)[1]
+merged_paths_fish_log=merged_paths_fish_res[[2]];dim(merged_paths_fish_log)
+head(merged_paths_fish)
+merged_paths_fish[merged_paths_fish$Description=='inflammatory response' ,]
+
+dim(merged_paths_fish)[1]
 combined_p_thresh<-0.05
 ## these numebrs are different...
 length(which(merged_paths$p.adjust.x<combined_p_thresh)); length(which(merged_paths$p.adjust.y<combined_p_thresh)); length(which(merged_paths$p.adjust<combined_p_thresh))
@@ -467,6 +500,8 @@ if (plot_all){
   labels_p=labels[4];width_p<-0.7/4
 }
 
+
+merged_paths_fish_sig[merged_paths_fish_sig$Description=='inflammatory response',]
 ## print the total number of paths 
 un_paths<-dim(merged_paths_fish_sig)[1]
 text_p<-paste0('\n p-adj.< ', combined_p_thresh,': ', un_paths, ' pathways')
@@ -498,7 +533,7 @@ mir_enrich_p_all
   Npaths
   
   
-  
+  vars_by_mod
   
   #### COMPARE TO MOFA
 

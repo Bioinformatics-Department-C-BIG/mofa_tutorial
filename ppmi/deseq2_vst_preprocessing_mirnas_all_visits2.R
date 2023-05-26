@@ -20,10 +20,9 @@ library(dplyr)
 
 ## Output directory
 # output_de=paste0(output_1, 'gene')
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
-source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir, '/utils.R'))
+source(paste0('ppmi/setup_os.R'))
+source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 ### Load metadata 

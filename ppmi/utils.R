@@ -241,7 +241,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p=''){
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p='', title_p=''){
   
   require(clusterProfiler)
   
@@ -271,8 +271,9 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   )
   dp<-dp+theme(axis.ticks=element_blank() , 
                axis.text.x = element_blank(),
-               plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
-    labs(caption=text_p)
+               plot.caption= element_text(hjust = 0, face = "italic", size=20), 
+               plot.title=element_text(size=20)) +
+    labs(caption=text_p, title=title_p)
 
   
     
@@ -291,15 +292,14 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
          plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
-  if (!(process_mirnas) & !(run_ORA)){
-    
+  if (!(process_mirnas) && !(run_ORA)){
+
     dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
     ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
     
   }
   
   #### EMAP PLOT 
-  #N_EMAP=50
   options(ggrepel.max.overlaps = Inf)
   x2 <- pairwise_termsim(gse )
   #if (process_mirnas){N=15}
@@ -348,6 +348,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   node_label<-"category"
   node_label<-"all"
   
+  
   p2_net<- cnetplot(gse_x,
                     node_label=node_label,
                     cex_label_category = 1.2, showCategory=N_NET)
@@ -370,26 +371,28 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   #install.packages('ggtree')
   
   #### heatmap
-  p1 <- treeplot(x2,showCategory =N_TREE, nWords=0)
-  p1
-  p2_tree <- treeplot(x2, hclust_method = "average", 
-                      showCategory =N_TREE, nWords=0, 
-                      #offset_tiplab=5, 
-                      label_format =50, 
-                      fontsize = 300, 
-                      extend=-0.001, 
-                      offset=15, 
-                      hilight=FALSE, 
-                      branch.length=0.1)
-  
-  #aplot::plot_list(p1, p2_tree, tag_levels='A')
-  #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
-  
-  p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
-  labs(caption=text_p)
-  #write_n='test'
-  ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
-         width=10, height=0.5*log(N_TREE)+3, dpi=300)
+  nCluster=ifelse(dim(x2)[1]<4,1, 4) 
+    p1 <- treeplot(x2,showCategory =N_TREE, nWords=0, nCluster=nCluster)
+        
+      
+    
+      p2_tree <- treeplot(x2, hclust_method = "average", 
+                          showCategory =N_TREE, nWords=0, nCluster=nCluster,
+                          label_format =50, 
+                          fontsize = 300, 
+                          extend=-0.001, 
+                          offset=15, 
+                          hilight=FALSE, 
+                          branch.length=0.1)
+      
+      #aplot::plot_list(p1, p2_tree, tag_levels='A')
+      #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+      
+      p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
+      labs(caption=text_p, title=title_p)
+      #write_n='test'
+      ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
+             width=10, height=0.5*log(N_TREE)+3, dpi=300)
   
   
   return(list(dp, p_enrich, p2_tree))
@@ -400,12 +403,6 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
 
 
 
-#### Configuration 
-
-VISIT='V08'
-
-process_mirnas<-FALSE
-padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
 
 get_genelist_byVisit<-function(VISIT){
   

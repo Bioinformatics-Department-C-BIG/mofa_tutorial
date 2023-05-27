@@ -45,7 +45,7 @@ cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
 cors_pearson_l[,'INEXPAGE'] 
 cors_pval[,'CONCOHORT']
 cohort_cors
-cor_t=0.05
+cor_t=0.15
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 cohort_cors[sel_factors]

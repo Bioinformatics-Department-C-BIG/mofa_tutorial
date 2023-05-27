@@ -148,9 +148,8 @@ log2fol_T_overall=0.1
 
 
 ## parameters for the enrichment- could be specified elsewhere?
-run_anova=FALSE;use_pval=FALSE; 
-run_ORA=FALSE; use_protein_pval=TRUE
-run_ORA=TRUE
+run_anova=FALSE;use_pval=TRUE; 
+run_ORA=FALSE; use_protein_pval=FALSE
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'; ONT='BP'
 
 
@@ -178,39 +177,27 @@ padj_paths<-0.05
 pvalueCutoff=1; order_by_metric<-'log2pval'
 results_file<-paste0(outdir_rnas,'/enrichment/', '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
 enrich_rnas_file<-paste0(results_file,pvalueCutoff ,'.csv')
-enrich_rnas_file
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pvalGSEA600')
-
 enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
-enrich_rna<-read.csv(enrich_rnas_file)
-enrich_mirnas<-read.csv(paste0(enrich_mirnas_file,pvalueCutoff, '.csv'))
-enrich_proteins<-read.csv(enrich_proteins_file)
 
 
+enrich_rna_single<-read.csv(enrich_rnas_file)
+enrich_mirnas_single<-read.csv(paste0(enrich_mirnas_file,pvalueCutoff, '.csv'))
+enrich_proteins_sigle<-read.csv(enrich_proteins_file)
 
-enrich_rna_sig<-enrich_rna[enrich_rna$p.adjust<padj_paths,]
-enrich_mirnas_sig<-enrich_mirnas[enrich_mirnas$p.adjust<padj_paths,]
-dim(enrich_mirnas_sig)
-enrich_proteins_sig<-enrich_proteins[enrich_proteins$p.adjust<padj_paths,]
+enrich_rna_sig<-enrich_rna_single[enrich_rna_single$p.adjust<padj_paths,]; dim(enrich_rna_sig)[1]
+enrich_mirnas_sig<-enrich_mirnas_single[enrich_mirnas_single$p.adjust<padj_paths,]; dim(enrich_mirnas_sig)[1]
+enrich_proteins_sig<-enrich_proteins_sigle[enrich_proteins_sigle$p.adjust<padj_paths,]; dim(enrich_proteins_sig)[1]
 
 common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Description )
 
 
-
-
-
-
-
-
-##### function
-
-### 
-
-listInput_all_mods<-list(rna=enrich_rna_sig$Description,
+## Create a list with all files 
+listInput_all_mods_single<-list(rna=enrich_rna_sig$Description,
                          prot=enrich_proteins_sig$Description, 
                          mirnas=enrich_mirnas_sig$Description)
-listInput<-listInput_all_mods
+listInput<-listInput_all_mods_single
 
 
 
@@ -225,29 +212,13 @@ res_overlap<-calculate.overlap(listInput)
 intersection_all_three<-Reduce(intersect,listInput_all_mods)
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
 write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways' , int_params, '.csv') , row.names = FALSE)
-unique_rna<-enrich_rna %>% 
-  filter(Description %in% res_overlap$a1)
-dim(unique_rna)
-lapply(res_overlap, length)
-
-
-
-write.csv(unique_rna,
-          paste0(out_compare,'unique_rna_' , int_params, '.csv') , row.names = FALSE)
-write.csv(enrich_proteins %>% 
-            filter(Description %in% res_overlap$a3), 
-          paste0(out_compare,'unique_prot_' , int_params, '.csv') , row.names = FALSE)
-write.csv(enrich_mirnas %>% 
-            filter(Description %in%res_overlap$a7),
-          paste0(out_compare,'unique_mirs_' , int_params, '.csv') , row.names = FALSE)
-
 
 
 library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel2")
 
 
-
+### UNION OF ALL single files 
 venn.diagram(listInput,
              # Circles
              lwd = 2,
@@ -257,220 +228,5 @@ venn.diagram(listInput,
              cat.cex=2.5,
              filename = paste0(out_compare,'all_modalities_', int_params ,'venn_diagramm.png'), output=TRUE)
 
-############### COMBINE PVALUES 
+############### COMBINE PVALUES #####
 
-listInput_all_mods
-
-listInput_all_mods<-list(rna=enrich_rna_sig$Description,
-                         prot=enrich_proteins_sig$Description, 
-                         mirnas=enrich_mirnas_sig$Description)
-#BiocManager::install('scran')
-#library('scran')
-pvalueCutoff=1
-enrich_rnas_file<-paste0(results_file, pvalueCutoff,  '.csv')
-enrich_mirnas_file<-paste0(enrich_mirnas_file, pvalueCutoff,  '.csv')
-
-#enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
-#enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pval',  '.csv')
-run_ORA=FALSE
-pvalueCutoff
-if (run_ORA){
-  enrich_proteins_file<-paste0(outdir_s_p_enrich_file_ora, pvalueCutoff,'.csv')
-  
-}else{
-  enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
-}
-
-
-
-concatenate_pvals<-function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, pval_to_use='p.adjust') {
-  #' supply the three enrichment datasets 
-  #' chooose pval
-  #' 
-  #' 
-  enrich_proteins_pvals<-enrich_proteins[, c(pval_to_use, 'Description')]
-  enrich_rna_pvals<-enrich_rna[, c(pval_to_use, 'Description')]
-  
-  hist(enrich_proteins[,pval_to_use ])
-  hist(enrich_rna[,pval_to_use ])
-  # all=TRUE does not work well many mirna high are coming up 
-  merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE);dim(merged_paths)
-  merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description');dim(merged_paths)
-  if (add_mirs){
-    enrich_mirna_pvals<-enrich_mirnas[, c(pval_to_use, 'Description')]
-    hist(enrich_mirnas[,pval_to_use ])
-    
-    ## PROBLEM here if add all then something that is only in mirs it will come up 
-    merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
-  }
-  return(merged_paths)
-  
-}
-
-
-get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5)){
-  library(metapod)
-  
-  p1<-merged_paths[,2]; length(p1)
-  p2<-merged_paths[,3];length(p2)
-  
-  
-  
-  hist(p1)
-  hist(p2)
-  if (add_mirs){
-    p3<-merged_paths[,4];length(p3)
-    fish <- metapod::combineParallelPValues(list(p1, p2, p3),
-                                            method=pmethod, 
-                                            weights = weights)$p.value
-    
-  }else{
-    fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
-    
-  }
-  
-  ### Add the combined to the original frame 
-  merged_paths_fish<-cbind(merged_paths, fish)
-  # and order
-  merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
-  write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
-  
-  ### Write significant results 
-  
-  cols_ch=colnames(merged_paths_fish)
-  cols_ch=cols_ch[cols_ch!='Description']
-  
-  if (pval_to_use=='pvalue'){
-    # adjust afterwards 
-    merged_paths_fish_adj=merged_paths_fish
-    merged_paths_fish_adj[cols_ch]=merged_paths_fish_adj[cols_ch]*dim(merged_paths_fish_adj)[1]
-    merged_paths_fish_adj[cols_ch]=replace(merged_paths_fish_adj[cols_ch], merged_paths_fish_adj[cols_ch]>1, 1)
-    merged_paths_fish=merged_paths_fish_adj
-  }
-  merged_paths_fish_log=merged_paths_fish
-  
-  
-  merged_paths_fish_log[cols_ch]=lapply(merged_paths_fish[cols_ch], 
-                                        function(x){-log10(x)})
-  
-  #if (add_mirs){
-  #  merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
-  #  
-  #}
-  return(list(merged_paths_fish, merged_paths_fish_log))
-  
-}
-
-
-
-
-
-#### Here is the input for the combination  ####
-enrich_rna<-read.csv(enrich_rnas_file)
-enrich_rna
-dim(enrich_rna); dim(enrich_mirnas)
-#enrich_mirnas<-read.csv(enrich_mirnas_file)
-enrich_proteins<-read.csv(enrich_proteins_file)
-enrich_mirnas<-read.csv(enrich_mirnas_file)
-pval_to_use<-'p.adjust'
-pval_to_use<-'pvalue'
-
-
-
-
-
-
-
-
-  
- 
- 
- 
-  #################################### VISITS ##########################
-  
-  #### load both visits to compare: 
-  
-
-  
-  merged_path_file
-
-  v08_paths<-read.csv(paste0( out_compare, 'V081p.adjust_FALSE', '.csv'))
-  bl_paths<-read.csv(paste0( out_compare, 'BL1p.adjust_FALSE', '.csv'))
-  dim(v08_paths); dim(bl_paths)
-  
-  T_P<- 0.05
-  v08_paths_sig<-v08_paths[v08_paths$fish<T_P,]
-  bl_paths_sig<-bl_paths[bl_paths$fish<T_P,]
-  dim(v08_paths_sig)
-  dim(bl_paths_sig)
-  inter<-intersect(v08_paths_sig$Description,bl_paths_sig$Description )
-  #View(inter)  
-  
-  inter
-  
-  listInput_all_mods<-list(bl=bl_paths_sig$Description,
-                          v08=v08_paths_sig$Description)
-  
-  
-  
-  listInput<-listInput_all_mods
-  res_overlap<-calculate.overlap(listInput)
-  bl_only<-bl_paths_sig[!bl_paths_sig$Description %in% inter,]
-  v08_only<-v08_paths_sig[!v08_paths_sig$Description %in% inter,]
-  dim(v08_only)[1]
-
-  
-  #View(bl_paths[bl_paths$Description %in% v08_only$Description,])
-  write.csv(bl_paths[bl_paths$Description %in% v08_only$Description,], 
-            paste0(out_compare,'V08_only_single', T_P, '.csv'))
-  
-  
-  
-  
-  myCol <- brewer.pal(3, "Pastel2")[1:2]
-  
-  venn.diagram(listInput,
-               # Circles
-               lwd = 2,
-               lty = 'blank',
-               fill = myCol,
-               cex=2.5,
-               
-               
-               
-               filename = paste0(out_compare,'all_modalities_','visits_venn_diagramm.png'), output=TRUE)
-  
-  
-  
-  
-  #### 
-  
-  
-  
-  ###get parents: 
-  library(GOfuncR)
-  
-  
-  ### TODO: get the ids from my rna/prot files? 
-  ### And get the parents or find where they are in the hierarchy
-  ### is mofa giving me only upper? 
-  rna_parents<-get_parent_nodes(enrich_rna_sig$ID)
-  prot_parents<-get_parent_nodes(enrich_proteins_sig$ID)
-  mir_parents<-get_parent_nodes(enrich_mirnas_sig$ID)
-  
-  rna_par_01<-rna_parents[rna_parents$distance==c(1),]
-  prot_parents_01<-prot_parents[prot_parents$distance==c(1),]
-  mir_parents_01<-prot_parents[mir_parents$distance==c(1),]
-  
-  intersect(rna_par_01$child_go_id, prot_parents_01$child_go_id)
-  inter<-intersect(rna_par_01$parent_go_id, prot_parents_01$parent_go_id)
-  prot_parents_01[prot_parents_01$parent_go_id %in% inter,]
-  
-  prot_parents_01
-  ### we need the id, not the description 
-  rna_parents<-get_parent_nodes(merged_factors_mofa$Description)
-  
-  
-  
-  ### 
-  

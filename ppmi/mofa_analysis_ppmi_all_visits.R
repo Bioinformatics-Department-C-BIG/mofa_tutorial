@@ -890,26 +890,26 @@ mode='proteomics'
         
         ## TODO: create a function to do for both positive and negative 
         #
-        results_enrich<-res.negative$pval.adj
-        all_fs_merged2<-reshape::melt(results_enrich)
-        #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
-        all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
+        write_enrich<-function(res, sign_mode){
+          results_enrich<-res$pval.adj
+          all_fs_merged2<-reshape::melt(results_enrich)
+          #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
+          all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
+          
+          neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                           mode, '_enrichment', sign_mode)
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file,  '.csv' ))
+          T=0.05
+          all_fs_merged2=all_fs_merged2[ all_fs_merged2$value<T,]
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file, '_', T,  '.csv' ))
+          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', sign_mode ))
+          
+        }
         
-        all_fs_merged2[ all_fs_merged2$value<0.05,]
-        write.csv(format(all_fs_merged2, digits=3),paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
-                                                          '_', T, mode, '_enrichment_negative_pvals.csv' ))
-        saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_negative_pvals' ))
-
-        results_enrich<-res.positive$pval.adj
-        all_fs_merged2<-reshape::melt(results_enrich) 
-        #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
-        all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
-        write.csv(format(all_fs_merged2, digits=3),paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
-                                                          T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
-        saveRDS(res.positive,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
-                                    T, mode,'_enrichment_positive_pvals_no_f' ))
+        write_enrich(res.negative, sign_mode='negative')
+        write_enrich(res.positive, sign_mode='positive')
         
-        all_fs_merged2[ all_fs_merged2$value<0.05,]
+        
         
         
        

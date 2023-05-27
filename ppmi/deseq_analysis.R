@@ -471,31 +471,15 @@ fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
-#library(gridExtra)
-#library(grid)
-##grid.arrange(pvol, p2,
-#grid.arrange(pvol,
-#             ncol=1,
-#             top = textGrob('EnhancedVolcano',
-#                            just = c('center'),
-#                            gp = gpar(fontsize = 32))
-#             )
-#
-#
-#
-#fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
-#ggsave(fname, width=9,height=8)
-##
-#library('EnhancedVolcano')
-#pvol+coord_flip()
-#
-#fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
-#ggsave(fname, width=8, height=7)
+
 Padj_T_paths=0.05
 padj_paths<-Padj_T_paths
 pvalueCutoff=1
 if (!process_mirnas){
   source('ppmi/RNAseq enrichment.R')
+  
+}else{
+  source('ppmi/miRNA_seq_enrichment.R')
   
 }
 

@@ -74,7 +74,25 @@ if (run_rna_mirna){
     TOP_GN=0.2
     TOP_PN=0.9
     
-  
+    ### TOO few genes does not work well with GSEA 
+    TOP_MN=0.50
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
+    # try
+    TOP_MN=0.50
+    TOP_GN=0.50
+    TOP_PN=0.9
+    
+    ### TOO few genes does not work well with GSEA 
+    ## too many gives low corelation with disease..
+    ## but maybe I need to increase the factors 
+    TOP_MN=0.50
+    TOP_GN=0.30
+    TOP_PN=0.9
+    
+  # try
+    
   }
 
   

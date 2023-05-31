@@ -73,6 +73,9 @@ list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
 
+
+mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
+
 #sel_factors=c(4)
 #if (file.exists(mofa_enrich_rds)){
  # list_all<-loadRDS(mofa_enrich_rds)

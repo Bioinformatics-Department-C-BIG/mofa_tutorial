@@ -90,107 +90,33 @@ if (run_mofa_complete){
   N_FACTORS=9
 }else{
   N_FACTORS=12
+  N_FACTORS=15
+ # N_FACTORS=20
+  
 
 }
+
+
+
 
 
 #combined$Outcome
 ## VISIT_S to allow this to be more than one visits at once!! 
 
 #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-
-
-
 mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
-
-#param_str_g<-paste0('rnas_', g_params, sel_coh_s, '_'  )
-#
-
-
-highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
-highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
-
-if (use_signif){
-  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
-  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
-  
-}
-
-
-
-highly_variable_mirnas_outfile
-highly_variable_genes_outfile
-highly_variable_proteins_outfile
-
-### TODO: INPUT vsn files and filter here instead of rerunnign!!1 
-#param_str_m<-paste0('mirnas_', m_params ,sel_coh_s, '_')
-#vsn_file_m<-paste0(output_files, 'mirnas_', param_str_m, '_vsn.csv')
-#vsn_file_g<-paste0(output_files, 'rnas_', param_str_g, '_vsn.csv')
-
-###
-#vsn_file_m_df<-read.csv(vsn_file_m,header=TRUE)
-#duplicated(colnames(vsn_file_m_df))
-#vsn_file_m_df[,1]
-#rownames(vsn_file_m_df)<-vsn_file_m_df[,1]
-
-
-mofa_params;g_params;p_params;p_params_out
-p_params
 out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-highly_variable_proteins_outfile<-paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-out_params
 
+### get mofa parameters 
+# 1. output directory
+# 2. 
 outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
 dir.create(outdir, showWarnings = FALSE)
-
-
-fname<-paste0(output_files, 'proteomics_',TISSUE, '.csv')
-
-
-
+prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
+  
 
 ###### Option 2: preprocessing from VSN: Load from file 
 ### 1. Load proteins 
-
-in_file<-highly_variable_proteins_outfile
-
-highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
-
-### Start loading mofa data
-proteomics<-as.data.frame(highly_variable_proteins_mofa)
-dim(highly_variable_proteins_mofa)
-
-test2<-proteomics['GLO1',]
-##### Load mirnas + RNAs 
-### we use data.table because there are duplicate samples? 
-### problem with saving of rownmaes 
-highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
-colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
-rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
-
-
-highly_variable_mirnas_outfile
-# EITHER input to vst or put as is normalized
-miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
-rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
-head(rownames(miRNA));
-head(colnames(miRNA))
-
-
-
-##### Load RNA seq: 
-
-highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
-colnames(highly_variable_genes_mofa)[1]<-'rnas'
-rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
-dim(highly_variable_genes_mofa)
-# or input to vst or put as is normalized
-
-RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
-rownames(RNA)<-rownames(highly_variable_genes_mofa)
-head(rownames(RNA)); head(colnames(RNA))
-
 
 
 create_hist<-function(df, name){
@@ -221,14 +147,8 @@ create_hist(miRNA, 'miRNA')
 #### just trying a multi assay here to help with filtering.. 
 #head(colnames(prot_filt));head(colnames(miRNA_filt)); colnames(RNA_filt)
 
-### might need to filter by what is common with meta
-
-
-data_full<-list(miRNA=as.matrix(miRNA), 
-                RNA=as.matrix(RNA),
-                proteomics=as.matrix(proteomics))
-
-
+data_full<-prepare_multi_data(p_params, param_str_g, param_str_m, mofa_params)
+  
 assay_full=c(rep('RNA', length(RNA)),
              rep('miRNA', length(miRNA)),
              rep('proteomics', length(proteomics)))
@@ -237,7 +157,7 @@ colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
 primary=colname
 sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
 common_samples_in_assays=unique(colname)
-### TODO: is it a problem for duplicates when i make patno_event_id the key column? 
+### TODO: is it a problem for duplicates when i make PATNO_EVENT_ID the key column? 
 ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
 
 metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
@@ -251,7 +171,6 @@ mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                  sampleMap=sample_map)
 
 
-mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
 
 mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
@@ -348,7 +267,18 @@ if (file.exists(mofa_file)){
 plot_variance_explained(MOFAobject, max_r2=20)
 ggsave(paste0(outdir, 'variance_explained_total','.png'), width = 7, height=4, dpi=100)
 
+mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
 
+cors_both<-get_correlations_with_coh(MOFAobject)
+cors_t<-paste(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2), collapse=', ')
+
+}
+
+df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+              run_mofa_complete, N_FACTORS,cors_t  )
+
+
+write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
 
 
 

@@ -99,25 +99,25 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
 NROW(non_na_vars)
 #### Covariance of factors with metadata 
+source('ppmi/mofa_utils.R')
 
-cors<-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars), 
-                                  plot = "log_pval", 
-                                  return_data = TRUE
-                                  
-)
-
-MOFAobject@samples_metadata$COHORT<-as.factor(MOFAobject@samples_metadata$COHORT)
-cors_pearson<-correlate_factors_with_covariates(MOFAobject,
-                                        covariates = names(non_na_vars), 
-                                        plot = "r", 
-                                        return_data = TRUE
-                                        
-)
-cors_pearson
+get_top_cors<-function(MOFAobject){
+  cors_both<-get_correlations_with_coh(MOFAobject)
+  cors<-cors_both[[1]]
+  cors_pearson<-cors_both[[2]]
+  sel_factors<-abs(cors_pearson[,'CONCOHORT'])>0.15
+  sel_factors
+  round(cors[,'CONCOHORT'][sel_factors], digits=2)
+  round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2)
+}
 
 
-round(cors_pearson[,'CONCOHORT'], digits=2)
+
+
+
+max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
+
+cors_both<-get_correlations_with_coh(MOFAobject)
 
 
 

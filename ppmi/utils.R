@@ -491,3 +491,63 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 
 
 
+################ MOFA ####
+
+
+prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
+  #### Takes in the parameters of the input files and loads them 
+  #' return: data_full: a list with the 3 modalities 
+  
+  highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
+  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
+  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+  
+  if (use_signif){
+    highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+    highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+  }
+  
+  
+  in_file<-highly_variable_proteins_outfile
+  highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
+  ### Start loading mofa data
+  proteomics<-as.data.frame(highly_variable_proteins_mofa)
+  
+  ##### Load mirnas + RNAs 
+  ### we use data.table because there are duplicate samples? 
+  ### problem with saving of rownmaes 
+  highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
+  colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
+  rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
+  
+  
+  highly_variable_mirnas_outfile
+  # EITHER input to vst or put as is normalized
+  miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
+  rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
+  
+  ##### Load RNA seq: 
+  
+  highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
+  colnames(highly_variable_genes_mofa)[1]<-'rnas'
+  rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
+  dim(highly_variable_genes_mofa)
+  # or input to vst or put as is normalized
+  
+  RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
+  rownames(RNA)<-rownames(highly_variable_genes_mofa)
+  head(rownames(RNA)); head(colnames(RNA))
+  
+  data_full<-list(miRNA=as.matrix(miRNA), 
+                  RNA=as.matrix(RNA),
+                  proteomics=as.matrix(proteomics))
+  
+  
+  return(data_full)
+  
+  
+}
+
+
+
+

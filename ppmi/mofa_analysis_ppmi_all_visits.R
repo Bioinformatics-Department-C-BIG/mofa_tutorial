@@ -50,28 +50,16 @@ library(EnsDb.Hsapiens.v79)
 
 ## Making a "short cut"
 geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-length(ens_ids)
-geneIDs1
-length(geneIDs1$SYMBOL)
-
 new_ids<-geneIDs1[match(ens_ids,geneIDs1$GENEID ),]
-## sOME SYMBOLS DOI NOT EXIST SO we only replace the ones that do
 not_na_ind<-!is.na(new_ids$SYMBOL)
 ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
-
 features_names(MOFAobject_gs)$RNA<-ens_ids
-
-ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
-
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 write.table(format(vars_by_factor,digits = 2)
             ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
-
-
-vars_by_factor>0.1
 
 p3<-plot_variance_explained(MOFAobject, max_r2=20)+
   theme(axis.text.x=element_text(size=20), 
@@ -112,12 +100,11 @@ get_top_cors<-function(MOFAobject){
 }
 
 
-
-
+cors_both<-get_correlations_with_coh(MOFAobject)
+cors_pearson=cors_both[[2]]
+cors=cors_both[[1]]
 
 max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
-
-cors_both<-get_correlations_with_coh(MOFAobject)
 
 
 
@@ -863,107 +850,64 @@ subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
-  for (subcategory in c('GO:BP' )){
 
-        gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+mode='RNA'
+mode='proteomics'
+
+  for (subcategory in c('GO:BP' )){
+        if (mode=='proteomics'){
+          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+          
+        }else{
+          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+          
+        }
         
         gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-        rownames(gs)
+        colnames(gs)
+        
         
         features_names(MOFAobject)$RNA
         features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
                function(x) {stringr::str_remove(x, '\\..*')}
         )
-        
-        
-        # GSEA on positive weights, with default options
-       #es.positive <- run_enrichment(MOFAobject, 
-       #                              feature.sets = reactomeGS, 
-       #                              view = "RNA",
-       #                              sign = "positive"
-       #
-        
-        
-        
         # GSEA on negative weights, with default options
         res.negative <- run_enrichment(MOFAobject, 
                                        feature.sets = gs, 
-                                       view = "RNA",
+                                       view = mode,
                                        sign = "negative"
         )
         
-        
-        
         res.positive <- run_enrichment(MOFAobject, 
                                        feature.sets = gs, 
-                                       view = "RNA",
+                                       view = mode,
                                        sign = "positive"
         )
         
         
         
+        
+        ## TODO: create a function to do for both positive and negative 
+        #
+        write_enrich<-function(res, sign_mode){
+          results_enrich<-res$pval.adj
+          all_fs_merged2<-reshape::melt(results_enrich)
+          #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
+          all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
           
+          neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                           mode, '_enrichment', sign_mode)
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file,  '.csv' ))
+          T=0.05
+          all_fs_merged2=all_fs_merged2[ all_fs_merged2$value<T,]
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file, '_', T,  '.csv' ))
+          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', sign_mode ))
           
-          
-        # change to negative and positive
-        T=0.05
-        extract_order_significant<-function(x, T) {
-          # extracy most significant and order 
-          
-          sign<-x[x<T]
-          sign2<-sign[order(sign)]
-          print(sign2)
         }
         
-
-        stack_list<-function(i,enrichment_list) {
-          
-          # Take a list of dataframes and stack them 
-          # Add a column called factor which extracts the list counter 
-          if (length(enrichment_list)){
-                
-                factor<-paste0('Factor', i)
-                x=enrichment_list[factor]
-                x=enrichment_list[[i]]
-                
-                if (length(x)>0){
-                  tmp<-as.data.frame(x)
-                  tmp$path<-rownames(tmp)
-                  colnames(tmp)<-'pvals'
-                  
-                  rownames(tmp)<-NULL
-                  f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
-                  tmp$factor=f
-                  return(tmp)}
-                }
-          }
+        write_enrich(res.negative, sign_mode='negative')
+        write_enrich(res.positive, sign_mode='positive')
         
-        
-        
-        results_enrich<-res.negative$pval.adj
-        #all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
-          all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-          all_fs_merged2<-reshape::melt(results_enrich)
-          colnames(all_fs_merged2)
-          all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
-          all_fs_merged2<-all_fs_merged2[
-            with(all_fs_merged2, order(X2, value)),]
-          write.csv(format(all_fs_merged2, digits=3),paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals.csv' ))
-          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals' ))
-          
-          #all_fs_merged2
-         # all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
-          
-        
-      
-        
-        results_enrich<-res.positive$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
-        all_fs_unlisted<-lapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
-        
-        write.csv(format(all_fs_merged1, digits=3),paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
-        saveRDS(res.positive,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f' ))
         
         
         

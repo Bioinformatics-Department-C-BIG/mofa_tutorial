@@ -241,7 +241,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p=''){
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p='', title_p=''){
   
   require(clusterProfiler)
   
@@ -271,8 +271,9 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   )
   dp<-dp+theme(axis.ticks=element_blank() , 
                axis.text.x = element_blank(),
-               plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
-    labs(caption=text_p)
+               plot.caption= element_text(hjust = 0, face = "italic", size=20), 
+               plot.title=element_text(size=20)) +
+    labs(caption=text_p, title=title_p)
 
   
     
@@ -291,15 +292,14 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
          plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
-  if (!(process_mirnas) & !(run_ORA)){
-    
+  if (!(process_mirnas) && !(run_ORA)){
+
     dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
     ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
     
   }
   
   #### EMAP PLOT 
-  #N_EMAP=50
   options(ggrepel.max.overlaps = Inf)
   x2 <- pairwise_termsim(gse )
   #if (process_mirnas){N=15}
@@ -348,6 +348,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   node_label<-"category"
   node_label<-"all"
   
+  
   p2_net<- cnetplot(gse_x,
                     node_label=node_label,
                     cex_label_category = 1.2, showCategory=N_NET)
@@ -370,26 +371,28 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   #install.packages('ggtree')
   
   #### heatmap
-  p1 <- treeplot(x2,showCategory =N_TREE, nWords=0)
-  p1
-  p2_tree <- treeplot(x2, hclust_method = "average", 
-                      showCategory =N_TREE, nWords=0, 
-                      #offset_tiplab=5, 
-                      label_format =50, 
-                      fontsize = 300, 
-                      extend=-0.001, 
-                      offset=15, 
-                      hilight=FALSE, 
-                      branch.length=0.1)
-  
-  #aplot::plot_list(p1, p2_tree, tag_levels='A')
-  #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
-  
-  p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
-  labs(caption=text_p)
-  #write_n='test'
-  ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
-         width=10, height=0.5*log(N_TREE)+3, dpi=300)
+  nCluster=ifelse(dim(x2)[1]<4,1, 4) 
+    p1 <- treeplot(x2,showCategory =N_TREE, nWords=0, nCluster=nCluster)
+        
+      
+    
+      p2_tree <- treeplot(x2, hclust_method = "average", 
+                          showCategory =N_TREE, nWords=0, nCluster=nCluster,
+                          label_format =50, 
+                          fontsize = 300, 
+                          extend=-0.001, 
+                          offset=15, 
+                          hilight=FALSE, 
+                          branch.length=0.1)
+      
+      #aplot::plot_list(p1, p2_tree, tag_levels='A')
+      #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+      
+      p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
+      labs(caption=text_p, title=title_p)
+      #write_n='test'
+      ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
+             width=10, height=0.5*log(N_TREE)+3, dpi=300)
   
   
   return(list(dp, p_enrich, p2_tree))
@@ -400,12 +403,6 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
 
 
 
-#### Configuration 
-
-VISIT='V08'
-
-process_mirnas<-FALSE
-padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
 
 get_genelist_byVisit<-function(VISIT){
   
@@ -497,7 +494,9 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 
-  
+  # TODO: simplify the reading and setting the feature column to null? 
+  #' @param  p_params, param_str_g, param_str_m : these are set by the config.R
+  #' 
   highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
   highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
   highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
@@ -520,8 +519,6 @@ prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
   colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
   rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
   
-  
-  highly_variable_mirnas_outfile
   # EITHER input to vst or put as is normalized
   miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
   rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
@@ -549,5 +546,54 @@ prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
 }
 
 
+
+
+create_multi_experiment<-function(data_full, combined_bl){
+  
+  ### take a list of three and create the multiassay experiment 
+  #' also take metadata and align
+  #' @param data_full:  list of threematrices 
+  #' @param metadata:
+  #' @return mofa_multi, multi assay experiment
+  
+  RNA= data_full[['RNA']]
+  miRNA= data_full[['miRNA']]
+  proteomics= data_full[['proteomics']]
+  assay_full=c(rep('RNA', dim(RNA)[2]),
+               rep('miRNA', dim(miRNA)[2]),
+               rep('proteomics', dim(proteomics)[2]))
+  
+  
+  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+  primary=colname
+  sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
+  common_samples_in_assays=unique(colname)
+  ### TODO: is it a problem for duplicates when i make PATNO_EVENT_ID the key column? 
+  ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
+  
+  metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
+  metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
+  
+  rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
+  
+  
+  mofa_multi<-MultiAssayExperiment(experiments=data_full,
+                                   colData = metadata_filt, 
+                                   sampleMap=sample_map)
+  
+  
+  return(mofa_multi)
+}
+
+
+
+
+create_hist<-function(df, name){
+  
+  dfm<-melt(df)
+  
+  p1<-ggplot(dfm, aes(x=value))+ geom_histogram()+ labs(title='mirnas')
+  ggsave(paste0(outdir, 'data_histograms',name,  '.jpeg' ), width = 10, height=8)
+}
 
 

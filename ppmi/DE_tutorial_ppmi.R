@@ -324,18 +324,22 @@ order_statistic<-'log2pval'
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
 order_statistic<-'logFC'
+order_statistic<-'signlog2pval'
+order_statistic<-'logFC'
 
 
 
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
-results_de$pval_reverse<- -results_de$P.Value
+results_de$pval_reverse<- -results_de$P.Value ## this prob does not work with gsea because there are no negative values 
 
 results_de$log2pval<- -log10(results_de$adj.P.Val) * results_de$logFC
 results_de$abslog2pval<- abs(results_de$log2pval)
+results_de$abslog2pval<- abs(results_de$log2pval)
+results_de$signlogFCpval<- abs(results_de$log2pval)
 
 results_de$log2pval_not_adj<- -log10(results_de$P.Value) * results_de$logFC
 results_de$signlog2pval<- -log10(results_de$adj.P.Val) * sign(results_de$logFC)
-
+results_de[results_de$adj.P.Val<0.05,'signlog2pval']
 
 write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 
@@ -359,7 +363,7 @@ gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 run_anova=FALSE
 run_ORA=FALSE; 
 use_protein_pval=FALSE ## Proteins to use a sinput 
-use_pval=FALSE  ### WHAT TO PLOT
+use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
 
 
 pvalueCutoff_sig=0.05
@@ -412,7 +416,7 @@ res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
                                         ont=ONT, 
                                         keyType = 'SYMBOL', 
                                         OrgDb = 'org.Hs.eg.db', 
-                                        pvalueCutoff  = pvalueCutoff, 
+                                        pvalueCutoff  = pvalueCutoff 
                                           )
       
           
@@ -458,20 +462,26 @@ gse_protein@result$p.adjust
 process_mirnas=FALSE
 un_paths<-dim(gse_protein@result)[1]
 un_paths
-text_p1=ifelse(run_ORA,paste0('\n DE proteins: ',  length(gene_list_ora)), '')
+
+get_pval_text<-function(gse, pvalueCutoff_sig){
+  text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
+  text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', length(which(gse@result$p.adjust<pvalueCutoff_sig)), 
+                  '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
+  text_p=paste0(text_p1, text_p2)
+}
+text_p<-get_pval_text(gse_protein_full, pvalueCutoff_sig)
+title_p=ifelse( run_ORA==FALSE, paste0('GSEA, ',order_statistic), paste0('ORA, p.adj<',padj_T_overall))
+title_p
+  enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , 
+                                     N_DOT=15, N_EMAP = 25,N_TREE=25, text_p=text_p, title_p)
 
 
-text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', dim(gse_protein_padj@result)[1], 
-               '\n p-val.< ', pvalueCutoff_sig,': ', dim(gse_protein_pval@result)[1])
 
-
-text_p=paste0(text_p1, text_p2)
-enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , 
-                                   N_DOT=15, N_EMAP = 25,N_TREE=25, text_p=text_p)
 
 
 
 enrich_plots
 
 ### run enrichGo with anova
+
 

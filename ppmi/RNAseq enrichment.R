@@ -1,5 +1,5 @@
 script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir,'/setup_os.R'))
+source(paste0(script_dir,'ppmi/setup_os.R'))
 
 
 #detach("package:AnnotationDbi", unload=TRUE)
@@ -23,8 +23,62 @@ library('enrichplot' )
 
 
 
+
+#### Configuration 
+
+VISIT='V08'
+
+process_mirnas<-FALSE
+padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
+
+
+get_genelist_byVisit<-function(VISIT){
+  
+  ### Input visit AND return list 
+  ##'
+  ##'
+  
+  deseq2ResDF_2 = as.data.frame(read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1))
+  gene_list<-get_ordered_gene_list(deseq2ResDF_2,  order_by_metric, padj_T=1, log2fol_T=0 )
+  names(gene_list)<-gsub('\\..*', '',names(gene_list))
+  return(gene_list)
+}
+VISIT='V08'
+source(paste0(script_dir, 'ppmi/config.R'))
+gene_list<-get_genelist_byVisit(VISIT)
+
+outdir_enrich<-paste0(outdir_s,'/enrichment/')
+dir.create(outdir_enrich)
+
+### setup
+length(gene_list)
+tail(gene_list)
+ONT='BP'
+
+
+
+results_file<-paste0(outdir_enrich, '/gseGO', '_', ONT, '_', padj_T, '_',  log2fol_T, order_by_metric)
+res_path<-paste0(results_file, 'gse.RDS')
+
+#### Run and return the whole set of p-values with pcutoff=1 
+## then filter 
+if (file.exists(res_path)){
+  gse_full=loadRDS(res_path)
+  
+}else{
+  
+  pvalueCutoff<-1
+  gse_full <- clusterProfiler::gseGO(gene_list, 
+                                     ont=ONT, 
+                                     keyType = 'ENSEMBL', 
+                                     OrgDb = 'org.Hs.eg.db', 
+                                     pvalueCutoff  = pvalueCutoff)
+  saveRDS(gse_full, res_path)
+  
+}
+
 ## Filter 
-gse=write_filter_gse_results(gse_full, results_file_rnas, pvalueCutoff)
+gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
 
 #### 
 # run all results
@@ -32,126 +86,22 @@ gse=write_filter_gse_results(gse_full, results_file_rnas, pvalueCutoff)
 require(DOSE)
 library('enrichplot')
 
+results_file=results_file
+gse = gse
 
 #results_file=mir_results_file_anticor
 #gse = gse_mirnas
-pvalueCutoff_sig=0.01
+pvalueCutoff_sig=0.05
 sel<-gse_full@result$pvalue<pvalueCutoff_sig
 gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
 
+text_p<-get_pval_text(gse_full, pvalueCutoff_sig)
 
-enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_rnas, N_DOT=15, N_EMAP=25 )
+enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15, N_EMAP=25, text_p=text_p )
 dp=enrich_plots[[1]]
 p_enrich=enrich_plots[[2]]
 p2_tree=enrich_plots[[3]]
 
 
 
-#### 
-gse@result[gse@result$pvalue>0.05,]
-
-df<-gse@result
-hist_p<-ggplot(df, aes(x=-log10(pvalue))) + 
-  geom_histogram(color="black", fill="white")
-hist_p
-
-ggsave(paste0(results_file_rnas, '_pval_hist.png'),plot=last_plot() )
-
-
-
-
-#### RUN ENRICHMENT WITH FILTERED PATHS FROM 3 MODALITIES ####
-run_anova=FALSE
-use_pval=TRUE
-### prerequisite: source venn diagrams
-out_compare<-'ppmi/plots/single/compare/'
-int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
-
-intersection_all_three_plot<-read.csv(paste0(out_compare,'interesction_pathways' , int_params, '.csv') )
-#as.character(intersection_all_three_plot)
-showCategory_list=as.vector(unlist(intersection_all_three_plot))
-length(showCategory_list)
-
-
-gse_common<-gse %>% 
-  dplyr::filter(Description %in%showCategory_list )
-
-
-enrich_plots<-run_enrichment_plots(gse=gse_common,
-                                   results_file=paste0(results_file, '_intersect_',int_params ),
-                                   N_EMAP=20, N_NET=20)
-
-
-write.csv(gse_common@result, paste0(results_file, '_intersect_',int_params, '.csv' ))
-run_mofa=FALSE
-#run_mofa=TRUE
-### TODO: FIX AND MAKE A FUNCTION OF THIS SO I CAN USE IN MOFA TOO 
-if (run_mofa){
-  for (factor in c(1:8)){
-    
-    
-    results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
-    gse_mofa=list1[[factor]]
-    write.csv(as.data.frame(gse@result), paste0(results_file, '.csv'))
-    
-    ### to run mofa results
-    run_enrichment_plots(gse=gse_mofa, results_file = results_file_mofa)
-    
-    
-    if (process_mirnas){
-      results_file=mir_results_file_by_cat
-      gse=enr;
-      
-      
-    }
-    
-    
-    
-    ############# KEGG
-    
-    
-    #parents<-get_parent_nodes(gse_x$ID, term_df = NULL, graph_path_df = NULL, godir = NULL)
-    
-    #parents$distance
-    
-  }
-}
-
-
-### CLUSTER COMPARE
-
-
-
-#### 
-#library(ggplot2)
-#library(dplyr)
-#library(stringr)
-#gse@result
-#x=gse
-### count the gene number
-#gene_count<- x@result %>% group_by(ID) %>% summarise(count = sum(str_count(core_enrichment, "/")) + 1)
-#
-### merge with the original dataframe
-#dot_df<- left_join(x@result, gene_count, by = "ID") %>% mutate(GeneRatio = count/setSize)
-#
-### plot
-#library(forcats) ## for reordering the factor
-#ggplot(dot_df, aes(x = GeneRatio, y = fct_reorder(Description, GeneRatio))) + 
-#  geom_point(aes(size = GeneRatio, color = p.adjust)) +
-#  theme_bw(base_size = 14) +
-#  scale_colour_gradient(limits=c(0, 0.10), low="red") +
-#  ylab(NULL) +
-#  ggtitle("GO pathway enrichment")
-#
-#
-#
-#
-#
-#
-#gsea_run <- clusterProfiler::GSEA(gene_list, 
-#                              keyType = 'ALIAS', 
-#                              pAdjustMethod = 'BH')
-#
-#
-#
 

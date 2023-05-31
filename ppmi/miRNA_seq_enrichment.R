@@ -1,5 +1,4 @@
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir,'/setup_os.R'))
+source('ppmi/setup_os.R')
 
 
 #install.packages('VennDiagram')
@@ -8,8 +7,8 @@ library('VennDiagram')
 library(enrichplot)
 VISIT='V08'
 process_mirnas<-TRUE
-source(paste0(script_dir, '/config.R'))
-source(paste0(script_dir, '/utils.R'))
+source(paste0(script_dir, 'ppmi/config.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
 library(ggplot2)
 
 
@@ -106,7 +105,6 @@ if (file.exists(gsea_results_fname)){
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
-View(mieaa_all_gsea)
 ### FROM HERE ONWARDS RUN MOFA 
 ## TODO: MAKE THIS A FUNCTION that takes in arguments of mieaa_all_gsea and mir_results_file 
 process_mofa=FALSE
@@ -166,7 +164,7 @@ results_file=mir_results_file_by_cat
 mir_results_file_by_cat
 
 ### Posto process and return enrichresult 
-mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category)
+mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category = Category, mir_results_file = mir_results_file_by_cat)
 mieaa_gsea_1=mieaa_res[[1]]
 enr_full=mieaa_res[[2]]
 
@@ -181,10 +179,11 @@ mir_results_file_by_cat
 
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
 
-
-
+text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
+text_p
+process_mirnas
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
-run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15)
+run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15, text_p=text_p)
 dim(gse_sig)
 
 ############

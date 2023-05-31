@@ -2,9 +2,7 @@
 #script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
 #os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
-source(paste0(script_dir, '/setup_os.R'))
+source('ppmi/setup_os.R')
 
 data_dir
 
@@ -30,7 +28,7 @@ library("SummarizedExperiment")
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 #source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir,'/utils.R'))
+source(paste0(script_dir,'ppmi/utils.R'))
 
 output_1=paste0(data_dir,'ppmi/plots/proteomics/')
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
@@ -55,7 +53,7 @@ VISIT=c('BL')
 process_mirnas=FALSE
 #TISSUE='CSF'
 
-source(paste0(script_dir, '/config.R' ))
+source(paste0(script_dir, 'ppmi/config.R' ))
 
 param_str<-paste0(TOP_PN)
 

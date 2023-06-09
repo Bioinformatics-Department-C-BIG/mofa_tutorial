@@ -1,15 +1,14 @@
 
-get_correlations_with_coh<-function(MOFAobject){
+get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
   cors<-correlate_factors_with_covariates(MOFAobject,
-                                          covariates = c('CONCOHORT'), 
+                                          covariates = covariates, 
                                           plot = "log_pval", 
                                           return_data = TRUE
                                           
   )
   
-  MOFAobject@samples_metadata$COHORT<-as.factor(MOFAobject@samples_metadata$COHORT)
   cors_pearson<-correlate_factors_with_covariates(MOFAobject,
-                                                  covariates = c('CONCOHORT'), 
+                                                  covariates = covariates, 
                                                   plot = "r", 
                                                   return_data = TRUE
                                                   

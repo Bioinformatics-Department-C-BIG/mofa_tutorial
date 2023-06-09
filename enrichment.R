@@ -1,0 +1,54 @@
+
+
+#install.packages("msigdbr")
+library(msigdbr)
+library(data.table)
+library(MOFAdata)
+data("reactomeGS")
+
+# Choose pathway gene list GO/KEGG etc 
+#all_gene_sets = msigdbr(species = "Homo sapiens", category = 'C5', subcategory = 'GO:BP')
+category='C5';subcategory<-'GO:BP';
+category='C2';subcategory<-'CP:KEGG';
+category='C5';subcategory<-'GO:MF';
+
+
+
+all_gene_sets = msigdbr(species = "Homo sapiens", category = category, subcategory =subcategory )
+
+df<-all_gene_sets[c('gs_name', 'ensembl_gene')]
+
+df_wide<-data.table::dcast(as.data.table(df), 
+                           gs_name ~ ensembl_gene)
+df_wide<-as.data.frame(df_wide)
+rownames(df_wide)<-df_wide$gs_name
+df_wide$gs_name<-NULL
+
+
+# make binary 
+na_ind<-is.na(df_wide)
+df_wide[na_ind]<-0
+df_wide[!na_ind]<-1
+
+df_wide<-as.matrix(df_wide)
+df_wide %in% c(0,1)
+
+
+#to_drop<-colnames(df_wide)[str_starts(colnames(df_wide), 'ASM')]
+df_wide2<-df_wide[,-c(1:5)]
+
+
+#### Some columns do not match... why? 
+
+ind_to_keep<-!is.na(match(colnames(df_wide2), colnames(reactomeGS)))
+length(ind_to_keep)
+length(which(ind_to_keep))
+df_wide3<-df_wide2[,ind_to_keep]
+dim(df_wide3)
+
+df_wide4<-as.matrix(apply(as.data.frame(df_wide3), 2,as.numeric))
+rownames(df_wide4)<-rownames(df_wide3)
+
+gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+write.csv(df_wide4,gs_file)
+

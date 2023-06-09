@@ -56,10 +56,7 @@ run_mofa_get_cors<-function(N_FACTORS){
   ### run mofa and write stats of corelation to file!! 
   #'
   #'
-  
-  
-  
-  
+
   ## histograms to check normality pattern 
   #create_hist(data_full['RNA'], 'RNA')
   #create_hist(data_full['miRNA'], 'miRNA')
@@ -89,7 +86,7 @@ run_mofa_get_cors<-function(N_FACTORS){
   ##### Basic stats
   
   
-  cors_both<-get_correlations_with_coh(MOFAobject)
+  cors_both<-get_correlations(MOFAobject, c('CONCOHORT'))
   cors_pearson=cors_both[[2]]
   cors_t<-paste(round(cors_pearson[,'CONCOHORT'], digits=2), collapse=', ')
   max_cor<-round(max(cors_pearson), digits=2)
@@ -102,7 +99,7 @@ run_mofa_get_cors<-function(N_FACTORS){
 }
 
 
-
+# n_factors best=15
 for (N_FACTORS in c(15)){
   ## MOFA parameters, set directory 
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
@@ -119,28 +116,6 @@ for (N_FACTORS in c(15)){
 
 
 
-
-### Split the data
-#if (split){
-#  seed_tr_test=150
-#  set.seed(seed_tr_test)
-#  train_ind<-sample(nsamples, nsamples*0.7)
-#  mofa_multi_complete_train = mofa_multi_complete_all[,train_ind]
-#  mofa_multi_complete_test = mofa_multi_complete_all[,-train_ind]
-#  mofa_multi_complete=mofa_multi_complete_train
-#}else{
-#  mofa_multi_complete=mofa_multi_complete_all
-#  mofa_multi_complete=mofa_multi_complete_all
-#  
-#}
-#dim(colData(mofa_multi_complete_train))[1]
-#prot_to_impute<-assays(mofa_multi_complete)$proteomics
-
-
-###################### RUN MOFA #########################
-##### Setup MOFA model 
-## model opts 
-# SET factor values 
 
 
 

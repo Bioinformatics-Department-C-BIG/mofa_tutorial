@@ -459,7 +459,7 @@ mofa_only_all<-all_ord_R[all_ord_R$Description%in% unique_mofa,]
 single_only_all<-single_ps[single_ps$Description%in% unique_single,]
 mofa_only_all$Description
 create_combination_plot(use_mofa=use_mofa, merged_paths_fish=mofa_only_all, combined_p_thresh=0.01, text_add='mofa_uniq')
-create_combination_plot(use_mofa=use_mofa, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
+create_combination_plot(use_mofa=FALSE, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
 
 
 dim(mofa_only_all)

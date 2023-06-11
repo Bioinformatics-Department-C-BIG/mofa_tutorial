@@ -8,7 +8,7 @@ source(paste0(script_dir,'ppmi/setup_os.R'))
 #('UpSetR')
 library('UpSetR')
 library('dplyr')
-
+library('ggplot2')
 library('VennDiagram')
 library(grid)
 #source(paste0(script_dir, 'ppmi/utils.R'))
@@ -375,8 +375,7 @@ combined_ps=single_ps
 single_combination<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
 
 listInput_single_combination=append(listInput_all_mods_single,
-                                    list(single_combination), 
-                                    )
+                                    list(single_combination)        )
 
 inter<-calculate.overlap(listInput_single_combination)
 write.csv(single_ps[combined_ps$Description %in% inter$a3,],
@@ -412,7 +411,7 @@ create_venn(listInput_single_combination, fname_venn)
 merged_factors_mofa_ps<-merged_factors_mofa$Description[merged_factors_mofa$fish< pvalueCutoff_sig]; 
 
 listInput_single_combination=append(listInput_all_mods_single,
-                                    list(single_combination), 
+                                    list(single_combination) 
 )
 # add also mofa
 listInput_single_combination_all=append(listInput_single_combination,
@@ -468,13 +467,51 @@ plot(v, main=paste0('weights: ',paste0(round(weights_Var, digits=0), collapse = 
 
 
 ###########
+# create multi omics emap plot 
+library('multienrichjam')
+library('clusterProfiler')
+colnames(merged_factors_mofa)
+colnames(enrich_rna)
 
+merged_results<-merged_factors_mofa
 
+merged_results_o<-merged_results[
+  with(merged_results, order(Description, fish)),
+  ]
+merged_results_o[, c('fish', 'Description')]
+## TODO:  double  IF i AM filteirng by largest
+merged_results<-merged_results_o[!duplicated(merged_results_o$Description),]
+merged_results[, c('fish', 'Description')]
+
+merged_results$pvalue<-merged_results$fish
+merged_results<-merged_results[merged_results$fish<0.05,]
+merged_results$geneColname<-enrich_rna[match(merged_results$Description, enrich_rna$Description),]$core_enrichment
+enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(merged_results),
+                                                  keyColname =  'Description',
+                                                 geneColname ='geneColname',
+                                                  pvalueColname = 'fish', 
+                                                  pvalueCutoff = 0.05)
+
+ # run_enrichment_plots(enr_full,results_file = 'test.txt')
+enr_full@result$ID
+enr_full@result$Description<-enr_full@result$ID
+x2 <- pairwise_termsim(enr_full, showCategory = 150)
+as.character(enr_full@result$Description)
+
+enr_full$Description
+emapplot(x2, showCategory=150,
+        cex_category=1, 
+        cex_label_category=0.5)
 #### COMPARE SINGLE COMBINATION TO MOFA COMBINATION ####
 
 cor_t<-0.15
 outdir
-
+#install.packages('arules')
+library(arules)
+library(igraph)
+## create an emap as an igrpah object
+ig_plot<-enrichMapJam(x2, n=120)
+plot(ig_plot)
 mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
 mofa_enrich_file<-paste0(mofa_enrich_dir, '.csv')
 all_ord_R<-read.csv(mofa_enrich_file, header=1)

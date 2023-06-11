@@ -105,11 +105,13 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5
 create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh=0.05, text_add=''){
   #### 
   #' @param  merged_paths_fish_log_sig
+  #' @param combined_p_thresh default pvalue threshold=0.05
+  #' @text_add add text to description
   #' 
   #' 
   #' 
-  #' 
-  
+  #combined_p_thresh=0.05
+  # text_add=''
   # test
   #merged_paths_fish= mofa_only_all
   cols_ch=colnames(merged_paths_fish)[-1]
@@ -212,10 +214,10 @@ if (v2){
 run_ORA=FALSE
 pmethod<-'stouffer'
 
-
+use_mofa
 if (use_mofa){
   ### use all not just the significant p-value
-  fn=1
+  fn=4
   gse_mofa_rna=list1[[sel_factors[fn]]]
   cohort_cors[sel_factors[fn]]
   cohort_cors
@@ -235,6 +237,8 @@ if (use_mofa){
   weights_Var<-weights_Var/sum(weights_Var)*100
   run_weighted=TRUE
   # also write to extra file
+  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+  
   merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
                               'mofa_',  use_mofa_s , 'w_', run_weighted  )
 
@@ -247,12 +251,15 @@ if (use_mofa){
   enrich_proteins=enrich_proteins_single
   enrich_mirnas=enrich_mirnas_single
   
+  
+  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+  
+  
 }
 
 
 #### SET PARAMETERS
 
-use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
 # TODO: ADD WEIGTS? IN FILE
 merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
                          'mofa_',  use_mofa_s  )
@@ -323,10 +330,11 @@ f_pvals<-list()
 ###  LOAD SINGLE-COMBINATION ###
 
 
+## what to actually input 
+use_mofa=TRUE
 
-
-if (use_mofa){
-  for (fn in c(1,2)){
+### merge mofa 
+for (fn in c(1,2,3,4)){
     use_mofa=TRUE;run_weighted=TRUE
     
     use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
@@ -342,48 +350,105 @@ if (use_mofa){
   #### Merge factors together??? #### 
   dim(merged_factors_mofa[merged_factors_mofa$fish<0.05,])
   dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
-  combined_ps<-merged_factors_mofa
+
   
   
-}else{
-  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-  merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
+  ## LOAD SINGLE 
+use_mofa=FALSE 
+use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
                                   'mofa_',  use_mofa_s, 'w_', run_weighted  )
   
-  single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
+single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
   
-  combined_ps<-single_ps
-  
-}
+
+
 
 
 #### COMPARE TO SINGLE-UNION ####
+#### option to compare MOFA or combination
 ### this is the single union of paths 
-listInput_all_mods_single
 
-single_combination<-combined_ps$Description[combined_ps$fish< pvalueCutoff_sig]; length(single_combination)
-listInput_single_combination=append(listInput_all_mods_single,list(single_combination))
+listInput_all_mods_single
+combined_ps=single_ps
+
+single_combination<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
+
+listInput_single_combination=append(listInput_all_mods_single,
+                                    list(single_combination), 
+                                    )
+
 inter<-calculate.overlap(listInput_single_combination)
-head(single_ps[combined_ps$Description %in% inter$a3,])
-write.csv(single_ps[combined_ps$Description %in% inter$a3,], paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
-names(listInput_all_mods)
+write.csv(single_ps[combined_ps$Description %in% inter$a3,],
+          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
+
+
 names(listInput_single_combination)[4]<-'combination'
-length(listInput_single_combination)
-myCol2 <- brewer.pal(4, "Pastel2")
-venn.diagram(listInput_single_combination,
-             # Circles
-             lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1,
-             filename = paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
-                               int_params ,'venn_mofa_',use_mofa, '.jpeg'), 
+fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
+                  int_params ,'venn_mofa_',use_mofa, '.jpeg')
+
+### def create a venn? 
+venn_list=listInput_single_combination
+
+
+create_venn<-function(venn_list, fname_venn){
+  
+  #######
+  #' @param 
+  #'
+  #'
+  myCol2 <- brewer.pal(length(venn_list), "Pastel2")
+  venn.diagram(venn_list,
+               # Circles
+               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1,
+               filename =fname_venn, 
              
-             output=FALSE)
+               output=FALSE)
+}
+
+create_venn(listInput_single_combination, fname_venn)
+
+### create another list with all items 
+merged_factors_mofa_ps<-merged_factors_mofa$Description[merged_factors_mofa$fish< pvalueCutoff_sig]; 
+
+listInput_single_combination=append(listInput_all_mods_single,
+                                    list(single_combination), 
+)
+# add also mofa
+listInput_single_combination_all=append(listInput_single_combination,
+                                        list(merged_factors_mofa_ps) 
+)
+
+
+
+inter<-calculate.overlap(listInput_single_combination_all)
+write.csv(single_ps[combined_ps$Description %in% inter$a3,],
+          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
+
+
+names(listInput_single_combination_all)[4]<-'combination'
+names(listInput_single_combination_all)[5]<-'mofa'
+
+fname_venn=paste0(out_compare,'ALL_3', 
+                  int_params ,'.jpeg')
+
+### def create a venn? 
+venn_list=listInput_single_combination_all
+create_venn(listInput_single_combination_all, fname_venn)
+
+
+
+### def create a venn? 
+
+
+
 
 
 
 library(venneuler)
 #install.packages('venneuler')
 
-Lists <- listInput_single_combination  #put the word vectors into a list to supply lapply
+Lists <- listInput_single_combination_all  #put the word vectors into a list to supply lapply
 items <- sort(unique(unlist(Lists)))   #put in alphabetical order
 MAT <- matrix(rep(0, length(items)*length(Lists)), ncol=length(Lists))  #make a matrix of 0's
 colnames(MAT) <- names(Lists)

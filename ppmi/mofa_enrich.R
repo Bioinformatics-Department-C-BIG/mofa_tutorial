@@ -40,7 +40,7 @@ cors_pval<-correlate_factors_with_covariates(MOFAobject,
                                                   
 )
 
-
+cors<-cors_pval[,'CONCOHORT'] # TODO: LOAD or recalc
 cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
 cors_pearson_l[,'INEXPAGE'] 
 cors_pval[,'CONCOHORT']
@@ -49,7 +49,9 @@ cor_t=0.15
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
 cohort_cors[sel_factors]
-
+## select by correlation? 
+sel_factors<-which(cors>-log10(0.05))
+sel_factors
 vars_by_factor_all$r2_per_factor$group1[sel_factors,]
 
 ONT='BP'
@@ -73,6 +75,7 @@ list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
 
+dir.create(paste0(outdir, '/enrichment/'))
 
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
@@ -90,8 +93,8 @@ if (!isRStudio){
       for (factor in sel_factors){
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
-               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
-                 for (view in c( 'RNA')){
+               for (view in c( 'RNA', 'miRNA', 'proteomics')){
+               #  for (view in c( 'RNA')){
                    
                     print(paste0(view,' ', factor ))
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -203,9 +206,11 @@ as.logical(lapply(list_proteins, is.null))
 
 list_mirs_enrich=list()
 sel_factors_to_p<-sel_factors
-sel_factors
-sel_factors_to_p<-sel_factors[1:2]
+sel_factors_to_p<-sel_factors
 sel_factors_to_p
+
+dir.create(paste0(outdir, '/enrichment/'))
+
 
 for (factor in sel_factors){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
@@ -239,7 +244,7 @@ run_ORA=FALSE
 
 for (factor in sel_factors_to_p){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
-  dir.create(paste0(outdir, '/enrichment/mirnas/'))
+  suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
   gse_mofa_mirs=list_mirs[[factor]]
   
   mieaa_all_gsea=gse_mofa_mirs
@@ -271,7 +276,7 @@ for (factor in sel_factors_to_p){
     print(paste(factor,'sig'))
     enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
                                        results_file=results_file_mofa, 
-                                       N_DOT=20, N_EMAP = 15)    
+                                       N_DOT=20, N_EMAP = 50)    
     
   }
   
@@ -287,7 +292,7 @@ for (factor in sel_factors_to_p){
   write.csv(as.data.frame(gse_mofa_rna@result), paste0(results_file_mofa, '.csv'))
   
   ### to run mofa results
-  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa)
+  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50)
 } 
 
 
@@ -296,7 +301,6 @@ list_proteins[[1]]
 process_mofa=TRUE
 for (factor in sel_factors_to_p){
     results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
-    dir.create(paste0(outdir, '/enrichment/proteins/'))
     gse_mofa=list_proteins[[factor]]
     gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, 0.2)
     
@@ -315,7 +319,7 @@ for (factor in sel_factors_to_p){
       gse_mofa
           enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
                                              results_file=results_file_mofa, 
-                                             N_DOT=15, N_EMAP = 15)    
+                                             N_DOT=15, N_EMAP = 50)    
           
     }
       

@@ -90,40 +90,43 @@ NROW(non_na_vars)
 source('ppmi/mofa_utils.R')
 
 get_top_cors<-function(MOFAobject){
-  cors_both<-get_correlations_with_coh(MOFAobject)
+  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
   cors<-cors_both[[1]]
   cors_pearson<-cors_both[[2]]
   sel_factors<-abs(cors_pearson[,'CONCOHORT'])>0.15
-  sel_factors
+  
   round(cors[,'CONCOHORT'][sel_factors], digits=2)
   round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2)
 }
 
-cors_both<-get_correlations_with_coh(MOFAobject)
+
+cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]
 cors=cors_both[[1]]
-
+cors_pearson
 max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
-
-cors_both<-get_correlations_with_coh(MOFAobject)
 
 
 
 ######
 
 
-cors_pearson
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
 ids_to_plot<-which(apply(cors_pearson, 2, sum)>0)
+
+ids_to_plot<-which(apply(cors, 2, sum)>-log10(0.05))
+
 which(cors_pearson>0.1)
 ids_to_plot<-which(apply(cors, 2, sum)>0)
+ids_to_plot
 tot_cor_t=5
-ids_to_plot_strict<-which(apply(cors, 2, sum)>tot_cor_t)
-names(non_na_vars)
+ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
+non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
+non_na_ids_to_plot
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars), 
+                                  covariates = non_na_ids_to_plot, 
                                   plot = "log_pval"
                                   
 )
@@ -131,13 +134,16 @@ dev.off()
 graphics.off()
  keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
  ids_to_plot<-ids_to_plot[keep]
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=150)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars)[ids_to_plot], 
+                                  covariates =non_na_ids_to_plot, 
                                   plot = "log_pval"
                                   
 )
 dev.off()
+
+
+
 #ids_to_plot_strict
 #ids_to_plot_strict=c('SEX', 'AGE_AT_VISIT')
 ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_to_plot_strict))]
@@ -147,20 +153,12 @@ ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_t
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'),width = length(ids_to_plot_strict_1)*50,
      height = 800, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars)[ids_to_plot_strict_1], 
-                                  plot = "log_pval"
-                                  
-)
-dev.off()
-
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero', tot_cor_t,'.jpeg'), width = length(ids_to_plot_strict)*22, height=1000, res=150)
-correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars)[ids_to_plot_strict], 
                                   plot = "log_pval"
                                   
 )
 dev.off()
+
 
 
 names(non_na_vars)[ids_to_plot]
@@ -181,13 +179,20 @@ dev.off()
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "r",labels_col=labels_col )
 dev.off()
+ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
+## this is the othet
+# = non_na_ids_to_plot[-ind_re]
 
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_pearson','.jpeg'), 
+     width =N_FACTORS*500, height=  length(selected_covars)*150, res=300)
+correlate_factors_with_covariates(MOFAobject,covariates = names(ids_to_plot_strict), 
+                                  plot = "r",
+                                  alpha=0.000000001,
+                                  col.lim=c(-0.4, 0.4))
+dev.off()
 
-correlate_factors_with_covariates(MOFAobject,covariates = names(non_na_vars)[ids_to_plot_strict],
-                                  plot = "r",labels_col=labels_col )
+cors_pearson[,c('DYSKIRAT')]
 
-correlate_factors_with_covariates(MOFAobject,covariates =ids_to_plot_cor,
-                                  plot = "r")
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*70, height=1000, res=300)
 
 correlate_factors_with_covariates(MOFAobject,covariates =labels_col,

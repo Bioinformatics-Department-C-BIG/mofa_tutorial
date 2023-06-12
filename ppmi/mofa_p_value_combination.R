@@ -11,8 +11,8 @@ library('dplyr')
 library('ggplot2')
 library('VennDiagram')
 library(grid)
-#source(paste0(script_dir, 'ppmi/utils.R'))
-#source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
+source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 
 process_mirnas=FALSE
 
@@ -316,7 +316,7 @@ merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
 
 
 
-create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish)
+create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish, )
 ## question: what was NOT there before and is now? 
 
 
@@ -345,11 +345,11 @@ for (fn in c(1,2,3,4)){
     
     
   }
-  merged_factors_mofa<-do.call(rbind,f_pvals)
-  merged_factors_mofa
+merged_factors_mofa<-do.call(rbind,f_pvals)
+merged_factors_mofa
   #### Merge factors together??? #### 
-  dim(merged_factors_mofa[merged_factors_mofa$fish<0.05,])
-  dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
+dim(merged_factors_mofa[merged_factors_mofa$fish<0.05,])
+dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
 
   
   
@@ -381,7 +381,11 @@ inter<-calculate.overlap(listInput_single_combination)
 write.csv(single_ps[combined_ps$Description %in% inter$a3,],
           paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
 
-
+# mofa unique: 
+# inter$a3
+# mir only: inter
+inter$
+View(inter)
 names(listInput_single_combination)[4]<-'combination'
 fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
                   int_params ,'venn_mofa_',use_mofa, '.jpeg')
@@ -390,6 +394,8 @@ fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_',
 venn_list=listInput_single_combination
 
 
+
+library('RColorBrewer')
 create_venn<-function(venn_list, fname_venn){
   
   #######
@@ -464,57 +470,6 @@ plot(v, main=paste0('weights: ',paste0(round(weights_Var, digits=0), collapse = 
 
 
 
-
-
-###########
-# create multi omics emap plot 
-library('multienrichjam')
-library('clusterProfiler')
-colnames(merged_factors_mofa)
-colnames(enrich_rna)
-
-merged_results<-merged_factors_mofa
-
-merged_results_o<-merged_results[
-  with(merged_results, order(Description, fish)),
-  ]
-merged_results_o[, c('fish', 'Description')]
-## TODO:  double  IF i AM filteirng by largest
-merged_results<-merged_results_o[!duplicated(merged_results_o$Description),]
-merged_results[, c('fish', 'Description')]
-
-merged_results$pvalue<-merged_results$fish
-merged_results<-merged_results[merged_results$fish<0.05,]
-merged_results$geneColname<-enrich_rna[match(merged_results$Description, enrich_rna$Description),]$core_enrichment
-enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(merged_results),
-                                                  keyColname =  'Description',
-                                                 geneColname ='geneColname',
-                                                  pvalueColname = 'fish', 
-                                                  pvalueCutoff = 0.05)
-
- # run_enrichment_plots(enr_full,results_file = 'test.txt')
-enr_full@result$ID
-enr_full@result$Description<-enr_full@result$ID
-x2 <- pairwise_termsim(enr_full, showCategory = 150)
-as.character(enr_full@result$Description)
-
-enr_full$Description
-emapplot(x2, showCategory=150,
-        cex_category=1, 
-        cex_label_category=0.5)
-#### COMPARE SINGLE COMBINATION TO MOFA COMBINATION ####
-
-cor_t<-0.15
-outdir
-#install.packages('arules')
-library(arules)
-library(igraph)
-## create an emap as an igrpah object
-ig_plot<-enrichMapJam(x2, n=120)
-plot(ig_plot)
-mofa_enrich_dir=paste0(outdir,'/enrichment/', mofa_params, TISSUE, 'ranked_list', cor_t)
-mofa_enrich_file<-paste0(mofa_enrich_dir, '.csv')
-all_ord_R<-read.csv(mofa_enrich_file, header=1)
 
 
 ### compare to merged 

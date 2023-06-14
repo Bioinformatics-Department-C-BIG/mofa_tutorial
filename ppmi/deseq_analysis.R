@@ -137,7 +137,7 @@ dim(highly_variable_sign_genes_mofa)
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
 deseq2ResDF
-deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
+deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 

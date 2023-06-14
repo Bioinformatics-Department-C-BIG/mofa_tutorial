@@ -29,7 +29,7 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
-
+process_mirnas=FALSE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
   for (VISIT in c('V08')){

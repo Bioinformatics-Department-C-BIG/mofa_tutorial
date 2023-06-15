@@ -1,6 +1,6 @@
 
 #BiocManager::install(c("edgeR"))
-#BiocManager::install(c("Glimma"))
+#BiocManager::install(c("mixOmics"))
 
 library(mixOmics)
 #### 

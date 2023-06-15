@@ -64,6 +64,8 @@ install.packages('UpSetR')
 
 #### MOFA
 BiocManager::install('MOFAdata')
+BiocManager::install('MOFA2')
+
 BiocManager::install('MultiAssayExperiment')
 
 
@@ -76,4 +78,10 @@ BiocManager::install('DOSE')
 BiocManager::install('GOfuncR')
 BiocManager::install('ensembldb')
 BiocManager::install('org.Hs.eg.db')
+
+
+
+### MIXOMICS
+
+BiocManager::install(c("mixOmics"))
 

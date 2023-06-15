@@ -1,5 +1,5 @@
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir,'ppmi/setup_os.R'))
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+#source(paste0(script_dir,'ppmi/setup_os.R'))
 
 
 #detach("package:AnnotationDbi", unload=TRUE)
@@ -44,7 +44,7 @@ get_genelist_byVisit<-function(VISIT){
   return(gene_list)
 }
 VISIT='V08'
-source(paste0(script_dir, 'ppmi/config.R'))
+#source(paste0(script_dir, '/config.R'))
 gene_list<-get_genelist_byVisit(VISIT)
 
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
@@ -95,7 +95,8 @@ pvalueCutoff_sig=0.05
 sel<-gse_full@result$pvalue<pvalueCutoff_sig
 gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
 
-text_p<-get_pval_text(gse_full, pvalueCutoff_sig)
+#text_p<-get_pval_text(gse_full, pvalueCutoff_sig)
+text_p<-''
 
 enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15, N_EMAP=25, text_p=text_p )
 dp=enrich_plots[[1]]

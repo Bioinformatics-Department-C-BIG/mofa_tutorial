@@ -1,8 +1,11 @@
 source(paste0('ppmi/setup_os.R'))
+#BiocManager::install('GOSemSim')
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
 library(MOFA2)
+#install.packages("broom", type="binary")
+
 library(data.table)
 library(tidyverse)
 library(ggplot2)

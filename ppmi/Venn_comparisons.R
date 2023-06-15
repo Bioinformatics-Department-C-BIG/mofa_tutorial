@@ -205,7 +205,7 @@ listInput<-listInput_all_mods_single
 enrich_proteins_sig$p.adjust
 get_ids(enrich_mirnas$ID[1])
 
-
+length(unique(unlist(listInput_all_mods_single), use.names=FALSE))
 
 res_overlap<-calculate.overlap(listInput)
 

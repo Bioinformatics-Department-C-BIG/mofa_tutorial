@@ -164,8 +164,8 @@ dev.off()
 names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SCAU
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN')
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN'  )
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN', 'SCAU5')
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN', 'CONSTIP'  )
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
@@ -183,11 +183,11 @@ ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
 ## this is the othet
 # = non_na_ids_to_plot[-ind_re]
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_pearson','.jpeg'), 
-     width =N_FACTORS*500, height=  length(selected_covars)*150, res=300)
-correlate_factors_with_covariates(MOFAobject,covariates = names(ids_to_plot_strict), 
-                                  plot = "r",
-                                  alpha=0.000000001,
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
+     width =N_FACTORS*100, height=  length(selected_covars)*150, res=300)
+correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
+                                  plot = "log_pval",
+                                 # alpha=0.000000001,
                                   col.lim=c(-0.4, 0.4))
 dev.off()
 

@@ -334,7 +334,7 @@ f_pvals<-list()
 use_mofa=TRUE
 
 ### merge mofa 
-for (fn in c(1,2,3,4)){
+for (fn in c(1,2)){
     use_mofa=TRUE;run_weighted=TRUE
     
     use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
@@ -344,108 +344,48 @@ for (fn in c(1,2,3,4)){
     f_pvals[[fn]]<-read.csv(paste0( merged_path_file_load, '.csv'), row.names = 1)
     
     
-  }
+}
+
+
 merged_factors_mofa<-do.call(rbind,f_pvals)
 merged_factors_mofa
   #### Merge factors together??? #### 
-dim(merged_factors_mofa[merged_factors_mofa$fish<0.05,])
+merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
+
+merged_factors_mofa_sig$Description<-gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
 dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
 
   
   
   ## LOAD SINGLE 
-use_mofa=FALSE 
+use_mofa=TRUE 
 use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
 merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
                                   'mofa_',  use_mofa_s, 'w_', run_weighted  )
   
 single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
-  
+single_ps_sig<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
+single_ps_sig<-gsub('-', ' ', tolower(single_ps_sig))
 
 
-
-
-#### COMPARE TO SINGLE-UNION ####
-#### option to compare MOFA or combination
-### this is the single union of paths 
-
-listInput_all_mods_single
-combined_ps=single_ps
-
-single_combination<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
-
-listInput_single_combination=append(listInput_all_mods_single,
-                                    list(single_combination)        )
-
-inter<-calculate.overlap(listInput_single_combination)
-write.csv(single_ps[combined_ps$Description %in% inter$a3,],
-          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
-
-# mofa unique: 
-# inter$a3
-# mir only: inter
-inter$
-View(inter)
-names(listInput_single_combination)[4]<-'combination'
-fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
-                  int_params ,'venn_mofa_',use_mofa, '.jpeg')
-
-### def create a venn? 
-venn_list=listInput_single_combination
-
-
+use_mofa=TRUE
 
 library('RColorBrewer')
-create_venn<-function(venn_list, fname_venn){
+create_venn<-function(venn_list, fname_venn, main){
   
   #######
   #' @param 
   #'
   #'
-  myCol2 <- brewer.pal(length(venn_list), "Pastel2")
+  myCol2 <- brewer.pal(length(venn_list), "Pastel2")[1:length(venn_list)]
   venn.diagram(venn_list,
                # Circles
-               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1,
+               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
                filename =fname_venn, 
-             
+               main=main,
+               
                output=FALSE)
 }
-
-create_venn(listInput_single_combination, fname_venn)
-
-### create another list with all items 
-merged_factors_mofa_ps<-merged_factors_mofa$Description[merged_factors_mofa$fish< pvalueCutoff_sig]; 
-
-listInput_single_combination=append(listInput_all_mods_single,
-                                    list(single_combination) 
-)
-# add also mofa
-listInput_single_combination_all=append(listInput_single_combination,
-                                        list(merged_factors_mofa_ps) 
-)
-
-
-
-inter<-calculate.overlap(listInput_single_combination_all)
-write.csv(single_ps[combined_ps$Description %in% inter$a3,],
-          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
-
-
-names(listInput_single_combination_all)[4]<-'combination'
-names(listInput_single_combination_all)[5]<-'mofa'
-
-fname_venn=paste0(out_compare,'ALL_3', 
-                  int_params ,'.jpeg')
-
-### def create a venn? 
-venn_list=listInput_single_combination_all
-create_venn(listInput_single_combination_all, fname_venn)
-
-
-
-### def create a venn? 
-
-
 
 
 
@@ -454,71 +394,175 @@ library(venneuler)
 #install.packages('venneuler')
 
 Lists <- listInput_single_combination_all  #put the word vectors into a list to supply lapply
-items <- sort(unique(unlist(Lists)))   #put in alphabetical order
-MAT <- matrix(rep(0, length(items)*length(Lists)), ncol=length(Lists))  #make a matrix of 0's
-colnames(MAT) <- names(Lists)
-rownames(MAT) <- items
-lapply(seq_along(Lists), function(i) {   #fill the matrix
-  MAT[items %in% Lists[[i]], i] <<- table(Lists[[i]])
-})
-dev.off()
-MAT   #look at the results
-v <- venneuler(MAT, quantities=TRUE)
-plot(v, main=paste0('weights: ',paste0(round(weights_Var, digits=0), collapse = ', ')))
+Lists <- listInput_truth_mofa  #put the word vectors into a list to supply lapply
+
+create_venneuler<-function(Lists,fname){
+  
+  
+  items <- sort(unique(unlist(Lists)))   #put in alphabetical order
+  MAT <- matrix(rep(0, length(items)*length(Lists)), ncol=length(Lists))  #make a matrix of 0's
+  colnames(MAT) <- names(Lists)
+  rownames(MAT) <- items
+  lapply(seq_along(Lists), function(i) {   #fill the matrix
+    MAT[items %in% Lists[[i]], i] <<- table(Lists[[i]])
+  })
+  v <- venneuler(MAT, quantities=TRUE)
+  
+  jpeg(fname, res=300, height=1000, width=1000)
+  plot(v, cex=1.2)
+  dev.off()
+  
+}
+
+
+#### COMPARE TO SINGLE MODALITIES SEPARATELY-UNION ####
+#### option to compare MOFA or combination
+### this is the single union of paths 
+
+listInput_all_mods_single
+use_mofa=TRUE
+### CHOOSE WHICH OF THE TWO TO PLOT HERE 
+if (use_mofa){
+    combined_ps<-merged_factors_mofa_sig$Description
+    title='MOFA vs Single'
+  }else{
+    combined_ps<-single_ps_sig
+    title='Single combination vs Single'
+  }
+# combined_ps=merged_factors_mofa; dim(merged_factors_mofa)
+
+
+listInput_single_combination=append(listInput_all_mods_single[c(1,3)],
+                                    list(combined_ps))
+
+inter_mofa_single<-calculate.overlap(listInput_single_combination)
+# write.csv(single_ps[combined_ps$Description %in% inter_mofa_single$a3,],
+#          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
+
+# mofa unique: 
+# inter$a3
+# mir only: inter
+
+# View(inter)
+names(listInput_single_combination)[length(listInput_single_combination)]<-'combination'
+fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
+                  int_params ,'venn_mofa_',use_mofa, '.jpeg')
+
+### def create a venn? 
+venn_list=listInput_single_combination
+
+create_venn(listInput_single_combination, fname_venn, main=title)
+
+##########################
+#########################
+
+
+
+### create another list with all THREE items 
+merged_factors_mofa_ps<-merged_factors_mofa_sig$Description
+listInput_all_mods_single=lapply(listInput_all_mods_single, function(x) {gsub('-', ' ', tolower(x)) }) 
+listInput_single_combination=append(listInput_all_mods_single[c(1,3)],
+                                    list(single_ps_sig) 
+)
+# add also mofa
+listInput_single_combination_all=append(listInput_single_combination,
+                                        list(merged_factors_mofa_ps) 
+)
+
+names(listInput_single_combination_all)[3]<-'combination'
+names(listInput_single_combination_all)[4]<-'mofa'
+
+fname_venn=paste0(out_compare,'ALL_3', 
+                  int_params ,'.jpeg')
+
+### def create a venn? 
+venn_list=listInput_single_combination_all
+create_venn(listInput_single_combination_all, fname_venn, main='MOFA and Single combination and Single ')
 
 
 
 
 
+#### compare MOFA to merged ####
 
+'cytokine mediated signaling pathway' %in% merged_factors_mofa_sig$Description
+'cytokine mediated signaling pathway' %in% single_ps_sig
 
-### compare to merged 
-p_final=0.05
-all_ord_R<-merged_factors_mofa[merged_factors_mofa$fish<p_final,]
-single_paths<-single_ps[single_ps$fish<p_final,]
-dim(all_ord_R)
-
-single_paths$Description<-gsub('-', ' ', tolower(single_paths$Description))
-all_ord_R$Description<-gsub('-', ' ', tolower(all_ord_R$Description))
-
-'cytokine mediated signaling pathway' %in% all_ord_R$Description
-'cytokine mediated signaling pathway' %in% single_paths$Description
-
-dim(single_paths)
-dim(all_ord_R)
 listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths$Description)
-mofa_overlap<-calculate.overlap(listInput_single_mofa)
-unique_single<-mofa_overlap$a2[!(mofa_overlap$a2 %in%mofa_overlap$a3)]
-unique_mofa<-mofa_overlap$a1[!(mofa_overlap$a1 %in%mofa_overlap$a3)]
-mofa_overlap
-unique_mofa
-unique_single
-
-mofa_overlap$a2
-# common 
-mofa_overlap$a3
+filename = paste0(out_compare,'Venn_all_modalities_', 
+                  int_params ,'venn_diagramm_mofa', cor_t, '.png') 
+create_venn(listInput_single_mofa,filename, main='Mofa and Single combination' )
 
 
-myCol2 <- brewer.pal(4, "Pastel2")[1:length(listInput_single_mofa)]
-venn.diagram(listInput_single_mofa,  # Circles
-             lwd = 2, lty = 'blank',           fill = myCol2,
-             cex=2.5, cat.cex=1,
-             category.names=c( 'mofa\nintegration','single\ncombination'),
-             filename = paste0(out_compare,'all_modalities_', 
-                               int_params ,'venn_diagramm_mofa', cor_t, '.png'), 
-             output=TRUE)
+
+
+inter_mofa_union<-calculate.overlap(listInput_single_mofa)
+unique_single<-unique(inter_mofa_union$a2[!(inter_mofa_union$a2 %in%inter_mofa_union$a3)])
+unique_mofa<-unique(inter_mofa_union$a1[!(inter_mofa_union$a1 %in%inter_mofa_union$a3)])
+
 
 
 
 ###### PLOT UNIQUE ONLY #### 
-head(mofa_only_all)
-mofa_only_all<-all_ord_R[all_ord_R$Description%in% unique_mofa,]
-single_only_all<-single_ps[single_ps$Description%in% unique_single,]
-mofa_only_all$Description
+#####
+#####
+#####
+##
+
+
 create_combination_plot(use_mofa=use_mofa, merged_paths_fish=mofa_only_all, combined_p_thresh=0.01, text_add='mofa_uniq')
 create_combination_plot(use_mofa=FALSE, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
 
 
 dim(mofa_only_all)
 length(unique_mofa)
+
+
+
+unique(unlist(listInput_all_mods_single), use.names=FALSE)
+### eVALUATION 
+
+## TRUTHSET #### 
+truth_paths<-read.csv(paste0(data_dir,'ppmi/ppmi_data/known_biomarkers_overlap/GO_Biological_Process_2023_table_gene_malacards.txt' ), sep='\t')
+truth_paths_sig<-truth_paths[truth_paths$Adjusted.P.value<0.05,]
+
+
+### preprocess alll 
+truth_paths_sig$Description<-gsub('-', ' ', tolower(truth_paths_sig$Term))
+truth_paths_sig$Description= sub( '\\ [^ ]+$', '',truth_paths_sig$Description)
+listInput_all_mods_single_l=unlist(listInput_all_mods_single, use.names = FALSE)
+listInput_all_mods_single_l=gsub('-', ' ', tolower(listInput_all_mods_single_l))
+listInput_all_mods_single_l
+merged_factors_mofa_sig$Description=gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
+single_ps_sig=gsub('-', ' ', tolower(single_ps_sig))
+
+
+  
+listInput_truth_mofa=append(list(truth_paths_sig$Description),
+                            list(merged_factors_mofa_sig$Description)
+)
+#listInput_truth_mofa=append(listInput_truth_mofa,list(merged_factors_mofa_sig$Description))
+
+# intersect( unlist(listInput_all_mods_single, use.names = FALSE), single_ps_sig)
+
+listInput_truth_mofa=append(listInput_truth_mofa,list(listInput_all_mods_single_l))
+
+listInput_truth_mofa=append(listInput_truth_mofa,list(single_ps_sig))
+
+names(listInput_truth_mofa)=c('malacards', 'mofa', 'union', 'combination' )
+
+
+#names(listInput_truth_mofa)=c('malacards', 'combination', 'mofa','union' )
+
+
+fname_venn_all=paste0(out_compare,'VennEuler_Truthset_', 
+                      int_params ,'.jpeg')
+
+create_venneuler(listInput_truth_mofa, fname_venn_all)
+fname_venn
+
+create_venn(listInput_truth_mofa, fname_venn)
+
+
+listInput_single_combination
 

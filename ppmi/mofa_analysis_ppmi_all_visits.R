@@ -134,7 +134,7 @@ dev.off()
 graphics.off()
  keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
  ids_to_plot<-ids_to_plot[keep]
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=300)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*30, height=2000, res=300)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates =non_na_ids_to_plot, 
                                   plot = "log_pval"
@@ -165,7 +165,8 @@ names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SCAU
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
 selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN', 'SCAU5')
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN', 'CONSTIP'  )
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN',
+             'CONSTIP'  )
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]

@@ -31,6 +31,7 @@ process_mirnas=TRUE
 
 source(paste0(script_dir, 'ppmi/config.R'))
 
+print(script_dir)
 
 
 print(deseq_file)

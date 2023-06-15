@@ -1,7 +1,6 @@
 
 
-#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir,'ppmi/setup_os.R'))
+source(paste0('ppmi/setup_os.R'))
 
 
 #### Metascripts 
@@ -11,8 +10,11 @@ library('dplyr')
 library('ggplot2')
 library('VennDiagram')
 library(grid)
+script_dir
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+script_dir
+source(paste0(script_dir,'ppmi/load_single_combination_pathways.R'))
 
 process_mirnas=FALSE
 
@@ -47,14 +49,18 @@ concatenate_pvals<-function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, pva
 }
 
 
-get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5)){
+get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5), merged_path_file){
+  #'
+  #' Combine and save 
+  
+  
   library(metapod)
   
   p1<-merged_paths[,2]; length(p1)
   p2<-merged_paths[,3];length(p2)
   
   
-  
+  print(paste0('Weights ', weights))
   hist(p1)
   hist(p2)
   if (add_mirs){
@@ -91,12 +97,9 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights=c(1,1,0.5
   #  merged_paths_fish_log$p.adjust<--log10(merged_paths_fish$p.adjust)
   #  
   #}
-  if (use_mofa){
-    write.csv(merged_paths_fish,paste0( merged_path_file2, '.csv'))
-    
-  }
+
   write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
-  
+  print(paste('Saving ',merged_path_file ))
   return(merged_paths_fish)
   
 }
@@ -214,162 +217,142 @@ if (v2){
 run_ORA=FALSE
 pmethod<-'stouffer'
 
-use_mofa
-if (use_mofa){
-  ### use all not just the significant p-value
-  fn=4
-  gse_mofa_rna=list1[[sel_factors[fn]]]
-  cohort_cors[sel_factors[fn]]
-  cohort_cors
-  gse_mofa_prot=list_proteins[[sel_factors[fn]]]
-  ## WARNING: RUN THE WHOLE enrich_mofa script to convert mirs 
-  gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
-  enrich_rna<-gse_mofa_rna@result
-  enrich_proteins=gse_mofa_prot@result
-  enrich_mirnas=gse_mofa_mirs@result
-  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
-  
-  
-  #### also weight by modality variance 
-  t_var<-sum(vars_by_mod)
-  mir_div=10
-  weights_Var<-c(vars_by_mod['proteomics'], vars_by_mod['RNA'],vars_by_mod['miRNA']/mir_div )
-  weights_Var<-weights_Var/sum(weights_Var)*100
-  run_weighted=TRUE
-  # also write to extra file
-  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-  
-  merged_path_file2<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                              'mofa_',  use_mofa_s , 'w_', run_weighted  )
+get_mofa_paths_and_weights<-function(fn){
+        #'
+        #'For each mofa factor extract the list of paths and the weights 
+        #' @param fn factor value to obtain
+        #' @return      
+        
+        gse_mofa_rna=list1[[sel_factors[fn]]]
+        gse_mofa_prot=list_proteins[[sel_factors[fn]]]
+        gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
+        
+        enrich_rna<-gse_mofa_rna@result
+        enrich_proteins=gse_mofa_prot@result
+        enrich_mirnas=gse_mofa_mirs@result
+        
+        
+        return(list(enrich_rna, enrich_proteins, enrich_mirnas))
+  }
 
+        get_mofa_vars<-function(fn,adj_weights){
+                vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
+                
+                
+                #### also weight by modality variance 
+                t_var<-sum(vars_by_mod)
+                weights_Var<-c(vars_by_mod['proteomics']/adj_weights[1], vars_by_mod['RNA']/adj_weights[2],vars_by_mod['miRNA']/adj_weights[3] )
+                weights_Var<-weights_Var/sum(weights_Var)*100
+                return(weights_Var)
+          
+        }
+        
   
-}else{
-  weights_Var=c(41,301,298)
+
+### use all not just the significant p-value
+        ## run for all mofa factors and concatenate? 
+use_mofa=TRUE;run_weighted=TRUE
+f_pvals<-list()
+fns=c(1:4)
+
+        for (fn in fns){
+          
+                list_all<-get_mofa_paths_and_weights(fn)
+                # also write to extra file
+                
+                enrich_rna= list_all[[1]]
+                enrich_proteins = list_all[[2]]
+                enrich_mirnas = list_all[[3]]
+                adj_weights=c(1,1,1)
+                weights_Var=get_mofa_vars(fn, adj_weights)
+                print(paste(sel_factors[fn]))
+                print(weights_Var, digits=2)
+                use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+                
+                merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                                          'mofa_',  use_mofa_s , 'w_', run_weighted  )
+               
+                
+                ################# ACTUALLY RUN THE combination #### 
+                
+                merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use )
+                merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var, merged_path_file=merged_path_file_mofa)
+                merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
+                #### Create plots of combined p-values ####
+                create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish, )
+                ## question: what was NOT there before and is now? 
+                f_pvals[[fn]]<-merged_paths_fish
+                
+               # f_pvals[[fn]]<-read.csv(paste0( merged_path_file_mofa, '.csv'), row.names = 1)
+                lapply(f_pvals,dim)
+                
+        }              
+
+## how many      
+lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
+
+merged_factors_mofa<-do.call(rbind,f_pvals)
+#### Merge factors together??? #### 
+merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
+merged_factors_mofa_sig$Description<-gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
+unique(length(merged_factors_mofa_sig$Description))
+## what to actually input 
+
+### merge mofa 
+
+
+use_mofa=FALSE
+### single MODE ##### 
+single_weights_Var=c(41,301,298)
+single_weights_Var=c(1,1,1)
+single_weights_Var=c(41,301,298)
+
   weights_Var=weights_Var/sum(weights_Var)*100
   run_weighted=TRUE
   enrich_rna<-enrich_rna_single
   enrich_proteins=enrich_proteins_single
   enrich_mirnas=enrich_mirnas_single
-  
-  
+
   use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
   
+  merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_', run_ORA, pmethod,
+                           'mofa_',  use_mofa_s  )
   
-}
-
+  
+  ################# ACTUALLY RUN THE combination #### 
+  
+  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use )
+  merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= single_weights_Var,merged_path_file= merged_path_file_single)
+  merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
+  #### Create plots of combined p-values ####
+  create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish )
+  
+### MAIN OUTPUT: 
+  #$merged_path_file_single
 
 #### SET PARAMETERS
 
-# TODO: ADD WEIGTS? IN FILE
-merged_path_file<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                         'mofa_',  use_mofa_s  )
-
-
-
-get_paths<-function(mode){
-  prot_paths1<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
-                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
-  prot_paths2<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
-                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
-  prot_paths=rbind(prot_paths1,prot_paths2)
-  colnames(prot_paths)<-c('X', 'Description', 'Factor', 'p.adjust')
-  
-  return(prot_paths)
-}
-
-
-if (use_mofa & v2){
-  prot_paths<-get_paths('proteomics')
-  rna_paths<-get_paths('RNA')
-  prot_paths
-  ### METHOD 2: PCGSE 
-  fn=1
-  ### use all not just the significant p-value
-  cohort_cors[sel_factors[fn]]
-  cohort_cors
-  enrich_proteins=prot_paths[prot_paths$Factor==paste0('Factor', sel_factors[fn]),]
-  enrich_rna<-rna_paths[rna_paths$Factor==paste0('Factor', sel_factors[fn]),]
-  colnames(enrich_proteins)
-
-  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
-  vars_by_mod
-  vars_by_mod/sum(vars_by_mod) *100
-  
-}
-
-
-
-################# ACTUALLY RUN THE combination #### 
-
-if (add_mirs){
-  merged_paths=concatenate_pvals(enrich_proteins,enrich_rna,enrich_mirnas, pval_to_use )
-}else{
-  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna, pval_to_use )
-  
-}
-
-
-merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= weights_Var)
-merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
-############################################
-#### Create plots of combined p-values ####
-
-
-
-create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish, )
-## question: what was NOT there before and is now? 
 
 
 
 
-merged_path_file2
+
+
+
+
+
+
 ####### NOW MERGE THE RESULTS ####
-f_pvals<-list()
-
-
-###  LOAD SINGLE-COMBINATION ###
-
-
-## what to actually input 
-use_mofa=TRUE
-
-### merge mofa 
-for (fn in c(1,2)){
-    use_mofa=TRUE;run_weighted=TRUE
-    
-    use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-    merged_path_file_load<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                                  'mofa_',  use_mofa_s , 'w_', run_weighted  )
-    
-    f_pvals[[fn]]<-read.csv(paste0( merged_path_file_load, '.csv'), row.names = 1)
-    
-    
-}
-
-
-merged_factors_mofa<-do.call(rbind,f_pvals)
-merged_factors_mofa
-  #### Merge factors together??? #### 
-merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
-
-merged_factors_mofa_sig$Description<-gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
-dim(merged_factors_mofa[merged_factors_mofa$fish<0.01,])
 
   
   
-  ## LOAD SINGLE 
-use_mofa=TRUE 
-use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-merged_path_file_single<-paste0(out_compare, VISIT, '_',TISSUE,'_',  pvalueCutoff, pval_to_use,'_', run_ORA, pmethod,
-                                  'mofa_',  use_mofa_s, 'w_', run_weighted  )
-  
+#### LOAD SINGLE COMBINATION ####
 single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
 single_ps_sig<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
 single_ps_sig<-gsub('-', ' ', tolower(single_ps_sig))
 
 
 use_mofa=TRUE
-
 library('RColorBrewer')
 create_venn<-function(venn_list, fname_venn, main){
   
@@ -393,7 +376,7 @@ create_venn<-function(venn_list, fname_venn, main){
 library(venneuler)
 #install.packages('venneuler')
 
-Lists <- listInput_single_combination_all  #put the word vectors into a list to supply lapply
+#Lists <- listInput_single_combination_all  #put the word vectors into a list to supply lapply
 Lists <- listInput_truth_mofa  #put the word vectors into a list to supply lapply
 
 create_venneuler<-function(Lists,fname){
@@ -408,8 +391,8 @@ create_venneuler<-function(Lists,fname){
   })
   v <- venneuler(MAT, quantities=TRUE)
   
-  jpeg(fname, res=300, height=1000, width=1000)
-  plot(v, cex=1.2)
+  jpeg(fname, res=300, height=1200, width=1200)
+  plot(v, cex=1.1)
   dev.off()
   
 }
@@ -481,17 +464,20 @@ create_venn(listInput_single_combination_all, fname_venn, main='MOFA and Single 
 
 
 
-
-
+params_all=paste0('Single weights: ',
+                        paste0(single_weights_Var, collapse=', '  ), '\n n factors: ',length(fns)  
+                        )
 #### compare MOFA to merged ####
-
+#################################
 'cytokine mediated signaling pathway' %in% merged_factors_mofa_sig$Description
 'cytokine mediated signaling pathway' %in% single_ps_sig
 
-listInput_single_mofa<-list( mofa=unique(all_ord_R$Description), single=single_paths$Description)
-filename = paste0(out_compare,'Venn_all_modalities_', 
-                  int_params ,'venn_diagramm_mofa', cor_t, '.png') 
-create_venn(listInput_single_mofa,filename, main='Mofa and Single combination' )
+listInput_single_mofa<-list( mofa=unique(merged_factors_mofa_sig$Description), single=single_ps_sig)
+filename = paste0(out_compare,'Venn_MOFA_single_combination', 
+                  int_params , cor_t, '.png') 
+create_venn(listInput_single_mofa,filename, 
+            main=paste0('Mofa and Single combination \n', params_all))
+                        
 
 
 
@@ -508,16 +494,8 @@ unique_mofa<-unique(inter_mofa_union$a1[!(inter_mofa_union$a1 %in%inter_mofa_uni
 #####
 #####
 ##
-
-
-create_combination_plot(use_mofa=use_mofa, merged_paths_fish=mofa_only_all, combined_p_thresh=0.01, text_add='mofa_uniq')
-create_combination_plot(use_mofa=FALSE, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
-
-
-dim(mofa_only_all)
-length(unique_mofa)
-
-
+#create_combination_plot(use_mofa=use_mofa, merged_paths_fish=mofa_only_all, combined_p_thresh=0.01, text_add='mofa_uniq')
+#create_combination_plot(use_mofa=FALSE, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
 
 unique(unlist(listInput_all_mods_single), use.names=FALSE)
 ### eVALUATION 
@@ -552,8 +530,6 @@ listInput_truth_mofa=append(listInput_truth_mofa,list(single_ps_sig))
 names(listInput_truth_mofa)=c('malacards', 'mofa', 'union', 'combination' )
 
 
-#names(listInput_truth_mofa)=c('malacards', 'combination', 'mofa','union' )
-
 
 fname_venn_all=paste0(out_compare,'VennEuler_Truthset_', 
                       int_params ,'.jpeg')
@@ -561,8 +537,73 @@ fname_venn_all=paste0(out_compare,'VennEuler_Truthset_',
 create_venneuler(listInput_truth_mofa, fname_venn_all)
 fname_venn
 
-create_venn(listInput_truth_mofa, fname_venn)
+create_venn(listInput_truth_mofa, fname_venn,
+            main=paste('MOFA, union and Malacards \n ',params_all ))
 
 
 listInput_single_combination
+
+
+junion=jaccard(unique(listInput_truth_mofa$malacards), unique(listInput_truth_mofa$union))
+jmofa=jaccard(unique(listInput_truth_mofa$malacards), unique(listInput_truth_mofa$mofa))
+jcomb=jaccard(unique(listInput_truth_mofa$malacards), unique(listInput_truth_mofa$combination))
+
+jaccard(listInput_truth_mofa$malacards, listInput_truth_mofa$combination)
+
+df_j_stats=  format(c( single_weights_Var,adj_weights, junion,jmofa,jcomb ), digits = 2)
+
+write.table(t(df_j_stats), paste0(out_compare,'jaccard_stats.csv'), append=TRUE, col.names = FALSE)
+
+
+
+
+jaccard <- function(a, b) {
+  intersection = length(intersect(a, b))
+  union = length(a) + length(b) - intersection
+  return (intersection/union)
+}
+
+
+
+
+
+
+
+
+
+
+######## THIS IS IF WE ARE USING A DIFFERENT METHOD TO SOURCE PATHS FOR MOFA
+
+
+
+get_paths<-function(mode){
+  prot_paths1<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
+                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
+  prot_paths2<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_',
+                               T,  mode, '_enrichment_positive_pvals_no_f.csv' ))
+  prot_paths=rbind(prot_paths1,prot_paths2)
+  colnames(prot_paths)<-c('X', 'Description', 'Factor', 'p.adjust')
+  
+  return(prot_paths)
+}
+
+
+if (use_mofa & v2){
+  prot_paths<-get_paths('proteomics')
+  rna_paths<-get_paths('RNA')
+  prot_paths
+  ### METHOD 2: PCGSE 
+  fn=1
+  ### use all not just the significant p-value
+  cohort_cors[sel_factors[fn]]
+  cohort_cors
+  enrich_proteins=prot_paths[prot_paths$Factor==paste0('Factor', sel_factors[fn]),]
+  enrich_rna<-rna_paths[rna_paths$Factor==paste0('Factor', sel_factors[fn]),]
+  colnames(enrich_proteins)
+  
+  vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
+  vars_by_mod
+  vars_by_mod/sum(vars_by_mod) *100
+  
+}
 

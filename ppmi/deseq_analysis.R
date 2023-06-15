@@ -1,10 +1,9 @@
 
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
+source(paste0('ppmi/setup_os.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
-source(paste0(script_dir,'/deseq_analysis_setup.R'))
+source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 
 process_mirnas
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
@@ -83,8 +82,8 @@ deseq2ResDF$SYMBOL
 log2fol_T<-0.25
 padj_T<-.005
 
-deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
-deseq2ResDF_strict<-mark_signficant(deseq2ResDF, padj_T, log2fol_T)
+deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
+deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 
 
 ####### MOFA deseq2  
@@ -108,7 +107,7 @@ vsd_mat <- assay(vsd)
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 #for (most_var in c(0.05, 0.5)){
 #  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
-    for (most_var in c(0.05,0.1, 0.5, 0.9, 0.2,0.3)){
+    for (most_var in c(0.05,0.1, 0.5, 0.9, 0.2,0.3, 0.35, 0.4, 0.45, 0.75)){
     
 
   param_str_tmp<-paste0(prefix, VISIT_S, '_',most_var ,'_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
@@ -138,7 +137,7 @@ dim(highly_variable_sign_genes_mofa)
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
 deseq2ResDF
-deseq2ResDF<-mark_signficant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
+deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 
@@ -472,31 +471,15 @@ fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
-#library(gridExtra)
-#library(grid)
-##grid.arrange(pvol, p2,
-#grid.arrange(pvol,
-#             ncol=1,
-#             top = textGrob('EnhancedVolcano',
-#                            just = c('center'),
-#                            gp = gpar(fontsize = 32))
-#             )
-#
-#
-#
-#fname<-paste0(outdir_s, '/EnhancedVolcano.jpeg')
-#ggsave(fname, width=9,height=8)
-##
-#library('EnhancedVolcano')
-#pvol+coord_flip()
-#
-#fname<-paste0(outdir_s, '/EnhancedVolcano_flip.jpeg')
-#ggsave(fname, width=8, height=7)
+
 Padj_T_paths=0.05
 padj_paths<-Padj_T_paths
 pvalueCutoff=1
 if (!process_mirnas){
   source('ppmi/RNAseq enrichment.R')
+  
+}else{
+  source('ppmi/miRNA_seq_enrichment.R')
   
 }
 

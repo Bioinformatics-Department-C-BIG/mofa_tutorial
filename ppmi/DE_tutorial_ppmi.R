@@ -7,7 +7,9 @@
 
 #### tutorial from: https://combine-australia.github.io/RNAseq-R/06-rnaseq-day1.html
 
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 
+source(paste0('ppmi/setup_os.R'))
 library(limma)
 library(pheatmap)
 library(R.filesets)
@@ -18,9 +20,12 @@ library(RColorBrewer)
 library(sys)
 library(sys)
 
+process_mirnas=FALSE
 
-source(paste0(script_dir, '/config.R' ))
-source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, 'ppmi/config.R' ))
+source(paste0(script_dir,'ppmi/utils.R'))
+
+source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 
 
@@ -90,9 +95,9 @@ results_de
   ### write out results 
 # We want to highlight the significant genes. We can get this from decideTests.
 #par(mfrow=c(1))
-plotMD(fit.cont,coef=1,status=summa.fit[, 'COHORT' ], 
-       values = c(-1, 1), hl.col=c("blue","red"))
-dev.off()
+#plotMD(fit.cont,coef=1,status=summa.fit[, 'COHORT' ], 
+#       values = c(-1, 1), hl.col=c("blue","red"))
+#dev.off()
 
 fit.cont$ad
 # For the volcano plot we have to specify how many of the top genes to highlight.
@@ -161,9 +166,13 @@ if (TISSUE=='CSF' & VISIT=='V08'){
   
 }
 log2fol_T_overall=0
-padj_T_overall
+log2fol_T_hm=1
+padj_T_overall=0.05
+padj_T_hm=0.05
+
 results_de
-gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_overall & results_de$logFC>log2fol_T_overall]
+gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_hm & 
+                                                           results_de$logFC>log2fol_T_hm]
 gene_list_limma_significant_heatmap
 
 length(gene_list_limma_significant_heatmap)
@@ -191,15 +200,14 @@ dim(hm)
 filter_highly_var=FALSE; most_var_t=FALSE
 cluster_cols=TRUE
 n_sig_f=30
-
 fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
               filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
 fname
 graphics.off()
 library(ggplot2)
-if(process_mirnas){
-  lab=rownames(rowData(vsd_filt_genes)) }else{
-    lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+#if(process_mirnas){
+  #lab=rownames(rowData(vsd_filt_genes)) }else{
+   # lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
 
         #jpeg(fname, width=10*100, height=10*100, res=150)
         my_pheatmap<-pheatmap(hm, 
@@ -217,7 +225,8 @@ if(process_mirnas){
 show(my_pheatmap)
 dev.off()
 my_pheatmap
-ggsave(fname, my_pheatmap, dpi = 200, width=7, height=10)
+ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
+
 
 
 
@@ -303,39 +312,41 @@ T=0.05
 
 
 
-
 ################# ENRICHMENT - GSEA-GO #############
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
 order_statistic<-'log2pval'
 order_statistic<-'adj.P.Val'
 order_statistic<-'signlog2pval'
-order_statistic<-'logFC'
 order_statistic<-'P.Value'
 order_statistic<-'log2pval'
 #order_statistic<-'pval_reverse'
 order_statistic<-'log2pval'
 order_statistic<-'logFC'
-order_statistic<-'log2pval'
+order_statistic<-'logFC'
+order_statistic<-'signlog2pval'
+order_statistic<-'logFC'
 
 
 
 #order_statistic<-'log2pval_not_adj' - NO RESULTS 
-results_de$pval_reverse<- -results_de$P.Value
+results_de$pval_reverse<- -results_de$P.Value ## this prob does not work with gsea because there are no negative values 
 
 results_de$log2pval<- -log10(results_de$adj.P.Val) * results_de$logFC
 results_de$abslog2pval<- abs(results_de$log2pval)
+results_de$abslog2pval<- abs(results_de$log2pval)
+results_de$signlogFCpval<- abs(results_de$log2pval)
 
 results_de$log2pval_not_adj<- -log10(results_de$P.Value) * results_de$logFC
 results_de$signlog2pval<- -log10(results_de$adj.P.Val) * sign(results_de$logFC)
-
+results_de[results_de$adj.P.Val<0.05,'signlog2pval']
 
 write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 
 
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
-results_de_signif<-mark_signficant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
+results_de_signif<-mark_significant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
                             padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
 
 results_de_signif$abslog2pval
@@ -345,11 +356,17 @@ gene_list1<-results_de[,order_statistic]
 names(gene_list1)<-rownames(results_de)
 gene_list_ord=gene_list1[order(-gene_list1)]
 gene_list_ord
-gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<T]
+gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
 gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
+run_ORA=FALSE; 
+use_protein_pval=FALSE ## Proteins to use a sinput 
+use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
+
+
+pvalueCutoff_sig=0.05
 if (run_anova){
   order_statistic<-'statistic'
   gene_list2<-pull(anova_results_oneway, statistic)
@@ -359,31 +376,59 @@ if (run_anova){
   
 }
 length(gene_list_ord)
-
-
+gene_list_ora=gene_list_limma_significant
+if (use_protein_pval){
+  gene_list_ora=gene_list_limma_significant_pval
+  
+}
+gene_list_ora
 ONT='BP'
-run_ORA=FALSE
+
 gene_list_ord
 
 pvalueCutoff=1
 #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
 
+
+
+outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
+                               '_anova_', run_anova, 'pval_', use_pval )
 res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
-if (file.exists(res_path)){
-  gse_protein_full=loadRDS(res_path)
-}else{
-  
-    
-    #### TODO: ALSO RUN ENRICHMENT using ANOVA from 
-    gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                                  ont=ONT, 
-                                  keyType = 'SYMBOL', 
-                                  OrgDb = 'org.Hs.eg.db', 
-                                  pvalueCutoff  = pvalueCutoff)
 
+
+#if (file.exists(res_path)){
+#  gse_protein_full=loadRDS(res_path)
+#}else{
+        if (run_ORA){
+          
+          gse_protein_full <- clusterProfiler::enrichGO(gene_list_ora, 
+                                                        ont=ONT, 
+                                                        keyType = 'SYMBOL', 
+                                                        OrgDb = 'org.Hs.eg.db', 
+                                                        pvalueCutoff  = pvalueCutoff)
+          
+        }else{
+          
+        
+          
+          #### TODO: ALSO RUN ENRICHMENT using ANOVA from 
+          gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                        ont=ONT, 
+                                        keyType = 'SYMBOL', 
+                                        OrgDb = 'org.Hs.eg.db', 
+                                        pvalueCutoff  = pvalueCutoff 
+                                          )
+      
+          
+          
+          use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
+          
+        }
   saveRDS(gse_protein_full, res_path)
-}
+  
+  
+#}
+gse_protein_full
 dim(gse_protein_full@result)
 hist(gse_protein_full@result$pvalue)
 sig_ind<-gse_protein_full[gse_protein_full@result$pvalue<0.05,]
@@ -392,104 +437,51 @@ process_mirnas=FALSE
 
 write.csv(as.data.frame(gse_protein_full@result), paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv'))
 
-use_pval=FALSE
+# EXTRACT THE SIG ONLY 
 gse_protein=write_filter_gse_results(gse_protein_full, outdir_s_p_enrich_file, pvalueCutoff)
-gse_protein
-dim(gse_protein@result)
+
 length(which(gse_protein_full@result$pvalue<0.05))
 
 sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCutoff_sig,]
 write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
 
+sig_gse_result
+
+gse_protein_pval=filter(gse_protein_full, pvalue < pvalueCutoff_sig)
+gse_protein_padj=filter(gse_protein_full, p.adjust < pvalueCutoff_sig)
 
 if (use_pval){
-  gse_protein=filter(gse_full, pvalue < pvalueCutoff_sig)
+  gse_protein=gse_protein_pval
 }else{
-  gse_protein=filter(gse_full, p < pvalueCutoff_sig)
-  
+  gse_protein=gse_protein_padj
 }
+gse_protein@result$p.adjust
 
 ### supply the full result 
-enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
+##enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
+process_mirnas=FALSE
+un_paths<-dim(gse_protein@result)[1]
+un_paths
+
+get_pval_text<-function(gse, pvalueCutoff_sig){
+  text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
+  text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', length(which(gse@result$p.adjust<pvalueCutoff_sig)), 
+                  '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
+  text_p=paste0(text_p1, text_p2)
+}
+text_p<-get_pval_text(gse_protein_full, pvalueCutoff_sig)
+title_p=ifelse( run_ORA==FALSE, paste0('GSEA, ',order_statistic), paste0('ORA, p.adj<',padj_T_overall))
+title_p
+  enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , 
+                                     N_DOT=15, N_EMAP = 25,N_TREE=25, text_p=text_p, title_p)
 
 
-gse_protein_full
 
 
 
+
+enrich_plots
 
 ### run enrichGo with anova
-
-run_ORA=TRUE
-#### IN ENRICHMENT WE filter by what is significant ONLY !! 
-run_anova=FALSE
-use_pval=FALSE
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA,'_anova_', run_anova, 'pval_', use_pval )
-
-if (run_anova){
-  order_statistic<-'statistic'
-  anova_results_oneway$a
- anova_results_oneway_significant_en <- anova_results_oneway %>%
-  dplyr::filter(Adjusted_pval<T)
-  gene_list_anova_signficant<-pull(anova_results_oneway_significant_en, Assay)
-  gene_list_ora=gene_list_anova_signficant
-  print(length(gene_list_anova_signficant))
-}else{
-  gene_list_ora=gene_list_limma_significant
-  if (use_pval){
-    gene_list_ora=gene_list_limma_significant_pval
-    
-  }
-  
-  length(gene_list_limma_significant)
-}
-
-pvalueCutoff=1
-res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
-if (file.exists(res_path)){
-  gse_protein_full=loadRDS(res_path)
-}else{
-  
-      gse_protein_enrich_full <- clusterProfiler::enrichGO(gene_list_ora, 
-                                              ont=ONT, 
-                                              keyType = 'SYMBOL', 
-                                              OrgDb = 'org.Hs.eg.db', 
-                                              pvalueCutoff  = pvalueCutoff)
-      
-      saveRDS(gse_protein_enrich_full, res_path)
-
-}
-## EMAP 15 is better for reporting - less crowded
-process_mirnas=TRUE
-gse_protein_enrich=write_filter_gse_results(gse_protein_enrich_full, outdir_s_p_enrich_file, pvalueCutoff)
-## does it contain nonsign pvalues? 
-gse_protein_enrich@result[gse_protein_enrich_full@result$pvalue>0.05,]
-length(which(gse_protein_enrich_full@result$pvalue<0.05))
-
-process_mirnas=FALSE
-enrich_plots<-run_enrichment_plots(gse=gse_protein_enrich,
-                                   results_file=paste0(outdir_s_p_enrich_file, 'enrich'), 
-                                   N_DOT=15, N_EMAP = 15)
-
-
-dev.off()
-
-gse_protein_enrich$p.adjust
-
-### draw histogram 
-df<-gse_protein_enrich@result
-hist_p<-ggplot(df, aes(x=-log10(pvalue))) + 
-  geom_histogram(color="black", fill="white")
-hist_p
-
-ggsave(paste0(outdir_s_p_enrich_file_ora, '_pval_hist.png'),plot=last_plot() )
-
-int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
-
-
-
-
-
-
 
 

@@ -12,6 +12,10 @@ all_gene_sets = msigdbr(species = "human", category=category, subcategory = subc
 colnames(all_gene_sets)
 all_gene_sets_long<-all_gene_sets[,c('gs_name','ensembl_gene' )]
 
+all_gene_sets_long<-all_gene_sets[,c('gs_name','ensembl_gene' )]
+### better to obtain it from a protein db! 
+all_gene_sets_long_prot<-all_gene_sets[,c('gs_name','gene_symbol' )]
+
 #Convert the VST counts to long format for ggplot2
 library(reshape2)
 
@@ -27,10 +31,21 @@ all_gene_sets_wide<-all_gene_sets_long %>%
   spread(ensembl_gene, yesno, fill = 0)
 
 dim(all_gene_sets_wide)
-dim(reactomeGS)
-colnames(reactomeGS)
-colnames(all_gene_sets_wide)
 
+
+write.csv(all_gene_sets_wide,gs_file, row.names=FALSE )
+
+
+
+#### proteins #### 
+### created using gene symbols 
+
+gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+all_gene_sets_wide<-all_gene_sets_long_prot %>%
+  mutate(yesno = 1) %>%
+  distinct %>%
+  spread(gene_symbol, yesno, fill = 0)
+dim(all_gene_sets_wide)
 
 write.csv(all_gene_sets_wide,gs_file, row.names=FALSE )
 

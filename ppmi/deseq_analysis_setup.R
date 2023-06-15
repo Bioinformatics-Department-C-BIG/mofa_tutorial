@@ -1,6 +1,5 @@
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
+source(paste0('ppmi/setup_os.R'))
 
 print(script_dir)
 suppressWarnings(library('R.filesets' ))
@@ -23,14 +22,14 @@ suppressWarnings(library('ggplot2'))
 #### Run DE
 
 
-source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir, '/utils.R'))
+source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
 
 VISIT='V08'
 process_mirnas<-FALSE
 
 
-source(paste0(script_dir, '/config.R'))
+source(paste0(script_dir, 'ppmi/config.R'))
 
 
 

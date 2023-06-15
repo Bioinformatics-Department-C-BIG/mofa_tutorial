@@ -4,7 +4,8 @@
 
 #install.packages("remotes")
 #remotes::install_github("bioFAM/MOFAdata")
-##### 
+#####  MOFA ANALYSIS 
+
 ### this one depends on mofa application to inherit: 
 ### 1. MOFAobject, 2. factors, 
 # 3. clinical variables
@@ -14,18 +15,21 @@
 #source('enrichment.R')
 
 
+#### MOFA ANALYSIS ####
+### 1. get correlations with covariates 
+
+###### CORRELATIONS WITH COVARIATES ##########
+##### Corelations
+## TODO: load mofa object from outdir 
+
+
+
+
 library(ggplot2)
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
 
 graphics.off()
-MOFAobject@features_metadata
-features_names(MOFAobject)
-#getGene(id = rownames(breast_data$mRNA) , type='hgnc_symbol', mart=ensembl )
-
-
-
-print(outdir)
 
 jpeg(paste0(outdir, 'factor_cor','.jpeg'))
 plot_factor_cor(MOFAobject)
@@ -46,27 +50,16 @@ library(EnsDb.Hsapiens.v79)
 
 ## Making a "short cut"
 geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-length(ens_ids)
-geneIDs1
-length(geneIDs1$SYMBOL)
-
 new_ids<-geneIDs1[match(ens_ids,geneIDs1$GENEID ),]
-## sOME SYMBOLS DOI NOT EXIST SO we only replace the ones that do
 not_na_ind<-!is.na(new_ids$SYMBOL)
 ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
-
 features_names(MOFAobject_gs)$RNA<-ens_ids
-
-ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 write.table(format(vars_by_factor,digits = 2)
             ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
-
-
-vars_by_factor>0.1
 
 p3<-plot_variance_explained(MOFAobject, max_r2=20)+
   theme(axis.text.x=element_text(size=20), 
@@ -94,36 +87,46 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
 NROW(non_na_vars)
 #### Covariance of factors with metadata 
+source('ppmi/mofa_utils.R')
 
-cors<-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars), 
-                                  plot = "log_pval", 
-                                  return_data = TRUE
-                                  
-)
+get_top_cors<-function(MOFAobject){
+  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+  cors<-cors_both[[1]]
+  cors_pearson<-cors_both[[2]]
+  sel_factors<-abs(cors_pearson[,'CONCOHORT'])>0.15
+  
+  round(cors[,'CONCOHORT'][sel_factors], digits=2)
+  round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2)
+}
 
-MOFAobject@samples_metadata$COHORT<-as.factor(MOFAobject@samples_metadata$COHORT)
-cors_pearson<-correlate_factors_with_covariates(MOFAobject,
-                                        covariates = names(non_na_vars), 
-                                        plot = "r", 
-                                        return_data = TRUE
-                                        
-)
 
-round(cors_pearson[,'CONCOHORT'], digits=2)
-
+cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+cors_pearson=cors_both[[2]]
+cors=cors_both[[1]]
 cors_pearson
+max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
+
+
+
+######
+
+
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
 ids_to_plot<-which(apply(cors_pearson, 2, sum)>0)
+
+ids_to_plot<-which(apply(cors, 2, sum)>-log10(0.05))
+
 which(cors_pearson>0.1)
 ids_to_plot<-which(apply(cors, 2, sum)>0)
+ids_to_plot
 tot_cor_t=5
-ids_to_plot_strict<-which(apply(cors, 2, sum)>tot_cor_t)
-names(non_na_vars)
+ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
+non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
+non_na_ids_to_plot
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars), 
+                                  covariates = non_na_ids_to_plot, 
                                   plot = "log_pval"
                                   
 )
@@ -131,13 +134,16 @@ dev.off()
 graphics.off()
  keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
  ids_to_plot<-ids_to_plot[keep]
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=150)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*22, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars)[ids_to_plot], 
+                                  covariates =non_na_ids_to_plot, 
                                   plot = "log_pval"
                                   
 )
 dev.off()
+
+
+
 #ids_to_plot_strict
 #ids_to_plot_strict=c('SEX', 'AGE_AT_VISIT')
 ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_to_plot_strict))]
@@ -147,15 +153,6 @@ ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_t
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'),width = length(ids_to_plot_strict_1)*50,
      height = 800, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars)[ids_to_plot_strict_1], 
-                                  plot = "log_pval"
-                                  
-)
-dev.off()
-
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero', tot_cor_t,'.jpeg'), width = length(ids_to_plot_strict)*22, height=1000, res=150)
-correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(non_na_vars)[ids_to_plot_strict], 
                                   plot = "log_pval"
                                   
@@ -163,11 +160,12 @@ correlate_factors_with_covariates(MOFAobject,
 dev.off()
 
 
+
 names(non_na_vars)[ids_to_plot]
-MOFAobject@samples_metadata$NP1T
+MOFAobject@samples_metadata$SCAU
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'SCAU', 'NHY', 'NP3BRADY', 'NP3RIGN')
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'SCOPA', 'Hoehn & Yahr','BRADY','RIGN'  )
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN')
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN'  )
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
@@ -181,13 +179,20 @@ dev.off()
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "r",labels_col=labels_col )
 dev.off()
+ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
+## this is the othet
+# = non_na_ids_to_plot[-ind_re]
 
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_pearson','.jpeg'), 
+     width =N_FACTORS*500, height=  length(selected_covars)*150, res=300)
+correlate_factors_with_covariates(MOFAobject,covariates = names(ids_to_plot_strict), 
+                                  plot = "r",
+                                  alpha=0.000000001,
+                                  col.lim=c(-0.4, 0.4))
+dev.off()
 
-correlate_factors_with_covariates(MOFAobject,covariates = names(non_na_vars)[ids_to_plot_strict],
-                                  plot = "r",labels_col=labels_col )
+cors_pearson[,c('DYSKIRAT')]
 
-correlate_factors_with_covariates(MOFAobject,covariates =ids_to_plot_cor,
-                                  plot = "r")
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*70, height=1000, res=300)
 
 correlate_factors_with_covariates(MOFAobject,covariates =labels_col,
@@ -202,7 +207,6 @@ dev.off()
 
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
-
 
 view='proteomics'; factor=6
 
@@ -253,6 +257,9 @@ for (i in seq(1,vps)){
 
 outdir
 high_vars_by_factor<-vars_by_factor>0.1
+
+
+#### 2. Save highly weighted features #####
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     
@@ -387,49 +394,12 @@ plot_factors(MOFAobject,
 )
 
 
-plot_factor(MOFAobject, 
-             factors = c(2,4,6),
-            color_by = color_by,
-            
-             show_missing = FALSE
-)
-
-
-plot_factors(MOFAobject, 
-             factors = c('Factor1', 'Factor2'), 
-             color_by = color_by,
-             show_missing = FALSE
-)
-
-# Plot top variables with top factors?  
-plot_factors(MOFAobject, 
-             factors = c(3,4), 
-             dot_size = 2.5, 
-             color_by = 'NHY'
-             
-)
-dev.off()
-
-##### Plot molecular signatures in the input data
-
-
-
-plot_weights(MOFAobject,
-             view = "miRNA",
-             factor = 2,
-             nfeatures = 10,     # Top number of features to highlight
-             scale = T           # Scale weights from -1 to 1
-)
-
-
 
 
 
 
 ### Age, gender , stage does not discriminate factors
 #Conclusion here:# factor 1 correlates with grade
-
-  
 for (ii in seq(1,fps)){
   ### Plot factors against a clinical variable 
   x_cor_t=4
@@ -459,7 +429,7 @@ for (ii in seq(1,fps)){
   
   
 }
-
+cors_pearson[,'COHORT']
 f1<-get_factors(MOFAobject,factors=1)
 f1<-as.data.frame(get_factors(MOFAobject,factors=1)['group1'])
 
@@ -470,7 +440,6 @@ length(yvar)
 f1[yvar_name]<-yvar
 f1[,yvar_name]=as.numeric(f1[,yvar_name])
 ggplot(f1, aes_string(x='Factor1', y=yvar_name) )+ geom_point()
-
 
 
 # Factor 2 associates with proteomic Subtype 
@@ -538,6 +507,8 @@ dir.create(paste0(outdir, 'top_weights/'))
 
 graphics.off()
 
+
+#### 3. Save heatmaps and top weighted feaqtures ####
 dir.create(paste0(outdir, '/heatmap/'))
 views[i]
 i
@@ -593,44 +564,63 @@ for (i in seq(1,vps)){
  
 
 
+#### 3. Save heatmaps and top weighted feaqtures ####
 
 
+vps
+# rename because value is too long in the legend
+MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
+MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
 graphics.off()
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
-    
+    print(paste('Modality', i, 'factor', ii))
     cluster_rows=TRUE;cluster_cols=TRUE
     
     
     
     ###### Heatmaps 
-    nfs=10
+    nfs=20
     #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     # Plot heatmaps for each factor only for miRNA 
     
     var_captured<-round(vars_by_factor[ii,i], digits=2)
     main_t<-paste0('Factor ', ii, ', Variance = ',var_captured, '%')
+    #log10(0.005) = 2.3
+    #cor_T<- -log10(0.005); cor_p_T<-0.15
+    modality=names(MOFAobject@dimensions$D)[i]
+    if (names(MOFAobject@dimensions$D)[i]=='proteomics'){modality=paste(TISSUE, modality )  }
+    main_t<-paste0('Factor ', ii, ', Mod ',modality, ', Variance = ',var_captured, '%')
+    
+    
     
     ns<-dim(MOFAobject@samples_metadata)[1]
-    cor_T<-2; cor_p_T<-0.1
+    if (run_mofa_complete){
+      cor_T<-1.5; cor_p_T<-0.1
+      
+    }else{
+      cor_T<-2; cor_p_T<-0.1
+      
+    }
+    
     abs(cors_pearson)>0.15
     
-    dim(cors_pearson)
-    dim(cors)
-    rel_cors<-cors[ii,][cors[ii,]>cor_T &  cors_pearson[ii,]>cor_p_T ]
-    rel_cors
-    
-    cors_sig=names(which(cors[ii,]>cor_T))
+    rel_cors<-cors[ii,][cors[ii,]>cor_T &  abs(cors_pearson[ii,])>cor_p_T ]
+
+    # sig holds the names only 
+    cors_sig=names(rel_cors); cors_sig
     FT=0
     if (length(cors_sig)==0){
       cors_sig=c()
       
-    } else if (length(cors_sig)>5){
-      FT=5
+    } else if (length(cors_sig)>10){
+      FT=10
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
       rel_cors_ordered<-rel_cors[order(-rel_cors)]
-      
+       rel_cors_ordered<-rel_cors[order(-rel_cors)][1:FT]
+      #rel_cors_ordered<-rel_cors[order(-rel_cors)]
+
       cors_sig<-names(rel_cors_ordered)
     }
     cors_sig
@@ -646,25 +636,37 @@ for (i in seq(1,vps)){
     MOFAobject_gs@samples_metadata[,cors_sig]
     
     #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
+
+    ### if the col contains only NA
     
+    #which(cors_sig_non_na=='PDSTATE')
+    #cors_sig_non_na=cors_sig_non_na[-3]
+    if (length(cors_sig)>1){
+      cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
+      
+    }else{
+      cors_sig_non_na=cors_sig 
+    }
+    cors_sig_non_na
+    if( length(cors_sig_non_na)==0){
+      cors_sig_non_na=c()
+    }
+    denoise=FALSE
     
-    #cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),1,any )))
-    
-    #if(length(cors_sig_non_na)==0){
-    #  cors_sig_non_na=c()
-    #}
-    
-    cors_sig_non_na=cors_sig
+    #cors_sig_non_na=cors_sig
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
-    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', FT, '.jpeg')
+    hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', 
+                  FT, 'den_', denoise, '.jpeg')
+
     
-    MOFAobject_gs@samples_metadata[cors_sig_non_na]
+    #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
     p<-plot_data_heatmap(MOFAobject_gs, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,
-                         denoise = TRUE,
-                         cluster_rows = cluster_rows, cluster_cols = cluster_cols,
+                         denoise = denoise,
+                         cluster_rows = cluster_rows, 
+                         cluster_cols = cluster_cols,
                          show_rownames = TRUE, show_colnames = TRUE,
                          scale = "row",
                          annotation_samples = cors_sig_non_na,
@@ -673,8 +675,15 @@ for (i in seq(1,vps)){
                          
     )
     #ggsave(hname, plot=p,height=nfs/2, width=(ns+as.numeric(length(cors_sig_non_na) )) )
-    width=ifelse( length(cors_sig_non_na)> 0,ns/50+2,ns/50)
-    ggsave(hname, plot=p,height=nfs/2, width=width, dpi=250) 
+    if (run_mofa_complete){
+      width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
+      
+    }else{
+      width=ifelse( length(cors_sig_non_na)> 0,ns/80+6,ns/80+4)
+      
+    }
+    
+    ggsave(hname, plot=p,height=nfs/5+2, width=width, dpi=250) 
     
     
   }
@@ -685,7 +694,22 @@ for (i in seq(1,vps)){
   
 }
 
+views[3]
 
+p<-plot_data_heatmap(MOFAobject_gs, 
+                     view = views[3], 
+                     factor =  ii,  
+                     features = nfs,
+                     denoise = FALSE,
+                     cluster_rows = cluster_rows, 
+                     cluster_cols = cluster_cols,
+                     show_rownames = TRUE, show_colnames = TRUE,
+                     scale = "row",
+                     annotation_samples = cors_sig_non_na,
+                     main=main_t
+                     
+                     
+)
 
 
 
@@ -754,10 +778,10 @@ if (n_groups>1){
 
 
 library(gridExtra)
-grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
-do.call('grid.arrange', c(list(p1,p2)) )
+#grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
+#do.call('grid.arrange', c(list(p1,p2)) )
 
-dev.off()
+#dev.off()
 
 
 plot_data_heatmap(MOFAobject, 
@@ -805,8 +829,8 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 
 
-### 
-## GENE SET ENRICHMENT! 
+####
+##### 5. GENE SET ENRICHMENT! #####
 ## AND reactome gsa enrichment!!
 
 
@@ -823,7 +847,8 @@ utils::data(reactomeGS)
 
 head((reactomeGS))
 
-
+## TODO: if enrichment is already run then just load results
+## load res.positive to be used in the next script
 
 subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
@@ -831,102 +856,65 @@ subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
-  for (subcategory in c('GO:BP' )){
 
-        gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+mode='RNA'
+mode='proteomics'
+
+  for (subcategory in c('GO:BP' )){
+        if (mode=='proteomics'){
+          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+          
+        }else{
+          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+          
+        }
         
         gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-        rownames(gs)
+        colnames(gs)
+        
         
         features_names(MOFAobject)$RNA
         features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
                function(x) {stringr::str_remove(x, '\\..*')}
         )
-        
-        
-        # GSEA on positive weights, with default options
-       #es.positive <- run_enrichment(MOFAobject, 
-       #                              feature.sets = reactomeGS, 
-       #                              view = "RNA",
-       #                              sign = "positive"
-       #
-        
-        
-        
         # GSEA on negative weights, with default options
         res.negative <- run_enrichment(MOFAobject, 
                                        feature.sets = gs, 
-                                       view = "RNA",
+                                       view = mode,
                                        sign = "negative"
         )
         
-        
-        
         res.positive <- run_enrichment(MOFAobject, 
                                        feature.sets = gs, 
-                                       view = "RNA",
+                                       view = mode,
                                        sign = "positive"
         )
         
         
         
-          
-          
-          
-        # change to negative and positive
-        T=0.05
-        extract_order_significant<-function(x, T) {
-          # extracy most significant and order 
-          
-          sign<-x[x<T]
-          sign2<-sign[order(sign)]
-          print(sign2)
-        }
         
-
-        stack_list<-function(i,enrichment_list) {
+        ## TODO: create a function to do for both positive and negative 
+        #
+        write_enrich<-function(res, sign_mode){
+          results_enrich<-res$pval.adj
+          all_fs_merged2<-reshape::melt(results_enrich)
+          #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
+          all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
           
-          # Take a list of dataframes and stack them 
-          # Add a column called factor which extracts the list counter 
-          if (length(enrichment_list)){
-                
-                factor<-paste0('Factor', i)
-                x=enrichment_list[factor]
-                x=enrichment_list[[i]]
-                
-                if (length(x)>0){
-                  tmp<-as.data.frame(x)
-                  tmp$path<-rownames(tmp)
-                  colnames(tmp)<-'pvals'
-                  
-                  rownames(tmp)<-NULL
-                  f<-names(all_fs_enrichment)[[i]] # EXTRACT the counter to assign factor value in new column
-                  tmp$factor=f
-                  return(tmp)}
-                }
-          }
-        
-        
-        
-        results_enrich<-res.negative$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant,  T=T)
-        if (length(all_fs_enrichment)>0){
-          all_fs_unlisted<-sapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-          all_fs_merged2<-do.call(rbind, all_fs_unlisted )
-          
-          write.csv(all_fs_merged2,paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), '_', T, '_enrichment_negative_pvals_no_f.csv' ))
-          #all_fs_merged2
-         # all_fs_merged2[str_detect(all_fs_merged2[,2], 'PARKINSON'),'factor']
+          neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                           mode, '_enrichment', sign_mode)
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file,  '.csv' ))
+          T=0.05
+          all_fs_merged2=all_fs_merged2[ all_fs_merged2$value<T,]
+          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file, '_', T,  '.csv' ))
+          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', sign_mode ))
           
         }
         
+        write_enrich(res.negative, sign_mode='negative')
+        write_enrich(res.positive, sign_mode='positive')
         
-        results_enrich<-res.positive$pval.adj
-        all_fs_enrichment<-apply(results_enrich, 2 , extract_order_significant, T=T)
-        all_fs_unlisted<-lapply(seq(1:length(all_fs_enrichment)), stack_list, enrichment_list=all_fs_enrichment)
-        all_fs_merged1<-do.call(rbind, all_fs_unlisted )
         
-        write.csv(all_fs_merged1,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, '_enrichment_positive_pvals_no_f.csv' ))
         
         
        
@@ -1058,7 +1046,7 @@ View(confusion_mat)
 round(importance(model.y), 2)
 
 
-install.packages('GGally')
+#install.packages('GGally')
 library('GGally')
 ### Plot predictions
 p <- plot_factors(MOFAobject, 

@@ -20,23 +20,22 @@ library(dplyr)
 
 ## Output directory
 # output_de=paste0(output_1, 'gene')
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
-source(paste0(script_dir, '/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir, '/utils.R'))
+source(paste0('ppmi/setup_os.R'))
+source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
+source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 ### Load metadata 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
-
+process_mirnas=TRUE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
   for (VISIT in c('V08')){
     
   
-  source(paste0(script_dir, '/config.R'))
+  source(paste0(script_dir, 'ppmi/config.R'))
   
   raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
   raw_counts_all<-raw_counts

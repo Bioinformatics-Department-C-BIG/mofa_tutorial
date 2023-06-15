@@ -2,9 +2,7 @@
 #script_dir='/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/'
 #os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
 
-script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-source(paste0(script_dir, '/setup_os.R'))
-source(paste0(script_dir, '/setup_os.R'))
+source('ppmi/setup_os.R')
 
 data_dir
 
@@ -30,7 +28,7 @@ library("SummarizedExperiment")
 if (!require("pacman")) install.packages("pacman")
 #pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
 #source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
-source(paste0(script_dir,'/utils.R'))
+source(paste0(script_dir,'ppmi/utils.R'))
 
 output_1=paste0(data_dir,'ppmi/plots/proteomics/')
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
@@ -53,7 +51,9 @@ combined<-read.csv2(metadata_output)
 
 VISIT=c('BL')
 process_mirnas=FALSE
-source(paste0(script_dir, '/config.R' ))
+#TISSUE='CSF'
+
+source(paste0(script_dir, 'ppmi/config.R' ))
 
 param_str<-paste0(TOP_PN)
 
@@ -61,9 +61,9 @@ param_str<-paste0(TOP_PN)
 run_vsn
 NORMALIZED
 
-
-
-
+output_files
+p_params_in
+TISSUE
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
   # if we dont run vsn we want to take the log values 
@@ -212,8 +212,11 @@ vsn_mat<-normalized_data
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
 TOP_PN
-for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
-     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3, 0.9,0.75,0.5)){
+     # TODO: IF YOU CHANGE THIS MAKE SURE TO CHANGE THE ONE IN MOFA 
+    #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+   most_var
+    p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
   
   
@@ -260,4 +263,5 @@ if (!run_vsn){
 
 
 highly_variable_proteins_outfile
+
 

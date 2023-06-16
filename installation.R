@@ -62,6 +62,10 @@ BiocManager::install('EnhancedVolcano')
 
 
 
+
+
+
+install.packages('tidyverse')
 install.packages('UpSetR')
 
 #### MOFA

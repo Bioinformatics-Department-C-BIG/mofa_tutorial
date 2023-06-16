@@ -73,7 +73,7 @@ enrich_proteins_single<-read.csv(enrich_proteins_file)
 
 enrich_rna_sig<-enrich_rna_single[enrich_rna_single$p.adjust<padj_paths,]; dim(enrich_rna_sig)[1]
 enrich_mirnas_sig<-enrich_mirnas_single[enrich_mirnas_single$p.adjust<padj_paths,]; dim(enrich_mirnas_sig)[1]
-enrich_proteins_sig<-enrich_proteins_sigle[enrich_proteins_sigle$p.adjust<padj_paths,]; dim(enrich_proteins_sig)[1]
+enrich_proteins_sig<-enrich_proteins_single[enrich_proteins_single$p.adjust<padj_paths,]; dim(enrich_proteins_sig)[1]
 
 common_paths<-intersect(enrich_rna_sig$Description,enrich_proteins_sig$Description )
 

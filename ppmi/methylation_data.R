@@ -8,7 +8,7 @@ library(minfiData)
 library(dplyr)
 library(stringr)
 
-ppmi_methyl<-read.csv('ppmi/ppmi_data/methylation/ppmi_140_link_list_20210607.csv')
+ppmi_methyl<-read.csv('ppmi_data/methylation/ppmi_140_link_list_20210607.csv')
 unique_patients<-unique(ppmi_methyl$PATNO)
 summary(ppmi_methyl)
 ## how many instances for each patients??
@@ -27,6 +27,9 @@ ppmi_methyl %>%
 
 
 ppmi_methyl_120<-read.csv('ppmi/ppmi_data/methylation/beta_post_Funnorm_PPMI_EPICn524final030618_PPMI_120.csv')
+
+
+ppmi_methyl_120<-read.csv('ppmi/ppmi_data/methylation/140_IDATS1of3-20190805T190057Z-002/IDATS1of3/')
 
 
 ### Intersect by visit 

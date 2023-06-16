@@ -1,4 +1,4 @@
-source('ppmi/setup_os.R')
+#source('ppmi/setup_os.R')
 
 
 #install.packages('VennDiagram')
@@ -134,11 +134,29 @@ if (use_mofa){
 }
 
 
+
+
+
+
+
+
+mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
+######### convert to enrichResult to use gsego functios
+results_file=mir_results_file_by_cat
+mir_results_file_by_cat
+### Posto process and return enrichresult 
+mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category = Category, mir_results_file = mir_results_file_by_cat)
+mieaa_gsea_1=mieaa_res[[1]]
+enr_full=mieaa_res[[2]]
+
+
 ##### plot results 
 ##
 #DOSE::enrichResult
 #  EnrichResult(mieaa_all_gsea)
 ### intermediate plot --- remove..??
+
+
 df=mieaa_gsea_1
 df$P.adjusted<-as.numeric(df$P.adjusted)
 df$padj<-as.numeric(df$P.adjusted)
@@ -153,20 +171,6 @@ ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), plot=mir_enrich
 
 dir.create(paste0(outdir_enrich, Category))
 
-mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
-######### convert to enrichResult to use gsego functios
-
-
-
-results_file=mir_results_file_by_cat
-
-
-mir_results_file_by_cat
-
-### Posto process and return enrichresult 
-mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category = Category, mir_results_file = mir_results_file_by_cat)
-mieaa_gsea_1=mieaa_res[[1]]
-enr_full=mieaa_res[[2]]
 
 
 gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff_sig)
@@ -180,7 +184,7 @@ mir_results_file_by_cat
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
 
 text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
-text_p
+text_p=''
 process_mirnas
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
 run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15, text_p=text_p)

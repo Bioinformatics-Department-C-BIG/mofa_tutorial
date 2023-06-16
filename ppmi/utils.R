@@ -488,6 +488,16 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 
 
 
+get_pval_text<-function(gse, pvalueCutoff_sig){
+  text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
+  text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', length(which(gse@result$p.adjust<pvalueCutoff_sig)), 
+                  '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
+  text_p=paste0(text_p1, text_p2)
+}
+
+
+
+
 ################ MOFA ####
 
 

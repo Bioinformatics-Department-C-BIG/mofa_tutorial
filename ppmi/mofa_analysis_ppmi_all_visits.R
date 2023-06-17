@@ -104,6 +104,7 @@ cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]
 cors=cors_both[[1]]
 cors_pearson
+cors
 max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
 
 
@@ -163,21 +164,28 @@ dev.off()
 
 names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SCAU
-selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU')
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY', 'NP3RIGN', 'SCAU5')
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','BRADY','RIGN',
-             'CONSTIP'  )
+MOFAobject@samples_metadata$MCATOT
+
+selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY',
+                   'NP3RIGN', 'SCAU5', 'MCATOT', 'PDSTATE', 'NP3RTCON', 'STAIAD',
+                   'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
+                   'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
+                   'NP3RTARU')
+labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
+             'SC-CONSTIP', 'MCATOT'  , 'PDSTATE', 'MDS3-REST_TREMOR', 'STAID:ANXIETY_TOT', 'STAIAD:FEEL RESTED', 'MDSI-ANXIOUS', 'MDS3-GAIT', 
+             'SC-FEC INCONT', 'MDS3-SPEECH PROB', 'MDS3-RISING', 'MDS2-EAT', 'MDS3-TREMOR')
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
 
 colnames(MOFAobject@samples_metadata)[selected_covars]
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 700+length(selected_covars)*20, height=1100, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",labels_col=labels_col )
 dev.off()
 
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*100, height=1000, res=300)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 700+length(selected_covars)*20, height=1000, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "r",labels_col=labels_col )
 dev.off()
 ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
@@ -307,19 +315,27 @@ for (i in seq(1,vps)){
   
   
 ### wHICH VARIABLES correlate with which factors 
-pos_cors<-cors>0  # which have more than two factors positive 
+pos_cors<-cors>0  # which are sig. corelated with any factors 
 n_factors_pos=1
 positive_cors<-cors[,colSums(pos_cors)>n_factors_pos]
 
+
+### THRESHOLD: IMPORTANT
+### significance-which variables to print--> log10(pval)=4 - sig is anything above 1.3
+x_cor_t=2
+
+i=111
+
+
 for (i in 1:dim(positive_cors)[2]){
-  
+  #' fix find 2d plots 
+  #' i= index of the clinical variable 
 
   names<-colnames(positive_cors)
   x_cors<-positive_cors[,i]
-  
-  ### Which factors have more than two variables so we can plot them together 
+  print(names[i])
+  ### does the variable relate to two factors? 
   pos_factors<-names(which(x_cors>0))
-  x_cor_t=5
   pos_factors<-names(which(x_cors>x_cor_t))
   pos_factors
   # Order by 
@@ -329,36 +345,43 @@ for (i in 1:dim(positive_cors)[2]){
   
           #TODO: print also other factors combinations
           #combn(pos_factors,2)
-          fs= ifelse(length(pos_factors)>1, c(pos_factors[1],pos_factors[2]), pos_factors[1])
-          
-          color_by<-names[i]
+          if (length(pos_factors)>1){fs=c(pos_factors[1],pos_factors[2])}else{fs=pos_factors[1]}
+          fs      
+          color_by<-names[i] ## OR change: COLOR BY GROUP? color_by='group'
           print(color_by)
-          plot_factors(MOFAobject, 
+          factor_cors<-paste0(format(x_cors[pos_factors], digits=2), collapse=',')
+
+          pf<-plot_factors(MOFAobject, 
                        factors = fs, 
                        shape_by=color_by,
-                       color_by = 'group',
-                         show_missing = FALSE
+                       color_by = color_by,
+                         show_missing = FALSE 
           )
           
+          pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
           fss<-paste(fs,sep='_',collapse='-')
-          dir.create(file.path(paste0(outdir,'/factor_plots/')), showWarnings = FALSE)
+          dir.create(file.path(paste0(outdir,'/factor_plots/2D/')), showWarnings = FALSE)
           
-          FNAME<-paste0(outdir,'/factor_plots/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
+          FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
           
           
-          ggsave(FNAME, width = 4, height=4, dpi=100)
+          ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
           
+          
+          ### you can also add a variable if it is also related to these two factors? 
           shape_by='NHY'
           #shape_by='AGE_AT_VISIT'
           fs
-          plot_factors(MOFAobject, 
+          pf=plot_factors(MOFAobject, 
                        factors = fs, 
                        color_by=color_by,
                         shape_by= shape_by,
                        show_missing = FALSE
           )
-          FNAME<-paste0(outdir,'/factor_plots/group/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
-            ggsave(FNAME, width = 4, height=4, dpi=100)
+          pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
+          
+          FNAME<-paste0(outdir,'/factor_plots/group/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
+            ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
   }
 }
 dev.off()

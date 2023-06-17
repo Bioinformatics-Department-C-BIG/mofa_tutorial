@@ -31,10 +31,10 @@ rank_mofa_paths<-function(f_pvals){
         # TODO: RANK factors? 
         lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
 
-        lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
-        
+
         merge(f_pvals[[1]],f_pvals[[2]], by='Description' )
         f_pvals_merged<-f_pvals %>% reduce(inner_join, by='Description')
+        
         
         
         f_pvals_merged$rank1[order(f_pvals_merged$fish.x)]<-1:nrow(f_pvals_merged)
@@ -44,7 +44,23 @@ rank_mofa_paths<-function(f_pvals){
         
         f_pvals_merged$tot_rank=rowSums(f_pvals_merged[,c('rank1', 'rank2', 'rank3', 'rank4')])
         
-        f_pvals_merged[order(f_pvals_merged$tot_rank),'Description']
+        # weighted with vars
+        ranks<-f_pvals_merged[,c('rank1', 'rank2', 'rank3', 'rank4')]
+        vars_by_factor_sel<-rowSums(vars_by_factor)[sel_factors]
+        vars_by_factor_sel<-vars_by_factor_sel/sum(vars_by_factor_sel)
+        vars_by_factor_sel*cors
+        cors_by_factor_sel<-abs(cors_pearson_l[sel_factors,'CONCOHORT'])
+                                
+        weighted_Ranks<-data.frame(mapply(`*`,ranks,cors_by_factor_sel))
+        f_pvals_merged$tot_rank=rowSums(weighted_Ranks)
+        
+        f_pvals_merged_ord<-f_pvals_merged[order(f_pvals_merged$tot_rank),]
+        head(f_pvals_merged[order(f_pvals_merged$tot_rank),c('Description', 'fish.x.x')],30)
+        head(f_pvals_merged[order(f_pvals_merged$tot_rank),c('Description', 'fish.y')],30)
+        head(f_pvals_merged[order(f_pvals_merged$fish.x.x),c('Description', 'fish.x.x')],30)
+        
+        head(f_pvals_merged[order(f_pvals_merged$fish.y.y),c('Description', 'fish.y.y')],30)
+        
         merged_factors_mofa<-do.call(rbind,f_pvals)
         #### Merge factors together??? #### 
         merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
@@ -72,16 +88,23 @@ rank_mofa_paths<-function(f_pvals){
         
         
         
-        return(merged_results)
+        return(list(merged_results, f_pvals_merged_ord))
 }
 
+merged_results_all<-rank_mofa_paths(f_pvals)
+merged_results<-merged_results_all[[1]]
 
+merged_results<-merged_results_all[[2]]
 
+head(merged_results, 3)
+colnames(merged_results)
+
+create_combination_plot(f_pvals_merged_ord)
 
 ### TODO: where to obtain the gene names from??? 
 # Now they are taken from RNA 
 merged_results$geneColname<-enrich_rna[match(merged_results$Description, enrich_rna$Description),]$core_enrichment
-enr_full <- multienrichjam::enrichDF2enrichResult(as.data.frame(merged_results),
+enr_full_all <- multienrichjam::enrichDF2enrichResult(as.data.frame(merged_results),
                                                   keyColname =  'Description',
                                                   geneColname ='geneColname',
                                                   pvalueColname = 'fish',
@@ -94,14 +117,21 @@ enr_full@result$pvalue
 
 
 inter<-inter_mofa_single
+enr_full<-enr_full_all
 # run_enrichment_plots(enr_full,results_file = 'test.txt')
 enr_full@result$ID
 enr_full@result$Description<-enr_full@result$ID
 #enr_full@result$qvalue[enr_full@result$Description %in% inter$a6]<-10 # mirnas only
-enr_full@result$qvalue[enr_full@result$Description %in% inter$a4]<-5 # rna only and mofa? 
+intersect(enr_full@result$Description, inter$a1)
+
+### tidy up these stuff here: 
+# show what is common in all
+enr_full@result$qvalue[enr_full@result$Description %in% inter$a3]<-5 # rna only and mofa? 
 enr_full@result$qvalue[enr_full@result$Description %in% inter$a7]<-1 # mofa unique
 enr_full@result$qvalue[enr_full@result$Description %in% inter$a5]<-20 # all
 enr_full@result$qvalue[enr_full@result$Description %in% inter$a5]<-20 # all
+N_EMAP=100
+graphics.off()
 fname_net<-paste0(out_compare,'network_MOFA_single_',use_mofa_s, 
                   int_params ,N_EMAP,'.png')
 create_multi_emap(enr_full, N_EMAP=100, fname_net=fname_net)
@@ -109,20 +139,21 @@ unique(inter$a7)
 
 
 
+graphics.off()
 
 create_multi_emap<-function(enr_full, N_EMAP=200,fname_net, title){
   x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
-  as.character(enr_full@result$Description)
+
   
-  
-  
-  emapplot(x2, showCategory=N_EMAP,
+  jpeg(fname_net)
+  em<-emapplot(x2, showCategory=N_EMAP,
            cex_category=1, 
            cex_label_category=0.5, 
-           color='qvalue', title=title,
+           color='qvalue'
   )
-  
-  ggsave(fname_net, width=15, height=15, dpi=300)
+  em
+  dev.off()
+  #ggsave(filename=fname_net, plot=last_plot(),width=15, height=15, dpi=300)
 }
 
 
@@ -130,13 +161,24 @@ create_multi_emap<-function(enr_full, N_EMAP=200,fname_net, title){
 inter<-inter_mofa_union
 unique(inter$a1)
 #### Mofa vS single combination 
+enr_full<-enr_full_all
 enr_full@result$Description<-enr_full@result$ID
-enr_full@result$qvalue[enr_full@result$Description %in% inter$a3]<-10 # mirnas only
+enr_full@result$qvalue[enr_full@result$Description %in% common_mofa_combination]<-10 # mirnas only
 
-'cell death' %in% unique_mofa
+x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
+
+N_EMAP=50
+jpeg(fname_net)
+em<-emapplot(x2, showCategory=N_EMAP,
+             cex_category=1, 
+             cex_label_category=0.5, 
+             color='qvalue'
+)
+em
+dev.off()
 
 
-create_multi_emap(enr_full, title='Mofa vs Union')
+create_multi_emap(enr_full, title='Mofa vs Union', fname_net = fname_net)
 enr_full@result$qvalue
 
 #### COMPARE SINGLE COMBINATION TO MOFA COMBINATION ####

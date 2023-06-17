@@ -26,6 +26,10 @@ sel_coh <- c(1,2)
 
 
 sel_coh=c(1,2);
+
+# ONLY PD 
+sel_coh=c(1,2);
+
 sel_subcoh=FALSE;
 sel_subcoh=FALSE
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
@@ -39,7 +43,7 @@ sel_subcoh=c('INEXPD');
 
 
 
-VISIT=c( 'V08')
+#VISIT=c( 'BL')
 
 
 VISIT_S=paste(VISIT,sep='_',collapse='-')

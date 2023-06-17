@@ -93,8 +93,9 @@ if (!isRStudio){
       for (factor in sel_factors){
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
-              # for (view in c( 'RNA', 'miRNA', 'proteomics')){
-                 for (view in c( 'proteomics')){
+                 #for (view in c( 'proteomics')){
+                for (view in c( 'RNA', 'miRNA', 'proteomics')){
+                  
                    
                #  for (view in c( 'RNA')){
                    
@@ -146,18 +147,20 @@ if (!isRStudio){
                   }else{
 
                    # DECIDE on the number 
-                    gse_protein_full <- clusterProfiler::enrichGO(names(gene_list_ord[1:50]), 
-                                                               ont=ONT, 
-                                                               keyType = 'SYMBOL', 
-                                                               OrgDb = 'org.Hs.eg.db', 
-                                                               pvalueCutoff  = pvalueCutoff)
+                    #gse_protein_full <- clusterProfiler::enrichGO(names(gene_list_ord[1:50]), 
+                    #                                           ont=ONT, 
+                    #                                           keyType = 'SYMBOL', 
+                    #                                           OrgDb = 'org.Hs.eg.db', 
+                    #                                           pvalueCutoff  = pvalueCutoff)
+                    #
+                    #list_proteins[[factor]]<-gse_protein_full
+                    #saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot_enrich'))
                     
-                          
-                         # gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                        #                                             ont=ONT, 
-                        #                                             keyType = 'SYMBOL', 
-                        #                                             OrgDb = 'org.Hs.eg.db', 
-                        #                                             pvalueCutoff  = pvalueCutoff)
+                         gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                                                     ont=ONT, 
+                                                                     keyType = 'SYMBOL', 
+                                                                    OrgDb = 'org.Hs.eg.db', 
+                                                                     pvalueCutoff  = pvalueCutoff)
                           
                           
                           list_proteins[[factor]]<-gse_protein_full

@@ -144,3 +144,8 @@ demographics$PATNO
 
 
 
+## add genetics
+
+genetics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus'))
+
+

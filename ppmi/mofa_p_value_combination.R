@@ -70,7 +70,7 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
   pmethod
   #weights=weights_Var
   print(paste0('Weights ', weights_Var))
-  weights_Var=c(1/500, 5/100, 5/100)
+  #weights_Var=c(1/500, 5/100, 5/100)
   hist(p1)
   hist(p2)
   if (add_mirs){
@@ -98,6 +98,7 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
   
   if (pval_to_use=='pvalue'){
     # adjust afterwards 
+    print(paste('Adjusted p values using: ', dim(merged_paths_fish_adj)[1]))
     merged_paths_fish_adj=merged_paths_fish
     merged_paths_fish_adj[cols_ch]=merged_paths_fish_adj[cols_ch]*dim(merged_paths_fish_adj)[1]
     merged_paths_fish_adj[cols_ch]=replace(merged_paths_fish_adj[cols_ch], merged_paths_fish_adj[cols_ch]>1, 1)
@@ -117,9 +118,9 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
 }
 
 
-create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh=0.05, text_add='', title_p='', merged_path_file){
+create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh=0.05, text_add='', title_p='', merged_path_file, plot_all=TRUE){
   ####  Creates a plot from the combined result from Stouffer's 
-  #' @param  merged_paths_fish_log_sig
+  #' @param  merged_paths_fish_log_sig expects order of columns as:  proteins, rnas, mirnas 
   #' @param combined_p_thresh default pvalue threshold=0.05
   #' @text_add add text to description
   #' 
@@ -136,6 +137,15 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
   
   merged_paths_fish_log_sig<-merged_paths_fish_log[merged_paths_fish_log$fish>-log10(combined_p_thresh),]
   
+  #merged_paths_fish_log_sig=merged_paths_fish_log_sig[merged_paths_fish_log_sig$fish,]
+  
+  
+  ### FILTER THE FIRST NPATHS HERE
+  NN=25
+  nsig<-dim(merged_paths_fish_log_sig)[1];nsig
+  Npaths=ifelse(nsig<NN,nsig,NN)
+  
+  
   merged_paths_fish_sig_melt<-reshape2::melt(merged_paths_fish_log_sig[1:Npaths,])
   merged_paths_fish_sig_melt
   if (add_mirs){
@@ -143,20 +153,26 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
   }else{ 
     labels<-c('proteomics', 'RNA', 'Stouffer\'s')}
   
-  
+  # filter only fish
   merged_paths_fish_sig_melt_fish<-merged_paths_fish_sig_melt[merged_paths_fish_sig_melt$variable=='fish',]
   plot_all=TRUE
   merged_to_plot<-merged_paths_fish_sig_melt
-  
+
   if (plot_all){
     labels_p<-labels; width_p<-0.7
+    
   }else{
     labels_p=labels[4];width_p<-0.7/4
+    
   }
   
-  NN=25
-  nsig<-dim(merged_paths_fish_sig)[1]
-  Npaths=ifelse(nsig<NN,nsig,NN)
+
+  
+  
+  ## ORDER BY DECREASING FISH
+  ord_paths<-merged_paths_fish_sig_melt_fish$Description[order(merged_paths_fish_sig_melt_fish$value)]
+  merged_paths_fish_sig=merged_paths_fish[merged_paths_fish$fish<0.05,]
+ 
   
   ## print the total number of paths 
   un_paths_0.05<-length(unique(merged_paths_fish_log$Description[merged_paths_fish_log$fish>-log10(0.05)]))
@@ -165,8 +181,14 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
                  '\n p-adj.< ', 0.01,': ', un_paths_0.01, ' pathways \n' )
   
   
+  merged_to_plot$Description=factor(merged_to_plot$Description, levels=unique(ord_paths))
+  levels(merged_to_plot$Description)
+    
+
+    
   mir_enrich_p_all<-ggplot(merged_to_plot,
-                           aes( x=reorder(Description, value),
+                          # aes( x=reorder(Description, value),
+                          aes( x=Description,
                                 y=value, fill=variable))+
     #geom_bar(position='dodge', stat='identity', width=0.7)+
     geom_bar(position='dodge', stat='identity', width=width_p)+
@@ -185,7 +207,7 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
     scale_fill_discrete(labels=labels_p)+
     
     coord_flip()
-
+  mir_enrich_p_all
   plot_params<-paste0(add_mirs,Npaths ,'_barplot_all',plot_all, combined_p_thresh,text_add)
   
   ggsave(paste0(merged_path_file, plot_params ,'.jpeg'),mir_enrich_p_all, dpi=300,
@@ -198,6 +220,8 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
 
 pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
+pval_to_use<-'pvalue'
+
 add_mirs=TRUE
 use_mofa=TRUE
 v2=FALSE
@@ -224,9 +248,13 @@ get_mofa_paths_and_weights<-function(fn){
         
         
         return(list(enrich_rna, enrich_proteins, enrich_mirnas))
+        
+        
   }
 
         get_mofa_vars<-function(fn,adj_weights){
+          #'
+          #'
                 vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
                 
                 
@@ -237,6 +265,7 @@ get_mofa_paths_and_weights<-function(fn){
                 weights_Var2<-adj_weights/sum(adj_weights)*100
                 weights_Var=weights_Var1*weights_Var2
                 weights_Var=weights_Var/sum(weights_Var)*100
+                print(weights_Var)
                 return(weights_Var)
           
         }
@@ -274,7 +303,13 @@ use_mofa=TRUE;run_weighted=TRUE
 f_pvals<-list()
 fns=c(1:4)
 fns=c(3)
+fns=c(3)
+pval_to_use<-'p.adjust'
+
 fns=c(1:4)
+fns=c(3)
+fns=c(1:4)
+
 
         for (fn in fns){
           
@@ -284,9 +319,9 @@ fns=c(1:4)
                 enrich_rna= list_all[[1]]
                 enrich_proteins = list_all[[2]]
                 enrich_mirnas = list_all[[3]]
+              
                 adj_weights=c(41,301,298)
                 adj_weights=c(1,1,1)
-                adj_weights=c(41,301,298)
                 
                 weights_Var=get_mofa_vars(fn, adj_weights)
                 weights_Var
@@ -302,12 +337,21 @@ fns=c(1:4)
                 ################# ACTUALLY RUN THE combination #### 
                 cors_pearson_l
                 
-                merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use )
-                merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights_Var= weights_Var, merged_path_file=merged_path_file_mofa)
+                merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,
+                                               enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use='pvalue' )
+                #merged_paths[merged_paths==1]=0.999999999999999
+                merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights_Var=weights_Var, 
+                                                          merged_path_file=merged_path_file_mofa)
+                
                 merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
+                merged_paths_fish$fish
                 #### Create plots of combined p-values ####
-                merged_paths_fish[order(merged_paths_fish$p.adjust.y),]
-                print(merged_paths_fish[order(merged_paths_fish$p.adjust.y),])
+                print(merged_paths_fish[order(merged_paths_fish$fish),])
+                
+                
+                #merged_paths_fish[order(merged_paths_fish$p.adjust.y),]
+                merged_paths_fish
+                #print(merged_paths_fish[order(merged_paths_fish$p.adjust.y),])
                 
                 create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish,title_p=title_p, merged_path_file=merged_path_file_mofa )
                 ## question: what was NOT there before and is now? 
@@ -315,12 +359,13 @@ fns=c(1:4)
                 
                # f_pvals[[fn]]<-read.csv(paste0( merged_path_file_mofa, '.csv'), row.names = 1)
                 lapply(f_pvals,dim)
+                print(lapply(f_pvals, function(x){length(which(x$fish<0.05))}))
                 
                 
                 
                 
         }              
-
+weights_Var
 ## how many      
 lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
 lapply(f_pvals, function(x){dim(x)}) 
@@ -333,6 +378,8 @@ merged_factors_mofa<-do.call(rbind,f_pvals)
 merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
 merged_factors_mofa_sig$Description<-gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
 unique(length(merged_factors_mofa_sig$Description))
+
+head(merged_results, 30)
 
 
 merged_factors_mofa_sig_uniq<-rank_mofa_paths(merged_factors_mofa_sig)
@@ -363,7 +410,7 @@ single_weights_Var=c(41,301,298)
   ################# ACTUALLY RUN THE combination #### 
   title_p=get_combination_settings(weights_var=single_weights_Var, use_mofa=FALSE,fn=fn, adj_weights=adj_weights)
   title_p
-  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use )
+  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use='pvalue' )
   merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= single_weights_Var,merged_path_file= merged_path_file_single)
   merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
   #### Create plots of combined p-values ####
@@ -483,6 +530,8 @@ create_venn(listInput_single_combination, fname_venn, main=title)
 
 
 
+
+
 ### create another list with all THREE items 
 merged_factors_mofa_ps<-merged_factors_mofa_sig$Description
 listInput_all_mods_single=lapply(listInput_all_mods_single, function(x) {gsub('-', ' ', tolower(x)) }) 
@@ -496,6 +545,9 @@ listInput_single_combination_all=append(listInput_single_combination,
 
 names(listInput_single_combination_all)[3]<-'combination'
 names(listInput_single_combination_all)[4]<-'mofa'
+
+common_mofa_combination=intersect(listInput_single_combination_all$combination, listInput_single_combination_all$mofa)
+
 
 fname_venn=paste0(out_compare,'ALL_3', 
                   int_params ,'.jpeg')
@@ -525,8 +577,7 @@ inter_mofa_union<-calculate.overlap(listInput_single_mofa)
 unique_single<-unique(inter_mofa_union$a2[!(inter_mofa_union$a2 %in%inter_mofa_union$a3)])
 unique_mofa<-unique(inter_mofa_union$a1[!(inter_mofa_union$a1 %in%inter_mofa_union$a3)])
 
-
-
+listInput_single_mofa$mofa
 ###### PLOT UNIQUE ONLY #### 
 #####
 #####
@@ -588,7 +639,7 @@ jaccard <- function(a, b) {
 }
 
 
-
+unique(listInput_truth_mofa$mofa)
 
 junion=jaccard(unique(listInput_truth_mofa$malacards), unique(listInput_truth_mofa$union))
 jmofa=jaccard(unique(listInput_truth_mofa$malacards), unique(listInput_truth_mofa$mofa))
@@ -646,4 +697,5 @@ if (use_mofa & v2){
   vars_by_mod/sum(vars_by_mod) *100
   
 }
+
 

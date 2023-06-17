@@ -12,7 +12,7 @@ library(limma)
 library(RColorBrewer)
 library(sys)
 library(GenomicRanges)
-BiocManager::install('DeSeq2')
+#BiocManager::install('DeSeq2')
 library(DESeq2)
 library("SummarizedExperiment")
 library(data.table)
@@ -34,10 +34,11 @@ combined<-read.csv2(metadata_output)
 process_mirnas=TRUE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
-        for (VISIT in c('V08')){
-          
-        
+
+for (VISIT in c('BL')){
         source(paste0(script_dir, 'ppmi/config.R'))
+  
+        
         
         raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
         raw_counts_all<-raw_counts

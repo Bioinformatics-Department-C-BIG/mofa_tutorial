@@ -25,7 +25,7 @@ suppressWarnings(library('ggplot2'))
 source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 
-VISIT='V08'
+VISIT='BL'
 process_mirnas=TRUE
 
 

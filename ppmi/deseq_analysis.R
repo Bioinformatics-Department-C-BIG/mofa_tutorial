@@ -432,7 +432,8 @@ mfc<-max(abs(deseq2ResDF$log2FoldChange))
 pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
 pmax
 xlim = c(-mfc-0.2,mfc+0.2)
-ylim = c(0,pmax+1)
+ylim = c(0,pmax+0.2)
+ylim = c(0,pmax-0.5)
 
 ns_full<-table(se_filt$COHORT_DEFINITION)
 ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
@@ -467,6 +468,7 @@ pvol<-EnhancedVolcano(deseq2ResDF,
 
 
 pvol
+
 fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)

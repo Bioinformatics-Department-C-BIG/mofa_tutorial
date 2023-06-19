@@ -89,13 +89,15 @@ rank_mofa_paths<-function(f_pvals){
         
         
         return(list(merged_results, f_pvals_merged_ord))
-}
+
+        
+        }
+
+f_pvals[2]
 
 merged_results_all<-rank_mofa_paths(f_pvals)
 merged_results<-merged_results_all[[1]]
-
 merged_results<-merged_results_all[[2]]
-
 head(merged_results, 3)
 colnames(merged_results)
 
@@ -104,24 +106,86 @@ create_combination_plot(f_pvals_merged_ord)
 ### TODO: where to obtain the gene names from??? 
 # Now they are taken from RNA 
 merged_results$geneColname<-enrich_rna[match(merged_results$Description, enrich_rna$Description),]$core_enrichment
-enr_full_all <- multienrichjam::enrichDF2enrichResult(as.data.frame(merged_results),
-                                                  keyColname =  'Description',
-                                                  geneColname ='geneColname',
-                                                  pvalueColname = 'fish',
-                                                  descriptionColname = 'Description',
-                                                  qvalue='',
-                                                  pvalueCutoff = 0.05)
 
-enr_full@result$pvalue
+enrich_res_df<-merged_results
+
+
+
+############
+
+create_enrich_result<-function(enrich_res_df){
+  #' convert pvalue comb to enrich result for further cluster profiler plotting
+  #' @param  enrich_res_df contains fish variable as pvalue
+  #' @return description
+  enr_full_all <- multienrichjam::enrichDF2enrichResult(as.data.frame(enrich_res_df),
+                                                        keyColname =  'Description',
+                                                        geneColname ='geneColname',
+                                                        pvalueColname = 'fish',
+                                                        descriptionColname = 'Description',
+                                                        qvalue='',
+                                                        pvalueCutoff = 0.05)
+  return(enr_full_all)
+}
+
+
+
+#for (fn in fns){
+fn=2
+list_all<-get_mofa_paths_and_weights(fn)
+  # also write to extra file
+  
+enrich_rna= list_all[[1]]
+enrich_proteins = list_all[[2]]
+enrich_mirnas = list_all[[3]]
+
+# outdir
+  
+use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                                'mofa_',  use_mofa_s   )
+factor1_paths<-f_pvals[[fn]]
+factor1_paths=factor1_paths[factor1_paths$fish<0.05,]
+factor1_paths=factor1_paths[c('Description', 'fish')]
+## obtain the enrich RNA of the specific factor!!! 
+weights_Var=get_mofa_vars(fn, adj_weights)
+
+
+factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
+if (which.max(weights_Var)=='miRNA'){
+  factor1_paths$geneColname<-enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
+  
+}else if(which.max(weights_Var)=='proteomics'){
+  factor1_paths$geneColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$geneID
+  
+  
+}
+
+enrich_res_df<-factor1_paths
+enrich_res_df
+
+
+
+
+
 
 
 
 inter<-inter_mofa_single
-enr_full<-enr_full_all
+enr_full<-create_enrich_result(enrich_res_df)
+
+
 # run_enrichment_plots(enr_full,results_file = 'test.txt')
-enr_full@result$ID
 enr_full@result$Description<-enr_full@result$ID
-#enr_full@result$qvalue[enr_full@result$Description %in% inter$a6]<-10 # mirnas only
+
+
+
+## EMAP by factor
+create_multi_emap(enr_full, N_EMAP=100, fname_net=paste0(merged_path_file_mofa, '_network', '.jpeg'), color_by = 'pvalue', 
+                  min_edge = 0.6)
+
+
+
+
 intersect(enr_full@result$Description, inter$a1)
 
 ### tidy up these stuff here: 
@@ -134,26 +198,45 @@ N_EMAP=100
 graphics.off()
 fname_net<-paste0(out_compare,'network_MOFA_single_',use_mofa_s, 
                   int_params ,N_EMAP,'.png')
-create_multi_emap(enr_full, N_EMAP=100, fname_net=fname_net)
+create_multi_emap(enr_full, N_EMAP=50, fname_net=fname_net)
 unique(inter$a7)
 
 
 
 graphics.off()
 
-create_multi_emap<-function(enr_full, N_EMAP=200,fname_net, title){
+create_multi_emap(enr_full, N_EMAP=100, fname_net=fname_net, min_edge = 0.99)
+
+
+create_multi_emap<-function(enr_full, N_EMAP=200,fname_net, title, color_by='qvalue', min_edge=0.2){
+  #'
+  #'
+  #'
+  #'
+  
+  
+  options(ggrepel.max.overlaps = Inf)
+  
   x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
 
   
-  jpeg(fname_net)
+ 
+  
+  
+  
+  color_by='pvalue'
+  N_EMAP=50
+  #jpeg(fname_net)
   em<-emapplot(x2, showCategory=N_EMAP,
            cex_category=1, 
            cex_label_category=0.5, 
-           color='qvalue'
+           color=color_by,
+           min_edge =min_edge
   )
-  em
-  dev.off()
-  #ggsave(filename=fname_net, plot=last_plot(),width=15, height=15, dpi=300)
+  
+  
+  ggsave(fname_net, width=9, height=9, 
+         dpi = 300)  #ggsave(filename=fname_net, plot=last_plot(),width=15, height=15, dpi=300)
 }
 
 

@@ -328,10 +328,11 @@ fns=c(1:4)
                 print(paste(sel_factors[fn]))
                 print(weights_Var, digits=2)
                 use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+                merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                                              'mofa_',  use_mofa_s   )
                 
                 title_p=get_combination_settings(weights_var=weights_Var, use_mofa=use_mofa,fn=fn, adj_weights=adj_weights)
-                merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
-                                          'mofa_',  use_mofa_s , 'w_', run_weighted  )
+                
                
                 
                 ################# ACTUALLY RUN THE combination #### 
@@ -344,8 +345,9 @@ fns=c(1:4)
                                                           merged_path_file=merged_path_file_mofa)
                 
                 merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
-                merged_paths_fish$fish
-                #### Create plots of combined p-values ####
+
+                
+                                #### Create plots of combined p-values ####
                 print(merged_paths_fish[order(merged_paths_fish$fish),])
                 
                 
@@ -371,7 +373,7 @@ lapply(f_pvals, function(x){length(which(x$fish<0.05))})
 lapply(f_pvals, function(x){dim(x)}) 
 
 
-merged_factors_mofa[merged_factors_mofa$Description =='cell cycle',]
+#merged_factors_mofa[merged_factors_mofa$Description =='cell cycle',]
 
 merged_factors_mofa<-do.call(rbind,f_pvals)
 #### Merge factors together??? #### 
@@ -423,7 +425,7 @@ single_weights_Var=c(41,301,298)
 
 
 
-
+  
 
 
 
@@ -522,7 +524,6 @@ fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_',
 
 ### def create a venn? 
 venn_list=listInput_single_combination
-
 create_venn(listInput_single_combination, fname_venn, main=title)
 
 ##########################
@@ -590,6 +591,8 @@ unique(unlist(listInput_all_mods_single), use.names=FALSE)
 ### eVALUATION 
 
 ## TRUTHSET #### 
+go_ids<-read.csv(paste0(data_dir,'ppmi/ppmi_data/go_pathway_info.txt'), sep='\t')
+
 truth_paths<-read.csv(paste0(data_dir,'ppmi/ppmi_data/known_biomarkers_overlap/GO_Biological_Process_2023_table_gene_malacards.txt' ), sep='\t')
 truth_paths_sig<-truth_paths[truth_paths$Adjusted.P.value<0.05,]
 
@@ -597,9 +600,93 @@ truth_paths_sig<-truth_paths[truth_paths$Adjusted.P.value<0.05,]
 ### preprocess alll 
 truth_paths_sig$Description<-gsub('-', ' ', tolower(truth_paths_sig$Term))
 truth_paths_sig$Description= sub( '\\ [^ ]+$', '',truth_paths_sig$Description)
-listInput_all_mods_single_l=unlist(listInput_all_mods_single, use.names = FALSE)
-listInput_all_mods_single_l=gsub('-', ' ', tolower(listInput_all_mods_single_l))
-listInput_all_mods_single_l
+listInput_all_mods_single_l=unique(unlist(listInput_all_mods_single, use.names = FALSE))
+
+
+listInput_all_mods_single_l_ids<-retrieve_path_ids(listInput_all_mods_single_l, go_ids)
+single_ps_sig_ids<-retrieve_path_ids(single_ps_sig , go_ids)
+
+write.csv(single_ps_sig_ids, paste0(merged_path_file_single, '_GOids.csv'), row.names = FALSE)
+
+write.csv(merged_factors_mofa_sig_ids, paste0(merged_path_file_mofa, '_GOids.csv'), row.names = FALSE)
+write.csv(listInput_all_mods_single_l_ids, paste0(path_file_single_union, '_GOids.csv' ), row.names = FALSE)
+
+listInput_single_combination_all$combination
+paths_description=listInput_all_mods_single_l
+
+listInput_all_mods_single_l_ids
+
+
+merged_factors_mofa_sig_ids<-retrieve_path_ids(merged_factors_mofa_sig$Description, go_ids)
+
+paths_description=merged_factors_mofa_sig$Description
+
+mofa_path_ids
+
+retrieve_path_ids <- function(paths_description, go_ids){
+  #'
+  #' Retrieves the path ids from GO from their descriptions
+  #' @param paths_description: path descriptions 
+  #' @go_ids key value table with ids and descriptions provided by George Minadakis
+  #' @return return the GO ids 
+  
+  go_ids_all<-go_ids
+  colnames(go_ids_all)<-c('ID', 'Description')
+  paths_to_id=data.frame(Description=paths_description)
+  # which(go_ids_all$Description=='gene silencing by mirna')
+  paths_to_id$Description=standardize_go_names(paths_to_id$Description)
+  enrich_rna_single$Description=standardize_go_names(enrich_rna_single$Description)
+  enrich_proteins_single$Description=standardize_go_names(enrich_proteins_single$Description)
+  
+  
+ # retrieveGO<-merge(paths_to_id, go_ids_all, by='Description',  all.x=TRUE)
+  retrieveGO<-merge(paths_to_id, enrich_rna_single, by='Description',  all.x=TRUE, suffix='rna'); retrieveGO$ID
+  retrieveGO<-merge(retrieveGO, enrich_proteins_single, by='Description',  all.x=TRUE, suffix=c('rna','prot')); 
+  retrieveGO<-merge(retrieveGO, go_ids_all, by='Description',  all.x=TRUE, suffix=c('','all'));retrieveGO$ID
+  
+  
+  retrieveGO[c('Description','IDrna', 'IDprot', 'ID')] 
+  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDrna
+  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDprot
+  
+  print(which(is.na(retrieveGO$ID)))
+  retrieveGO[is.na(retrieveGO$ID),]
+  
+  paths_to_id$Description[!(paths_to_id$Description %in% enrich_rna_single$Description)]
+  
+  enrich_mirnas_single$Description[grep('g1 dna damage checkpoint' ,enrich_mirnas_single$Description)]
+    #retrieveGO<-merge(retrieveGO, enrich_proteins, by='Description', all=TRUE)
+  
+  
+  return(retrieveGO$ID)
+  
+  
+  
+}
+
+standardize_go_names(paths_to_id)
+
+
+standardize_go_names<-function(descriptions){
+  #'
+  #'
+  #'
+  descriptions=gsub('-', ' ', tolower(descriptions))
+  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
+  
+   
+  descriptions=gsub("\\'", '', tolower(descriptions))
+  descriptions=gsub("\\,", '', tolower(descriptions))
+  
+  descriptions=gsub('\\(', '', tolower(descriptions))
+  descriptions=gsub('\\)', '', tolower(descriptions))
+  descriptions=gsub('\\/', '', tolower(descriptions))
+  
+  
+  return(descriptions)
+  
+}
+
 merged_factors_mofa_sig$Description=gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
 single_ps_sig=gsub('-', ' ', tolower(single_ps_sig))
 

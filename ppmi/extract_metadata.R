@@ -66,11 +66,18 @@ non_motor_stait<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/State-Tra
 pr_outcome<-read.csv(paste0('ppmi/ppmi_data/patient_outcomes_predictions.csv'))
 
 
+### Sleepiness scale 
+
+epworth<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Epworth_Sleepiness_Scale.csv'))
+rbd<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
+
+
+
 VISIT='BL'
 
 
 ### Eventually merge both by visit and patient
-
+## These measures are per patient and event id
 
 motor_assess_all<-merge(motor_assess, motor_assess_III, by=c('PATNO','EVENT_ID'),  suffixes = c("_M1", '_M3'),  all=TRUE); unique(motor_assess_all$PATNO)
 motor_assess_all<-merge(motor_assess_all, motor_assess_II,by=c('PATNO','EVENT_ID'),suffixes = c("", '_M2'), all=TRUE) ;unique(motor_assess_all$PATNO)
@@ -85,9 +92,15 @@ combined<-merge(combined, demographics,by=c('PATNO'),suffixes = c("", 'd'), all=
 combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
 combined<-merge(combined, non_motor_stait,by=c('PATNO','EVENT_ID'), suffixes = c("", '_st'),  all=TRUE)
 
+combined<-merge(combined, epworth,by=c('PATNO','EVENT_ID'), suffixes = c("", '_ep'),  all=TRUE)
+combined<-merge(combined, rbd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_rbd'),  all=TRUE)
+
 dim(combined)
+
+## these measures are per patient 
 combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
+
 
 dim(combined)
 
@@ -111,7 +124,8 @@ combined$OFFEXAMDT
 combined$HRPOSTMED ### hours since last dose 
 
 combined[,c('ONEXAM', 'OFFEXAM','PDMEDYN','ORIG_ENTRY_M3',  'INFODT_M3','NTEXAMDT',  'OFFEXAMDT' ,'OFFEXAMTM', 'OFFPDMEDDT', 'OFFPDMEDTM')]
-
+combined$PATNO
+rbd
 #demographics_2<-subset(demographics, select = -c(EVENT_ID))
 #combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
@@ -127,7 +141,7 @@ combined$AGE
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 write.csv2(combined,metadata_output_all, row.names = FALSE)
-dim
+
 combined$COHORT_DEFINITION
 #View(combined[combined$PATNO=='4125',])
 combined$NHY

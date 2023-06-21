@@ -163,18 +163,22 @@ dev.off()
 
 
 names(non_na_vars)[ids_to_plot]
-MOFAobject@samples_metadata$SCAU
-MOFAobject@samples_metadata$MCATOT
+MOFAobject@samples_metadata$SCAU1
+
+selected_covars[!(selected_covars %in% names(MOFAobject@samples_metadata))]
+MOFAobject@samples_metadata$STAIAD.1
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
 selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY',
-                   'NP3RIGN', 'SCAU5', 'MCATOT', 'PDSTATE', 'NP3RTCON', 'STAIAD',
+                   'NP3RIGN', 'SCAU5', 'MCATOT', 'PDSTATE', 'NP3RTCON', 
                    'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
                    'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
                    'NP3RTARU')
+# STAIAD
 labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
-             'SC-CONSTIP', 'MCATOT'  , 'PDSTATE', 'MDS3-REST_TREMOR', 'STAID:ANXIETY_TOT', 'STAIAD:FEEL RESTED', 'MDSI-ANXIOUS', 'MDS3-GAIT', 
+             'SC-CONSTIP', 'MCATOT'  , 'PDSTATE', 'MDS3-REST_TREMOR',  'STAIAD:FEEL RESTED', 'MDSI-ANXIOUS', 'MDS3-GAIT', 
              'SC-FEC INCONT', 'MDS3-SPEECH PROB', 'MDS3-RISING', 'MDS2-EAT', 'MDS3-TREMOR')
+# 'STAID:ANXIETY_TOT'
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
 MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]

@@ -1,3 +1,4 @@
+
 source(paste0('ppmi/setup_os.R'))
 #BiocManager::install('GOSemSim')
 # SCENARIOS: 
@@ -81,12 +82,15 @@ run_mofa_get_cors<-function(N_FACTORS){
   }
   MOFAobject=create_mofa(mofa_multi_to_use)
   dir.create(outdir, showWarnings = FALSE)
-  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir )
+  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=TRUE )
   
   
   
   
   ##### Basic stats
+  #'
+  #'
+  
   
   
   cors_both<-get_correlations(MOFAobject, c('CONCOHORT'))
@@ -98,18 +102,25 @@ run_mofa_get_cors<-function(N_FACTORS){
                 run_mofa_complete, N_FACTORS,cors_t , max_cor )
   
   write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+  
+  
   return(MOFAobject)
+  
+  
 }
 
 
 # n_factors best=15
 for (N_FACTORS in c(15)){
   ## MOFA parameters, set directory 
+  #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
   outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
   dir.create(outdir, showWarnings = FALSE)
   MOFAobject=run_mofa_get_cors(N_FACTORS)
+  
+  
 }
 
 

@@ -1,5 +1,5 @@
 library(dplyr)
-
+options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX
 
 metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
 combined_bl<-read.csv2(metadata_output)
@@ -44,7 +44,7 @@ graphics.off()
 get_averages<-function(combined,sub_pattern ){
   # groups and averages specific columns 
     # TODO somehwte it is considering NAs as zeros CHECK 
-    sub_pattern=paste0(sub_pattern,'[1-9]')  #For testing
+    sub_pattern=paste0(sub_pattern,'[1-9]|[A-Z]')  #For testing
     #sub_pattern='SCAU[1-9]'
   
     df<-combined[ , grepl( sub_pattern, colnames( combined ) )
@@ -69,28 +69,83 @@ get_averages<-function(combined,sub_pattern ){
 sca_assess<-combined[ , grepl( sub_pattern, colnames( combined ) ) ]
 colnames(sca_assess)
 library(stringr)
-sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2')
+sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'ESS')
 sub_pattern=paste0(sub_patterns[1],'[1-9]')  #For testing
 sub_patterns_all<-paste(sub_patterns, collapse='|')
 sub_patterns_all  
 df$SCAU26C
+
+
+# ADD THE NEW averages   
+#avs<-sapply(sub_patterns,get_averages, combined=combined)
+#combined<-cbind(combined,avs)
+#avs
+sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
+
+df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
+              & !grepl('TOT',  colnames( combined ) ) ]
+
 df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
                 & !grepl('TOT',  colnames( combined ) ) ]
-  df=as.data.frame(df)
-  df
-  df=df[sapply(df, is.numeric)]
-  df_log<-sapply(df, function(x) log2(x+10^-6))
+
+df=data.frame(df)
+
+df=df[sapply(df, is.numeric)]
+#df<-data.frame(apply(df,2, clipping_values))
+
+df_log=data.frame(sapply(df, function(x) log2(x)))
+df_log[is.infinite(as.matrix(df_log))]<-NA
+
+df_log<-data.frame(apply(df_log,2, clipping_values))
+
+#df_log=data.frame(sapply(df, function(x) log2(x)))
   
-  df_log
-  df_log=as.data.frame(df_log)
-  df_lognan_r<-sapply(df_log, is.nan)
-  df_log[df_lognan_r]<-NA
-  #combined_new<-merge(combined,df_log)
-  combined_new<-mutate(df_log,combined)
+x=df_log[,30]  
+x
+clipping_values<-function(x){
+  #'
+  #'
+  higher_val<-quantile(x, 0.98, na.rm=TRUE)
+  lower_val<-quantile(x, 0.02, na.rm=TRUE)
+  lower_val
+  x[which(x<lower_val)]=as.numeric(lower_val)
+  x[which(x>higher_val)]=as.numeric(higher_val)
+  return(x)
+  
+}
+
+df_log
+df_log
+
+min(df_log, na.rm=TRUE)
+
+
+hist(df_log[,10], na.rm=TRUE)
+shapiro.test(df_log[,10][1:100])
+df_lognan_r<-sapply(df_log, is.nan)
+df_log[df_lognan_r]<-NA
+hist(data.frame(df_log), na.rm=TRUE)
+  
+#combined_new<-merge(combined,df_log)
+combined_new<-mutate(df_log,combined)
+
+combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
+combined_filt<-combined[combined$PATNO_EVENT_ID %in% sel_sam,]
+
+
+hist(combined_filt$STAIAD1)
+hist(combined_new_filt$STAIAD1)
+hist(combined_new_filt$NP2PTOT)
+hist(combined_filt$NP2PTOT)
+
+
+  #combined_new<-mutate(df_log,combined)
   dim(combined_new)
   metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
+  
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
-
+  combined_new$SCAU40
+  combined_new$STAIAD1
   hist(combined_new$SCAU2)
   hist(combined$SCAU2)
   
@@ -102,7 +157,7 @@ df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
 # ADD THE NEW averages   
 avs<-sapply(sub_patterns,get_averages, combined=combined)
 combined<-cbind(combined,avs)
-
+avs
 
 
 

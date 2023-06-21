@@ -19,8 +19,9 @@ get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
 
 
 
-run_mofa_wrapper<-function(MOFAobject, outdir ){
+run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE ){
   ### Run mofa and write to file
+  #'
   #' @param MOFAobject 
   #' @param outdir
   #' 
@@ -39,7 +40,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir ){
   )
   
   mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
-  if (file.exists(mofa_file)){
+  if (file.exists(mofa_file) & !(force) ){
     pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
     MOFAobject<-pre_trained
     
@@ -49,6 +50,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir ){
   }
   
   return(MOFAobject)
+  
 }
 
 

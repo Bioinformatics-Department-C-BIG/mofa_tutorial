@@ -23,10 +23,13 @@ library('enrichplot' )
 
 
 
-
 #### Configuration 
 
-VISIT='V08'
+#VISIT='V08'
+# Rerun config 
+# Load Visit from the config and not from here? 
+source(paste0(script_dir, 'ppmi/config.R'))
+
 
 process_mirnas<-FALSE
 padj_T=1;log2fol_T=0.00;order_by_metric<-'log2pval'
@@ -43,7 +46,6 @@ get_genelist_byVisit<-function(VISIT){
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
   return(gene_list)
 }
-VISIT='V08'
 #source(paste0(script_dir, '/config.R'))
 gene_list<-get_genelist_byVisit(VISIT)
 

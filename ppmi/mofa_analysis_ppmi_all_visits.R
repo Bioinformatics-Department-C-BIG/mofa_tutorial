@@ -166,18 +166,34 @@ names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SCAU1
 
 selected_covars[!(selected_covars %in% names(MOFAobject@samples_metadata))]
-MOFAobject@samples_metadata$STAIAD.1
+cors[MOFAobject@samples_metadata$RBD_TOT,]
+cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
+format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
+cors_pearson
+hist(MOFAobject@samples_metadata$NP4_TOT)
+
+cors_pearson[,c('NP2PTOT', 'NP2_TOT')]
+cors[,'SCAU_TOT']
+cors[,'NP4_TOT']
+
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'NHY', 'NP3BRADY',
+
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 
+                   'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
+                   'NHY', 'NP3BRADY',
                    'NP3RIGN', 'SCAU5', 'MCATOT', 'PDSTATE', 'NP3RTCON', 
                    'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
                    'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
-                   'NP3RTARU')
+                   'NP3RTARU', 'RBD_TOT')
+                   #'DYSKIRAT')
 # STAIAD
-labels_col=c('Disease status', 'AGE', 'SEX','MDS-UPDRS-I','MDS-UPDRS-II','MDS-UPDRS-III', 'MDS-UPDRS-IV', 'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
+labels_col=c('Disease status', 'AGE', 'SEX','UPDRS-I','UPDRS-II','UPDRS-III', 'UPDRS-IV', 
+             'UPDRS-I_l','UPDRS-II_l','UPDRS-III_l', 'UPDRS-IV_l',
+             'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
              'SC-CONSTIP', 'MCATOT'  , 'PDSTATE', 'MDS3-REST_TREMOR',  'STAIAD:FEEL RESTED', 'MDSI-ANXIOUS', 'MDS3-GAIT', 
-             'SC-FEC INCONT', 'MDS3-SPEECH PROB', 'MDS3-RISING', 'MDS2-EAT', 'MDS3-TREMOR')
+             'SC-FEC INCONT', 'MDS3-SPEECH PROB', 'MDS3-RISING', 'MDS2-EAT', 'MDS3-TREMOR', 'RBD_TOT')
+           #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
 
 names(MOFAobject@samples_metadata[selected_covars])<-labels_col
@@ -189,15 +205,12 @@ correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot 
 dev.off()
 
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 700+length(selected_covars)*20, height=1000, res=300)
-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "r",labels_col=labels_col )
-dev.off()
 ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
 ## this is the othet
 # = non_na_ids_to_plot[-ind_re]
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
-     width =N_FACTORS*100, height=  length(selected_covars)*150, res=300)
+     width = 700+length(selected_covars)*20, height=1100, res=300)
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
                                   plot = "log_pval",
                                  # alpha=0.000000001,
@@ -206,9 +219,13 @@ dev.off()
 
 cors_pearson[,c('DYSKIRAT')]
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = length(selected_covars)*70, height=1000, res=300)
+MOFAobject_nams<-MOFAobject
+colnames(MOFAobject_nams@samples_metadata)
+hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
 
-correlate_factors_with_covariates(MOFAobject,covariates =labels_col,
+
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 700+length(selected_covars)*20, height=1100, res=300)
+correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars,
                                   plot = "r", 
                                   col.lim=c(-0.5, 0.5), 
                                   is.cor=FALSE)

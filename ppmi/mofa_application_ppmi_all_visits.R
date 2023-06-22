@@ -37,7 +37,16 @@ source(paste0(script_dir, '/ppmi/mofa_config.R'))
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
-combined_bl<-read.csv2(metadata_output)
+combined_bl_log<-read.csv2(metadata_output)
+combined_bl_log$NP2_TOT
+
+combined_bl<-combined_all_original
+combined_bl<-combined_bl_log
+
+combined_bl_log$RBD_TOT
+#combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
+#combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
+
 scale_views=TRUE
 
 
@@ -80,14 +89,21 @@ run_mofa_get_cors<-function(N_FACTORS){
   mofa_multi_to_use<- if(run_mofa_complete){mofa_multi_to_use=mofa_multi_complete}else{
     mofa_multi_to_use=mofa_multi
   }
+  
+  if (length(VISIT)>1){
+    MOFAobject <- create_mofa(mofa_multi_to_use, groups= mofa_multi_to_use$EVENT_ID)
+  }
+  
   MOFAobject=create_mofa(mofa_multi_to_use)
   dir.create(outdir, showWarnings = FALSE)
-  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=TRUE )
+  
+  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE )
   
   
   
   
   ##### Basic stats
+  #'
   #'
   #'
   
@@ -121,11 +137,27 @@ for (N_FACTORS in c(15)){
   MOFAobject=run_mofa_get_cors(N_FACTORS)
   
   
+  
 }
 
+combined_bl_log_sel$RBD_TOT
+
+sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
+combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
+combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID),]
+combined_bl_log_sel$RBD_TOT
+meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
+meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
+
+meta_merged
+meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
+MOFAobject@samples_metadata=meta_merged_ord
+MOFAobject@samples_metadata$RBD_TOT
 
 
-
+dim(MOFAobject@samples_metadata)
+meta_merged$PATNO_EVENT_ID
+sel_sam
 
 
 

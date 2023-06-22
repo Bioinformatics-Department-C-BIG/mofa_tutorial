@@ -25,18 +25,21 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE ){
   #' @param MOFAobject 
   #' @param outdir
   #' 
-  if (length(VISIT)>1){
-    MOFAobject <- create_mofa(mofa_multi_complete, groups= mofa_multi_complete$EVENT_ID)
-  }
+
+  #MOFAobject <- create_mofa(mofa_multi_complete)
+  
   
   model_opts <- get_default_model_options(MOFAobject)
   data_opts <- get_default_data_options(MOFAobject)
   model_opts$num_factors <- N_FACTORS
   data_opts
   data_opts$scale_views=scale_views
+  train_opts<-get_default_training_options(MOFAobject)
+  train_opts
   MOFAobject <- prepare_mofa(MOFAobject,
                              model_options = model_opts,
-                             data_options = data_opts
+                             data_options = data_opts, 
+                             training_options = train_opts
   )
   
   mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
@@ -46,12 +49,21 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE ){
     
     
   }else {
-    MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), use_basilisk = TRUE)
+    
+    MOFAobject <- run_mofa(MOFAobject, outfile = paste0(outdir,'mofa_ppmi.hdf5'), 
+                           use_basilisk = TRUE)
   }
+  
   
   return(MOFAobject)
   
 }
+
+
+#outdir1<-'D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE - Copy/'
+#pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
+
+
 
 
 

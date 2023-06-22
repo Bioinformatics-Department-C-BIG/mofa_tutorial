@@ -241,26 +241,29 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p='', title_p=''){
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
+                               process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
   
   require(clusterProfiler)
   
   require('GOfuncR')
   require(DOSE)
   
-  
+  #gse=gse_mofa_rna; 
+  #geneList=gene_list_ord_g
+  #N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
   
   N=25
   ## TODO: ADD FACET IF SIGNED 
-  if (length(showCategory_list)>1){
-    print('Filter by selected category')
-    N_DOT<-showCategory_list
-    N_TREE<-showCategory_list
-    N_NET<-showCategory_list
-    N_EMAP<-showCategory_list
-    
+  #if (length(showCategory_list)>1){
+  #  print('Filter by selected category')
+  #  N_DOT<-showCategory_list
+  #  N_TREE<-showCategory_list
+  #  N_NET<-showCategory_list
+  #  N_EMAP<-showCategory_list
+  ##  
     write_n=FALSE
-  }
+  
   
   ### print a signed and unsigned dotplot 
   # because it does not make sense if we dont rank by logFC
@@ -342,18 +345,22 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   }
   
   
-  p1_net <- cnetplot(gse_x)
-  
+  p1_net <- cnetplot(gse_x, foldChange =  geneList)
+  show(p1_net)
   node_label<-"gene"
   node_label<-"category"
   node_label<-"all"
-  
+  graphics.off()
   
   p2_net<- cnetplot(gse_x,
                     node_label=node_label,
-                    cex_label_category = 1.2, showCategory=N_NET)
+                    cex_label_category = 1.2,
+                    showCategory=N_NET, 
+                    foldChange =  geneList)
   
   p2_net
+  show(p2_net)
+  #graphics.off()
   if (is.numeric(N_NET)){write_n=N_NET}
   
   ggsave(paste0(results_file, '_geneconcept_', node_label, '_',write_n, '.jpeg'), width=8, height=8)

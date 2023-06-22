@@ -40,19 +40,22 @@ graphics.off()
 ### Create new variables from the averages 
 ## scopa does not have a total - maybe just add scopa total ? 
 # because the average is the same as np3total
-
-get_averages<-function(combined,sub_pattern ){
-  # groups and averages specific columns 
-    # TODO somehwte it is considering NAs as zeros CHECK 
-    sub_pattern=paste0(sub_pattern,'[1-9]|[A-Z]')  #For testing
+sub_pattern
+get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
+  #' groups and averages specific columns 
+  #' TODO somehwte it is considering NAs as zeros CHECK 
+  #' @param sub_pattern
+    if (is.null(sub_pattern_detect)){
+      sub_pattern_detect=paste0(sub_pattern,'[1-9]|', sub_pattern,'[A-Z]')  #For testing
+      
+    }
     #sub_pattern='SCAU[1-9]'
   
-    df<-combined[ , grepl( sub_pattern, colnames( combined ) )
+    df<-combined[ , grepl( sub_pattern_detect, colnames( combined ) )
                           & !grepl('TOT',  colnames( combined ) ) ]
 
-    print(colnames(df))
     df<-as.data.frame(apply(df, 2, as.numeric))
-    
+    df
     ind <- rowSums(is.na(df)) == ncol(df)
 
     df$sca_tot<-rowSums(df, na.rm = TRUE)
@@ -61,103 +64,137 @@ get_averages<-function(combined,sub_pattern ){
     df$sca_tot[ind]<-NA 
     #combined$PATNO = as.factor(combined$PATNO )
     return(df$sca_tot)
-    print(df$sca_tot)
 
 }
 
 
-sca_assess<-combined[ , grepl( sub_pattern, colnames( combined ) ) ]
-colnames(sca_assess)
 library(stringr)
-sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'ESS')
-sub_pattern=paste0(sub_patterns[1],'[1-9]')  #For testing
-sub_patterns_all<-paste(sub_patterns, collapse='|')
-sub_patterns_all  
-df$SCAU26C
 
 
-# ADD THE NEW averages   
-#avs<-sapply(sub_patterns,get_averages, combined=combined)
-#combined<-cbind(combined,avs)
+############
+
+
+
+# REM SLEEP BEHAVIOR 
+#
+add_rbd=c('PTCGBOTH',	'DRMVIVID',	'DRMAGRAC',	'DRMNOCTB',	'SLPLMBMV',	'SLPINJUR',	'DRMVERBL',	'DRMFIGHT',	'DRMUMV'	,
+          'DRMOBJFL','MVAWAKEN',	'DRMREMEM',	'SLPDSTRB',	'STROKE',	'HETRA'	,'PARKISM',	'RLS'	,'NARCLPSY',	'DEPRS',	'EPILEPSY',	'BRNINFM'	,'CNSOTH')
+sub_pattern_detect=add_rbd
+sub_patterns_rbd<-paste(add_rbd, collapse='|')
+rbd_tot<-get_totals(combined=combined, sub_pattern = 'null', sub_pattern_detect = sub_patterns_rbd)
+
+combined$RBD_TOT=rbd_tot
 #avs
+
+combined$RBD_TOT
+
+
+
+### TODO: STAIAD SHOULD NOT BE ADDED since some of the variables have reverse health outcome 
+sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'NP4', 'ESS')
+#sub_pattern=paste0(sub_patterns[1],'[1-9]')  #For testing
+
+
+combined$STAIAD10
+combined$NP2_TOT
+combined$NP2PTOT
+# 1. ADD THE TOTALS TO THE  METADATA  
+avs<-sapply(sub_patterns,get_totals, combined=combined)
+colnames(avs)<-paste0(colnames(avs), '_TOT')
+
+
+### TODO: FIX THIS HERE IT CREATES PROBLEM IF  I keep adding and there are duplicates
+combined<-cbind(combined,avs)
+### from now on work on new vars!! 
+
+
+## LOG only the TOTALS !! 
+#'
+#'
 sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
-
-df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
-              & !grepl('TOT',  colnames( combined ) ) ]
-
-df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
-                & !grepl('TOT',  colnames( combined ) ) ]
-
-df=data.frame(df)
-
-df=df[sapply(df, is.numeric)]
-#df<-data.frame(apply(df,2, clipping_values))
-
-df_log=data.frame(sapply(df, function(x) log2(x)))
-df_log[is.infinite(as.matrix(df_log))]<-NA
-
-df_log<-data.frame(apply(df_log,2, clipping_values))
-
-#df_log=data.frame(sapply(df, function(x) log2(x)))
-  
-x=df_log[,30]  
-x
 clipping_values<-function(x){
   #'
   #'
-  higher_val<-quantile(x, 0.98, na.rm=TRUE)
-  lower_val<-quantile(x, 0.02, na.rm=TRUE)
+  #' @param 
+  #'
+  higher_val<-quantile(x, 0.99, na.rm=TRUE)
+  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
+  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
+  
+  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
   lower_val
+  higher_val
   x[which(x<lower_val)]=as.numeric(lower_val)
+  
   x[which(x>higher_val)]=as.numeric(higher_val)
   return(x)
   
 }
+sub_patterns_2=c(sub_patterns, 'RBD')
 
-df_log
-df_log
+sub_patterns_all<-paste(sub_patterns_2, collapse='|')
+sub_patterns_all  
 
-min(df_log, na.rm=TRUE)
+df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
+                & grepl('_TOT',  colnames( combined ) ) ]
+
+df=data.frame(df)
+
+df$RBD_TOT
+colnames(df)
+df=df[sapply(df, is.numeric)]
+df_clipped<-data.frame(apply(df,2, clipping_values))
+df_clipped
+
+### We choose df_log in the end 
+df_log=data.frame(sapply(df, function(x) log2(x+1)))
+
+df_log_clipped=data.frame(sapply(df_clipped, function(x) log2(x)))
+df_log_clipped_after<-data.frame(apply(df_log,2, clipping_values))
 
 
-hist(df_log[,10], na.rm=TRUE)
-shapiro.test(df_log[,10][1:100])
-df_lognan_r<-sapply(df_log, is.nan)
-df_log[df_lognan_r]<-NA
-hist(data.frame(df_log), na.rm=TRUE)
+  
+x=df_log[,1]  
+apply(df, 2, function(x) {plot(hist(x))})
+df[,1]
+hist(df[,1])
+hist(df_log[,1])
+hist(df_log[,'RBD_TOT'])
+
+shapiro.test(df_log[,5][1:100])
+shapiro.test(df_log_clipped[,5][1:100])
+
+hist(df_log_clipped[,1])
+hist(df_log_clipped_after[,1])
+
+x=df[,5]
+
+
+
+#### ATTEMPT TO SELECT SAMPLES BECAUSE OF PERCENTILES THAT WE DID NOT USE 
+df_log_sel=df_log[combined$PATNO_EVENT_ID %in% sel_sam,]
+
+hist(as.matrix(df_log_sel))
+
+#### Replace variables with the log form 
   
 #combined_new<-merge(combined,df_log)
-combined_new<-mutate(df_log,combined)
-
+# careful to not fail here
+### todo
+combined_new<-mutate(combined, df_log)
+combined_new$RBD_TOT
 combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 combined_filt<-combined[combined$PATNO_EVENT_ID %in% sel_sam,]
 
+combined_new$RBD_TOT
 
-hist(combined_filt$STAIAD1)
-hist(combined_new_filt$STAIAD1)
-hist(combined_new_filt$NP2PTOT)
-hist(combined_filt$NP2PTOT)
-
-
-  #combined_new<-mutate(df_log,combined)
   dim(combined_new)
   metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
   
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
-  combined_new$SCAU40
-  combined_new$STAIAD1
-  hist(combined_new$SCAU2)
-  hist(combined$SCAU2)
   
-  hist(df_log$SCAU2)
+  combined_new$RBD_TOT
   
-  # conevrt to apply 
-#combined[,sub_pattern]<-
-  
-# ADD THE NEW averages   
-avs<-sapply(sub_patterns,get_averages, combined=combined)
-combined<-cbind(combined,avs)
-avs
 
 
 

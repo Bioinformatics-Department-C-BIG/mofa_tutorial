@@ -74,6 +74,7 @@ pvalueCutoff=1
 list1= vector("list", length = nfactors)
 list_proteins= vector("list", length = nfactors)
 list_mirs= vector("list", length = nfactors)
+list1_genes= vector("list", length = nfactors)
 
 dir.create(paste0(outdir, '/enrichment/'))
 
@@ -88,6 +89,7 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 #}else{
 ### ONLY run on the server as rstudio script , there is a problem in Rstudio
 #sel_factors=1:8
+just_load=TRUE
 if (!isRStudio){
   
       for (factor in sel_factors){
@@ -98,19 +100,22 @@ if (!isRStudio){
                   
                    
                #  for (view in c( 'RNA')){
-                   
+                   #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
                     if (view=='RNA'){
                      
                       ### Run RNA 
-                      if (FALSE){
+                      if (just_load){
                         
                          # if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                     #      if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
                             ## to RERUN WITH NEW FACTORS YOU need to force it
+                        
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
+                            list1_genes[[factor]]<-gene_list_ord
+                            
                           }else{
                             gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
                             
@@ -129,6 +134,7 @@ if (!isRStudio){
                                 
                                 gse_mofa@result$Description[which(gse_mofa@result$p.adjust<0.05)]
                                 list1[[factor]]<-gse_mofa
+                                list1_genes[[factor]]<-gene_list_ord
                                 saveRDS(list1, paste0(mofa_enrich_rds, 'gene'))
                             
                           }
@@ -141,7 +147,7 @@ if (!isRStudio){
                   
                   
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
-                  if (FALSE){
+                  if (just_load){
 
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
@@ -171,7 +177,7 @@ if (!isRStudio){
               if (view=='miRNA'){
                 
                 
-                if (FALSE){
+                if (just_load){
                   
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
                 
@@ -257,6 +263,7 @@ if (run_plots){
 run_ORA=FALSE
 ## or LOAD GSE RESULTS HERE 
 
+list1_genes
 
 for (factor in sel_factors_to_p){
   results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
@@ -302,15 +309,18 @@ for (factor in sel_factors_to_p){
 sel_factors_to_p
 for (factor in sel_factors_to_p){
   process_mirnas=FALSE
-  
+  #factor=3
   results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
   gse_mofa_rna=list1[[factor]]
+  gene_lists<-list1_genes[[factor]]
   write.csv(as.data.frame(gse_mofa_rna@result), paste0(results_file_mofa, '.csv'))
-  
+  gene_list_ord_g<-list1_genes[[factor]]
   ### to run mofa results
-  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50)
+  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
+  run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =gene_list_ord_g  )
+  
 } 
-
+gse_mofa_rna@result$
 
 list_proteins[[1]]
 

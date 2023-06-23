@@ -124,6 +124,12 @@ tot_cor_t=5
 ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
 non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
 non_na_ids_to_plot
+cors[, '']
+
+MOFAobject@samples_metadata$DATSCAN_CAUDATE_L
+
+#### All associations that are not NA 
+
 
 jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
 correlate_factors_with_covariates(MOFAobject,
@@ -133,11 +139,13 @@ correlate_factors_with_covariates(MOFAobject,
 )
 dev.off()
 graphics.off()
- keep<-!(names(ids_to_plot ) %in% c('REC_ID_moca', 'REC_ID_st'))
- ids_to_plot<-ids_to_plot[keep]
+
+to_remove_covars<-grepl( 'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO', non_na_ids_to_plot)
+non_na_ids_to_plot_cleaned<-non_na_ids_to_plot[!to_remove_covars]
+
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*30, height=2000, res=300)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates =non_na_ids_to_plot, 
+                                  covariates =non_na_ids_to_plot_cleaned, 
                                   plot = "log_pval"
                                   
 )
@@ -147,14 +155,17 @@ dev.off()
 
 #ids_to_plot_strict
 #ids_to_plot_strict=c('SEX', 'AGE_AT_VISIT')
-ids_to_plot_strict_1<-ids_to_plot_strict[grepl( 'TOT|AGE|SEX|COHORT',names(ids_to_plot_strict))]
-
-
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'),width = length(ids_to_plot_strict_1)*50,
+graphics.off()
+to_remove_covars<-grepl( 'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO', names(ids_to_plot_strict))
+to_remove_covars
+ids_to_plot_strict_cleaned<-ids_to_plot_strict[!to_remove_covars]
+to_remove_covars
+ids_to_plot_strict_cleaned
+ids_to_plot_strict_cleaned
+jpeg(paste0(outdir, '/factors_covariates_only_nonzero_strict_pval','.jpeg'),width =700+length(ids_to_plot_strict)*20,
      height = 800, res=150)
 correlate_factors_with_covariates(MOFAobject,
-                                  covariates = names(non_na_vars)[ids_to_plot_strict], 
+                                  covariates = names(ids_to_plot_strict_cleaned), 
                                   plot = "log_pval"
                                   
 )
@@ -163,46 +174,83 @@ dev.off()
 
 
 names(non_na_vars)[ids_to_plot]
-MOFAobject@samples_metadata$SCAU1
+MOFAobject@samples_metadata$SNCA_rs356181
 
 selected_covars[!(selected_covars %in% names(MOFAobject@samples_metadata))]
+#### correlations between factors 
+cors[,c('stai_state' )]
+format(cors_pearson[,c('stai_trait')], digits=2)
+
 cors[MOFAobject@samples_metadata$RBD_TOT,]
 cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
 format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
-cors_pearson
-hist(MOFAobject@samples_metadata$NP4_TOT)
 
-cors_pearson[,c('NP2PTOT', 'NP2_TOT')]
-cors[,'SCAU_TOT']
+
+hist(log2(MOFAobject@samples_metadata$td_pigd_on))
+MOFAobject@samples_metadata$MCACLCKH
+MOFAobject@samples_metadata$moca
+MOFAobject@samples_metadata[,c('con_putamen', 'COHORT', 'updrs3_score_on', 'td_pigd_old_on', 'td_pigd_old', 'cogstate', 'moca', 
+                               'ptau', 'ess_cat')]
+
+cors_pearson[,c('NP2PTOT', 'NP2_TOT', 'con_putamen')]
+cors[,'stai_state']
+cors[,'updrs3_score_on']
+
 cors[,'NP4_TOT']
+cors[,'ess_cat']
 
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
 
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 
+selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
-                   'NP3RIGN', 'SCAU5', 'MCATOT', 'PDSTATE', 'NP3RTCON', 
-                   'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
+                   'NP3RIGN', 'SCAU5', 'MCATOT',
+                   'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 'ptau', 'ess_cat', 
+                   'HVLTRDLY',
+                   'PDSTATE', 'NP3RTCON', 
+                  'stai_state', 'stai_trait'  ,'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
                    'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
-                   'NP3RTARU', 'RBD_TOT')
+                   'NP3RTARU', 'RBD_TOT', 
+                  'con_putamen', 
+                 'td_pigd_old_on' )
                    #'DYSKIRAT')
 # STAIAD
-labels_col=c('Disease status', 'AGE', 'SEX','UPDRS-I','UPDRS-II','UPDRS-III', 'UPDRS-IV', 
-             'UPDRS-I_l','UPDRS-II_l','UPDRS-III_l', 'UPDRS-IV_l',
+labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_ON',
+             'MDS1_l','MDS2_l','MDS3_l', 'MDS4_l',
              'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
-             'SC-CONSTIP', 'MCATOT'  , 'PDSTATE', 'MDS3-REST_TREMOR',  'STAIAD:FEEL RESTED', 'MDSI-ANXIOUS', 'MDS3-GAIT', 
-             'SC-FEC INCONT', 'MDS3-SPEECH PROB', 'MDS3-RISING', 'MDS2-EAT', 'MDS3-TREMOR', 'RBD_TOT')
+             'SC-CONSTIP', 'MCA-cognit-tot'  , 
+             'MCA-verb fluency','MCA-visuoconstruct', 'cogstate', 'SEM fluency', 'SEM FL FRUIT',
+             'PTAU', 'EPWORTH sleep cat' ,
+             'HOP VERB LEARNING-recall', 
+             'PDSTATE', 'MDS3-REST TREMOR', 'STAI_STATE', 'STAI_TRAIT', 'STAI-FEEL RESTED', 'MDSI-anxious', 'MDS3-GAIT', 
+             'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
+             'PUTAMEN', 
+             'TD/PIGD dominant')
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
+graphics.off()
+MOFAobject_gs2<-MOFAobject
+MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
+MOFAobject@samples_metadata$HOE
 
-names(MOFAobject@samples_metadata[selected_covars])<-labels_col
-MOFAobject@samples_metadata[labels_col]<-MOFAobject@samples_metadata[selected_covars]
 
 colnames(MOFAobject@samples_metadata)[selected_covars]
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 700+length(selected_covars)*20, height=1100, res=300)
-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",labels_col=labels_col )
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 800+length(selected_covars)*20, height=1200, res=300)
+P2<-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",
+                                  labels_col=labels_col )
 dev.off()
+
+
+colnames(MOFAobject@samples_metadata)[selected_covars]
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_transpose_strict','.jpeg'),
+     height = 800+length(selected_covars)*20, width=1200, res=300)
+P2<-correlate_factors_with_covariates(MOFAobject_gs2,covariates = labels_col,
+                                      plot = "log_pval", transpose=TRUE
+                                       )
+dev.off()
+
+plot(P2+coord_flip())
 
 
 ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))

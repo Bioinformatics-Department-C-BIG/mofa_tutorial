@@ -44,6 +44,7 @@ combined_bl<-combined_all_original
 combined_bl<-combined_bl_log
 
 combined_bl_log$RBD_TOT
+combined_bl_log$stai_state
 #combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 #combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 
@@ -140,7 +141,6 @@ for (N_FACTORS in c(15)){
   
 }
 
-combined_bl_log_sel$RBD_TOT
 
 sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
 combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]

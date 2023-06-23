@@ -40,7 +40,6 @@ graphics.off()
 ### Create new variables from the averages 
 ## scopa does not have a total - maybe just add scopa total ? 
 # because the average is the same as np3total
-sub_pattern
 get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
   #' groups and averages specific columns 
   #' TODO somehwte it is considering NAs as zeros CHECK 
@@ -130,7 +129,8 @@ clipping_values<-function(x){
   return(x)
   
 }
-sub_patterns_2=c(sub_patterns, 'RBD')
+curated$con_caudate
+sub_patterns_2=c(sub_patterns, 'RBD', 'stai_state', 'stai_trait')
 
 sub_patterns_all<-paste(sub_patterns_2, collapse='|')
 sub_patterns_all  
@@ -193,7 +193,7 @@ combined_new$RBD_TOT
   
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
   
-  combined_new$RBD_TOT
+  hist(log2(combined_new$stai_state))
   
 
 

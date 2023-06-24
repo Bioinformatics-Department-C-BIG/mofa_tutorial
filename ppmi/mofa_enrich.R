@@ -88,8 +88,10 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
   
 #}else{
 ### ONLY run on the server as rstudio script , there is a problem in Rstudio
-#sel_factors=1:8
+sel_factors=1:15
 just_load=TRUE
+just_load=FALSE
+
 if (!isRStudio){
   
       for (factor in sel_factors){
@@ -305,7 +307,7 @@ for (factor in sel_factors_to_p){
   
 }
 
-
+### RNAS ####
 sel_factors_to_p
 for (factor in sel_factors_to_p){
   process_mirnas=FALSE
@@ -338,8 +340,15 @@ for (factor in sel_factors_to_p){
     process_mirnas=FALSE
     process_mofa=TRUE
     dim(gse_mofa_sig)
+    plot_only_sig=TRUE
+    if (plot_only_sig){
+      gse_mofa_to_plot=gse_mofa_sig
+    }else{
+      gse_mofa_to_plot=gse_mofa
+      
+    }
     #& vars_by_factor[,'proteomics'][factor]>1
-    if  (dim(gse_mofa_sig)[1]>2 ){
+    if  (dim(gse_mofa_to_plot)[1]>2 ){
       print(paste(factor,'sig'))
       which(gse_mofa@result$p.adjust<0.05)
       gse_mofa

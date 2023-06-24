@@ -91,12 +91,12 @@ source('ppmi/mofa_utils.R')
 
 get_top_cors<-function(MOFAobject){
   cors_both<-get_correlations(MOFAobject, names(non_na_vars))
-  cors<-cors_both[[1]]
-  cors_pearson<-cors_both[[2]]
-  sel_factors<-abs(cors_pearson[,'CONCOHORT'])>0.15
+  cors_top<-cors_both[[1]]
+  cors_pearson_top<-cors_both[[2]]
+  sel_factors<-abs(cors_pearson_top[,'CONCOHORT'])>0.15
   
-  round(cors[,'CONCOHORT'][sel_factors], digits=2)
-  round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2)
+  round(cors_top[,'CONCOHORT'][sel_factors], digits=2)
+  round(cors_pearson_top[,'CONCOHORT'][sel_factors], digits=2)
 }
 
 
@@ -156,7 +156,8 @@ dev.off()
 #ids_to_plot_strict
 #ids_to_plot_strict=c('SEX', 'AGE_AT_VISIT')
 graphics.off()
-to_remove_covars<-grepl( 'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO', names(ids_to_plot_strict))
+to_remove_regex<-'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO'
+to_remove_covars<-grepl( to_remove_regex, names(ids_to_plot_strict))
 to_remove_covars
 ids_to_plot_strict_cleaned<-ids_to_plot_strict[!to_remove_covars]
 to_remove_covars
@@ -206,27 +207,27 @@ selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
                    'NP3RIGN', 'SCAU5', 'MCATOT',
-                   'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 'ptau', 'ess_cat', 
+                   'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 'ptau', 'abeta', 'ess_cat', 
                    'HVLTRDLY',
                    'PDSTATE', 'NP3RTCON', 
                   'stai_state', 'stai_trait'  ,'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
                    'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
                    'NP3RTARU', 'RBD_TOT', 
                   'con_putamen', 
-                 'td_pigd_old_on' )
+                 'td_pigd_old_on', 'pd_med_use' )
                    #'DYSKIRAT')
 # STAIAD
 labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_ON',
-             'MDS1_l','MDS2_l','MDS3_l', 'MDS4_l',
+             'MDS1_log','MDS2_log','MDS3_log', 'MDS4_log',
              'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
              'SC-CONSTIP', 'MCA-cognit-tot'  , 
              'MCA-verb fluency','MCA-visuoconstruct', 'cogstate', 'SEM fluency', 'SEM FL FRUIT',
-             'PTAU', 'EPWORTH sleep cat' ,
+             'ptau','abeta' ,'EPWORTH sleep cat' ,
              'HOP VERB LEARNING-recall', 
              'PDSTATE', 'MDS3-REST TREMOR', 'STAI_STATE', 'STAI_TRAIT', 'STAI-FEEL RESTED', 'MDSI-anxious', 'MDS3-GAIT', 
              'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
              'PUTAMEN', 
-             'TD/PIGD dominant')
+             'TD/PIGD dominant', 'Medication use')
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
 graphics.off()
@@ -396,12 +397,16 @@ x_cor_t=2
 i=111
 
 
-for (i in 1:dim(positive_cors)[2]){
+positive_cors_to_plot<-positive_cors[,!grepl(tolower(to_remove_regex),tolower(colnames(positive_cors))) ]
+positive_cors_to_plot
+grepl(positive_cors,names(positive_cors_to_plot))
+
+for (i in 1:dim(positive_cors_to_plot)[2]){
   #' fix find 2d plots 
   #' i= index of the clinical variable 
 
-  names<-colnames(positive_cors)
-  x_cors<-positive_cors[,i]
+  names<-colnames(positive_cors_to_plot)
+  x_cors<-positive_cors_to_plot[,i]
   print(names[i])
   ### does the variable relate to two factors? 
   pos_factors<-names(which(x_cors>0))
@@ -573,16 +578,14 @@ ggsave(FNAME, width = 4, height=4, dpi=100)
 
 
 
-##### plot weights 
+##### plot weights ####
 library(grid)
 library(gridExtra)
 v_set=c()
-v_set=c()
 
 view='miRNA'
-factor=8
 
-fps=8
+fps=MOFAobject@dimensions$K
 vps
 fps
 seq(1,fps)
@@ -600,7 +603,7 @@ dir.create(paste0(outdir, 'top_weights/'))
 
 graphics.off()
 
-
+#####################
 #### 3. Save heatmaps and top weighted feaqtures ####
 dir.create(paste0(outdir, '/heatmap/'))
 views[i]
@@ -661,6 +664,7 @@ for (i in seq(1,vps)){
 
 
 vps
+fps
 # rename because value is too long in the legend
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'

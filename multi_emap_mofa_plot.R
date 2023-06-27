@@ -8,8 +8,9 @@ go_ids$GOID
 go_ids$TERM[grep( 'nervous system development', go_ids$TERM )]
 go_ids$TERM_standardized=standardize_go_names(go_ids$TERM)
 
+f_pvals_sig<-lapply(f_pvals, function(x){x[x$fish<0.05,]})
+f_pvals_merged<-f_pvals_sig %>% reduce(full_join , by='Description')
 
-f_pvals_merged<-f_pvals %>% reduce(left_join , by='Description')
 dim(f_pvals_merged)
 
 f_pvals_merged 
@@ -34,7 +35,7 @@ grep( 'GO:0007399',input_gene_overlap$node2)
 which(input_gene_overlap$common<2)
 mofa_net<-input_gene_overlap[input_gene_overlap$common>2,]
 hist(mofa_net$edgeScore);
-mofa_net<-mofa_net[mofa_net$edgeScore>0.05,]
+mofa_net<-mofa_net[mofa_net$edgeScore>0.06,]
 
 hist(log2(mofa_net$edgeScore*100))
 mofa_net$node1 
@@ -85,14 +86,18 @@ which(is.na(vis_emap_mofa$nodes$factor))
 unique(vis_emap_mofa$nodes$factor)
 
 unique(f_pvals_merged_fs$Least_factor)
-cols_pal<-RColorBrewer::brewer.pal(4, name='Spectral') # 2: orange 3: green 
-## fact:1: red 3: orange , 4: green, 14: blue 
-# pvalue<- factor 14, 1 , 3,  4
+unique(f_pvals_merged_fs$Least_factor)
 
-mapdf <- data.frame(old=c("fish.x"  , "fish.y.y" ,"fish.y", 'fish.x.x'),new=cols_pal)
+cols_pal<-RColorBrewer::brewer.pal(4, name='Spectral') # red, 2: orange 3: green , blue
+cols_pal 
+## fact:1: red 3: orange , 4: green, 14: blue 
+# pvalue<- factor  1 , 3,  4, 14 
+
+mapdf <- data.frame(old=c("fish.x"  , "fish.y" ,"fish.x.x", 'fish.y.y'),new=cols_pal)
 vis_emap_mofa$nodes$color<-mapdf$new[match(vis_emap_mofa$nodes$groups, mapdf$old)]
 #vis_emap_mofa$nodes$group<-vis_emap_mofa$nodes$color
 unique(vis_emap_mofa$nodes$groups)
+unique(vis_emap_mofa$nodes$label)
 
 
 visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges)%>%

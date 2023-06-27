@@ -34,8 +34,7 @@ rank_mofa_paths<-function(f_pvals){
 
         merge(f_pvals[[1]],f_pvals[[2]], by='Description' )
         f_pvals_merged<-f_pvals %>% reduce(inner_join, by='Description')
-        
-        
+
         
         f_pvals_merged$rank1[order(f_pvals_merged$fish.x)]<-1:nrow(f_pvals_merged)
         f_pvals_merged$rank2[order(f_pvals_merged$fish.y)]<-1:nrow(f_pvals_merged)
@@ -48,7 +47,6 @@ rank_mofa_paths<-function(f_pvals){
         ranks<-f_pvals_merged[,c('rank1', 'rank2', 'rank3', 'rank4')]
         vars_by_factor_sel<-rowSums(vars_by_factor)[sel_factors]
         vars_by_factor_sel<-vars_by_factor_sel/sum(vars_by_factor_sel)
-        vars_by_factor_sel*cors
         cors_by_factor_sel<-abs(cors_pearson_l[sel_factors,'CONCOHORT'])
                                 
         weighted_Ranks<-data.frame(mapply(`*`,ranks,cors_by_factor_sel))
@@ -97,7 +95,7 @@ f_pvals[2]
 
 merged_results_all<-rank_mofa_paths(f_pvals)
 merged_results<-merged_results_all[[1]]
-merged_results<-merged_results_all[[2]]
+#merged_results<-merged_results_all[[2]]
 head(merged_results, 3)
 colnames(merged_results)
 
@@ -129,39 +127,99 @@ create_enrich_result<-function(enrich_res_df){
 
 
 
-#for (fn in fns){
-fn=2
-list_all<-get_mofa_paths_and_weights(fn)
-  # also write to extra file
-  
-enrich_rna= list_all[[1]]
-enrich_proteins = list_all[[2]]
-enrich_mirnas = list_all[[3]]
+for (fn in fns){
+        list_all<-get_mofa_paths_and_weights(fn)
+          # also write to extra file
+          
+        enrich_rna= list_all[[1]]
+        enrich_proteins = list_all[[2]]
+        enrich_mirnas = list_all[[3]]
+        
+        # outdir
+          
+        use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+        merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                                        'mofa_',  use_mofa_s   )
+        factor1_paths<-f_pvals[[fn]]
+        factor1_paths=factor1_paths[factor1_paths$fish<0.05,]
+        factor1_paths=factor1_paths[c('Description', 'fish')]
+        ## obtain the enrich RNA of the specific factor!!! 
+        weights_Var=get_mofa_vars(sel_factors[fn], adj_weights)
+        
+        
+        factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
+        which.max(weights_Var)
+        if (which.max(weights_Var)=='miRNA'){
+          factor1_paths$geneColname<-enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
+          
+        }else if(which.max(weights_Var)=='proteomics'){
+          factor1_paths$geneColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$geneID
+          
+          
+        }
+        
+        enrich_res_df<-factor1_paths
+        enrich_res_df
+        
+        enr_full<-create_enrich_result(enrich_res_df)
+        
+        
+        # run_enrichment_plots(enr_full,results_file = 'test.txt')
+        enr_full@result$Description<-enr_full@result$ID
+        
+        
+        min_overlap_score=0.2
+        #### EMAP by factor ####
+        create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network', '.jpeg'), color_by = 'pvalue', 
+                          min_edge = min_overlap_score)
+        
 
-# outdir
-  
-use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
-                                'mofa_',  use_mofa_s   )
-factor1_paths<-f_pvals[[fn]]
-factor1_paths=factor1_paths[factor1_paths$fish<0.05,]
-factor1_paths=factor1_paths[c('Description', 'fish')]
-## obtain the enrich RNA of the specific factor!!! 
-weights_Var=get_mofa_vars(fn, adj_weights)
 
-
-factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
-if (which.max(weights_Var)=='miRNA'){
-  factor1_paths$geneColname<-enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
-  
-}else if(which.max(weights_Var)=='proteomics'){
-  factor1_paths$geneColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$geneID
-  
-  
 }
 
-enrich_res_df<-factor1_paths
-enrich_res_df
+#### 2. Create one EMAP for all mofa factors ####
+###
+
+
+  list_all<-get_mofa_paths_and_weights(fn=3)
+  # also write to extra file
+  # where to get lists of common genes 
+  enrich_rna= list_all[[1]]
+  enrich_proteins = list_all[[2]]
+  enrich_mirnas = list_all[[3]]
+  
+  # outdir
+  
+  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+  merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                                'mofa_',  use_mofa_s   )
+  
+  
+  ### ALL FACTOR PATHS 
+  merged_results_sig=merged_results[merged_results$fish<0.05,]
+  merged_results_sig=merged_results_sig[c('Description', 'fish')]
+  ## obtain the enrich RNA of the specific factor!!! 
+
+  ### Connect by gene OVERLAP 
+  merged_results_sig$geneColname<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
+  
+  
+  enrich_res_df<-merged_results_sig
+
+  enr_full<-create_enrich_result(enrich_res_df)
+  
+  
+  # run_enrichment_plots(enr_full,results_file = 'test.txt')
+  enr_full@result$Description<-enr_full@result$ID
+  
+  
+  min_overlap_score=0.2
+  #### EMAP by factor ####
+  create_multi_emap(enr_full, N_EMAP=400, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs', '.jpeg'), color_by = 'pvalue', 
+                    min_edge = min_overlap_score)
+  
+  
+  
 
 
 
@@ -170,18 +228,9 @@ enrich_res_df
 
 
 
-inter<-inter_mofa_single
-enr_full<-create_enrich_result(enrich_res_df)
-
-
-# run_enrichment_plots(enr_full,results_file = 'test.txt')
-enr_full@result$Description<-enr_full@result$ID
 
 
 
-## EMAP by factor
-create_multi_emap(enr_full, N_EMAP=100, fname_net=paste0(merged_path_file_mofa, '_network', '.jpeg'), color_by = 'pvalue', 
-                  min_edge = 0.6)
 
 
 

@@ -5,7 +5,6 @@
 library(rbioapi)
 library('VennDiagram')
 library(enrichplot)
-VISIT='V08'
 process_mirnas<-TRUE
 source(paste0(script_dir, 'ppmi/config.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
@@ -51,7 +50,7 @@ if (use_anticor){
 log2fol_T;padj_T;
 log2fol_T
 ### run the enrichment if it has not been ran yet!! 
-
+padj_T;log2fol_T
 Padj_T_paths=0.01
 
 deseq2ResDF = read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1)
@@ -59,21 +58,32 @@ de_mirs<-deseq2ResDF
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
 dir.create(outdir_enrich)
 
-gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
-test_type='ORA'; top_n=100
 
+
+gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
+gene_list_sig_only<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=0.05, log2fol_T=0.1 )
+
+test_type='ORA'; top_n=100
 test_type='GSEA';top_n=length(gene_list);
-#top_n=400
+
+gene_list_cut_ora<-gene_list_sig_only[order(abs(gene_list_sig_only))]
+length(gene_list_cut_ora)
 
 gene_list_cut<-gene_list[order(abs(gene_list))][1:top_n]
 gene_list_cut<-gene_list_cut[order(gene_list_cut, decreasing=TRUE)]
 
+
+test_type='ORA'
+if (test_type=='ORA'){
+  gene_list_cut=gene_list_cut_ora
+  mirs_ora=names(gene_list_cut_ora)
+    
+}
+
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
-mirs
 
 
-mirs
 enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric,test_type,  top_n)
 mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
@@ -183,7 +193,7 @@ mir_results_file_by_cat
 
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
 
-text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
+#text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
 text_p=''
 process_mirnas
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 

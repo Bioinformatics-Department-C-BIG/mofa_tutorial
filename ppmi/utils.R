@@ -141,9 +141,10 @@ get_symbols_vector<-function(ens ){
 ######## DE ANALYSIS #######
 #results_de<-mark_signficant(
   # test
-  #de_res= results_de
-  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='adj.P.Val'
-  #log2fc_name = 'logFC'   
+ # de_res= deseq2ResDF
+##deseq2ResDF$padj
+  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='padj'
+  #log2fc_name = 'log2FoldChange'   
   #outdir_single=outdir_s_p
 
 mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
@@ -156,12 +157,15 @@ mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_n
   # Examine this data frame
   # Order the significant to save as a new output file 
   head(de_res)
+  which(de_res$significant=='Significant')
   # LARGER ONE not saved 
   sign_only<-de_res[de_res$sign_lfc=='Significant',]
   sign_only_ordered<-sign_only[order(sign_only[,padj_name], decreasing = FALSE),]
   sign_only_ordered<-sign_only[order(-sign_only[,'abslog2pval'], decreasing = FALSE),]
   
-  sign_only_ordered<-sign_only_ordered[!is.na(de_res$sign_lfc),]
+  sign_only_ordered<-sign_only_ordered[!is.na(sign_only_ordered$sign_lfc=='Significant'),]
+
+  which(sign_only_ordered$significant=='Significant')
   write.csv(sign_only_ordered,signif_file, row.names = TRUE)
   ### create also a more strict file? 
   return(de_res)
@@ -325,8 +329,11 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   if ( !(process_mirnas) && !(process_mofa) && !(run_ORA)){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
-    r_p
-    ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
+    if (dim(r_p$data)[1]>0){
+      r_p
+      ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
+      
+    }
   }
   
   

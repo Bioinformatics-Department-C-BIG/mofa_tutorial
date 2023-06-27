@@ -104,10 +104,14 @@ BiocManager::install('rbioapi')
 
 BiocManager::install('clusterProfiler')
 BiocManager::install('DOSE')
-#install.packages('ggnewscale')
+install.packages('europepmc')
+
+
 BiocManager::install('GOfuncR')
 BiocManager::install('ensembldb')
 BiocManager::install('org.Hs.eg.db')
+
+
 
 
 

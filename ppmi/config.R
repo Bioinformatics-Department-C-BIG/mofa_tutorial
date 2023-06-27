@@ -19,6 +19,7 @@ TOP_MN=0.75
 ### if using signif
 
 
+# TODO: add in the config the ability to run BL with the V08 COMMON SAMPLES 
 sel_coh=c(1,4)
 
 

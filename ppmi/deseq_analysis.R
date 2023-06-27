@@ -351,7 +351,11 @@ if (run_heatmap){
 
   
   ### Add the annotations 
-  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT", "SEX", 'AGE', 'NHY')])
+  meta_single<-colData(vsd_filt_genes)
+  meta_single$MCATOT
+  colDataToPlot<-c('NP1RTOT','NP2PTOT', 'NP3TOT')# 'NP4TOT', 'MCATOT' )
+  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT", "SEX", 'AGE', 'NHY', colDataToPlot)])
+  df
   
   ## HEATMAP OPTIONS 
   cluster_cols=TRUE

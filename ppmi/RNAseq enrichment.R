@@ -24,7 +24,7 @@ library('enrichplot' )
 
 
 #### Configuration 
-
+### do not overwrite as it runs after deseq_analysis.R 
 #VISIT='V08'
 # Rerun config 
 # Load Visit from the config and not from here? 
@@ -87,24 +87,29 @@ gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
 
 require(DOSE)
 library('enrichplot')
+pvalueCutoff_sig=0.05
 
-results_file=results_file
+results_file_plot=paste0(results_file, 'psig_', pvalueCutoff_sig)
 gse = gse
 
 #results_file=mir_results_file_anticor
 #gse = gse_mirnas
-pvalueCutoff_sig=0.05
 sel<-gse_full@result$pvalue<pvalueCutoff_sig
 gse=filter(gse_full, p.adjust < pvalueCutoff_sig)
 
 #text_p<-get_pval_text(gse_full, pvalueCutoff_sig)
 text_p<-''
-
-enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=15, N_EMAP=25, text_p=text_p )
+enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_plot, N_DOT=15, N_EMAP=25, text_p=text_p )
 dp=enrich_plots[[1]]
 p_enrich=enrich_plots[[2]]
 p2_tree=enrich_plots[[3]]
 
-
+### PUBMED RESULTS #### 
+library(europepmc)
+#install.packages('europepmc')
+terms <- gse$Description[1:20]
+p <- pmcplot(terms, 2012:2022)
+p2 <- pmcplot(terms, 2012:2022, proportion=FALSE)
+plot_grid(p, p2, ncol=2)
 
 

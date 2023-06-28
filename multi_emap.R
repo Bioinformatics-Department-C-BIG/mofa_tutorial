@@ -33,8 +33,9 @@ rank_mofa_paths<-function(f_pvals){
 
 
         merge(f_pvals[[1]],f_pvals[[2]], by='Description' )
-        f_pvals_merged<-f_pvals %>% reduce(inner_join, by='Description')
-
+        f_pvals_merged<-f_pvals %>% reduce(full_join, by='Description')
+        dim(f_pvals_merged)
+        head(f_pvals_merged)
         
         f_pvals_merged$rank1[order(f_pvals_merged$fish.x)]<-1:nrow(f_pvals_merged)
         f_pvals_merged$rank2[order(f_pvals_merged$fish.y)]<-1:nrow(f_pvals_merged)

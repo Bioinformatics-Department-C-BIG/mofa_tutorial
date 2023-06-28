@@ -38,8 +38,8 @@ concatenate_pvals <- function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, p
   enrich_proteins_pvals<-as.data.frame(enrich_proteins[c(pval_to_use, 'Description')])
   enrich_rna_pvals<-as.data.frame(enrich_rna[c(pval_to_use, 'Description')])
   
-  hist(enrich_proteins[,pval_to_use ])
-  hist(enrich_rna[,pval_to_use ])
+  #hist(enrich_proteins[,pval_to_use ])
+  #hist(enrich_rna[,pval_to_use ])
   # all=TRUE does not work well many mirna high are coming up 
   merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE);
   dim(merged_paths)
@@ -48,7 +48,7 @@ concatenate_pvals <- function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, p
   ## TODO: double check the merging here -- maybe there are dashes and different formats 
   if (add_mirs){
     enrich_mirna_pvals<-enrich_mirnas[, c(pval_to_use, 'Description')]
-    hist(enrich_mirnas[,pval_to_use ])
+    #hist(enrich_mirnas[,pval_to_use ])
     
     ## PROBLEM here if add all then something that is only in mirs it will come up 
     merged_paths<-merge(merged_paths,enrich_mirna_pvals, by='Description')
@@ -57,14 +57,15 @@ concatenate_pvals <- function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, p
   
 }
 
-
-get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1,0.5), merged_path_file){
+#install.packages('sgof')
+library(sgof)
+get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1,0.5), merged_path_file, pval_to_use='pvalue'){
   #'
   #' Combine and save 
   
   
   library(metapod)
-  
+  merged_paths
   p1<-merged_paths[,2]; length(p1)
   p2<-merged_paths[,3];length(p2)
   pmethod
@@ -83,26 +84,32 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
     fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
     
   }
-  fish[16]
-  merged_paths_fish[16,]
+  
   ### Add the combined to the original frame 
   merged_paths_fish<-cbind(merged_paths, fish)
-  print(merged_paths_fish)
+  head(merged_paths_fish)
   # and order
   merged_paths_fish<-merged_paths_fish[order(merged_paths_fish$fish),]
-  
-  ### Write significant results 
+
+    ### Write significant results 
   
   cols_ch=colnames(merged_paths_fish)
   cols_ch=cols_ch[cols_ch!='Description']
   
   if (pval_to_use=='pvalue'){
     # adjust afterwards 
-    print(paste('Adjusted p values using: ', dim(merged_paths_fish_adj)[1]))
-    merged_paths_fish_adj=merged_paths_fish
-    merged_paths_fish_adj[cols_ch]=merged_paths_fish_adj[cols_ch]*dim(merged_paths_fish_adj)[1]
-    merged_paths_fish_adj[cols_ch]=replace(merged_paths_fish_adj[cols_ch], merged_paths_fish_adj[cols_ch]>1, 1)
-    merged_paths_fish=merged_paths_fish_adj
+    #merged_paths_fish_adj=merged_paths_fish
+    merged_paths_fish$fish_pvalue<-merged_paths_fish$fish
+    #print(paste('Adjusted p values using: ', dim(merged_paths_fish_adj)[1]))
+    
+  #  merged_paths_fish_adj[cols_ch]=merged_paths_fish_adj[cols_ch]*dim(merged_paths_fish_adj)[1]
+   # merged_paths_fish_adj[cols_ch]=replace(merged_paths_fish_adj[cols_ch], merged_paths_fish_adj[cols_ch]>1, 1)
+    #merged_paths_fish=merged_paths_fish_adj
+    ## apply benjamini-holberg
+    #length(which(merged_paths_fish$fish	<0.05))
+    
+    merged_paths_fish$fish<-BH(merged_paths_fish$fish, alpha = 0.05)$Adjusted.pvalues	
+
   }
 
   
@@ -112,6 +119,7 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
   #}
 
   write.csv(merged_paths_fish,paste0( merged_path_file, '.csv'))
+  which(merged_paths_fish$fish<0.05)
   print(paste('Saving ',merged_path_file ))
   return(merged_paths_fish)
   
@@ -232,15 +240,15 @@ if (v2){
 run_ORA=FALSE
 pmethod<-'stouffer'
 
-get_mofa_paths_and_weights<-function(fn){
+get_mofa_paths_and_weights<-function(factor){
         #'
         #'For each mofa factor extract the list of paths and the weights 
         #' @param fn factor value to obtain
         #' @return      
         
-        gse_mofa_rna=list1[[sel_factors[fn]]]
-        gse_mofa_prot=list_proteins[[sel_factors[fn]]]
-        gse_mofa_mirs = list_mirs_enrich[[sel_factors[fn]]]
+        gse_mofa_rna=list1[[factor]]
+        gse_mofa_prot=list_proteins[[factor]]
+        gse_mofa_mirs = list_mirs_enrich[[factor]]
         
         enrich_rna<-gse_mofa_rna@result
         enrich_proteins=gse_mofa_prot@result
@@ -252,10 +260,10 @@ get_mofa_paths_and_weights<-function(fn){
         
   }
 
-        get_mofa_vars<-function(fn,adj_weights){
+        get_mofa_vars<-function(factor,adj_weights){
           #'
           #'
-                vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[sel_factors[fn],]
+                vars_by_mod<-vars_by_factor_all$r2_per_factor$group1[factor,]
                 
                 
                 #### also weight by modality variance 
@@ -305,15 +313,17 @@ fns=c(1:4)
 fns=c(3)
 fns=c(3)
 pval_to_use<-'p.adjust'
+pval_to_use<-'pvalue'
 
 fns=c(1:4)
 fns=c(3)
 fns=c(1:4)
-
+sel_factors
 
         for (fn in fns){
-          
-                list_all<-get_mofa_paths_and_weights(fn)
+        #  fn=3
+                print(sel_factors[fn])
+                list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
                 # also write to extra file
                 
                 enrich_rna= list_all[[1]]
@@ -323,7 +333,7 @@ fns=c(1:4)
                 adj_weights=c(41,301,298)
                 adj_weights=c(1,1,1)
                 
-                weights_Var=get_mofa_vars(fn, adj_weights)
+                weights_Var=get_mofa_vars(factor=sel_factors[fn], adj_weights)
                 weights_Var
                 print(paste(sel_factors[fn]))
                 print(weights_Var, digits=2)
@@ -339,35 +349,32 @@ fns=c(1:4)
                 cors_pearson_l
                 
                 merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,
-                                               enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use='pvalue' )
+                                               enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use=pval_to_use )
                 #merged_paths[merged_paths==1]=0.999999999999999
                 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights_Var=weights_Var, 
-                                                          merged_path_file=merged_path_file_mofa)
+                                                          merged_path_file=merged_path_file_mofa, pval_to_use=pval_to_use)
                 
                 merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
-
+                which(merged_paths_fish$fish<0.05)
                 
                                 #### Create plots of combined p-values ####
-                print(merged_paths_fish[order(merged_paths_fish$fish),])
                 
-                
-                #merged_paths_fish[order(merged_paths_fish$p.adjust.y),]
-                merged_paths_fish
-                #print(merged_paths_fish[order(merged_paths_fish$p.adjust.y),])
-                
-                create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish,title_p=title_p, merged_path_file=merged_path_file_mofa )
+                # TODO: INVESTIGATE merged combination plot crashes at factor 3 
+                #create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish,title_p=title_p, 
+                #                        merged_path_file=merged_path_file_mofa )
                 ## question: what was NOT there before and is now? 
                 f_pvals[[fn]]<-merged_paths_fish
                 
                # f_pvals[[fn]]<-read.csv(paste0( merged_path_file_mofa, '.csv'), row.names = 1)
-                lapply(f_pvals,dim)
+               # lapply(f_pvals,dim)
                 print(lapply(f_pvals, function(x){length(which(x$fish<0.05))}))
                 
                 
                 
                 
-        }              
-weights_Var
+        }     
+
+
 ## how many      
 lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
 lapply(f_pvals, function(x){dim(x)}) 
@@ -381,11 +388,10 @@ merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
 merged_factors_mofa_sig$Description<-gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
 unique(length(merged_factors_mofa_sig$Description))
 
-head(merged_results, 30)
 
 
-merged_factors_mofa_sig_uniq<-rank_mofa_paths(merged_factors_mofa_sig)
-head(merged_factors_mofa_sig_uniq)
+#merged_factors_mofa_sig_uniq<-rank_mofa_paths(merged_factors_mofa_sig)
+#head(merged_factors_mofa_sig_uniq)
 ## what to actually input 
 
 ### merge mofa 
@@ -412,8 +418,9 @@ single_weights_Var=c(41,301,298)
   ################# ACTUALLY RUN THE combination #### 
   title_p=get_combination_settings(weights_var=single_weights_Var, use_mofa=FALSE,fn=fn, adj_weights=adj_weights)
   title_p
-  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use='pvalue' )
-  merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= single_weights_Var,merged_path_file= merged_path_file_single)
+  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use=pval_to_use )
+  merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights= single_weights_Var,merged_path_file= merged_path_file_single, 
+                                            pval_to_use=pval_to_use)
   merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
   #### Create plots of combined p-values ####
   create_combination_plot(use_mofa=use_mofa, merged_paths_fish=merged_paths_fish,title_p=title_p, merged_path_file=merged_path_file_single   )
@@ -441,6 +448,7 @@ single_weights_Var=c(41,301,298)
 single_ps<-read.csv(paste0( merged_path_file_single, '.csv'), row.names = 1)
 single_ps_sig<-single_ps$Description[single_ps$fish< pvalueCutoff_sig]; 
 single_ps_sig<-gsub('-', ' ', tolower(single_ps_sig))
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 
 use_mofa=TRUE
@@ -468,7 +476,6 @@ library(venneuler)
 #install.packages('venneuler')
 
 #Lists <- listInput_single_combination_all  #put the word vectors into a list to supply lapply
-Lists <- listInput_truth_mofa  #put the word vectors into a list to supply lapply
 
 create_venneuler<-function(Lists,fname){
   
@@ -482,7 +489,7 @@ create_venneuler<-function(Lists,fname){
   })
   v <- venneuler(MAT, quantities=TRUE)
   
-  jpeg(fname, res=300, height=1200, width=1200)
+  jpeg(fname, res=300, height=1000, width=1000)
   plot(v, cex=1.1)
   dev.off()
   
@@ -588,7 +595,75 @@ listInput_single_mofa$mofa
 #create_combination_plot(use_mofa=FALSE, merged_paths_fish=single_only_all, combined_p_thresh=0.01, text_add='single_uniq')
 
 unique(unlist(listInput_all_mods_single), use.names=FALSE)
-### eVALUATION 
+
+
+
+
+### eVALUATION ####
+
+standardize_go_names<-function(descriptions){
+  #'
+  #'
+  #'
+  descriptions=gsub('-', ' ', tolower(descriptions))
+  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
+  
+  
+  descriptions=gsub("\\'", '', tolower(descriptions))
+  descriptions=gsub("\\,", '', tolower(descriptions))
+  
+  descriptions=gsub('\\(', '', tolower(descriptions))
+  descriptions=gsub('\\)', '', tolower(descriptions))
+  descriptions=gsub('\\/', '', tolower(descriptions))
+  
+  
+  return(descriptions)
+  
+}
+
+
+retrieve_path_ids <- function(paths_description, go_ids){
+  #'
+  #' Retrieves the path ids from GO from their descriptions
+  #' @param paths_description: path descriptions 
+  #' @go_ids key value table with ids and descriptions provided by George Minadakis
+  #' @return return the GO ids 
+  #paths_description=single_ps_sig
+  go_ids_all<-go_ids
+  colnames(go_ids_all)<-c('ID', 'Description')
+  paths_to_id=data.frame(Description=paths_description)
+  # which(go_ids_all$Description=='gene silencing by mirna')
+  paths_to_id$Description=standardize_go_names(paths_to_id$Description)
+  enrich_rna_single$Description=standardize_go_names(enrich_rna_single$Description)
+  enrich_proteins_single$Description=standardize_go_names(enrich_proteins_single$Description)
+  
+  
+  # retrieveGO<-merge(paths_to_id, go_ids_all, by='Description',  all.x=TRUE)
+  retrieveGO<-merge(paths_to_id, enrich_rna_single, by='Description',  all.x=TRUE, suffix='rna'); retrieveGO$ID
+  retrieveGO<-merge(retrieveGO, enrich_proteins_single, by='Description',  all.x=TRUE, suffix=c('rna','prot')); 
+  retrieveGO<-merge(retrieveGO, go_ids_all, by='Description',  all.x=TRUE, suffix=c('','all'));retrieveGO$ID
+  
+  
+  retrieveGO[c('Description','IDrna', 'IDprot', 'ID')] 
+  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDrna
+  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDprot
+  
+  #print(which(is.na(retrieveGO$ID)))
+  #retrieveGO[is.na(retrieveGO$ID),]
+  
+  #paths_to_id$Description[!(paths_to_id$Description %in% enrich_rna_single$Description)]
+  
+  #enrich_mirnas_single$Description[grep('g1 dna damage checkpoint' ,enrich_mirnas_single$Description)]
+  #retrieveGO<-merge(retrieveGO, enrich_proteins, by='Description', all=TRUE)
+  
+  
+  return(retrieveGO$ID)
+  
+  
+  
+}
+
+
 
 ## TRUTHSET #### 
 go_ids<-read.csv(paste0(data_dir,'ppmi/ppmi_data/go_pathway_info.txt'), sep='\t')
@@ -606,8 +681,11 @@ listInput_all_mods_single_l=unique(unlist(listInput_all_mods_single, use.names =
 listInput_all_mods_single_l_ids<-retrieve_path_ids(listInput_all_mods_single_l, go_ids)
 single_ps_sig_ids<-retrieve_path_ids(single_ps_sig , go_ids)
 
-write.csv(single_ps_sig_ids, paste0(merged_path_file_single, '_GOids.csv'), row.names = FALSE)
 
+merged_factors_mofa_sig_ids<-retrieve_path_ids(merged_factors_mofa_sig$Description, go_ids)
+
+
+write.csv(single_ps_sig_ids, paste0(merged_path_file_single, '_GOids.csv'), row.names = FALSE)
 write.csv(merged_factors_mofa_sig_ids, paste0(merged_path_file_mofa, '_GOids.csv'), row.names = FALSE)
 write.csv(listInput_all_mods_single_l_ids, paste0(path_file_single_union, '_GOids.csv' ), row.names = FALSE)
 
@@ -617,75 +695,14 @@ paths_description=listInput_all_mods_single_l
 listInput_all_mods_single_l_ids
 
 
-merged_factors_mofa_sig_ids<-retrieve_path_ids(merged_factors_mofa_sig$Description, go_ids)
 
 paths_description=merged_factors_mofa_sig$Description
 
-mofa_path_ids
-
-retrieve_path_ids <- function(paths_description, go_ids){
-  #'
-  #' Retrieves the path ids from GO from their descriptions
-  #' @param paths_description: path descriptions 
-  #' @go_ids key value table with ids and descriptions provided by George Minadakis
-  #' @return return the GO ids 
-  
-  go_ids_all<-go_ids
-  colnames(go_ids_all)<-c('ID', 'Description')
-  paths_to_id=data.frame(Description=paths_description)
-  # which(go_ids_all$Description=='gene silencing by mirna')
-  paths_to_id$Description=standardize_go_names(paths_to_id$Description)
-  enrich_rna_single$Description=standardize_go_names(enrich_rna_single$Description)
-  enrich_proteins_single$Description=standardize_go_names(enrich_proteins_single$Description)
-  
-  
- # retrieveGO<-merge(paths_to_id, go_ids_all, by='Description',  all.x=TRUE)
-  retrieveGO<-merge(paths_to_id, enrich_rna_single, by='Description',  all.x=TRUE, suffix='rna'); retrieveGO$ID
-  retrieveGO<-merge(retrieveGO, enrich_proteins_single, by='Description',  all.x=TRUE, suffix=c('rna','prot')); 
-  retrieveGO<-merge(retrieveGO, go_ids_all, by='Description',  all.x=TRUE, suffix=c('','all'));retrieveGO$ID
-  
-  
-  retrieveGO[c('Description','IDrna', 'IDprot', 'ID')] 
-  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDrna
-  retrieveGO[is.na(retrieveGO$ID),]$ID<-retrieveGO[is.na(retrieveGO$ID),]$IDprot
-  
-  print(which(is.na(retrieveGO$ID)))
-  retrieveGO[is.na(retrieveGO$ID),]
-  
-  paths_to_id$Description[!(paths_to_id$Description %in% enrich_rna_single$Description)]
-  
-  enrich_mirnas_single$Description[grep('g1 dna damage checkpoint' ,enrich_mirnas_single$Description)]
-    #retrieveGO<-merge(retrieveGO, enrich_proteins, by='Description', all=TRUE)
-  
-  
-  return(retrieveGO$ID)
-  
-  
-  
-}
-
-standardize_go_names(paths_to_id)
 
 
-standardize_go_names<-function(descriptions){
-  #'
-  #'
-  #'
-  descriptions=gsub('-', ' ', tolower(descriptions))
-  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
-  
-   
-  descriptions=gsub("\\'", '', tolower(descriptions))
-  descriptions=gsub("\\,", '', tolower(descriptions))
-  
-  descriptions=gsub('\\(', '', tolower(descriptions))
-  descriptions=gsub('\\)', '', tolower(descriptions))
-  descriptions=gsub('\\/', '', tolower(descriptions))
-  
-  
-  return(descriptions)
-  
-}
+
+
+
 
 merged_factors_mofa_sig$Description=gsub('-', ' ', tolower(merged_factors_mofa_sig$Description))
 single_ps_sig=gsub('-', ' ', tolower(single_ps_sig))
@@ -750,7 +767,7 @@ write.table(t(df_j_stats), paste0(out_compare,'jaccard_stats.csv'), append=TRUE,
 
 
 
-######## THIS IS IF WE ARE USING A DIFFERENT METHOD TO SOURCE PATHS FOR MOFA
+  ######## THIS IS IF WE ARE USING A DIFFERENT METHOD TO SOURCE PATHS FOR MOFA
 
 
 
@@ -784,5 +801,7 @@ if (use_mofa & v2){
   vars_by_mod/sum(vars_by_mod) *100
   
 }
+
+
 
 

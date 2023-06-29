@@ -24,6 +24,8 @@ if (split){
   N_FACTORS=8
 }
 VISIT=c('V08');
+VISIT=c('BL');
+
 run_vsn=TRUE
 ## tissue is set in the config
 use_signif=FALSE
@@ -141,7 +143,7 @@ for (N_FACTORS in c(15)){
   
 }
 
-
+## attach some extra clinical variables 
 sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
 combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
 combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID),]

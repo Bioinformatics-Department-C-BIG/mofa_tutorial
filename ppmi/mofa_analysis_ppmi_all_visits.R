@@ -182,7 +182,6 @@ selected_covars[!(selected_covars %in% names(MOFAobject@samples_metadata))]
 cors[,c('stai_state' )]
 format(cors_pearson[,c('stai_trait')], digits=2)
 
-cors[MOFAobject@samples_metadata$RBD_TOT,]
 cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
 format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
 
@@ -230,20 +229,22 @@ labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_
              'TD/PIGD dominant', 'Medication use')
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
+
+selected_covars<-selected_covars[selected_covars %in% colnames(MOFAobject@samples_metadata)]
+labels_col<-labels_col[selected_covars %in% colnames(MOFAobject@samples_metadata)]
 graphics.off()
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
-MOFAobject@samples_metadata$HOE
+MOFAobject@samples_metadata
 
 
-colnames(MOFAobject@samples_metadata)[selected_covars]
+
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 800+length(selected_covars)*20, height=1200, res=300)
 P2<-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",
                                   labels_col=labels_col )
 dev.off()
+selected_covars
 
-
-colnames(MOFAobject@samples_metadata)[selected_covars]
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_transpose_strict','.jpeg'),
      height = 800+length(selected_covars)*20, width=1200, res=300)
 P2<-correlate_factors_with_covariates(MOFAobject_gs2,covariates = labels_col,

@@ -112,6 +112,8 @@ BiocManager::install('ensembldb')
 BiocManager::install('org.Hs.eg.db')
 
 
+install.packages('visNetwork')
+install.packages('igraph')
 
 
 

@@ -1,4 +1,6 @@
 
+source(paste0(script_dir,'ppmi/mofa_p_value_combination.R'))
+source(paste0(script_dir,'ppmi/utils.R'))
 
 ###########
 # create multi omics emap plot 
@@ -24,7 +26,7 @@ rank_mofa_paths<-function(f_pvals){
         #' TODO: weigh factors from each 
         #' @param merged_factors_mofa_sig description
         #' @param 
-        #'
+        #' TODO: redo
         #'
       
         ## what to actually input 
@@ -37,10 +39,6 @@ rank_mofa_paths<-function(f_pvals){
         dim(f_pvals_merged)
         head(f_pvals_merged)
         
-        f_pvals_merged$rank1[order(f_pvals_merged$fish.x)]<-1:nrow(f_pvals_merged)
-        f_pvals_merged$rank2[order(f_pvals_merged$fish.y)]<-1:nrow(f_pvals_merged)
-        f_pvals_merged$rank3[order(f_pvals_merged$fish.x.x)]<-1:nrow(f_pvals_merged)
-        f_pvals_merged$rank4[order(f_pvals_merged$fish.y.y)]<-1:nrow(f_pvals_merged)
         
         f_pvals_merged$tot_rank=rowSums(f_pvals_merged[,c('rank1', 'rank2', 'rank3', 'rank4')])
         
@@ -50,16 +48,10 @@ rank_mofa_paths<-function(f_pvals){
         vars_by_factor_sel<-vars_by_factor_sel/sum(vars_by_factor_sel)
         cors_by_factor_sel<-abs(cors_pearson_l[sel_factors,'CONCOHORT'])
                                 
-        weighted_Ranks<-data.frame(mapply(`*`,ranks,cors_by_factor_sel))
-        f_pvals_merged$tot_rank=rowSums(weighted_Ranks)
+        f_pvals_merged$tot_rank
         
-        f_pvals_merged_ord<-f_pvals_merged[order(f_pvals_merged$tot_rank),]
-        head(f_pvals_merged[order(f_pvals_merged$tot_rank),c('Description', 'fish.x.x')],30)
-        head(f_pvals_merged[order(f_pvals_merged$tot_rank),c('Description', 'fish.y')],30)
-        head(f_pvals_merged[order(f_pvals_merged$fish.x.x),c('Description', 'fish.x.x')],30)
-        
-        head(f_pvals_merged[order(f_pvals_merged$fish.y.y),c('Description', 'fish.y.y')],30)
-        
+      
+        ####        
         merged_factors_mofa<-do.call(rbind,f_pvals)
         #### Merge factors together??? #### 
         merged_factors_mofa_sig<-merged_factors_mofa[merged_factors_mofa$fish<0.05,]
@@ -94,13 +86,9 @@ rank_mofa_paths<-function(f_pvals){
 
 f_pvals[2]
 
-merged_results_all<-rank_mofa_paths(f_pvals)
-merged_results<-merged_results_all[[1]]
-#merged_results<-merged_results_all[[2]]
-head(merged_results, 3)
-colnames(merged_results)
+merged_results<-f_pvals_merged
 
-create_combination_plot(f_pvals_merged_ord)
+
 
 ### TODO: where to obtain the gene names from??? 
 # Now they are taken from RNA 
@@ -128,10 +116,48 @@ create_enrich_result<-function(enrich_res_df){
 
 
 
-for (fn in fns){
-        list_all<-get_mofa_paths_and_weights(fn)
-          # also write to extra file
+N_EMAP=25
+create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2){
+          #'
+          #'
+          #'
+          #'
           
+          #N_EMAP=50
+          #min=0.3
+  
+          options(ggrepel.max.overlaps = Inf)
+          
+          x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
+          
+          
+          
+          
+          
+          
+          color_by='pvalue'
+          #jpeg(fname_net)
+          em<-emapplot(x2, showCategory=N_EMAP,
+                       cex_category=1, 
+                       cex_label_category=0.5, 
+                       color=color_by,
+                       min =min, 
+                          
+          )
+          em
+          fn
+          
+          
+  
+}
+
+
+
+
+for (fn in fns){
+        list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
+          # also write to extra file
+          ### Create one emap for each factor with all paths inside factor 
         enrich_rna= list_all[[1]]
         enrich_proteins = list_all[[2]]
         enrich_mirnas = list_all[[3]]
@@ -145,7 +171,7 @@ for (fn in fns){
         factor1_paths=factor1_paths[factor1_paths$fish<0.05,]
         factor1_paths=factor1_paths[c('Description', 'fish')]
         ## obtain the enrich RNA of the specific factor!!! 
-        weights_Var=get_mofa_vars(sel_factors[fn], adj_weights)
+        weights_Var=get_mofa_vars(factor=sel_factors[fn], adj_weights)
         
         
         factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
@@ -160,8 +186,7 @@ for (fn in fns){
         }
         
         enrich_res_df<-factor1_paths
-        enrich_res_df
-        
+
         enr_full<-create_enrich_result(enrich_res_df)
         
         
@@ -169,10 +194,10 @@ for (fn in fns){
         enr_full@result$Description<-enr_full@result$ID
         
         
-        min_overlap_score=0.2
+        min_overlap_score=0.3
         #### EMAP by factor ####
-        create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network', '.jpeg'), color_by = 'pvalue', 
-                          min_edge = min_overlap_score)
+        create_multi_emap(enr_full, N_EMAP=30, fname_net=paste0(merged_path_file_mofa, '_network', '.jpeg'), color_by = 'pvalue', 
+                          min = min_overlap_score)
         
 
 
@@ -182,7 +207,7 @@ for (fn in fns){
 ###
 
 
-  list_all<-get_mofa_paths_and_weights(fn=3)
+  list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
   # also write to extra file
   # where to get lists of common genes 
   enrich_rna= list_all[[1]]
@@ -257,32 +282,6 @@ graphics.off()
 
 create_multi_emap(enr_full, N_EMAP=100, fname_net=fname_net, min_edge = 0.99)
 
-
-create_multi_emap<-function(enr_full, N_EMAP=200,fname_net, title, color_by='qvalue', min_edge=0.2){
-  #'
-  #'
-  #'
-  #'
-  
-  
-  options(ggrepel.max.overlaps = Inf)
-  
-  x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
-
-  
- 
-  
-  
-  
-  color_by='pvalue'
-  N_EMAP=50
-  #jpeg(fname_net)
-  em<-emapplot(x2, showCategory=N_EMAP,
-           cex_category=1, 
-           cex_label_category=0.5, 
-           color=color_by,
-           min_edge =min_edge
-  )
   
   
   ggsave(fname_net, width=9, height=9, 
@@ -365,5 +364,6 @@ my_object <- new("enrichResult",
                  universe = universe_vector,
                  gene2Symbol = character(0),
                  geneSets = geneSets)
+
 
 

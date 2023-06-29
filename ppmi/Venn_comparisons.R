@@ -9,6 +9,7 @@ library('VennDiagram')
 library(grid)
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 process_mirnas=FALSE
 

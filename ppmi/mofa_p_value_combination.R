@@ -1,4 +1,5 @@
-
+script_dir
+#setwd(script_dir)
 
 source(paste0('ppmi/setup_os.R'))
 
@@ -27,6 +28,8 @@ process_mirnas=FALSE
 ### Table of samples from all visits 
 #### For each modality separately
 out_compare<-'ppmi/plots/single/compare/'
+out_compare<-paste0('ppmi/plots/single/compare/', VISIT, '/')
+dir.create(out_compare)
 
 
 cohort_cors
@@ -317,8 +320,8 @@ pval_to_use<-'pvalue'
 
 fns=c(1:4)
 fns=c(3)
-fns=c(1:4)
-sel_factors
+fns=c(1:length(sel_factors))
+fns
 
         for (fn in fns){
         #  fn=3
@@ -353,7 +356,6 @@ sel_factors
                 #merged_paths[merged_paths==1]=0.999999999999999
                 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights_Var=weights_Var, 
                                                           merged_path_file=merged_path_file_mofa, pval_to_use=pval_to_use)
-                
                 merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
                 which(merged_paths_fish$fish<0.05)
                 

@@ -12,14 +12,19 @@ library('UpSetR')
 library('dplyr')
 
 library('VennDiagram')
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+
 library(grid)
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+out_compare<-'ppmi/plots/single/compare/'
 
 process_mirnas=FALSE
 
 
 VISIT='V08'; 
+VISIT='BL'; 
+
 process_mirnas=TRUE; source(paste0(script_dir, 'ppmi/config.R' ))
 outdir_mirs<-outdir_s; outdir_s
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R' ))
@@ -64,11 +69,18 @@ results_file<-paste0(outdir_rnas,'/enrichment/', '/gseGO', '_', ONT, '_', padj_T
 enrich_rnas_file<-paste0(results_file,pvalueCutoff ,'.csv')
 #enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/mirs_enrich__1_0_log2pval_GO Biological process (miRPathDB)',  '.csv')
 enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pvalGSEA600')
-enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
+if (VISIT=='BL'){
+  enrich_mirnas_file<-paste0(outdir_mirs,  '/enrichment/GO Biological process (miRPathDB)/mirs_enrich__1_0_log2pvalGSEA631')
+  
+}
 
+enrich_proteins_file<-paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv')
+enrich_mirnas_file
 
 enrich_rna_single<-read.csv(enrich_rnas_file); dim(enrich_rna_single)
 enrich_mirnas_single<-read.csv(paste0(enrich_mirnas_file,pvalueCutoff, '.csv'));dim(enrich_rna_single)
+
+
 enrich_proteins_single<-read.csv(enrich_proteins_file);dim(enrich_rna_single)
 
 enrich_rna_sig<-enrich_rna_single[enrich_rna_single$p.adjust<padj_paths,]; dim(enrich_rna_sig)[1]
@@ -96,7 +108,7 @@ length(unique(unlist(listInput_all_mods_single), use.names=FALSE))
 
 res_overlap<-calculate.overlap(listInput)
 
-intersection_all_three<-Reduce(intersect,listInput_all_mods)
+intersection_all_three<-Reduce(intersect,listInput_all_mods_single)
 int_params<-paste0(padj_paths, '_', VISIT, '_p_anova_',run_anova, 'pval_', use_pval )
 write.csv(intersection_all_three, paste0(out_compare,'interesction_pathways' , int_params, '.csv') , row.names = FALSE)
 path_file_single_union= paste0(out_compare,'union_pathways' , int_params, '.csv') 

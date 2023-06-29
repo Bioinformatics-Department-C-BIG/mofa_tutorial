@@ -94,7 +94,7 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
-
+sel_factors
 just_load=TRUE
 just_load=FALSE
 
@@ -104,7 +104,7 @@ if (!isRStudio){
            # for (view in c( 'proteomics')){
               #for (view in c( 'RNA', 'miRNA', 'proteomics')){
                  #for (view in c( 'proteomics')){
-               # for (view in c( 'RNA', 'miRNA', 'proteomics')){
+               # for (view in c( 'RNA', 'miRNA')){
                   
                    
                  for (view in c( 'proteomics')){
@@ -159,9 +159,13 @@ if (!isRStudio){
 
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
-
-                         # TODO: DECIDE on the number
+                        run_ORA=FALSE
                           gene_list_ord_abs=abs(gene_list_ord)
+                         # TODO: DECIDE on the number
+                          if (run_ORA){
+                            
+                          
+                          
                           gene_list_ord_abs_ora=gene_list_ord_abs[order(gene_list_ord_abs, decreasing = TRUE)]
                           hist(gene_list_ord_abs_ora)
                           high_quant<-quantile(gene_list_ord_abs_ora, 0)
@@ -175,17 +179,19 @@ if (!isRStudio){
                           
                           list_proteins_enrich[[factor]]<-gse_protein_full_enrich
                           saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
-                    
-                          # gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                          #                                           ont=ONT, 
-                          #                                           keyType = 'SYMBOL', 
-#                          #                                         OrgDb = 'org.Hs.eg.db', 
-                          #                                          pvalueCutoff  = pvalueCutoff)
+                          }else{
+                            
+                          
+                           gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
+                                                                     ont=ONT, 
+                                                                     keyType = 'SYMBOL', 
+                                                                  OrgDb = 'org.Hs.eg.db', 
+                                                                    pvalueCutoff  = pvalueCutoff)
                           
                           
-                          # list_proteins[[factor]]<-gse_protein_full
-                          #saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
-                  
+                           list_proteins[[factor]]<-gse_protein_full
+                          saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
+                          }
                   }
                 }
               if (view=='miRNA'){
@@ -270,7 +276,7 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 #### Now run the prot view ? 
 run_plots=ifelse(isRStudio, FALSE, TRUE)
 # TODO: PASS 
-run_plots=FALSE
+run_plots=TRUE
 
 if (run_plots){
 

@@ -11,7 +11,7 @@ write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 deseq2ResDF <- as.data.frame(deseq2Results)
 deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
 deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
-
+min(deseq2ResDF$padj)
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
@@ -76,7 +76,7 @@ outdir_s
 
 deseq2ResDF$SYMBOL
 
-
+deseq2ResDF
 
 
 log2fol_T<-0.25
@@ -85,6 +85,7 @@ padj_T<-.005
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 
+min(deseq2ResDF$padj)
 
 ####### MOFA deseq2  
 

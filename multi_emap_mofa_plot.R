@@ -16,57 +16,6 @@ go_ids$TERM[grep( 'nervous system development', go_ids$TERM )]
 go_ids$TERM_standardized=standardize_go_names(go_ids$TERM)
 
 #f_pvals_sig<-lapply(f_pvals, function(x){x[x$fish<0.05,]})
-lapply
-f_pvals_merged<-f_pvals %>% purrr::reduce(full_join , by='Description' )
-f_pvals_merged
-dim(f_pvals_merged)
-
-fish_cols<-colnames(f_pvals_merged)[ grepl('fish', colnames(f_pvals_merged )) & !grepl('pval', colnames(f_pvals_merged )) ]
-f_pvals_merged_fs<-f_pvals_merged[,fish_cols]
-colnames(f_pvals_merged_fs)<-names(sel_factors)
-rownames(f_pvals_merged_fs)<-f_pvals_merged$Description
-rownames(f_pvals_merged)<-f_pvals_merged$Description
-
-
-get_ranks<-function(f_pvals_merged_fs){
-  #''
-  #
-  ranks_fs<-as.data.frame(apply(f_pvals_merged_fs, 2, rank))
-  tot_rank=rowSums(ranks_fs)
-  min_rank<-colnames(ranks_fs)[apply(ranks_fs,1,which.min)]
-  min_rank
-  rank_stats=data.frame(tot_rank=tot_rank, min_rank=min_rank)
-  colnames(ranks_fs)<-paste0(colnames(ranks_fs), '_rank')
-  
-  rank_stats=cbind(rank_stats, ranks_fs)
-  return(rank_stats)
-}
-
-### Apply Ranking: 
-
-
-f_pvals_merged$Least_value<-rowMins(as.matrix(f_pvals_merged_fs))
-f_pvals_merged$Least_value
-f_pvals_merged$Least_factor<-colnames(f_pvals_merged_fs)[apply(f_pvals_merged_fs,1,which.min)]
-rank_stats<-get_ranks(f_pvals_merged_fs)
-head(rank_stats)
-
-
-#f_pvals_merged$tot_rank=rank_stats$tot_rank
-#f_pvals_merged$min_rank=rank_stats$min_rank
-f_pvals_merged<-cbind(f_pvals_merged,rank_stats)
-# filter
-f_pvals_merged<-f_pvals_merged[f_pvals_merged$Least_value<0.05,]
-###
-
-rownames(f_pvals_merged)[grep( 'nervous system',rownames(f_pvals_merged) )]
-# rename descriptions 
-
-rownames(f_pvals_merged)<-standardize_go_names(rownames(f_pvals_merged))
-f_pvals_merged$GOID<-go_ids$GOID[match(rownames(f_pvals_merged),go_ids$TERM_standardized )]
-f_pvals_merged[, c('GOID','Least_factor')]
-
-
 
 
 
@@ -82,7 +31,6 @@ jaccard_from_numbers <- function(intersection, length_a, length_b) {
 
 
 
-#### LOAD from FILE 
 input_gene_overlap_f<-paste0(outdir, '/enrichment/', 'GMinadakis_gene_overlap_mofa.csv' )
 input_gene_overlap_f<-paste0(outdir, '/enrichment/', 'scored_nets_/NET_union_pathways0.05_V08_p_anova_FALSEpval_TRUE_GOids.csv' )
 input_gene_overlap_f
@@ -115,12 +63,12 @@ emap_mofa<-graph_from_data_frame(mofa_net, directed = FALSE)
 
 
 terms<-go_ids$TERM[match(V(emap_mofa)$name,go_ids$GOID )]
-node_factors<-f_pvals_merged$Least_factor[match(V(emap_mofa)$name  , f_pvals_merged$GOID)]
+node_factors<-f_pvals_merged_sig$Least_factor[match(V(emap_mofa)$name  , f_pvals_merged_sig$GOID)]
 ## factor info: select only from the dataframe with specific names 
 ### Here we merge the network with mofa attribute data
 # first merge with 
-all_factor_info<-f_pvals_merged_fs[match(V(emap_mofa)$name  , f_pvals_merged$GOID),]
-all_factor_info<-cbind(all_factor_info,f_pvals_merged[match(V(emap_mofa)$name  , f_pvals_merged$GOID),])
+all_factor_info<-f_pvals_merged_fs_sig[match(V(emap_mofa)$name  , f_pvals_merged_sig$GOID),]
+all_factor_info<-cbind(all_factor_info,f_pvals_merged_sig[match(V(emap_mofa)$name  , f_pvals_merged_sig$GOID),])
 
 
 node_fs<-data.frame(apply(all_factor_info[,names(sel_factors)], 2, function(x){x<0.05} ))
@@ -129,22 +77,15 @@ dim(node_fs)
 
 V(emap_mofa)$label <- terms
 V(emap_mofa)$label_description <- terms
-
-#E(emap_mofa)$my_edge_score <- E(emap_mofa)$edgeScore
-
 E(emap_mofa)$my_edge_score <- E(emap_mofa)$jaccard
 E(emap_mofa)$my_edge_score <- log2(E(emap_mofa)$edgeScore*100)
-
-E(emap_mofa)$my_edge_score
-
 E(emap_mofa)$weight <- E(emap_mofa)$my_edge_score
-
 V(emap_mofa)$groups <- node_factors
 
 
 #emap_mofa <- 
 
-colnames(f_pvals_merged_fs)
+colnames(f_pvals_merged_sig_fs)
 for (i in 1:length(node_fs)){
   emap_mofa<-set_vertex_attr(emap_mofa, name = (colnames(node_fs)[i]), 
                                index = V(emap_mofa), value = node_fs[,i])
@@ -212,9 +153,11 @@ length(emap_mofa_filt)
 
 
 #### 2. Remove low ranks ####
+high_quant_t<-0.95
+high_quant_t<-1
 for (factor in c(factor_filters) ){
   print(factor)
-  up_quant<-quantile(vertex_attr(emap_mofa_filt,  paste0(factor, '_rank' ) ) ,0.95)
+  up_quant<-quantile(vertex_attr(emap_mofa_filt,  paste0(factor, '_rank' ) ) ,high_quant_t)
   vert_gt_50<-V(emap_mofa_filt)$name[vertex_attr(emap_mofa_filt,  paste0(factor, '_rank' ) ) >up_quant]
   vert_gt_50<-vert_gt_50[!is.na(vert_gt_50)]
   vert_gt_50
@@ -231,19 +174,24 @@ paste0(choose_f, '_rank' )
 
 vis_emap_mofa
 
+
+##########################################
+#### Now convert it to a visnetwork ####
+
 vis_emap_mofa<-toVisNetworkData(emap_mofa_filt)
+
+### make the labeling less dense 
 all_n<-length(vis_emap_mofa$nodes$label_description)
 vis_emap_mofa$nodes$label_description[c(TRUE,FALSE)]<-' '
 
 
-#vis_emap_mofa$nodes$pvalue<-
+### Add labels
 vis_emap_mofa$nodes$label<-vis_emap_mofa$nodes$label_description
-head(vis_emap_mofa$nodes)
+## Set width to the edge weight
 vis_emap_mofa$edges$width<-vis_emap_mofa$edges$weight
+# Set length of edge to be inverse the weight
 vis_emap_mofa$edges$length<-1/vis_emap_mofa$edges$weight*130
-vis_emap_mofa$nodes$label
 #vis_emap_mofa$edges$length<-log2((1-E(emap_mofa)$jaccard)*100)
-
 hist(vis_emap_mofa$edges$length)
 
   #set.vertex.attribute(emap_mofa,
@@ -251,13 +199,7 @@ hist(vis_emap_mofa$edges$length)
 
 
 ### SET NODE COLOR 
-
-
-
-intersect(vis_emap_mofa$nodes$id, f_pvals_merged$GOID)
-f_pvals_merged$GOID
-vis_emap_mofa$nodes$factor<-f_pvals_merged$min_rank[match( vis_emap_mofa$nodes$id, f_pvals_merged$GOID)]
-vis_emap_mofa$nodes$factor
+vis_emap_mofa$nodes$factor<-f_pvals_merged_sig$min_rank[match( vis_emap_mofa$nodes$id, f_pvals_merged_sig$GOID)]
 which(is.na(vis_emap_mofa$nodes$factor))
 unique(vis_emap_mofa$nodes$factor)
 
@@ -294,9 +236,6 @@ choose_f
 
 
 
-
-
-#vis_emap_mofa$nodes$group<-vis_emap_mofa$nodes$color
 unique(vis_emap_mofa$nodes$groups)
 unique(vis_emap_mofa$nodes$label)
 vis_emap_mofa$nodes$label
@@ -317,11 +256,14 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   visSave(file = paste0(outdir, '/enrichment/all_factors',pval_to_use, choose_f,'.html'))
 
 vis_emap_mofa$nodes$groups[is.na(vis_emap_mofa$nodes$groups)]<-'not_in_mofa'
-visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges)%>%
+
+
+visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges, 
+           main=paste0(choose_f))%>%
   #visOptions(selectedBy= list(variable="group",multiple=T)) %>%
   visEdges(width=width, 
            length=length)%>%
-  visIgraphLayout(layout = 'layout.fruchterman.reingold') %>%# same as   visLayout(hierarchical = TRUE) 
+  visIgraphLayout(layout = 'layout_with_drf') %>%# same as   visLayout(hierarchical = TRUE) 
 visNodes(font=list(size=50) )
 #%>%
 #  visGroups(groupname = "fish.x", color = "red", shape = "triangle")%>%

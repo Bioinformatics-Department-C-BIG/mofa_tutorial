@@ -16,7 +16,7 @@ library(stats)
 #### 2. 
 
 
-
+### Takes outdir and MOFA object as input
 nfactors<-MOFAobject@dimensions$K;nfactors
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 group=1
@@ -95,8 +95,8 @@ sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
 sel_factors
-just_load=TRUE
 just_load=FALSE
+just_load=TRUE
 
 if (!isRStudio){
   
@@ -276,7 +276,7 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 #### Now run the prot view ? 
 run_plots=ifelse(isRStudio, FALSE, TRUE)
 # TODO: PASS 
-run_plots=TRUE
+run_plots=FALSE
 
 if (run_plots){
 

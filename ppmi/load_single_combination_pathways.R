@@ -22,8 +22,8 @@ out_compare<-'ppmi/plots/single/compare/'
 process_mirnas=FALSE
 
 
-VISIT='V08'; 
-VISIT='BL'; 
+#VISIT='V08'; 
+#VISIT='BL'; 
 
 process_mirnas=TRUE; source(paste0(script_dir, 'ppmi/config.R' ))
 outdir_mirs<-outdir_s; outdir_s
@@ -31,7 +31,7 @@ process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R' ))
 outdir_rnas<-outdir_s; outdir_s
 
 
-source(paste0(script_dir, 'ppmi/deseq_analysis_setup.R' ))
+source(paste0(script_dir, 'ppmi/deseq_analysis_setup.R' ))## cHANGES THE VISIT!! 
 outdir_proteins<-outdir_s_p
 padj_T_overall=0.05
 log2fol_T_overall=0.1
@@ -60,7 +60,7 @@ signif_proteins<-read.csv(paste0(outdir_s_p,'/significant', padj_T_overall, '_',
 ### THE SIGNIFICANT GENES ARE TOO MANY.. filter them somehow..? 
 signif_proteins
 
-
+VISIT
 
 pvalueCutoff_sig=0.05
 padj_paths<-0.05

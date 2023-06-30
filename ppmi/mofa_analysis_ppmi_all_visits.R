@@ -955,10 +955,10 @@ subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
 
-mode='RNA'
 mode='proteomics'
+mode='RNA'
 
-  for (subcategory in c('GO:BP' )){
+  for (subcategory in c('GO:BP', 'GO:MF' )){
         if (mode=='proteomics'){
           gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
           

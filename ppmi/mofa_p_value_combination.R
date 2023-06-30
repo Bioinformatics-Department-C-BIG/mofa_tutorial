@@ -3,7 +3,7 @@ script_dir
 
 source(paste0('ppmi/setup_os.R'))
 
-
+#VISIT='V08'
 #### Metascripts 
 #('UpSetR')
 library('UpSetR')
@@ -228,7 +228,7 @@ create_combination_plot<-function(use_mofa, merged_paths_fish, combined_p_thresh
 }
 
 
-
+VISIT
 pval_to_use<-'pvalue'
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
@@ -803,7 +803,6 @@ if (use_mofa & v2){
   vars_by_mod/sum(vars_by_mod) *100
   
 }
-
 
 
 

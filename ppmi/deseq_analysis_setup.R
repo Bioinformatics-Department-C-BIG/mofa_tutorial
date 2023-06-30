@@ -26,7 +26,7 @@ source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 
 # BETTER TO NOT RUN THESE SETTINGS AGAIN IF YOU HAVE RUN PREPROCESSING
-VISIT='BL'
+#VISIT='BL'
 process_mirnas=TRUE
 
 

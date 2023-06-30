@@ -23,8 +23,8 @@ run_rna_mirna=FALSE
 if (split){
   N_FACTORS=8
 }
-VISIT=c('V08');
 VISIT=c('BL');
+VISIT=c('V08');
 
 run_vsn=TRUE
 ## tissue is set in the config

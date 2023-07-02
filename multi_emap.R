@@ -19,7 +19,6 @@ f_pvals[[1]][42,]
 
 lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
 
-
 ##############
 ########### MERGING
 
@@ -27,24 +26,22 @@ lapply(f_pvals, function(x){length(which(x$fish<0.05))})
 
 get_ranks<-function(f_pvals_merged_fs){
   #''
-  #
+  #' get the ranks of each factor, min_rank and total rank
+  #' @param f_pvals_merged_fs column for each factor pvalue 
+  #' @returns rank_stats
+  #'
   ranks_fs<-as.data.frame(apply(f_pvals_merged_fs, 2, rank, ties.method='first'))
   tot_rank=rowSums(ranks_fs)
   min_rank<-colnames(ranks_fs)[apply(ranks_fs,1,which.min)]
-  min_rank
   rank_stats=data.frame(tot_rank=tot_rank, min_rank=min_rank)
   colnames(ranks_fs)<-paste0(colnames(ranks_fs), '_rank')
-  
   rank_stats=cbind(rank_stats, ranks_fs)
   return(rank_stats)
 }
 
 
-
+### Merge the pvalues for the factors  factors by pathway name 
 f_pvals_merged<-f_pvals %>% purrr::reduce(full_join , by='Description' )
-f_pvals_merged
-dim(f_pvals_merged)
-
 fish_cols<-colnames(f_pvals_merged)[ grepl('fish', colnames(f_pvals_merged )) & !grepl('pval', colnames(f_pvals_merged )) ]
 f_pvals_merged_fs<-f_pvals_merged[,fish_cols]
 colnames(f_pvals_merged_fs)<-names(sel_factors)
@@ -52,35 +49,26 @@ rownames(f_pvals_merged_fs)<-f_pvals_merged$Description
 rownames(f_pvals_merged)<-f_pvals_merged$Description
 
 
-
-### Apply Ranking: 
-
-
-f_pvals_merged$Least_value<-rowMins(as.matrix(f_pvals_merged_fs))
-f_pvals_merged$Least_factor<-colnames(f_pvals_merged_fs)[apply(f_pvals_merged_fs,1,which.min)]
+pvalueT_mofa=0.01
+### Apply Ranking: ####
+f_pvals_merged$Least_value<-rowMins(as.matrix(f_pvals_merged_fs)) ## lower pvalue for path from all factors 
+f_pvals_merged$Least_factor<-colnames(f_pvals_merged_fs)[apply(f_pvals_merged_fs,1,which.min)] 
 
 # filter
-f_pvals_merged_sig<-f_pvals_merged[f_pvals_merged$Least_value<0.05,]
-f_pvals_merged_fs_sig<-f_pvals_merged_fs[f_pvals_merged$Least_value<0.05,]
+f_pvals_merged_sig<-f_pvals_merged[f_pvals_merged$Least_value<pvalueT_mofa,]
+f_pvals_merged_fs_sig<-f_pvals_merged_fs[f_pvals_merged$Least_value<pvalueT_mofa,]
 ### Get the ranks among the significant only !! 
 rank_stats<-get_ranks(f_pvals_merged_fs_sig)
 head(rank_stats)
-
-
-#f_pvals_merged$tot_rank=rank_stats$tot_rank
-#f_pvals_merged$min_rank=rank_stats$min_rank
+### add the ranking statistics 
 f_pvals_merged_sig<-cbind(f_pvals_merged_sig,rank_stats)
 
 
 
 
-########### FROM NOW ON USE SIG
+########### FROM NOW ON USE SIGnificant only ####
 
 rownames(f_pvals_merged_sig)<-standardize_go_names(rownames(f_pvals_merged_sig))
-f_pvals_merged_sig$GOID<-go_ids$GOID[match(rownames(f_pvals_merged_sig),go_ids$TERM_standardized )]
-f_pvals_merged_sig[, c('GOID','Least_factor')]
-
-
 colnames(f_pvals_merged_sig)
 
 
@@ -149,8 +137,8 @@ rank_mofa_paths<-function(f_pvals){
         
         }
 
-merged_results<-f_pvals_merged
-write.csv(f_pvals_merged_sig, paste0(outdir, '/enrichment/merged_factors_pvals.csv'))
+merged_results<-f_pvals_merged ### THE MERGED mofa results 
+write.csv(f_pvals_merged_sig, paste0(outdir, '/enrichment/merged_factors_pvals',pvalueT_mofa,  '.csv')) ## write the significant paths 
 
 ### TODO: where to obtain the gene names from??? 
 # Now they are taken from RNA 
@@ -162,7 +150,7 @@ colnames(merged_results)
 
 ############
 
-create_enrich_result<-function(enrich_res_df, pvalueColname='fish'){
+create_enrich_result<-function(enrich_res_df, pvalueColname='fish', qvalue=''){
   #' convert pvalue comb to enrich result for further cluster profiler plotting
   #' @param  enrich_res_df contains fish variable as pvalue
   #' @return description
@@ -171,7 +159,7 @@ create_enrich_result<-function(enrich_res_df, pvalueColname='fish'){
                                                         geneColname ='geneColname',
                                                         pvalueColname = pvalueColname,
                                                         descriptionColname = 'Description',
-                                                        qvalue='',
+                                                        qvalue=qvalue,
                                                         pvalueCutoff = 0.05)
   return(enr_full_all)
 }
@@ -186,9 +174,11 @@ library('stats')
 library('cluster')
 
 create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2,
-                            width=10, height=10, cex_label_category=0.6,nCluster=20,scale_option='plasma'){
+                            width=10, height=10, cex_label_category=0.6,nCluster=20,
+                            node_label='category',scale_option='plasma'){
           #'
-          #'
+          #' @param enr_full
+          #' https://github.com/YuLab-SMU/enrichplot/blob/devel/R/emapplot.R
           #'
           #'
           
@@ -220,9 +210,9 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                                 nCluster=nCluster),
                       group_category=TRUE,
                       nCluster=nCluster,
-                      alpha=0.1,
-                      ellipse_style='ggforce'
-                      # node_label = "all"
+                      alpha=0.005,
+                      ellipse_style='ggforce',
+                      node_label = node_label
           )
           
           
@@ -286,7 +276,7 @@ for (fn in fns){
         enr_full@result$Description<-enr_full@result$ID
         
         
-        min_overlap_score=0.25
+        min_overlap_score=0.35
         
         
         
@@ -294,7 +284,7 @@ for (fn in fns){
         #### EMAP by factor ####
         create_multi_emap(enr_full, N_EMAP=50, fname_net=paste0(merged_path_file_mofa, '_network', max_ws, '.jpeg'), color_by = 'pvalue', 
                           min = min_overlap_score, cex_label_category = 0.8,
-                          nCluster=7, scale_option='mako'
+                          nCluster=10, scale_option='mako', node_label = 'category'
                             )
         
         print(merged_path_file_mofa)
@@ -404,17 +394,16 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
                                 'mofa_',  use_mofa_s   )
   
   merged_results=f_pvals_merged
-  merged_results_sig=f_pvals_merged_sig
+  merged_results_sig_all=f_pvals_merged_sig
   ### ALL FACTOR PATHS 
   #merged_results_sig=merged_results[merged_results$Least_value<0.01,]
-  dim(merged_results_sig)
+  dim(merged_results_sig_all)
   
   ### Create filters on nodes 
-  merged_results_sig
   high_quant_t=0.5
-  factor_filters<-names(sel_factors)
-  rank_cols<-grep('[1-9]_rank', colnames(merged_results_sig))
-  
+  #factor_filters<-names(sel_factors)
+  rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
+  rank_cols
   
 
   mark_high_rank<-function(x, high_quant_t){
@@ -426,22 +415,29 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   merged_results_sig_fs<-merged_results_sig[,fish_cols]
   colnames(merged_results_sig_fs)<-names(sel_factors)
   
-  rank_stats<-get_ranks(merged_results_sig_fs)
-  cbind(merged_results_sig_fs$Factor1, rank(rank(merged_results_sig_fs$Factor1)))
-  merged_results_sig<-cbind(merged_results_sig,rank_stats)
-  dim(merged_results_sig)
-  table(merged_results_sig$min_rank)
+  #rank_stats<-get_ranks(merged_results_sig_fs)
+  #cbind(merged_results_sig_fs$Factor1, rank(rank(merged_results_sig_fs$Factor1)))
+ # merged_results_sig<-cbind(merged_results_sig,rank_stats)
+  #dim(merged_results_sig)
+  table(merged_results_sig_all$min_rank)
   
   ### Keep top 20 paths from each?
-  rank_stats$Factor1_rank
+
+  
   ## Filter more to show top representatives from each factor 
-  high_ranks<-apply(merged_results_sig[,rank_cols],2,mark_high_rank, high_quant_t=0.15)
+  high_ranks<-apply(merged_results_sig_all[,rank_cols],2,mark_high_rank, high_quant_t=0.15)
+  high_ranks
   #high_ranks_3<-mark_high_rank(merged_results_sig$Factor3_rank,  high_quant_t=0.1)
   #high_ranks[,'Factor3_rank']<-high_ranks_3
-  merged_results_sig<-merged_results_sig[!apply(high_ranks, 1,all),]
-  dim(merged_results_sig)
-  merged_results_sig[merged_results_sig$min_rank=='Factor4',]
+  ## remove low ranked in all 
   
+  merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
+  merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
+  
+  dim(merged_results_sig)
+  
+  ## OR remove 50% in ALL factors ..?? 
+
   
   table(merged_results_sig$min_rank)
   
@@ -452,8 +448,6 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   #merged_results_sig$Description
   #enrich_rna$Description
   # 
-  factor_genes
-  ids_merge_all
   factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
   factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
   factor_genes3<-list_all3[[1]][match(merged_results_sig$Description, list_all3[[1]]$Description),]$core_enrichment
@@ -471,36 +465,54 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
     ids_merge
     ids_merge_all[i]<-paste0(ids_merge, collapse = '/')
   }
-  length(ids_merge_all)
-  ids_merge_all
+  
+  ## filter to add only high var?? 
+  ## Color genes by weight..?
   merged_results_sig$geneColname<-factor_genes
-  
-  merged_results_sig$geneColname
-  
-  
-  merged_results_sig$Least_factor
+
+  # Color the nodes by qfactor
   # hack to get it to color with this attribute 
   ## Make sure that pvalues is the combined --> here i use the least /minimum
-  merged_results_sig$pvalue= merged_results_sig$Least_value
-  merged_results_sig$qvalue= merged_results_sig$min_rank
-  merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$qvalue))#, levels=c(1,2,3,4))
+  # 1. color by factor where it has the minimum ranking 
+  #
+  merged_results_sig$pvalue = merged_results_sig$Least_value
+  merged_results_sig$qvalue = merged_results_sig$min_rank
+  merged_results_sig$qvalue = as.numeric(factor(merged_results_sig$qvalue))#, levels=c(1,2,3,4))
+  
+  
+  ## OR color by whether it exists in baseline!!
+  color_by_bl=TRUE
+  if (color_by_bl){
+    v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
+    merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
+    merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$BL))
+    merged_results_sig[, c('BL', 'qvalue')]
+  }
+  
+  
   enrich_res_df<-merged_results_sig
-  enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value')
+  enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value',qvalue = qvalue)
   enr_full@result$pvalue
+  
+  write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_network.csv'))
   
   # run_enrichment_plots(enr_full,results_file = 'test.txt')
   enr_full@result$Description<-enr_full@result$ID
  # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
 
   
-    min_overlap_score=0.3
+    min_overlap_score=0.30
   #### EMAP by factor ####
     merged_path_file_mofa
-  create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs', '.jpeg'),
+  create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs_',color_by_bl, '.jpeg'),
+                    width=15, height=10,
                     color_by = 'qvalue', 
                     min = min_overlap_score, 
                     cex_label_category = 0.6,
-                    nCluster=10,
+                    nCluster=20,
+                    #node_label = 'all',
+                    node_label = 'all',
+                    
                     scale_option = 'plasma')
   
   

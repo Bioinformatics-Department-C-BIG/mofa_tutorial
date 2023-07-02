@@ -7,6 +7,9 @@ bl<-read.csv(bl_f)
 v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 v08<-read.csv(v08_f)
 bl<-bl[!is.na(bl$Description),]
+bl_sig<-bl[bl$Least_value<0.01,]
+
+unique(bl_sig$Description)
 tms<-list(bl=bl$Description, v08= v08$Description)
 tms
 out_com<-calculate.overlap()

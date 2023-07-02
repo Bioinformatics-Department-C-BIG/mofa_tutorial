@@ -3,9 +3,6 @@ script_dir
 
 source(paste0('ppmi/setup_os.R'))
 
-#VISIT='V08'
-#### Metascripts 
-#('UpSetR')
 library('UpSetR')
 library('dplyr')
 library('ggplot2')
@@ -13,10 +10,9 @@ library('VennDiagram')
 library(grid)
 script_dir
 source(paste0(script_dir, 'ppmi/utils.R'))
-source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
-
+#source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 ## load single combination enrichment
-source(paste0(script_dir,'ppmi/load_single_combination_pathways.R'))
+#source(paste0(script_dir,'ppmi/load_single_combination_pathways.R'))
 ### load mofa enrichment 
 source(paste0(script_dir,'ppmi/mofa_enrich.R'))
 
@@ -334,16 +330,11 @@ get_combination_settings<-function(weights_var,adj_weights=c(1,1,1), use_mofa=FA
         ## run for all mofa factors and concatenate? 
 use_mofa=TRUE;run_weighted=TRUE
 f_pvals<-list()
-fns=c(1:4)
-fns=c(3)
-fns=c(3)
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
 
-fns=c(1:4)
-fns=c(3)
+## selected factor  indices in numbers 
 fns=c(1:length(sel_factors))
-fns
 
         for (fn in fns){
         #  fn=3
@@ -399,7 +390,7 @@ fns
         }     
 
 
-## how many      
+## how many significant for each factor       
 lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
 lapply(f_pvals, function(x){dim(x)}) 
 

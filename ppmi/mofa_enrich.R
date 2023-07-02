@@ -43,8 +43,6 @@ cors_pval<-correlate_factors_with_covariates(MOFAobject,
 cors<-cors_pval[,'CONCOHORT'] # TODO: LOAD or recalc
 cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
 cors_pearson_l[,'INEXPAGE'] 
-cors_pval[,'CONCOHORT']
-cohort_cors
 cor_t=0.15
 sel_factors<-which(abs(cohort_cors)>cor_t)
 sel_factors
@@ -79,7 +77,7 @@ list_mirs= vector("list", length = nfactors)
 list1_genes= vector("list", length = nfactors)
 
 
-dir.create(paste0(outdir, '/enrichment/'))
+suppressWarnings(dir.create(paste0(outdir, '/enrichment/')))
 
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
@@ -242,7 +240,7 @@ as.logical(lapply(list1, is.null))
 as.logical(lapply(list_mirs, is.null))
 as.logical(lapply(list_proteins, is.null))
 
-
+## holds the pvalues as an enrich result
 list_mirs_enrich=list()
 sel_factors_to_p<-sel_factors_to_enrich
 sel_factors_to_p<-sel_factors

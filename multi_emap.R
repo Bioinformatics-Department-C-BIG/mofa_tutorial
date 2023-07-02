@@ -388,7 +388,8 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   #https://rdrr.io/github/YuLab-SMU/enrichplot/src/R/emapplot_utilities.R
 
   list_all<-get_mofa_paths_and_weights(factor=sel_factors[1])
-  list_all2<-get_mofa_paths_and_weights(factor=sel_factors[2])
+  list_all2<-get_mofa_paths_and_weights(factor=sel_factors[4])
+  sel_factors[2]
   list_all3<-get_mofa_paths_and_weights(factor=sel_factors[3])
   # also write to extra file
   # where to get lists of common genes 
@@ -472,7 +473,7 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   }
   length(ids_merge_all)
   ids_merge_all
-  merged_results_sig$geneColname<-ids_merge_all
+  merged_results_sig$geneColname<-factor_genes
   
   merged_results_sig$geneColname
   
@@ -499,7 +500,7 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
                     color_by = 'qvalue', 
                     min = min_overlap_score, 
                     cex_label_category = 0.6,
-                    nCluster=15,
+                    nCluster=10,
                     scale_option = 'plasma')
   
   

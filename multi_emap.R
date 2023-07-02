@@ -1,5 +1,5 @@
 
-source(paste0(script_dir,'ppmi/mofa_p_value_combination.R'))
+source(paste0(script_dir,'ppmi/mofa_p_value_combination.R')) ## run to merge 
 source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir,'multi_emap_mofa_plot.R'))
 
@@ -8,6 +8,8 @@ source(paste0(script_dir,'multi_emap_mofa_plot.R'))
 library('multienrichjam')
 library('clusterProfiler')
 library('enrichplot')
+library('DOSE')
+
 
 
 which(f_pvals[[1]]$Description == 'regulation of small GTPase mediated signal transduction')
@@ -26,7 +28,7 @@ lapply(f_pvals, function(x){length(which(x$fish<0.05))})
 get_ranks<-function(f_pvals_merged_fs){
   #''
   #
-  ranks_fs<-as.data.frame(apply(f_pvals_merged_fs, 2, rank))
+  ranks_fs<-as.data.frame(apply(f_pvals_merged_fs, 2, rank, ties.method='first'))
   tot_rank=rowSums(ranks_fs)
   min_rank<-colnames(ranks_fs)[apply(ranks_fs,1,which.min)]
   min_rank
@@ -36,6 +38,7 @@ get_ranks<-function(f_pvals_merged_fs){
   rank_stats=cbind(rank_stats, ranks_fs)
   return(rank_stats)
 }
+
 
 
 f_pvals_merged<-f_pvals %>% purrr::reduce(full_join , by='Description' )
@@ -159,14 +162,14 @@ colnames(merged_results)
 
 ############
 
-create_enrich_result<-function(enrich_res_df){
+create_enrich_result<-function(enrich_res_df, pvalueColname='fish'){
   #' convert pvalue comb to enrich result for further cluster profiler plotting
   #' @param  enrich_res_df contains fish variable as pvalue
   #' @return description
   enr_full_all <- multienrichjam::enrichDF2enrichResult(as.data.frame(enrich_res_df),
                                                         keyColname =  'Description',
                                                         geneColname ='geneColname',
-                                                        pvalueColname = 'fish',
+                                                        pvalueColname = pvalueColname,
                                                         descriptionColname = 'Description',
                                                         qvalue='',
                                                         pvalueCutoff = 0.05)
@@ -179,21 +182,25 @@ N_EMAP=25
 require(DOSE)
 require(enrichplot)
 require(viridis)
+library('stats')
+library('cluster')
+
 create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2,
-                            width=10, height=10, scale_option='plasma'){
+                            width=10, height=10, cex_label_category=0.6,nCluster=20,scale_option='plasma'){
           #'
           #'
           #'
           #'
           
-          #N_EMAP=50
-          #min=0.3
-          #color_by='qvalue'
+          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6
   
           options(ggrepel.max.overlaps = Inf)
           
           x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
-          
+         #grep( 'inflammatory',x2@result$ID )
+         
+         #enr_full@result[grep( 'inflammatory',enr_full@result$ID),]
+         #enr_full@result$ID
           
           
           
@@ -201,16 +208,18 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           
          # color_by='pvalue'
           #jpeg(fname_net)
+          print(N_EMAP)
           em<-emapplot(x2, showCategory=N_EMAP,
                        cex_category=1, 
-                       cex_label_category=0.8, 
+                       cex_label_category=cex_label_category,
                        color=color_by,
                        min =min,
                        cluster.params=list(cluster =TRUE, 
-                                method=cluster::kmeans, # cluster::clara, cluster::pam , cluster::kmeans
-                                ellipse_style='ggforce'),
+                                method=cluster::pam, # cluster::clara, cluster::pam , cluster::kmeans
+                                ellipse_style='ggforce', 
+                                nCluster=nCluster),
                       group_category=TRUE,
-                    
+                      nCluster=nCluster,
                       alpha=0.1,
                       ellipse_style='ggforce'
                       # node_label = "all"
@@ -270,7 +279,7 @@ for (fn in fns){
         
         enrich_res_df<-factor1_paths
 
-        enr_full<-create_enrich_result(enrich_res_df)
+        enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'fish')
         
         
         # run_enrichment_plots(enr_full,results_file = 'test.txt')
@@ -284,7 +293,8 @@ for (fn in fns){
     
         #### EMAP by factor ####
         create_multi_emap(enr_full, N_EMAP=50, fname_net=paste0(merged_path_file_mofa, '_network', max_ws, '.jpeg'), color_by = 'pvalue', 
-                          min = min_overlap_score, scale_option='mako'
+                          min = min_overlap_score, cex_label_category = 0.8,
+                          nCluster=7, scale_option='mako'
                             )
         
         print(merged_path_file_mofa)
@@ -372,13 +382,19 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
 #### 2. Create one EMAP for all mofa factors ####
 ###
 
+  sel_factors[fn]
+  
+  ##TODO: merge the geneColnames from all factors..?? 
+  #https://rdrr.io/github/YuLab-SMU/enrichplot/src/R/emapplot_utilities.R
 
-  list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
+  list_all<-get_mofa_paths_and_weights(factor=sel_factors[1])
+  list_all2<-get_mofa_paths_and_weights(factor=sel_factors[2])
+  list_all3<-get_mofa_paths_and_weights(factor=sel_factors[3])
   # also write to extra file
   # where to get lists of common genes 
   enrich_rna= list_all[[1]]
-  enrich_proteins = list_all[[2]]
-  enrich_mirnas = list_all[[3]]
+  #enrich_proteins = list_all[[2]]
+  #enrich_mirnas = list_all[[3]]
   
   # outdir
   
@@ -410,14 +426,21 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   colnames(merged_results_sig_fs)<-names(sel_factors)
   
   rank_stats<-get_ranks(merged_results_sig_fs)
+  cbind(merged_results_sig_fs$Factor1, rank(rank(merged_results_sig_fs$Factor1)))
   merged_results_sig<-cbind(merged_results_sig,rank_stats)
-
+  dim(merged_results_sig)
+  table(merged_results_sig$min_rank)
   
-  high_ranks<-apply(merged_results_sig[,rank_cols],2,mark_high_rank, high_quant_t=0.9)
+  ### Keep top 20 paths from each?
+  rank_stats$Factor1_rank
+  ## Filter more to show top representatives from each factor 
+  high_ranks<-apply(merged_results_sig[,rank_cols],2,mark_high_rank, high_quant_t=0.15)
   #high_ranks_3<-mark_high_rank(merged_results_sig$Factor3_rank,  high_quant_t=0.1)
   #high_ranks[,'Factor3_rank']<-high_ranks_3
   merged_results_sig<-merged_results_sig[!apply(high_ranks, 1,all),]
   dim(merged_results_sig)
+  merged_results_sig[merged_results_sig$min_rank=='Factor4',]
+  
   
   table(merged_results_sig$min_rank)
   
@@ -427,17 +450,41 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   ### Connect by gene OVERLAP 
   #merged_results_sig$Description
   #enrich_rna$Description
-  merged_results_sig$geneColname<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
+  # 
+  factor_genes
+  ids_merge_all
+  factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
+  factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
+  factor_genes3<-list_all3[[1]][match(merged_results_sig$Description, list_all3[[1]]$Description),]$core_enrichment
+  
+  ids_merge_all=c()
+  length(factor_genes)
+  for (i in length(factor_genes)){
+    ids <- unique(unlist(strsplit(factor_genes[i], "/")))
+    ids2 <-unique(unlist(strsplit(factor_genes2[i], "/")))
+    ids3 <-unique(unlist(strsplit(factor_genes3[i], "/")))
+    
+    ids_merge<-union(ids,ids2)
+    ids_merge
+    ids_merge<-as.character(union(ids_merge,ids3))
+    ids_merge
+    ids_merge_all[i]<-paste0(ids_merge, collapse = '/')
+  }
+  length(ids_merge_all)
+  ids_merge_all
+  merged_results_sig$geneColname<-ids_merge_all
+  
+  merged_results_sig$geneColname
+  
+  
   merged_results_sig$Least_factor
   # hack to get it to color with this attribute 
-  ## Make sure that pvalyus is the combined 
+  ## Make sure that pvalues is the combined --> here i use the least /minimum
   merged_results_sig$pvalue= merged_results_sig$Least_value
-  merged_results_sig$pvalue
   merged_results_sig$qvalue= merged_results_sig$min_rank
   merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$qvalue))#, levels=c(1,2,3,4))
   enrich_res_df<-merged_results_sig
-
-  enr_full<-create_enrich_result(enrich_res_df)
+  enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value')
   enr_full@result$pvalue
   
   # run_enrichment_plots(enr_full,results_file = 'test.txt')
@@ -445,11 +492,14 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
  # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
 
   
-    min_overlap_score=0.2
+    min_overlap_score=0.3
   #### EMAP by factor ####
-  create_multi_emap(enr_full, N_EMAP=90, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs', '.jpeg'),
+    merged_path_file_mofa
+  create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs', '.jpeg'),
                     color_by = 'qvalue', 
                     min = min_overlap_score, 
+                    cex_label_category = 0.6,
+                    nCluster=15,
                     scale_option = 'plasma')
   
   

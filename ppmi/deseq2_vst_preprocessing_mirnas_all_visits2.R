@@ -31,21 +31,23 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
-process_mirnas=TRUE
+process_mirnas=FALSE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
-for (VISIT in c('BL')){
-        source(paste0(script_dir, 'ppmi/config.R'))
+# tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
+VISIT
+for (VISIT in c(c('BL', 'V08'))){
+        source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+        filter_common=TRUE
   
-        
+        VISIT
         
         raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
         raw_counts_all<-raw_counts
         
         ##### Load required data 
         # TODO: input all the visits 
-        filter_common=TRUE
         # MOVE ALL this to a configuration file!! 
         #### Remove low expression 
         
@@ -68,14 +70,25 @@ for (VISIT in c('BL')){
       
         # remove duplicates 
         ##### Up till here it is generic, no filters yet. 
+        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
+        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
         
-        
+        common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+       
         ### I moved the age scaling elsewhere 
         # TODO: use se_filt$AGE_SCALED and test!!
         se_filt<-filter_se(se, VISIT, sel_coh)
         se_filt<-filter_se(se, VISIT, sel_coh, sel_ps)
         
+        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
+        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
         
+        dim(se_filt)
+        common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+        if (filter_common){
+          se_filt<-se_filt[,se_filt$PATNO %in% common]
+        }
+        dim(se_filt)
         #### Do the filter by expression here! 
         ## TODO: check if this works now 
         raw_counts=assays(se_filt)[[1]]
@@ -86,7 +99,8 @@ for (VISIT in c('BL')){
         dim(raw_counts)
         se_filt=se_filt[idx]
         
-  
+        ### TODO: ADD FILTER COMMON AS PARAM TO SAVE IN THE DIRECTORY IN CONFIG!!! 
+        
         
         
         ### OUTPUT THE FILTERED se_filt 

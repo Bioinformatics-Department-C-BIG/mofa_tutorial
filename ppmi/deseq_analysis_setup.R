@@ -8,6 +8,7 @@ suppressWarnings(library("SummarizedExperiment"))
 suppressWarnings(library(data.table))
 suppressWarnings(library(dplyr))
 
+library(org.Hs.eg.db)
 
 ### TODO: Add volcano plot for each time point -DONE
 ### TODO: add heatmap for all tps tpogether -DONE

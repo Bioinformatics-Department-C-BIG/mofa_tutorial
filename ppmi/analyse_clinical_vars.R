@@ -1,3 +1,7 @@
+
+
+
+
 library(dplyr)
 options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX
 
@@ -223,6 +227,7 @@ scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STA
 ### If we are going to normalize/standardize by min-max it is better to do it only for the specific samples? 
 i=2
 graphics.off()
+common_samples=common #### loaded from deseq2_vst_preprocessing script 
 combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
 
 #### Histograms to check the distributions of the clinical variables before and after processing 
@@ -234,8 +239,6 @@ for (i in 1:length(scales_in_stage)){
     
   
     vals<-combined_p[,y]  
-    hist(vals)
-    
     vals_zero<-vals
     vals_zero[which(vals==0)]<-10^-6
     

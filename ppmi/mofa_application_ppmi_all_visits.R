@@ -24,7 +24,9 @@ if (split){
   N_FACTORS=8
 }
 VISIT=c('BL');
+VISIT=c('BL', 'V08');
 VISIT=c('V08');
+
 
 run_vsn=TRUE
 ## tissue is set in the config
@@ -162,7 +164,7 @@ meta_merged$PATNO_EVENT_ID
 sel_sam
 
 
-
+MOFAobject@samples_metadata$PD_MED_USE
 
 
 

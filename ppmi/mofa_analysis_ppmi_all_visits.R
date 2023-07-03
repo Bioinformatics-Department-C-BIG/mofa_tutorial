@@ -104,7 +104,7 @@ cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]
 cors=cors_both[[1]]
 cors_pearson
-cors
+cors[1,][cors[1,]>1.3]
 max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
 
 
@@ -193,7 +193,7 @@ MOFAobject@samples_metadata[,c('con_putamen', 'COHORT', 'updrs3_score_on', 'td_p
                                'ptau', 'ess_cat')]
 
 cors_pearson[,c('NP2PTOT', 'NP2_TOT', 'con_putamen')]
-cors[,'stai_state']
+cors
 cors[,'updrs3_score_on']
 
 cors[,'NP4_TOT']

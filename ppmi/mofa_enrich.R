@@ -3,6 +3,8 @@ source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 ## run mofa / or just load model 
 source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
+
+
 library(R.filesets)
 library(stats)
 ### need to load or add the function first because it fails !! 

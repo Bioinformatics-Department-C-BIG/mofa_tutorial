@@ -1,7 +1,6 @@
 
 library(org.Hs.eg.db)
-
-
+# run deseqvst
 bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 bl<-read.csv(bl_f)
 
@@ -92,6 +91,10 @@ df_v08<- clip_outliers(df_v08)
 
 
 
+
+######### PLOT molecular markers 
+
+
 unique(colnames(df_v08))
 colnames(df_v08)
 rownames(df_v08) %in% ens_genes
@@ -102,17 +105,13 @@ bl_ens<-t(df_bl[rownames(df_bl) %in% ens_genes,])
 bl_ens=data.frame(bl_ens,patno=c(se_filt_BL_pd$PATNO), PATNO_EVENT_ID=c(se_filt_BL_pd$PATNO_EVENT_ID))
 se_filt_BL_pd$PATNO_EVENT_ID
 
-rownames(bl_ens)
 
 
-
-
+### MELT and MERGE 
 v8_melt<-melt(v8_ens)
 v8_melt$VISIT<-'V08'
 
 bl_melt<-melt(bl_ens); bl_melt$VISIT='BL'
-dim(bl_melt)
-dim(v8_melt)
 merged_melt<-rbind(bl_melt, v8_melt)
 #merged_df<-merge(bl_ens, v8_ens, by='patno')
 #merged_df
@@ -126,19 +125,15 @@ ens<-gsub('\\..*', '',merged_melt$variable)
 ### ### NOW match factors to samples
 Z <- get_factors(MOFAobject)[[1]]
 Z1<-Z[,sel_factors[fn_sel]]
-match(rownames(v8_ens),names(Z1))
-gsub('\\..*', '',ens)
 patnos_z1<-gsub('\\_.*', '', names(Z1))
 Z1_matched<-Z1[match(merged_melt$patno,patnos_z1) ]
 hist(Z1_matched);
 quantile(Z1_matched,0.9, na.rm=TRUE)
-grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
-grouping<-factor(Z1_matched>quantile(Z1_matched,0.9, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.9, na.rm=TRUE))
 
-length(grouping)
-grouping
 dim(merged_melt)
-merged_melt$grouping<-grouping
+merged_melt$grouping<-Z1_grouping
 
 
 symb<-get_symbols_vector(ens)
@@ -151,6 +146,9 @@ merged_melt_filt
 ### EDIT GROUP TO BE PATNO and GROUP!!
 # OR JUST GROUP  
 merged_melt_filt$VISIT
+
+
+
 
 
 
@@ -186,6 +184,85 @@ stat.test2 <- merged_melt_filt %>%
   group_by(grouping) %>%
   t_test(value ~ VISIT, p.adjust.method = "bonferroni")
 stat.test2
+
+##############
+
+### Plot clinical variables 
+
+na_ps
+### AND ALSO changed STAGE 
+
+se_V08_cl<-se_filt_V08_pd[,se_filt_V08_pd$PATNO%in% na_ps ]
+se_bl_cl<-se_filt_BL_pd[,se_filt_BL_pd$PATNO%in% na_ps ]
+se_V08_cl$NP4TOT
+
+to_sel_cor<-names(cors[1,][cors[1,]>1.7])
+to_sel<- c('PATNO', to_sel_cor)
+to_sel
+df_V08_cl<-colData(se_V08_cl)[,to_sel]
+df_bl_cl<-colData(se_bl_cl)[,to_sel]
+
+df_bl_cl$MCAVFNUM
+
+df_V08_cl_ml<-reshape2::melt(df_V08_cl,value.name = to_sel); df_V08_cl_ml$VISIT='V08'
+df_bl_cl_ml<-reshape2::melt(df_bl_cl, value.name=to_sel); df_bl_cl_ml$VISIT='BL'
+
+df_V08_cl_ml
+
+
+## Which variables are corelated? 
+
+
+merged_melt_cl<-rbind(df_bl_cl_ml,df_V08_cl_ml)
+
+patnos_z1<-gsub('\\_.*', '', names(Z1))
+patnos_z1
+merged_melt_cl$PATNO
+Z1_matched<-Z1[match(merged_melt_cl$PATNO,patnos_z1) ]
+Z1
+hist(Z1_matched);
+quantile(Z1_matched,0.9, na.rm=TRUE)
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.9, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
+
+dim(merged_melt)
+merged_melt_cl$grouping<-Z1_grouping
+
+
+table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
+
+
+ggplot(data = merged_melt_cl, aes_string(x = 'grouping', y ='NP3SPCH'  )) + 
+  geom_boxplot(aes(fill=VISIT ))+
+#facet_wrap(. ~ symbol, scales='free_y') +
+    theme_bw() 
+
+ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
+
+
+
+
+table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
+
+
+ggplot(data = merged_melt_cl, aes_string(x = 'VISIT', y ='NP3SPCH'  )) + 
+  geom_point(aes(col=factor(VISIT)), size = 2) +
+  geom_line(aes(group=PATNO, col=VISIT), jitter()) +
+  geom_jitter(aes(colour=grouping))+
+#  geom_boxplot(aes(fill=grouping))+
+  #geom_line(aes(group=patno), palette='jco') +
+  #facet_wrap(. ~ symbol) +
+
+  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+  theme_bw() 
+  
+
+
+#  stat_compare_means(comparisons = list(c("BL", "V08")), 
+ #                    label = "p.format", method = "wilcox.test", tip.length = 0)
+
+
+
 
 
 

@@ -2,6 +2,7 @@
 source(paste0(script_dir,'ppmi/mofa_p_value_combination.R')) ## run to merge 
 source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir,'multi_emap_mofa_plot.R'))
+source(paste0(script_dir,'ppmi/emap_utils.R'))
 
 ###########
 # create multi omics emap plot 
@@ -174,17 +175,18 @@ library('stats')
 library('cluster')
 
 create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2,
-                            width=10, height=10, cex_label_category=0.6,nCluster=20,
-                            node_label='category',scale_option='plasma'){
+                            width=10, height=10, cex_label_category=0.6, nCluster=20,
+                            node_label='category',scale_option='plasma', max.overlaps=10, 
+                            layout='fr'){
           #'
           #' @param enr_full
           #' https://github.com/YuLab-SMU/enrichplot/blob/devel/R/emapplot.R
           #'
           #'
           
-          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6
+          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6; nCluster=50
   
-          options(ggrepel.max.overlaps = Inf)
+          options(ggrepel.max.overlaps =max.overlaps)
           
           x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
          #grep( 'inflammatory',x2@result$ID )
@@ -198,21 +200,26 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           
          # color_by='pvalue'
           #jpeg(fname_net)
-          print(N_EMAP)
           em<-emapplot(x2, showCategory=N_EMAP,
-                       cex_category=1, 
+                       cex_category=0.5, 
                        cex_label_category=cex_label_category,
                        color=color_by,
                        min =min,
                        cluster.params=list(cluster =TRUE, 
                                 method=cluster::pam, # cluster::clara, cluster::pam , cluster::kmeans
                                 ellipse_style='ggforce', 
-                                nCluster=nCluster),
+                                nCluster=nCluster, 
+                               legend=TRUE),
+                       layout.params =list(layout=layout),
                       group_category=TRUE,
                       nCluster=nCluster,
                       alpha=0.005,
                       ellipse_style='ggforce',
-                      node_label = node_label
+                      node_label = node_label, 
+                      hilight.params=list(alpha_no_hilight =0.3, 
+                                          alpha_hilight=0.3
+                        
+                      ),
           )
           
           
@@ -252,6 +259,8 @@ for (fn in fns){
         merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
                                         'mofa_',  use_mofa_s   )
         factor1_paths<-f_pvals[[fn]]
+        
+        ### leave only significant 
         factor1_paths=factor1_paths[factor1_paths$fish<0.05,]
         factor1_paths=factor1_paths[c('Description', 'fish')]
         #factor1_paths$rank=rank(factor1_paths$fish)
@@ -269,22 +278,37 @@ for (fn in fns){
         
         enrich_res_df<-factor1_paths
 
-        enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'fish')
+      
         
+        color_by='pvalue'
+        color_by_rna=TRUE
+        
+        factor1_paths$rna<-standardize_go_names(factor1_paths$Description) %in% standardize_go_names(mofa_rna_common)
+        
+        factor1_paths$qvalue=as.numeric(factor(factor1_paths$rna))
+        factor1_paths[, c('rna', 'qvalue')]
+        
+        enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'fish', qvalue =qvalue )
         
         # run_enrichment_plots(enr_full,results_file = 'test.txt')
         enr_full@result$Description<-enr_full@result$ID
         
+        enr_full@result$Description
+        factor1_paths$Description
+        scale_option='mako'
+        if (color_by_rna){
+
+          enr_full@result$qvalue<-factor1_paths$qvalue
+          color_by='qvalue'
+          scale_option='plasma'
+          
+        }
+        min_overlap_score=0.25
         
-        min_overlap_score=0.35
-        
-        
-        
-    
         #### EMAP by factor ####
-        create_multi_emap(enr_full, N_EMAP=50, fname_net=paste0(merged_path_file_mofa, '_network', max_ws, '.jpeg'), color_by = 'pvalue', 
-                          min = min_overlap_score, cex_label_category = 0.8,
-                          nCluster=10, scale_option='mako', node_label = 'category'
+        create_multi_emap(enr_full, N_EMAP=60, fname_net=paste0(merged_path_file_mofa, '_network', max_ws,'rna' ,color_by_rna,'.jpeg'), 
+                          color_by = color_by,  min = min_overlap_score, cex_label_category = 0.8,
+                          nCluster=10, scale_option=scale_option, node_label = 'category', max.overlaps=20
                             )
         
         print(merged_path_file_mofa)
@@ -300,62 +324,108 @@ enr_full@result$Description<-enr_full@result$ID
 library(arules)
 library(igraph)
 ## create an emap as an igrpah object
-N_EMAP=200
-x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
-
+N_EMAP=1000
+x2 <- pairwise_termsim(enr_full_all_fs, showCategory = N_EMAP)
+enr_full_all_fs
 ig_plot<-enrichMapJam(x2, n=N_EMAP)
-ig_plot
-V(ig_plot)$size<-V(ig_plot)$size/1.2
+# set overlap score
+V(ig_plot)$size<-V(ig_plot)$size/1.8
 
-V(ig_plot)$color<-factor(V(ig_plot)$min_rank)
 V(ig_plot)$min_rank
 
-#### Remove low rank ####
+  #### Remove low rank ####
 factor
 high_quant_t=0.9
 g_graph<-ig_plot
-
-
-
-
-
 ig_plot_filt<-g_graph
-
-
-ig_plot_filt<-remove_subcomponents(ig_plot_filt, subcomp_min_edge = 2)
-
-
 #### Remove subcomponents 
+hist(E(ig_plot_filt)$overlap)
+which(E(ig_plot_filt)$overlap <0.25)
 
 
+clust_labs<-NULL
+### MIN overlap >0.35
+ig_plot_filt <- delete.edges(ig_plot_filt, which(E(ig_plot_filt)$overlap <0.3) )
+ig_plot_filt
 
-plot.igraph(ig_plot_filt, 
-     layout=layout_nicely, 
-     
+
+filt_plot<-remove_subcomponents(ig_plot_filt, subcomp_min_edge = 1)
+ig_plot_filt=filt_plot[[1]]
+
+cluster_louvain(ig_plot_filt)
+### Clustering
+
+#clust_labs<-igraph::cluster_optimal(ig_plot_filt )
+clust_labs_low_res<-cluster_louvain(ig_plot_filt, resolution=0.01)
+clust_labs<-cluster_louvain(ig_plot_filt, resolution=1)
+
+LO = layout_with_fr(ig_plot_filt)
+## identify which communities have fewer than 5 members
+
+members<-melt(clust_labs$memberships)
+colnames(members)=c('ni','id','group')
+
+group_ids <- lapply(members %>% split(.$group), function(grp) { grp$id })
+group_ids
+group_ids
+ig_plot_filt
+main_labels<-lapply(group_ids, function(x){if (length(x)>3)
+                                            return(c(max(x), min(x))) })
+main_label=unlist(main_labels, use.names=FALSE)
+#main_label=unlist(main_label, use.names=FALSE)
+label=V(ig_plot_filt)$label
+
+
+#### Remove some of the labels ########### 
+label=V(ig_plot_filt)$label
+label
+ig_plot_filt_2=ig_plot_filt
+V(ig_plot_filt)$label<-V(ig_plot_filt)$name
+label[!seq(1:NROW(label)) %in% main_label]<-''
+label
+
+
+cols_pal<-c("#bef7ff", "#a0dcff", "#82c2ff", "#63a7ff")
+cols_pal<-RColorBrewer::brewer.pal(4, name='Spectral') # red, 2: orange 3: green , blue
+
+fnames<-unique(factor(V(ig_plot_filt_2)$min_rank))
+
+mapdf <- data.frame(old=fnames,new=cols_pal[1:length(sel_factors)])
+V(ig_plot_filt_2)$color<-mapdf$new[match(V(ig_plot_filt_2)$min_rank, mapdf$old)]
+V(ig_plot_filt_2)$color
+ig_plot_filt_2 <- set.vertex.attribute(ig_plot_filt_2, "label", value=label)
+#ig_plot_filt_2 <- set.vertex.attribute(ig_plot_filt_2, "color", value=)
+
+V(ig_plot_filt_2)$label=label
+
+
+plot.igraph(ig_plot_filt_2, 
+     layout=layout_nicely ,
+     mark.groups = clust_labs,
+     mark.col=c("tan", "tan","pink", "lightgray"), 
      
      # === vertex label
      vertex.label.family="Helvetica",                  # Font family of the label (e.g.“Times”, “Helvetica”)
      vertex.label.font=1,                         # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
-     vertex.label.cex=0.7,                           # Font size (multiplication factor, device-dependent)
-     
-     )
-
+     vertex.label.cex=0.8                          # Font size (multiplication factor, device-dependent)    )
+)
 
 
 ### 1. Color by p-value, 
 ### 2.
-vis_emap_mofa<-toVisNetworkData(ig_plot_filt)
-vis_emap_mofa$edges$width
-vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
+vis_emap_mofa<-toVisNetworkData(ig_plot_filt_2)
+#vis_emap_mofa$edges$width
+#vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
 
 
 
 visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges) %>%
-visIgraphLayout(layout = 'layout_nicely')# same as   visLayout(hierarchical = TRUE) 
+      visIgraphLayout(layout = 'layout_nicely')# same as   visLayout(hierarchical = TRUE) 
   
 head(vis_emap_mofa$edges$width)
 vis_emap_mofa$nodes$id
 
+choose_f=sel_factors[fn]
 visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges, 
            main=paste0(choose_f))%>%
   #visOptions(selectedBy= list(variable="group",multiple=T)) %>%
@@ -400,7 +470,7 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   dim(merged_results_sig_all)
   
   ### Create filters on nodes 
-  high_quant_t=0.5
+  high_quant_t=0.2
   #factor_filters<-names(sel_factors)
   rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
   rank_cols
@@ -425,28 +495,20 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
 
   
   ## Filter more to show top representatives from each factor 
-  high_ranks<-apply(merged_results_sig_all[,rank_cols],2,mark_high_rank, high_quant_t=0.15)
+  high_ranks<-apply(merged_results_sig_all[,rank_cols],2,mark_high_rank, high_quant_t=high_quant_t)
   high_ranks
   #high_ranks_3<-mark_high_rank(merged_results_sig$Factor3_rank,  high_quant_t=0.1)
   #high_ranks[,'Factor3_rank']<-high_ranks_3
   ## remove low ranked in all 
   
   merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
-  merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
-  
+
   dim(merged_results_sig)
   
   ## OR remove 50% in ALL factors ..?? 
 
-  
+  ### Add more genes? 
   table(merged_results_sig$min_rank)
-  
-  #merged_results_sig=merged_results_sig[c('Description', 'fish')]
-  ## obtain the enrich RNA of the specific factor!!! 
-
-  ### Connect by gene OVERLAP 
-  #merged_results_sig$Description
-  #enrich_rna$Description
   # 
   factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
   factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
@@ -481,17 +543,31 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   
   
   ## OR color by whether it exists in baseline!!
-  color_by_bl=TRUE
+  color_by_bl=FALSE
+  color_by_rna=FALSE
+  min_overlap_score=0.30
+  
   if (color_by_bl){
     v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
     merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
     merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$BL))
     merged_results_sig[, c('BL', 'qvalue')]
+  }else if (color_by_rna){
+  #  mofa_in_rna<-mofa_rna_common
+
+    merged_results_sig$rna<-standardize_go_names(merged_results_sig$Description) %in% standardize_go_names(mofa_rna_common)
+    merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$rna))
+    merged_results_sig[, c('rna', 'qvalue')]
+    min_overlap_score=0.30
+    
+    
   }
   
+  # TODO: color by miRNA unique or RNA unique
   
   enrich_res_df<-merged_results_sig
   enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value',qvalue = qvalue)
+  enr_full_all_fs<-enr_full
   enr_full@result$pvalue
   
   write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_network.csv'))
@@ -501,17 +577,24 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
  # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
 
   
-    min_overlap_score=0.30
+  
   #### EMAP by factor ####
     merged_path_file_mofa
-  create_multi_emap(enr_full, N_EMAP=200, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs_',color_by_bl, '.jpeg'),
+    node_label= 'all';cex_label_category=0.5
+    node_label= 'group';cex_label_category=0.7
+    
+    
+    ### TODO: add ggrob to add legend etc. 
+  create_multi_emap(enr_full, N_EMAP=500, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs_','bl_',
+                                                           as.character(color_by_bl)[1], 'rna_', as.character(color_by_rna)[1], node_label,'.jpeg'),
                     width=15, height=10,
                     color_by = 'qvalue', 
                     min = min_overlap_score, 
-                    cex_label_category = 0.6,
-                    nCluster=20,
+                    cex_label_category = cex_label_category,
+                    nCluster=70,
+                    max.overlaps=1,
                     #node_label = 'all',
-                    node_label = 'all',
+                    node_label = node_label,
                     
                     scale_option = 'plasma')
   
@@ -590,7 +673,7 @@ library(arules)
 library(igraph)
 ## create an emap as an igrpah object
 N_EMAP=100
-x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
+x2 <- pairwise_termsim(enr_full_all_fs, showCategory = N_EMAP)
 
 ig_plot<-enrichMapJam(x2, n=N_EMAP)
 

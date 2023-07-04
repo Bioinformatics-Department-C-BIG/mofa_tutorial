@@ -108,21 +108,6 @@ V(emap_mofa)$Factor5_rank
 
 #### Remove small components ####
 
-remove_subcomponents<-function(g, subcomp_min_edge=2){
-        #'
-        #'
-        #'
-        sub_gs<-components(g)$membership
-        
-        small_sub <- names(which(table(sub_gs) <= subcomp_min_edge))
-      
-        #get names of nodes to rm
-        rm_nodes <- which(sub_gs %in% small_sub)
-          #remove nodes by name
-        g_filt<- delete_vertices(g, rm_nodes)
-        return(g_filt)
-}
-
 #emap_mofa_rem<-remove_subcomponents(emap_mofa)
 
 
@@ -212,7 +197,6 @@ grey_col<-'#808080'
 # pvalue<- factor  1 , 3,  4, 14 
 
 mapdf <- data.frame(old=c(names(sel_factors)),new=cols_pal[1:length(sel_factors)])
-
 vis_emap_mofa$nodes$groups
 ### COLOR BY FACTOR
 if (is.null(choose_f)){

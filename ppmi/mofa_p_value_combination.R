@@ -413,8 +413,7 @@ unique(length(merged_factors_mofa_sig$Description))
 
 
 use_mofa=FALSE
-### single MODE ##### 
-single_weights_Var=c(41,301,298)
+### single combination MODE ##### 
 single_weights_Var=c(1,1,1)
 single_weights_Var=c(41,301,298)
 
@@ -468,6 +467,7 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 use_mofa=TRUE
 library('RColorBrewer')
+length(venn_list)
 create_venn<-function(venn_list, fname_venn, main){
   
   #######
@@ -526,20 +526,13 @@ if (use_mofa){
     title='Single combination vs Single'
   }
 # combined_ps=merged_factors_mofa; dim(merged_factors_mofa)
-
+listInput_all_mods_single$rna
 
 listInput_single_combination=append(listInput_all_mods_single[c(1,3)],
                                     list(combined_ps))
 
 inter_mofa_single<-calculate.overlap(listInput_single_combination)
-# write.csv(single_ps[combined_ps$Description %in% inter_mofa_single$a3,],
-#          paste0(out_compare, 'unique_single_comb_union_' ,use_mofa ,'.csv'))
 
-# mofa unique: 
-# inter$a3
-# mir only: inter
-
-# View(inter)
 names(listInput_single_combination)[length(listInput_single_combination)]<-'combination'
 fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_', 
                   int_params ,'venn_mofa_',use_mofa, '.jpeg')
@@ -548,10 +541,89 @@ fname_venn=paste0(out_compare,'Single_union_vs_comb_all_modalities_',
 venn_list=listInput_single_combination
 create_venn(listInput_single_combination, fname_venn, main=title)
 
+mofa_rna_common
+fname_venn
 ##########################
 #########################
 
 
+
+
+#### Compare mofa to rna only! ####
+listInput_all_mods_single$rna
+merged_factors_mofa_sig
+listInput_MOFA_RNAonly=append(list(listInput_all_mods_single$rna),
+                                    list(unique(merged_factors_mofa_sig$Description)))
+names(listInput_MOFA_RNAonly)<-c('rna', 'mofa')
+fname_venn=paste0(out_compare,'MOFAvsRNA_', 
+                  int_params ,'venn_mofa_',use_mofa, '.jpeg')
+
+### def create a venn? 
+venn_list=listInput_MOFA_RNAonly
+mofa_rna_common<-intersect(listInput_MOFA_RNAonly$rna,listInput_MOFA_RNAonly$mofa )
+create_venn(listInput_MOFA_RNAonly, fname_venn, main='MOFA vs RNA only')
+
+mofa_unique<-listInput_MOFA_RNAonly$mofa[!listInput_MOFA_RNAonly$mofa %in%mofa_rna_common]
+rna_unique<-listInput_MOFA_RNAonly$rna[!listInput_MOFA_RNAonly$rna %in%mofa_rna_common]
+
+
+#### GET PARENTS  ### Exclude unique mofa parents and children from the really unique ones 
+go_ids$TERM[grep('small gtpase', standardize_go_names(go_ids$TERM))]
+
+mofa_unique_id<-go_ids$GOID[match(mofa_unique, standardize_go_names(go_ids$TERM))]
+rna_unique_id<-go_ids$GOID[match(rna_unique, standardize_go_names(go_ids$TERM))]
+go_ids_rna<-go_ids$GOID[grep(all_children[1], go_ids$TERM)]
+
+
+## For each unique mofa path--> only set it as unique IF and ONLY if it does not have children in rna unique
+all_children<-lapply(mofa_unique_id, function(x){get_child_nodes(x)})
+all_parents<-lapply(mofa_unique_id, function(x){ps<-get_parent_nodes(x)
+                                                ps<-ps[ps$distance<3,]
+                                                return(ps)})
+
+
+unique(rna_unique_id)
+
+### get also parents of rna unique
+#parents_rna_unique<-lapply(rna_unique_id[!is.na(rna_unique_id)], function(x){ps<-get_parent_nodes(x)
+#                                                      ps<-ps[ps$distance<3,]
+#                                                      return(ps)})
+#children_rna_unique<-lapply(rna_unique_id[!is.na(rna_unique_id)], function(x){get_child_nodes(x)})
+
+### Which of the children overlap with 
+res_all<-unlist(lapply(all_children, function(df){
+  res<-any(  df$child_go_id %in% c(rna_unique_id )    )
+  return( res )
+}))
+
+res_all_ps<-unlist(lapply(all_parents, function(df){
+  res<-any(  df$parent_go_id %in% c(rna_unique_id  ))
+  return( res )
+}))
+
+
+sum((res_all))
+mofa_unique_nic<-mofa_unique[!(res_all|res_all_ps) ]
+mofa_unique_nic
+
+mofa_unique_nic
+listInput_MOFA_RNAonly$rna[grep( 'ras protein',standardize_go_names(listInput_MOFA_RNAonly$rna))]
+listInput_MOFA_RNAonly$mofa[grep( 'ras protein',listInput_MOFA_RNAonly$mofa)]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## Test mofa uniqueness ##############################
 
 
 

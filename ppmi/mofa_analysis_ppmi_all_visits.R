@@ -103,9 +103,11 @@ get_top_cors<-function(MOFAobject){
 cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]
 cors=cors_both[[1]]
+cors_all=cors_both[[1]]
+
 cors_pearson
 cors[1,][cors[1,]>1.3]
-max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
+#max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
 
 
 
@@ -612,6 +614,27 @@ i
 ii=4
 i=2
 views[i]
+
+
+data.frame()
+
+
+#### Load features 
+fs_metadata<-read.csv(paste0(data_dir,'/ppmi/ppmi_data/features_metadata_genes.csv'))
+colnames(fs_metadata)<-c('f', 'feature_id', 'known')
+colnames(fs_metadata)
+fs_metadata$view='RNA'
+fs_met_to_merge<-fs_metadata[,c('feature_id', 'view', 'known'  )]
+
+source(paste0(script_dir, 'ppmi/mofa_my_utils.R'))
+p_ws<-plot_top_weights2(MOFAobject_gs,
+                       view = 'RNA',
+                       factor = 14,
+                       nfeatures = 15,     # Top number of features to highlight
+                       scale = F
+)
+p_ws
+# known genes 
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
@@ -622,20 +645,30 @@ for (i in seq(1,vps)){
       cols <- c( "red", 'red')
           p_ws<-plot_top_weights(MOFAobject_gs,
                            view = i,
-                           factor = ii,
-                           nfeatures = 10,     # Top number of features to highlight
-                           scale = F           # Scale weights from -1 to 1
+                           factor = c(ii),
+                           nfeatures = 20,     # Top number of features to highlight
+                           scale = F
           )
+          graphics.off()
+          nFeatures=12
           if (views[i]=='RNA'){
+            p_ws<-plot_top_weights2(MOFAobject_gs,
+                                    view = 'RNA',
+                                    factor = ii,
+                                    nfeatures = nFeatures,     # Top number of features to highlight
+                                    scale = F
+            )
+
+          
             print('rna')
             p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
           }
           #scale_colour_(values=cols) 
-
+       
             
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
                  plot=p_ws, 
-                 width = 3, height=3, dpi=300)
+                 width = 2, height=nfeatures/4, dpi=300)
           
           plot_weights(MOFAobject_gs, 
                        view = views[i], 
@@ -653,6 +686,9 @@ for (i in seq(1,vps)){
           }
   }
 }
+
+
+
 
     # top weights
     # concat all 

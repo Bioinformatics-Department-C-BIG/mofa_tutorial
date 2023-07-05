@@ -1,5 +1,6 @@
-
+#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 source(paste0('ppmi/setup_os.R'))
+#source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
 #BiocManager::install('GOSemSim')
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control

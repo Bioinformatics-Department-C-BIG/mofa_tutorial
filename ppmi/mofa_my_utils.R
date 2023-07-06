@@ -1,7 +1,3 @@
-plot_top_weights2(MOFAobject)
-
-i
-ii
 
 plot_top_weights2 <- function(object, view = 1, factors = 1,
                              nfeatures = 10, abs = TRUE, scale = TRUE, sign = "all") {
@@ -59,7 +55,7 @@ plot_top_weights2 <- function(object, view = 1, factors = 1,
   W$feature_id <- factor(W$feature_id, levels = rev(unique(W$feature_id)))
  
 
-  W2
+  
   W2<-merge(W,fs_met_to_merge, all.x=TRUE, by=c('feature_id' , 'view'))
   
   W2$color<-(tolower(W2$known)=='y')

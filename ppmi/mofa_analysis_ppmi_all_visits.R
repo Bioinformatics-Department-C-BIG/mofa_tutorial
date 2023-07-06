@@ -58,9 +58,12 @@ MOFAobject_gs@samples_metadata$COHORT_DEFINITION
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
-write.table(format(vars_by_factor,digits = 2)
+vars_by_factor_f<-format(vars_by_factor*100, digits=2)
+vars_by_factor
+write.table(format(vars_by_factor_f,digits = 2)
             ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
 
+vars_by_factor_f[sel_factors,]
 p3<-plot_variance_explained(MOFAobject, max_r2=20)+
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20))
@@ -126,7 +129,11 @@ tot_cor_t=5
 ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
 non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
 non_na_ids_to_plot
-cors[, '']
+
+sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+sel_factors
+10^-cors_all[,'CONCOHORT']
+format(cbind(cors_pearson[, 'CONCOHORT'],10^-cors_all[,'CONCOHORT']), digits=3) [sel_factors,]
 
 MOFAobject@samples_metadata$DATSCAN_CAUDATE_L
 
@@ -254,7 +261,6 @@ P2<-correlate_factors_with_covariates(MOFAobject_gs2,covariates = labels_col,
                                        )
 dev.off()
 
-plot(P2+coord_flip())
 
 
 ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
@@ -464,16 +470,66 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
 dev.off()
 
 
-MOFAobject@samples_metadata$CONCOHORT_DEFINITION
+MOFAobject@samples_metadata$NP3_TOT
 
+
+########## Scatter plots - FACTORS to variables ################
 # here find the view for which the variability of the factor maximum
-plot_data_scatter(MOFAobject, 
-                  view = "RNA",
-                  factor = fs[1],  
-                  features = 4,
-                  sign = "positive",
+color_by='NP3_TOT'
+plot_data_scatter(MOFAobject_gs, 
+                  view = "miRNA",
+                  factor = 3,  
+                  features = 6,
+                  sign = "negative",
                   color_by = color_by
 ) + labs(y=color_by)
+
+
+
+### Scatter plot top features NP3
+# create function to give top n
+top_mirs<-get_weights(MOFAobject_gs, view='miRNA', as.data.frame = TRUE, factor=3)
+
+view='miRNA'
+top_mirs<-get_weights(MOFAobject_gs, view=view, as.data.frame = TRUE, factor=3)
+
+top_mirs_10<-top_mirs[order(abs(top_mirs$value), decreasing = TRUE), ][1:20,]
+top_mirs_10$feature
+mirdata<-MOFAobject_gs@data[view]$miRNA[[1]]
+
+
+mirdata_sel<-mirdata[rownames(mirdata)%in%top_mirs_10$feature,]
+rownames(mirdata_sel)
+mirdata_sel_t<-t(mirdata_sel)
+
+MOFAobject@samples_metadata$PDSTATE
+
+## Loop cl 
+CL='NP3_TOT'
+mirdata_sel_t<-data.frame(mirdata_sel_t, 
+                          COHORT=MOFAobject@samples_metadata$COHORT, 
+                          CL=MOFAobject@samples_metadata[, CL], 
+                          PDSTATE=MOFAobject@samples_metadata[, 'PDSTATE'])
+
+
+MOFAobject@samples_metadata$COHORT_DEFINITION
+colnames(mirdata_sel_t$hsa.miR.193b.3p)
+mirdata_sel_t$hsa.miR.193b.3p
+mirdata_sel_t$PATNO<-rownames(mirdata_sel_t)
+mirdata_sel_t<-mirdata_sel_t[mirdata_sel_t$COHORT==1,]
+mirdata_sel_t$PDSTATE
+mirdata_sel_t<-mirdata_sel_t[!mirdata_sel_t$PDSTATE %in% c('ON')  ,]
+
+
+mirdata_melt<-melt(mirdata_sel_t, id=c('PATNO', 'COHORT', 'CL', 'PDSTATE'))
+colnames(mirdata_melt)
+ggplot(mirdata_melt, aes_string(x='value', y='CL'))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  facet_wrap(~variable, scales='free_x')
+
+
+ggsave(paste0(outdir, '/trajectories/clinical/',view,CL, '.jpeg'  ), width=10,height=10, dpi=300)
 
 
 type(MOFAobject@samples_metadata$STAIAD3)
@@ -638,6 +694,7 @@ p_ws
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
+    nFeatures=12
     
     ### oNLY SAVE THE ones with high variance
     if (high_vars_by_factor[ii, i]){
@@ -646,11 +703,10 @@ for (i in seq(1,vps)){
           p_ws<-plot_top_weights(MOFAobject_gs,
                            view = i,
                            factor = c(ii),
-                           nfeatures = 20,     # Top number of features to highlight
+                           nfeatures = nFeatures,     # Top number of features to highlight
                            scale = F
           )
           graphics.off()
-          nFeatures=12
           if (views[i]=='RNA'){
             p_ws<-plot_top_weights2(MOFAobject_gs,
                                     view = 'RNA',
@@ -668,7 +724,7 @@ for (i in seq(1,vps)){
             
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
                  plot=p_ws, 
-                 width = 2, height=nfeatures/4, dpi=300)
+                 width = 3, height=nFeatures/4, dpi=300)
           
           plot_weights(MOFAobject_gs, 
                        view = views[i], 
@@ -678,7 +734,7 @@ for (i in seq(1,vps)){
          
             
           ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'),
-                 width = 4, height=4, dpi=300)
+                 width = 3, height=nFeatures/4, dpi=300)
       
           
 

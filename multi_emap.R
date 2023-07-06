@@ -399,6 +399,7 @@ ig_plot_filt_2 <- set.vertex.attribute(ig_plot_filt_2, "label", value=label)
 V(ig_plot_filt_2)$label=label
 
 
+svg(paste0(outdir, '/enrichment/all_factors_emap_',pval_to_use, choose_f,'.svg'))
 plot.igraph(ig_plot_filt_2, 
      layout=layout_nicely ,
      mark.groups = clust_labs,
@@ -409,6 +410,8 @@ plot.igraph(ig_plot_filt_2,
      vertex.label.font=1,                         # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
      vertex.label.cex=0.8                          # Font size (multiplication factor, device-dependent)    )
 )
+dev.off()
+
 
 
 ### 1. Color by p-value, 

@@ -521,11 +521,24 @@ mirdata_sel_t$PDSTATE
 mirdata_sel_t<-mirdata_sel_t[!mirdata_sel_t$PDSTATE %in% c('ON')  ,]
 
 
+install.packages('ggpmisc')
+install.packages('dplyr')
+
+library('ggpmisc')
+
 mirdata_melt<-melt(mirdata_sel_t, id=c('PATNO', 'COHORT', 'CL', 'PDSTATE'))
 colnames(mirdata_melt)
+
 ggplot(mirdata_melt, aes_string(x='value', y='CL'))+
   geom_point()+
   geom_smooth(method=lm)+
+  
+  stat_fit_glance(method = 'lm',
+                  method.args = list(),
+                  geom = 'text',
+                  aes(label = paste("P-value = ", signif(..p.value.., digits = 4), sep = "")),
+                  label.x.npc = 'right', label.y.npc = 0.35, size = 3)
+
   facet_wrap(~variable, scales='free_x')
 
 

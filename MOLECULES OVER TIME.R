@@ -102,12 +102,6 @@ df_v08<- clip_outliers(df_v08)
 ######### PLOT molecular markers 
 
 
-unique(colnames(df_v08))
-colnames(df_v08)
-rownames(df_v08)
-rownames(df_v08) %in% ens_genes
-dim(df_v08)
-
 v8_ens<-t(df_v08[rownames(df_v08) %in% feat_names,])
 v8_ens=data.frame(v8_ens,patno=c(se_filt_V08_pd$PATNO), PATNO_EVENT_ID=c(se_filt_V08_pd$PATNO_EVENT_ID))
 bl_ens<-t(df_bl[rownames(df_bl) %in% feat_names,])
@@ -224,7 +218,7 @@ stat.test2
 
 ##############
 
-### Plot clinical variables 
+### Plot clinical variables ####
 
 na_ps
 ### AND ALSO changed STAGE 
@@ -235,6 +229,9 @@ se_bl_cl<-se_filt_BL_pd[,se_filt_BL_pd$PATNO%in% na_ps ]
 
 se_V08_cl$NP4TOT
 sel_factors[fn_sel]
+cors_both<-get_correlations(MOFAobject, names(MOFAobject@samples_metadata))
+cors_all=cors_both[[1]]
+
 to_sel_cor<-names(cors_all[names(sel_factors)[fn_sel],][cors_all[names(sel_factors)[fn_sel],]>1.7])
 to_sel<- c('PATNO', to_sel_cor)
 to_sel<-intersect(names(colData(se_V08_cl)), to_sel)
@@ -270,8 +267,8 @@ merged_melt_cl$grouping<-Z1_grouping
 to_sel
 
 ### for categorical 
-table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
-table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'], )
+#table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
+#table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'], )
 merged_melt_cl$NP3SPCH
 ggplot(data = merged_melt_cl, aes( x=factor(grouping), 
                                    fill = factor(PDSTATE) )) + 
@@ -286,12 +283,11 @@ is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 cov_to_plot %in% to_sel
 
 table(merged_melt_cl$PDSTATE)
-merged_melt_cl3$PDSTATE
 merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 merged_melt_cl2<-merged_melt_cl3
+merged_melt_cl3$PDSTATE
 
 for (cov_to_plot in to_sel){
-  
   
     if (is.numeric(merged_melt_cl3[, cov_to_plot])){
       
@@ -313,6 +309,9 @@ for (cov_to_plot in to_sel){
       
     }
 }
+
+
+
 
 ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
 

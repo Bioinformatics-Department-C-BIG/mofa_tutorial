@@ -1,6 +1,6 @@
 #install.packages('rstudioapi')
 
-#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 print(script_dir)
 suppressWarnings(library(sys))
@@ -82,7 +82,7 @@ formula_deseq3<-'~PATNO+AGE_AT_VISIT+SEX'
 
 des=gsub('~', '', formula_deseq2)
 
-
+process_mirnas
 if (process_mirnas){
   prefix='mirnas_'
   # if we filter too much we get normalization problems 
@@ -104,7 +104,7 @@ input_file<-paste0(output_files, prefix, 'all_visits.csv')
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
-deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds')
+deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 

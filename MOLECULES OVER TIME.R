@@ -26,8 +26,8 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=2
-view='miRNA'; process_mirnas=TRUE
+fn_sel=3
+view='proteomics'; process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
@@ -139,6 +139,14 @@ dev.off()
 quantile(Z1_matched,0.85, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.85, na.rm=TRUE))
+
+sel_factors[fn_sel]
+if (names(sel_factors[fn_sel])=='Factor4'){
+  T=0.15
+  Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  
+}
+T
 Z1_grouping
 dim(merged_melt)
 merged_melt$grouping<-Z1_grouping
@@ -178,7 +186,7 @@ ggplot(data = merged_melt_filt, aes(x = grouping, y = value)) +
   
   #geom_line(aes(group=patno, col=VISIT)) +
   
-  #geom_line(aes(group=patno), palette='jco') +
+  geom_line(aes(group=patno), palette='jco') +
   #facet_wrap(. ~ symbol) +
   facet_wrap(. ~ symbol, scales='free_y') +
   
@@ -186,7 +194,7 @@ ggplot(data = merged_melt_filt, aes(x = grouping, y = value)) +
   theme_bw() + 
   
   
-  stat_compare_means(comparisons = list(c("BL", "V08")), 
+  stat_compare_means(
                      label = "p.format", method = "wilcox.test", tip.length = 0)
 
 warnings()

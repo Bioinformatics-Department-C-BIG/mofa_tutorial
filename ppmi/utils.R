@@ -6,6 +6,42 @@
 ### TODO: move to a utils / preprocessing file because it is used also for proteoomics
 library(SummarizedExperiment)
 
+load_se_all_visits<-function(input_file, combined){
+  #'
+  #'
+  #'
+  raw_counts_all<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+  class(raw_counts_all) <- "numeric"
+  ## They seem to have taken averages for replicas so need to fix 
+  raw_counts_all<-round(raw_counts_all)
+  ## Question: why are there duplicate samples - seems to be controls! 
+  ## first filter what is in metadata and mirnas ?
+  se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
+  return(se)
+  
+}
+
+
+
+filter_se_byExpr<-function(se_filt){
+  #' @param name description
+  #' @param  
+  #'
+  #'
+  raw_counts=assays(se_filt)[[1]]
+  
+  ## filterbyExpr takes cpm so remove from there 
+  #idx <- edgeR::filterByExpr(raw_counts_all,min.count=min.count)
+  idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
+  
+  raw_counts <- as.matrix(raw_counts[idx, ])
+  se_filt=se_filt[idx]
+  return(se_filt)
+}
+
+
+
+
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #

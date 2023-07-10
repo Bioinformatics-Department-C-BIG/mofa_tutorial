@@ -124,14 +124,6 @@ raw_counts_all=proteomics
 class(raw_counts_all) <- "numeric"
 ## They seem to have taken averages for replicas so need to fix 
 #raw_counts_all<-round(raw_counts_all)
-dim(proteomics)
-dim(raw_counts_all)
-head(raw_counts_all[,2])
-
-#### Input to se 
-
-
-
 
 dim(proteomics)
 data<-proteomics
@@ -158,9 +150,7 @@ head(sample)
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 
-head(is.nan(as.matrix(data)))
 boxplot(log(data[1:16]))
-head(raw_counts_all[2,])
 
 #View(head(assays(proteomics_se)[[1]]))
 

@@ -57,7 +57,7 @@ motor_assess_II<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS
 motor_assess_III<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_III-short-date.csv'))
 
 motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_IV__Motor_Complications.csv'))
-motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/'))
+#motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/'))
 
 motor_assess_III$ONEXAMDT
 
@@ -172,12 +172,13 @@ MOFAobject@samples_metadata$PATNO
 demographics[which(demographics$PATNO==3386),]
 
 demographics$PATNO
-
-
+common
 
 
 ## add genetics
 
 genetics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus'))
+
+
 
 

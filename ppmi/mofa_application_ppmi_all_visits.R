@@ -149,23 +149,31 @@ for (N_FACTORS in c(15)){
 ## attach some extra clinical variables 
 sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
 combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
-combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID),]
-combined_bl_log_sel$RBD_TOT
+table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$COHORT )
+
+combined_bl_log_sel_OFF<- combined_bl_log_sel[combined_bl_log_sel$PDSTATE %in% c('OFF', 'NA', ''),]
+
+length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
+
+
+table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
+combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
+combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
+
+combined_bl_log_sel$PDSTATE
+
+
+### Merging and remove duplicates 
 meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
 meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
-
-meta_merged
 meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
+
 MOFAobject@samples_metadata=meta_merged_ord
-MOFAobject@samples_metadata$RBD_TOT
 
 
-dim(MOFAobject@samples_metadata)
-meta_merged$PATNO_EVENT_ID
-sel_sam
 
 
-MOFAobject@samples_metadata$PD_MED_USE
+
 
 
 

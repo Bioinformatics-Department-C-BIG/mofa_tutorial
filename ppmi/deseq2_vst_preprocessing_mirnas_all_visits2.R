@@ -31,20 +31,19 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 
-#process_mirnas=FALSE
+process_mirnas=TRUE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
 # tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
-VISIT
-for (VISIT in c(c('BL', 'V08'))){
-        source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-        filter_common=TRUE
+VISIT='V08'
+for (VISIT in c(c('V08'))){
+
   
-        VISIT
+        filter_common=TRUE
+
+        source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
         
-        raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
-        raw_counts_all<-raw_counts
         
         ##### Load required data 
         # TODO: input all the visits 
@@ -52,22 +51,12 @@ for (VISIT in c(c('BL', 'V08'))){
         #### Remove low expression 
         
         
-        
+        se=load_se_all_visits(input_file = input_file, combined=combined)
         
         ##### 1.  First create the summarized experiment object  
         ### find common samples in mirnas file + metadata
         ## subset and order by common samples
         ## And create SE object with metadata
-        #duplicate_samples<-colnames(mirnas_BL)[which(duplicated(colnames(mirnas_BL),fromLast = TRUE))]
-        
-        class(raw_counts_all) <- "numeric"
-        ## They seem to have taken averages for replicas so need to fix 
-        raw_counts_all<-round(raw_counts_all)
-        
-        ## Question: why are there duplicate samples - seems to be controls! 
-        ## first filter what is in metadata and mirnas ?
-        se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
-      
         # remove duplicates 
         ##### Up till here it is generic, no filters yet. 
         se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
@@ -91,13 +80,10 @@ for (VISIT in c(c('BL', 'V08'))){
         dim(se_filt)
         #### Do the filter by expression here! 
         ## TODO: check if this works now 
-        raw_counts=assays(se_filt)[[1]]
         
-        ## filterbyExpr takes cpm so remove from there 
-        idx <- edgeR::filterByExpr(raw_counts_all,min.count=min.count)
-        raw_counts <- as.matrix(raw_counts[idx, ])
-        dim(raw_counts)
-        se_filt=se_filt[idx]
+       
+        
+        se_filt<-filter_se_byExpr(se_filt)
         
         ### TODO: ADD FILTER COMMON AS PARAM TO SAVE IN THE DIRECTORY IN CONFIG!!! 
         
@@ -159,7 +145,13 @@ for (VISIT in c(c('BL', 'V08'))){
         deseq2Data <- DESeq(ddsSE)
         ### Contrast disease-control: parkinsons = 1, control = 2 
         se_filt$COHORT_DEFINITION; se_filt$COHORT
-        deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
+        if (4 %in% sel_coh){
+           disease_group=4    
+        }else{
+          disease_group=1    
+          
+        }
+        deseq2Results <- results(deseq2Data, contrast=c('COHORT', disease_group,2))
         datalist=list(ddsSE, vsd, se_filt, deseq2Results)
         saveRDS(datalist,deseq_file)
         saveRDS(se, se_file)

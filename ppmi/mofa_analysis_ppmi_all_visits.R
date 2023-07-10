@@ -63,7 +63,6 @@ vars_by_factor
 write.table(format(vars_by_factor_f,digits = 2)
             ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
 
-vars_by_factor_f[sel_factors,]
 p3<-plot_variance_explained(MOFAobject, max_r2=20)+
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20))
@@ -280,13 +279,15 @@ cors_pearson[,c('DYSKIRAT')]
 MOFAobject_nams<-MOFAobject
 colnames(MOFAobject_nams@samples_metadata)
 hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
-
-
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 700+length(selected_covars)*20, height=1100, res=300)
-correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars,
+selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]
+selected_covars_pearson
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 1000+length(selected_covars)*20, height=1100, res=300)
+correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars_pearson,
                                   plot = "r", 
                                   col.lim=c(-0.5, 0.5), 
-                                  is.cor=FALSE)
+                                  is.cor=FALSE, 
+                                  )
+
 dev.off()
 
 
@@ -409,6 +410,7 @@ i=111
 positive_cors_to_plot<-positive_cors[,!grepl(tolower(to_remove_regex),tolower(colnames(positive_cors))) ]
 positive_cors_to_plot
 grepl(positive_cors,names(positive_cors_to_plot))
+#install.packages('forcats')
 
 for (i in 1:dim(positive_cors_to_plot)[2]){
   #' fix find 2d plots 
@@ -418,9 +420,11 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
   x_cors<-positive_cors_to_plot[,i]
   print(names[i])
   ### does the variable relate to two factors? 
-  pos_factors<-names(which(x_cors>0))
-  pos_factors<-names(which(x_cors>x_cor_t))
+  pos_factors<-names(which(x_cors > 0))
+  pos_factors<-names(which(x_cors > x_cor_t))
   pos_factors
+  
+  fct_na_value_to_level
   # Order by 
   pos_factors<-pos_factors[order(x_cors[pos_factors], decreasing = TRUE)]
   print(paste(i, pos_factors))
@@ -434,14 +438,16 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
           print(color_by)
           factor_cors<-paste0(format(x_cors[pos_factors], digits=2), collapse=',')
 
+          
           pf<-plot_factors(MOFAobject, 
                        factors = fs, 
-                       shape_by=color_by,
+                       #shape_by=color_by,
                        color_by = color_by,
                          show_missing = FALSE 
           )
           
           pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
+          pf
           fss<-paste(fs,sep='_',collapse='-')
           dir.create(file.path(paste0(outdir,'/factor_plots/2D/')), showWarnings = FALSE)
           
@@ -452,22 +458,48 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
           
           
           ### you can also add a variable if it is also related to these two factors? 
-          shape_by='NHY'
+          #shape_by='NHY'
           #shape_by='AGE_AT_VISIT'
-          fs
-          pf=plot_factors(MOFAobject, 
-                       factors = fs, 
-                       color_by=color_by,
-                        shape_by= shape_by,
-                       show_missing = FALSE
-          )
-          pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
-          
-          FNAME<-paste0(outdir,'/factor_plots/group/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
-            ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
+          #fs
+          #pf=plot_factors(MOFAobject, 
+         #              factors = fs, 
+        #               color_by=color_by,
+        #                shape_by= shape_by,
+        #               show_missing = FALSE
+        #  )
+        #  pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
+        #  
+        #  FNAME<-paste0(outdir,'/factor_plots/group/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
+        #    ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
   }
 }
 dev.off()
+
+
+######## Specific correlations #########
+library(tidyverse)
+loadNamespace(tidyverse)
+factor_cors<-paste0(format(x_cors[factors_to_plot], digits=2), collapse=',')
+factor_cors
+  
+MOFAobject@samples_metadata$td_pigd
+factors_to_plot<-c(3,4)
+color_by='td_pigd'
+color_by='NP3GAIT'
+
+pf<-plot_factor(MOFAobject_gs, 
+                 factors = c(3,4), 
+                # shape_by=color_by,
+                 color_by = color_by,
+                 show_missing = TRUE 
+)
+pf
+pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
+fss<-paste(fs,sep='_',collapse='-')
+dir.create(file.path(paste0(outdir,'/factor_plots/2D/')), showWarnings = FALSE)
+
+FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
+
 
 
 MOFAobject@samples_metadata$NP3_TOT

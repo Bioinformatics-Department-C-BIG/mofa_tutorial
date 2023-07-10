@@ -1,5 +1,7 @@
 
 library(org.Hs.eg.db)
+library(edgeR)
+source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 ## Load baseline and v08 ####
@@ -26,9 +28,21 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=3
-view='proteomics'; process_mirnas=FALSE
-source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+fn_sel=4
+view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
+view='RNA'; process_mirnas=FALSE
+
+source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
+se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
+#se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
+#Reduce(intersect, list(a,b,c))
+
+common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+
+
+
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
 
@@ -38,10 +52,13 @@ ws_high<-ws[abs(ws)>quantile(ws, 0.95) & abs(ws)<quantile(ws, 0.96) ,]
 ws_high<-ws[abs(ws)>quantile(ws, 0.85) & abs(ws)<quantile(ws, 0.86) ,]
 ws_high<-ws[abs(ws)>quantile(ws, 0.95) & abs(ws)<quantile(ws, 0.96) ,]
 ws_high<-ws[abs(ws)>quantile(ws, 0.999999999),]
-ws_high<-ws[abs(ws)>quantile(ws, 0.99999996),][1:12]
+ws_high<-ws[abs(ws)>quantile(ws, 0.99996),][1:12]
+ws_high<-ws[ws>quantile(ws, 0.995),]
+ws_low<-ws[ws<quantile(ws, 0.005),]
 
+ws_union<-c(ws_high, ws_low)
 #ws_high<-ws_high[1:15]
-ws_high
+ws_union
 #ws_high<-ws_high[abs(ws_high)<quantile(ws_high, 0.9)]
 
 
@@ -50,11 +67,11 @@ ws_high
 
 
 if (view=='RNA'){
-  ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_high), collapse='|'), rownames(assay(se_filt_V08)))]
+  ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_union), collapse='|'), rownames(assay(se_filt_V08)))]
   feat_names=ens_genes
   
 }else{
-  feat_names=names(ws_high)
+  feat_names=names(ws_union)
   
 }
 se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
@@ -141,7 +158,7 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.85, na.rm=TRUE))
 
 sel_factors[fn_sel]
-if (names(sel_factors[fn_sel])=='Factor4'){
+if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
   T=0.15
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
@@ -150,7 +167,7 @@ T
 Z1_grouping
 dim(merged_melt)
 merged_melt$grouping<-Z1_grouping
-
+merged_melt
 
 if (view=='RNA'){
   symb<-get_symbols_vector(ens)
@@ -186,7 +203,7 @@ ggplot(data = merged_melt_filt, aes(x = grouping, y = value)) +
   
   #geom_line(aes(group=patno, col=VISIT)) +
   
-  geom_line(aes(group=patno), palette='jco') +
+  #geom_line(aes(group=patno), palette='jco') +
   #facet_wrap(. ~ symbol) +
   facet_wrap(. ~ symbol, scales='free_y') +
   
@@ -201,7 +218,6 @@ warnings()
 ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],'_', view,  '.jpeg'), 
        width=12, height=12)
 
-merged_melt_filt$VISIT
 merged_melt_filt$VISIT<-as.numeric(factor(merged_melt_filt$VISIT))
 
 
@@ -277,7 +293,6 @@ to_sel
 ### for categorical 
 #table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
 #table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'], )
-merged_melt_cl$NP3SPCH
 ggplot(data = merged_melt_cl, aes( x=factor(grouping), 
                                    fill = factor(PDSTATE) )) + 
   geom_bar()+

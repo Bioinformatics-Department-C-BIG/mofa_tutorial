@@ -85,6 +85,10 @@ function(){
   
 }
 
+
+
+
+
 preprocess_visit<-function(se_filt_V){
   
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
@@ -100,6 +104,9 @@ preprocess_visit<-function(se_filt_V){
 
 v6_ens<-preprocess_visit(se_filt_V06)
 v8_ens<-preprocess_visit(se_filt_V08)
+se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
+
+
 v4_ens<-preprocess_visit(se_filt_V04)
 bl_ens<-preprocess_visit(se_filt_BL)
 
@@ -177,7 +184,7 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 
 sel_factors[fn_sel]
-if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
+if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   T=0.2
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
@@ -235,7 +242,7 @@ merged_melt_filt$grouping<-as.factor(merged_melt_filt$grouping)
 
 ### Plot to remove the other group ####
 # TAKE THE low group
-if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
+if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   GROUP=FALSE
   
   
@@ -244,8 +251,10 @@ if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
 }
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
 merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
+merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
 
 merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
+merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 
 
 
@@ -254,30 +263,33 @@ wilcox_stats<-merged_melt_filt_g1 %>% group_by(symbol) %>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
-most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),]
+most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:5,]
 
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 
-
-ggplot(data = merged_melt_filt_g1, aes(x = VISIT, y = value)) + 
+ggplot(data = merged_melt_filt_g2, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
   geom_line(aes(group=patno),  col= 'grey') +
   geom_boxplot(aes(fill=VISIT))+
+  scale_color_viridis_d(option='mako')+
+  scale_fill_viridis_d(option='mako')+
+  
   #geom_line(aes(group=patno), palette='jco') +
   #facet_wrap(. ~ symbol) +
   
-  geom_signif(comparisons = list(c(1, 2)),  
+  geom_signif(comparisons = list(c('BL', 'V08')),  
               map_signif_level=TRUE, 
               tip_length = 0, vjust=0.4)+
 
-  facet_wrap(. ~ symbol, scales='free_y') +
+  facet_wrap(. ~ symbol, scales='free_y', nrow=1) +
   
     theme_bw() 
-ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
-       width=12, height=12)
+ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
+       width=12, height=3)
 
 
 
-
+#######################################################
 ############ TIME TRAJECTORY FOR ALL VISITS #####
 
 
@@ -294,9 +306,14 @@ mean_data
                ymax = quantile(x)[4])  # 3rd quartile
   }
   
-merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
 
-
+  filt_top=TRUE
+if (filt_top){
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
+}else{
+  merged_melt_filt_most_sig<-merged_melt_filt
+  
+}
 
 ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, 
                                     fill=grouping, group=grouping, colour=grouping)) + 
@@ -310,9 +327,10 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   
   #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
   theme_bw()+ 
-  geom_signif(comparisons = list(c('BL', 'V08')), 
+ geom_signif(comparisons = list(c('BL', 'V08')), 
               map_signif_level=TRUE, 
               tip_length = 0, vjust=0.4)+
+  
   labs(y='logCPM')+
  # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
@@ -323,7 +341,7 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   
 
 warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view,   '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top,   '.jpeg'), 
        width=10, height=3)
 
 

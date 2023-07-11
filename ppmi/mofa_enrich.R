@@ -77,7 +77,7 @@ list_proteins_enrich= vector("list", length = nfactors)
 
 list_mirs= vector("list", length = nfactors)
 list1_genes= vector("list", length = nfactors)
-
+list_proteins_weights=vector("list", length = nfactors)
 
 suppressWarnings(dir.create(paste0(outdir, '/enrichment/')))
 
@@ -94,21 +94,21 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
-sel_factors
+sel_factors_to_enrich
+
 just_load=FALSE
 just_load=TRUE
-
+sel_factors_to_enrich
 if (!isRStudio){
   
       for (factor in sel_factors_to_enrich){
            # for (view in c( 'proteomics')){
-              #for (view in c( 'RNA', 'miRNA', 'proteomics')){
                  #for (view in c( 'proteomics')){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-                 for (view in c( 'proteomics')){
-                   #view='RNA'; factor=3
+          for (view in c( 'RNA', 'proteomics')){
+          #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
                     gene_list_ord<-get_ranked_gene_list_mofa(view, factor)
@@ -181,7 +181,8 @@ if (!isRStudio){
                           saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
                           }else{
                             
-                          
+                          list_proteins_weights[[factor]]<-gene_list_ord
+                            
                            gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
                                                                      ont=ONT, 
                                                                      keyType = 'SYMBOL', 
@@ -276,6 +277,7 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 #### Now run the prot view ? 
 run_plots=ifelse(isRStudio, FALSE, TRUE)
 # TODO: PASS 
+run_plots=TRUE
 run_plots=FALSE
 
 if (run_plots){
@@ -325,9 +327,15 @@ if (run_plots){
             
           }
           
+          
+          ############################
           ### RNAS ####
           sel_factors_to_p
+          pvalueCutoff=1
           for (factor in sel_factors_to_p){
+            #'
+            #'
+            #'
             process_mirnas=FALSE
             #factor=3
             results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
@@ -340,17 +348,20 @@ if (run_plots){
             run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =gene_list_ord_g  )
             
           } 
-          gse_mofa_rna@result$
+
+          
           
           list_proteins[[1]]
           
           process_mofa=TRUE
+          pvalueCutoff=1
+          suppressWarnings(dir.create(paste0(outdir, '/enrichment/proteins')))
           for (factor in sel_factors_to_p){
               results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
               gse_mofa=list_proteins[[factor]]
           
               #### Threshold to plot 
-              gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff_sig = 0.2)
+              gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff_sig = 0.2, pvalueCutoff=1)
               write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))
               
               ### to run mofa results
@@ -378,7 +389,7 @@ if (run_plots){
           for (factor in sel_factors_to_p){
             results_file_mofa = paste0(outdir, '/enrichment/proteins/ora/gsego_',factor,'_')
             gse_mofa=list_proteins_enrich[[factor]]
-            
+            gse_mofa
             #### Threshold to plot 
             gse_mofa_sig=write_filter_gse_results(gse_mofa, results_file_mofa, pvalueCutoff=0.1,pvalueCutoff_sig = 0.1)
             write.csv(as.data.frame(gse_mofa@result), paste0(results_file_mofa, '.csv'))

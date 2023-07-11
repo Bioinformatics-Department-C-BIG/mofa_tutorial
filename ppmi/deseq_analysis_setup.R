@@ -28,7 +28,7 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 # BETTER TO NOT RUN THESE SETTINGS AGAIN IF YOU HAVE RUN PREPROCESSING
 #VISIT='V08'
-#process_mirnas=TRUE
+process_mirnas=TRUE
 
 
 source(paste0(script_dir, 'ppmi/config.R'))

@@ -8,11 +8,12 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 # run deseqvst
 bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 bl<-read.csv(bl_f)
+bl<-bl[!is.na(bl$Description),]
+bl_sig<-bl[bl$Least_value<0.01,]
 
 v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 v08<-read.csv(v08_f)
-bl<-bl[!is.na(bl$Description),]
-bl_sig<-bl[bl$Least_value<0.01,]
+
 
 unique(bl_sig$Description)
 tms<-list(bl=bl$Description, v08= v08$Description)
@@ -28,15 +29,18 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=4
+fn_sel=3
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='RNA'; process_mirnas=FALSE
+#view='miRNA'; process_mirnas=TRUE
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
 se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
-#se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
+se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
+se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
+
 #Reduce(intersect, list(a,b,c))
 
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
@@ -47,18 +51,20 @@ common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
 
 
-ws
-ws_high<-ws[abs(ws)>quantile(ws, 0.95) & abs(ws)<quantile(ws, 0.96) ,]
-ws_high<-ws[abs(ws)>quantile(ws, 0.85) & abs(ws)<quantile(ws, 0.86) ,]
-ws_high<-ws[abs(ws)>quantile(ws, 0.95) & abs(ws)<quantile(ws, 0.96) ,]
-ws_high<-ws[abs(ws)>quantile(ws, 0.999999999),]
-ws_high<-ws[abs(ws)>quantile(ws, 0.99996),][1:12]
-ws_high<-ws[ws>quantile(ws, 0.995),]
-ws_low<-ws[ws<quantile(ws, 0.005),]
+if (fn_sel==2){
+  cut_high<-0.98; cut_low=0.02
+  
+}else{
+  cut_high<-0.998; cut_low=0.002
+  
+}
+ws_high<-ws[ws>quantile(ws, cut_high),]
+ws_low<-ws[ws<quantile(ws, cut_low),]
+ws_high
 
 ws_union<-c(ws_high, ws_low)
 #ws_high<-ws_high[1:15]
-ws_union
+length(ws_union)
 #ws_high<-ws_high[abs(ws_high)<quantile(ws_high, 0.9)]
 
 
@@ -74,22 +80,32 @@ if (view=='RNA'){
   feat_names=names(ws_union)
   
 }
-se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
-se_filt_V08_pd<-se_filt_V08_pd[,se_filt_V08_pd$PATNO %in% common]
-dim(se_filt_V08_pd)
-dim(se_filt_V08_pd)
 
-se_filt_V08_pd$PD_MED_USE
-med=se_filt_V08_pd$PD_MED_USE
-se_filt_BL_pd<-se_filt_BL[,se_filt_BL$COHORT==1]
+function(){
+  
+}
+
+preprocess_visit<-function(se_filt_V){
+  
+  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
+  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  df_v<- clip_outliers(df_v)
+  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  v_ens=data.frame(df_V_ens,patno=c(se_filt_V_pd$PATNO), PATNO_EVENT_ID=c(se_filt_V_pd$PATNO_EVENT_ID))
+  
+  return(v_ens)
+  
+}
+
+v6_ens<-preprocess_visit(se_filt_V06)
+v8_ens<-preprocess_visit(se_filt_V08)
+v4_ens<-preprocess_visit(se_filt_V04)
+bl_ens<-preprocess_visit(se_filt_BL)
 
 
-### AND ALSO changed STAGE 
 
-df_v08<-assay(se_filt_V08_pd)
-df_bl<-assay(se_filt_BL_pd)
-df_v08<-cpm(df_v08, normalized.lib.sizes=TRUE)
-df_bl<-cpm(df_bl, normalized.lib.sizes=TRUE)
+
 
 
 
@@ -108,8 +124,7 @@ clip_outliers<-function(df1){
   return(df1)
 }
 
-df_bl<- clip_outliers(df_bl)
-df_v08<- clip_outliers(df_v08)
+
 
 
 
@@ -119,21 +134,25 @@ df_v08<- clip_outliers(df_v08)
 ######### PLOT molecular markers 
 
 
-v8_ens<-t(df_v08[rownames(df_v08) %in% feat_names,])
-v8_ens=data.frame(v8_ens,patno=c(se_filt_V08_pd$PATNO), PATNO_EVENT_ID=c(se_filt_V08_pd$PATNO_EVENT_ID))
-bl_ens<-t(df_bl[rownames(df_bl) %in% feat_names,])
-bl_ens=data.frame(bl_ens,patno=c(se_filt_BL_pd$PATNO), PATNO_EVENT_ID=c(se_filt_BL_pd$PATNO_EVENT_ID))
-se_filt_BL_pd$PATNO_EVENT_ID
 
-
-v8_ens
 ### MELT and MERGE 
 v8_melt<-melt(v8_ens)
-v8_melt$VISIT<-'V08'
+v6_melt<-melt(v6_ens)
+v4_melt<-melt(v4_ens)
+bl_melt<-melt(bl_ens)
 
-bl_melt<-melt(bl_ens); bl_melt$VISIT='BL'
-merged_melt<-rbind(bl_melt, v8_melt)
-merged_melt
+
+bl_melt$VISIT<-'BL'
+v4_melt$VISIT<-'V04'
+v8_melt$VISIT<-'V08'
+v6_melt$VISIT<-'V06'
+
+
+
+merged_melt<-rbind(bl_melt, v4_melt)
+merged_melt<-rbind(merged_melt,v6_melt)
+merged_melt<-rbind(merged_melt,v8_melt)
+
 #merged_df<-merge(bl_ens, v8_ens, by='patno')
 #merged_df
 
@@ -155,11 +174,11 @@ dev.off()
 
 quantile(Z1_matched,0.85, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.85, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
-  T=0.15
+  T=0.2
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
 }
@@ -176,53 +195,136 @@ if (view=='RNA'){
   merged_melt$symbol<-merged_melt$variable
   
 }
-merged_melt$variable
-merged_melt
+
 na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$patno)
-na_ps
 merged_melt_filt<-merged_melt[merged_melt$patno %in% na_ps, ]
-merged_melt_filt
 
 ### EDIT GROUP TO BE PATNO and GROUP!!
 # OR JUST GROUP  
 merged_melt_filt$VISIT
 
 
+group_up<-unique(names(Z1_grouping[which(Z1_grouping==FALSE)]))
+group_down<-unique(names(Z1_grouping[which(Z1_grouping==TRUE)]))
+### Did they change scales???
+
+se_filt_V08_pd_g1<-se_filt_V08_pd[,se_filt_V08_pd$PATNO_EVENT_ID %in% group_down ]
+se_filt_V08_pd_g2<-se_filt_V08_pd[,se_filt_V08_pd$PATNO_EVENT_ID %in% group_up ]
 
 
-
-
-
+G1<-se_filt_V08_pd_g1[,!(se_filt_V08_pd_g1$PDSTATE == 'ON')]
+G2<-se_filt_V08_pd_g2[,!(se_filt_V08_pd_g2$PDSTATE == 'ON')]
+## TODO: plot here ALL the clinical variables by grouping!! 
 
 #### 
-ggplot(data = merged_melt_filt, aes(x = grouping, y = value)) + 
-  #geom_point(aes(col=factor(VISIT)), size = 2) +
-  #geom_line(aes(group=patno, col=grouping)) +
-  geom_boxplot(aes(fill=VISIT ))+
-  geom_line(aes(group=patno ))+
+
+merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
+
+merged_melt_filt$grouping<-as.factor(merged_melt_filt$grouping)
+
+
+
+
+
+
+
+
+
+################
+
+
+### Plot to remove the other group ####
+# TAKE THE low group
+if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14')){
+  GROUP=FALSE
   
-  #geom_line(aes(group=patno, col=VISIT)) +
   
+}else{
+  GROUP=TRUE
+}
+merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
+merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
+
+merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
+
+
+
+wilcox_stats<-merged_melt_filt_g1 %>% group_by(symbol) %>%
+  do(w=wilcox.test(value~VISIT, data=.))%>%
+  summarize(symbol, Wilcox=w$p.value) %>%
+  as.data.frame()
+
+most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),]
+
+
+
+ggplot(data = merged_melt_filt_g1, aes(x = VISIT, y = value)) + 
+  geom_point(aes(col=VISIT), size = 2) +
+  geom_line(aes(group=patno),  col= 'grey') +
+  geom_boxplot(aes(fill=VISIT))+
   #geom_line(aes(group=patno), palette='jco') +
   #facet_wrap(. ~ symbol) +
+  
+  geom_signif(comparisons = list(c(1, 2)),  
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+
   facet_wrap(. ~ symbol, scales='free_y') +
   
-  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-  theme_bw() + 
-  
-  
-  stat_compare_means(
-                     label = "p.format", method = "wilcox.test", tip.length = 0)
-
-warnings()
-ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],'_', view,  '.jpeg'), 
+    theme_bw() 
+ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
        width=12, height=12)
 
-merged_melt_filt$VISIT<-as.numeric(factor(merged_melt_filt$VISIT))
 
 
 
+############ TIME TRAJECTORY FOR ALL VISITS #####
 
+
+
+mean_data<-merged_melt_filt_g1 %>%
+  group_by(grouping, symbol) %>%
+  summarise(mean_expr = mean(value, na.rm = TRUE))
+mean_data
+  most_sig_over_time
+  
+  median_IQR <- function(x) {
+    data.frame(y = median(x), # Median
+               ymin = quantile(x)[2], # 1st quartile
+               ymax = quantile(x)[4])  # 3rd quartile
+  }
+  
+merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
+
+
+
+ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, 
+                                    fill=grouping, group=grouping, colour=grouping)) + 
+  stat_summary(geom = "pointrange", fun.data = median_IQR, 
+               position=position_dodge(0))+
+  stat_summary(fun = median, position=position_dodge(width=0), 
+               geom = "line", size = 1) + 
+  scale_color_viridis_d(option='turbo')+
+  facet_wrap(. ~ symbol, scales='free_y', 
+            nrow = 1) +
+  
+  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+  theme_bw()+ 
+  geom_signif(comparisons = list(c('BL', 'V08')), 
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  labs(y='logCPM')+
+ # legend(legend=c('Low', 'High'))+
+  theme(strip.text = element_text(
+    size = 12, color = "dark green"), 
+    axis.title.y =element_text(
+      size = 12, color = "dark green") )
+  
+  
+
+warnings()
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view,   '.jpeg'), 
+       width=10, height=3)
 
 
 
@@ -371,22 +473,6 @@ library(rstatix)
 
 
 
-
-
-
-
-ggplot(data = merged_melt_filt, aes(x = VISIT, y = value)) + 
-  geom_point(aes(col=factor(VISIT)), size = 2) +
-  geom_line(aes(group=patno, col=grouping)) +
-  geom_boxplot(aes(fill=grouping))+
-  #geom_line(aes(group=patno), palette='jco') +
-  #facet_wrap(. ~ symbol) +
-  facet_wrap(. ~ symbol, scales='free_y') +
-  
-  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-  theme_bw() + 
-  stat_compare_means(comparisons = list(c("BL", "V08")), 
-                     label = "p.format", method = "wilcox.test", paired=TRUE, tip.length = 0)
 
 
 

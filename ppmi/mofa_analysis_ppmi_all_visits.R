@@ -268,6 +268,9 @@ ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
      width = 700+length(selected_covars)*20, height=1100, res=300)
+
+
+
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
                                   plot = "log_pval",
                                  # alpha=0.000000001,

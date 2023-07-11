@@ -29,16 +29,20 @@ sel_coh <- c(1,2)
 sel_coh=c(1,2);
 
 # ONLY PD 
-sel_coh=c(1,2);
 sel_coh=c(4,2)
+
+sel_coh=c(1,2);
+
 
 sel_subcoh=FALSE;
 sel_subcoh=FALSE
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=c( 'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=FALSE
-sel_subcoh=c('INEXPD');
+
 sel_subcoh=FALSE
+sel_subcoh=c('INEXPD');
+
 
 #sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 

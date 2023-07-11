@@ -173,7 +173,7 @@ require(enrichplot)
 require(viridis)
 library('stats')
 library('cluster')
-
+enr_full=enr_full_all_fs
 create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2,
                             width=10, height=10,
                             filter_single_nodes=FALSE, cex_label_category=0.6, nCluster=20,
@@ -185,13 +185,15 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           #'
           #'
           
-          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6; nCluster=50
+          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6; nCluster=50; filter_single_nodes=TRUE; max.overlaps=1
   
           options(ggrepel.max.overlaps =max.overlaps)
+          #enr_full@result$ID[c(TRUE, TRUE,TRUE, FALSE)]<-'.'
+          #enr_full@result$ID
           
           x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
           x2_pass<-x2@termsim>min_overlap_score
-          pos_edges<-rowSums(x2_pass, na.rm = TRUE) > 1L
+          pos_edges<-rowSums(x2_pass, na.rm = TRUE) > 2L
 
           ### update without single nodes 
           enr_full_new<-enr_full[pos_edges, asis=T]
@@ -216,7 +218,8 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           }else{
             x2_to_use=x2
           }
-          set.seed(123)
+        
+          set.seed(150)
           em<-emapplot(x2_to_use, showCategory=N_EMAP,
                        cex_category=0.5, 
                        cex_label_category=cex_label_category,
@@ -224,13 +227,13 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                        min =min,
                        cluster.params=list(cluster =TRUE, 
                                 method=cluster::pam, # cluster::clara, cluster::pam , cluster::kmeans
-                                ellipse_style='ggforce', 
+                                ellipse_style='shadowtext', 
                                 nCluster=nCluster, 
                                legend=TRUE),
                        layout.params =list(layout=layout),
                       group_category=TRUE,
                       nCluster=nCluster,
-                      alpha=0.005,
+                      alpha=0.009,
                       ellipse_style='ggforce',
                       node_label = node_label, 
                       hilight.params=list(alpha_no_hilight =0.3, 
@@ -239,9 +242,10 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                       ),
           )
           
+          em$data$name[!em$data$name %in% top_paths]<-''
           
-
-          em
+          em$data$name[c(TRUE, TRUE, FALSE)]<-''
+          
           
           em+ scale_fill_viridis(option=scale_option)
           #em +  scale_color_gradient(low = "#56B1F7", high = "#132B43")
@@ -272,7 +276,7 @@ for (fn in fns){
         enrich_mirnas = list_all[[3]]
         
         # outdir
-          
+        #View(data.frame(enrich_mirnas$geneID))
         use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
         merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
                                         'mofa_',  use_mofa_s   )
@@ -302,11 +306,16 @@ for (fn in fns){
           min_overlap_score=0.25
           
           
+        }else if(weights_Var['miRNA']>20){
+          print(weights_Var)
+          factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
+          min_overlap_score=0.60
+          
         }
+        
         
         ### TODo: Calculate a weighted overlap
         #else if (weights_Var['miRNA']>10){
-        #  factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
         #  factor1_paths$
           #min_overlap_score=0.995
           
@@ -342,17 +351,213 @@ for (fn in fns){
           scale_option='plasma'
           
         }
-        
         #### EMAP by factor ####
-        create_multi_emap(enr_full, N_EMAP=60, fname_net=paste0(merged_path_file_mofa, '_network', max_ws,'rna' ,color_by_rna,'.jpeg'), 
+        create_multi_emap(enr_full, N_EMAP=80, fname_net=paste0(merged_path_file_mofa, '_network', max_ws,'rna' ,color_by_rna,'.jpeg'), 
                           color_by = color_by,  min = min_overlap_score, cex_label_category = 0.8,
-                          nCluster=10, scale_option=scale_option, node_label = 'category', max.overlaps=20
+                          nCluster=10, scale_option=scale_option, node_label = 'category', max.overlaps=20,
+                          
                             )
+       
         
         print(merged_path_file_mofa)
 
 
 }
+
+
+
+
+
+
+
+
+#### 2. Create one EMAP for all mofa factors ####
+###
+
+bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
+bl<-read.csv(bl_f)
+bl<-bl[!is.na(bl$Description),]
+bl_sig<-bl[bl$Least_value<0.01,]
+
+sel_factors[fn]
+
+##TODO: merge the geneColnames from all factors..?? 
+#https://rdrr.io/github/YuLab-SMU/enrichplot/src/R/emapplot_utilities.R
+
+list_all<-get_mofa_paths_and_weights(factor=sel_factors[3])
+list_all2<-get_mofa_paths_and_weights(factor=sel_factors[4])
+sel_factors[2]
+list_all3<-get_mofa_paths_and_weights(factor=sel_factors[1])
+# also write to extra file
+# where to get lists of common genes 
+enrich_rna= list_all[[1]]
+#enrich_proteins = list_all[[2]]
+#enrich_mirnas = list_all[[3]]
+
+# outdir
+
+use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
+merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
+                              'mofa_',  use_mofa_s   )
+
+merged_results=f_pvals_merged
+merged_results_sig_all=f_pvals_merged_sig
+### ALL FACTOR PATHS 
+#merged_results_sig=merged_results[merged_results$Least_value<0.01,]
+dim(merged_results_sig_all)
+
+### Create filters on nodes 
+high_quant_t=0.3
+#factor_filters<-names(sel_factors)
+rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
+rank_cols
+
+
+mark_high_rank<-function(x, high_quant_t){
+  up_quant<-quantile(x, high_quant_t)
+  return(x>up_quant)
+}
+
+
+merged_results_sig_fs<-merged_results_sig_all[,fish_cols]
+colnames(merged_results_sig_fs)<-names(sel_factors)
+
+#rank_stats<-get_ranks(merged_results_sig_fs)
+#cbind(merged_results_sig_fs$Factor1, rank(rank(merged_results_sig_fs$Factor1)))
+# merged_results_sig<-cbind(merged_results_sig,rank_stats)
+#dim(merged_results_sig)
+table(merged_results_sig_all$min_rank)
+
+### Keep top 20 paths from each?
+
+
+## Filter more to show top representatives from each factor 
+high_ranks<-apply(merged_results_sig_all[,rank_cols],2,mark_high_rank, high_quant_t=high_quant_t)
+high_ranks
+#high_ranks_3<-mark_high_rank(merged_results_sig$Factor3_rank,  high_quant_t=0.1)
+#high_ranks[,'Factor3_rank']<-high_ranks_3
+## remove low ranked in all 
+
+merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
+
+dim(merged_results_sig)
+
+## OR remove 50% in ALL factors ..?? 
+
+### Add more genes? 
+table(merged_results_sig$min_rank)
+# 
+factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
+factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
+factor_genes3<-list_all3[[1]][match(merged_results_sig$Description, list_all3[[1]]$Description),]$core_enrichment
+
+ids_merge_all=c()
+length(factor_genes)
+for (i in length(factor_genes)){
+  
+  ids <- unique(unlist(strsplit(factor_genes[i], "/")))
+  ids2 <-unique(unlist(strsplit(factor_genes2[i], "/")))
+  ids3 <-unique(unlist(strsplit(factor_genes3[i], "/")))
+  
+  ids_merge<-union(ids,ids2)
+  ids_merge
+  ids_merge<-as.character(union(ids_merge,ids3))
+  ids_merge
+  ids_merge_all[i]<-paste0(ids_merge, sep = '/')
+}
+
+factor_genes_all<-paste0(factor_genes, factor_genes2, sep='/')
+factor_genes_all<-paste0(factor_genes_all, factor_genes3, sep='/')
+## filter to add only high var?? 
+## Color genes by weight..?
+merged_results_sig$geneColname<-factor_genes
+merged_results_sig$geneColname<-factor_genes_all
+
+# Color the nodes by qfactor
+# hack to get it to color with this attribute 
+## Make sure that pvalues is the combined --> here i use the least /minimum
+# 1. color by factor where it has the minimum ranking 
+#
+merged_results_sig$pvalue = merged_results_sig$Least_value
+merged_results_sig$qvalue = factor(merged_results_sig$min_rank)
+merged_results_sig$qvalue = as.numeric(factor(merged_results_sig$qvalue))#, levels=c(1,2,3,4))
+
+## OR color by whether it exists in baseline!!
+color_by_rna=FALSE
+color_by_bl=FALSE
+
+min_overlap_score=0.25
+
+if (color_by_bl){
+  v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
+  merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
+  merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$BL))
+  merged_results_sig[, c('BL', 'qvalue')]
+}else if (color_by_rna){
+  #  mofa_in_rna<-mofa_rna_common
+  
+  merged_results_sig$rna<-standardize_go_names(merged_results_sig$Description) %in% standardize_go_names(mofa_rna_common)
+  merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$rna))
+  merged_results_sig[, c('rna', 'qvalue')]
+  min_overlap_score=0.3
+  
+  
+}
+
+# TODO: color by miRNA unique or RNA unique
+
+enrich_res_df<-merged_results_sig
+enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value',qvalue = qvalue)
+enr_full_all_fs<-enr_full
+enr_full@result$pvalue
+
+
+write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_network.csv'))
+
+# run_enrichment_plots(enr_full,results_file = 'test.txt')
+enr_full@result$Description<-enr_full@result$ID
+# enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
+top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:300]
+length(enrich_res_df$Description)
+top_paths
+
+#### EMAP by factor ####
+merged_path_file_mofa
+node_label= 'group';cex_label_category=0.7
+node_label= 'all';cex_label_category=0.5
+node_label= 'category';cex_label_category=0.7
+
+fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_', 'hq_', high_quant_t, 
+                  'bl_',   as.numeric(color_by_bl)[1], 'rna_', as.numeric(color_by_rna)[1], 
+                  node_label,'.jpeg')
+
+ 
+create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
+                  width=15, height=10,
+                  cex_label_category = cex_label_category,
+                  filter_single_nodes=TRUE, 
+                  nCluster=20,
+                  max.overlaps=2,
+                  ### TODO: add ggrob to add legend etc. 
+                  color_by = 'qvalue', 
+                  min = min_overlap_score,
+                  #node_label = 'all',
+                  node_label = node_label,
+                  
+                  scale_option = 'plasma')
+
+
+
+
+
+####  TODO: FIND out which nodes to not have a single neighbour and delete them? 
+
+
+
+
+
+
+
 
 
 #### Change the visualization ####
@@ -362,7 +567,7 @@ enr_full@result$Description<-enr_full@result$ID
 library(arules)
 library(igraph)
 ## create an emap as an igrpah object
-N_EMAP=1000
+N_EMAP=100
 x2 <- pairwise_termsim(enr_full_all_fs, showCategory = N_EMAP)
 enr_full_all_fs
 ig_plot<-enrichMapJam(x2, n=N_EMAP)
@@ -371,7 +576,24 @@ V(ig_plot)$size<-V(ig_plot)$size/1.8
 
 V(ig_plot)$min_rank
 
-  #### Remove low rank ####
+vis_emap_mofa<-toVisNetworkData(ig_plot)
+vis_emap_mofa$edges$width
+
+vis_emap_mofa$edges$weight=width
+vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
+
+
+
+visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges) %>%
+  visLayout(hierarchical = TRUE) 
+
+#visIgraphLayout(layout = 'hierarchical')# same as   visLayout(hierarchical = TRUE) 
+
+
+
+
+
+#### Remove low rank ####
 factor
 high_quant_t=0.9
 g_graph<-ig_plot
@@ -436,7 +658,7 @@ ig_plot_filt_2 <- set.vertex.attribute(ig_plot_filt_2, "label", value=label)
 
 V(ig_plot_filt_2)$label=label
 
-
+choose_f=14
 svg(paste0(outdir, '/enrichment/all_factors_emap_',pval_to_use, choose_f,'.svg'))
 plot.igraph(ig_plot_filt_2, 
      layout=layout_nicely ,
@@ -454,14 +676,16 @@ dev.off()
 
 ### 1. Color by p-value, 
 ### 2.
-vis_emap_mofa<-toVisNetworkData(ig_plot_filt_2)
-#vis_emap_mofa$edges$width
-#vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
+vis_emap_mofa<-toVisNetworkData(ig_plot)
+vis_emap_mofa$edges$width
 
-
+vis_emap_mofa$edges$weight=width
+vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
 
 visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges) %>%
-      visIgraphLayout(layout = 'layout_nicely')# same as   visLayout(hierarchical = TRUE) 
+  visLayout(hierarchical = TRUE) 
+
+      visIgraphLayout(layout = 'hierarchical')# same as   visLayout(hierarchical = TRUE) 
   
 head(vis_emap_mofa$edges$width)
 vis_emap_mofa$nodes$id
@@ -477,179 +701,6 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
   visSave(file = paste0(outdir, '/enrichment/all_factors_emap_',pval_to_use, choose_f,'.html'))
 
 #%>%
-
-
-
-#### 2. Create one EMAP for all mofa factors ####
-###
-
-  sel_factors[fn]
-  
-  ##TODO: merge the geneColnames from all factors..?? 
-  #https://rdrr.io/github/YuLab-SMU/enrichplot/src/R/emapplot_utilities.R
-
-  list_all<-get_mofa_paths_and_weights(factor=sel_factors[3])
-  list_all2<-get_mofa_paths_and_weights(factor=sel_factors[4])
-  sel_factors[2]
-  list_all3<-get_mofa_paths_and_weights(factor=sel_factors[1])
-  # also write to extra file
-  # where to get lists of common genes 
-  enrich_rna= list_all[[1]]
-  #enrich_proteins = list_all[[2]]
-  #enrich_mirnas = list_all[[3]]
-  
-  # outdir
-  
-  use_mofa_s=ifelse(use_mofa, paste0('_',sel_factors[fn]),use_mofa )
-  merged_path_file_mofa<-paste0(outdir, '/enrichment/', VISIT, '_',TISSUE,'_',run_ORA, pmethod,
-                                'mofa_',  use_mofa_s   )
-  
-  merged_results=f_pvals_merged
-  merged_results_sig_all=f_pvals_merged_sig
-  ### ALL FACTOR PATHS 
-  #merged_results_sig=merged_results[merged_results$Least_value<0.01,]
-  dim(merged_results_sig_all)
-  
-  ### Create filters on nodes 
-  high_quant_t=0.2
-  #factor_filters<-names(sel_factors)
-  rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
-  rank_cols
-  
-
-  mark_high_rank<-function(x, high_quant_t){
-    up_quant<-quantile(x, high_quant_t)
-    return(x>up_quant)
-  }
-  
-  
-  merged_results_sig_fs<-merged_results_sig[,fish_cols]
-  colnames(merged_results_sig_fs)<-names(sel_factors)
-  
-  #rank_stats<-get_ranks(merged_results_sig_fs)
-  #cbind(merged_results_sig_fs$Factor1, rank(rank(merged_results_sig_fs$Factor1)))
- # merged_results_sig<-cbind(merged_results_sig,rank_stats)
-  #dim(merged_results_sig)
-  table(merged_results_sig_all$min_rank)
-  
-  ### Keep top 20 paths from each?
-
-  
-  ## Filter more to show top representatives from each factor 
-  high_ranks<-apply(merged_results_sig_all[,rank_cols],2,mark_high_rank, high_quant_t=high_quant_t)
-  high_ranks
-  #high_ranks_3<-mark_high_rank(merged_results_sig$Factor3_rank,  high_quant_t=0.1)
-  #high_ranks[,'Factor3_rank']<-high_ranks_3
-  ## remove low ranked in all 
-  
-  merged_results_sig<-merged_results_sig_all[!apply(high_ranks, 1,all),]
-
-  dim(merged_results_sig)
-  
-  ## OR remove 50% in ALL factors ..?? 
-
-  ### Add more genes? 
-  table(merged_results_sig$min_rank)
-  # 
-  factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
-  factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
-  factor_genes3<-list_all3[[1]][match(merged_results_sig$Description, list_all3[[1]]$Description),]$core_enrichment
-  
-  ids_merge_all=c()
-  length(factor_genes)
-  for (i in length(factor_genes)){
-  
-    ids <- unique(unlist(strsplit(factor_genes[i], "/")))
-    ids2 <-unique(unlist(strsplit(factor_genes2[i], "/")))
-    ids3 <-unique(unlist(strsplit(factor_genes3[i], "/")))
-    
-    ids_merge<-union(ids,ids2)
-    ids_merge
-    ids_merge<-as.character(union(ids_merge,ids3))
-    ids_merge
-    ids_merge_all[i]<-paste0(ids_merge, sep = '/')
-  }
-  
-  factor_genes_all<-paste0(factor_genes, factor_genes2, sep='/')
-  factor_genes_all<-paste0(factor_genes_all, factor_genes3, sep='/')
-  ## filter to add only high var?? 
-  ## Color genes by weight..?
-  merged_results_sig$geneColname<-factor_genes
-  merged_results_sig$geneColname<-factor_genes_all
-  
-  # Color the nodes by qfactor
-  # hack to get it to color with this attribute 
-  ## Make sure that pvalues is the combined --> here i use the least /minimum
-  # 1. color by factor where it has the minimum ranking 
-  #
-  merged_results_sig$pvalue = merged_results_sig$Least_value
-  merged_results_sig$qvalue = merged_results_sig$min_rank
-  merged_results_sig$qvalue = as.numeric(factor(merged_results_sig$qvalue))#, levels=c(1,2,3,4))
-  
-  
-  ## OR color by whether it exists in baseline!!
-  color_by_bl=FALSE
-  color_by_rna=FALSE
-  min_overlap_score=0.30
-  
-  if (color_by_bl){
-    v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
-    merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
-    merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$BL))
-    merged_results_sig[, c('BL', 'qvalue')]
-  }else if (color_by_rna){
-  #  mofa_in_rna<-mofa_rna_common
-
-    merged_results_sig$rna<-standardize_go_names(merged_results_sig$Description) %in% standardize_go_names(mofa_rna_common)
-    merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$rna))
-    merged_results_sig[, c('rna', 'qvalue')]
-    min_overlap_score=0.30
-    
-    
-  }
-  
-  # TODO: color by miRNA unique or RNA unique
-  
-  enrich_res_df<-merged_results_sig
-  enr_full<-create_enrich_result(enrich_res_df, pvalueColname = 'Least_value',qvalue = qvalue)
-  enr_full_all_fs<-enr_full
-  enr_full@result$pvalue
-  
-  write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_network.csv'))
-  
-  # run_enrichment_plots(enr_full,results_file = 'test.txt')
-  enr_full@result$Description<-enr_full@result$ID
- # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
-
-  
-  
-  #### EMAP by factor ####
-    merged_path_file_mofa
-    node_label= 'all';cex_label_category=0.5
-    node_label= 'group';cex_label_category=0.7
-    
-    
-
-    ### TODO: add ggrob to add legend etc. 
-  create_multi_emap(enr_full, N_EMAP=1000, fname_net=paste0(merged_path_file_mofa, '_network_ALLfs_','bl_',
-                                                           as.character(color_by_bl)[1], 'rna_', as.character(color_by_rna)[1], node_label,'.jpeg'),
-                    width=15, height=10,
-                    color_by = 'qvalue', 
-                    min = min_overlap_score, 
-                    cex_label_category = cex_label_category,
-                    filter_single_nodes=TRUE, 
-                    nCluster=20,
-                    max.overlaps=1,
-                    #node_label = 'all',
-                    node_label = node_label,
-                    
-                    scale_option = 'plasma')
-  
-  
-  
-
-
-####  TODO: FIND out which nodes to not have a single neighbour and delete them? 
 
 
 

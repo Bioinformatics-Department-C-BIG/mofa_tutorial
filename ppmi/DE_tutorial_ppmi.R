@@ -361,7 +361,7 @@ gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
-run_ORA=FALSE; 
+run_ORA=TRUE; 
 use_protein_pval=FALSE ## Proteins to use a sinput 
 use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
 

@@ -38,7 +38,7 @@ source('ppmi/utils.R')
 # these do not have event id
 # TODO: genetic consensus
 ps<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Participant_Status.csv'))
-#genetics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus_20220310'))
+genetics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus_20220310.csv'))
 clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Age_at_visit.csv'))
 demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
 
@@ -61,11 +61,13 @@ motor_assess_IV<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS
 
 motor_assess_III$ONEXAMDT
 
+## cognition####
+
 non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
 non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
 non_motor_stait<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
-
 pr_outcome<-read.csv(paste0('ppmi/ppmi_data/patient_outcomes_predictions.csv'))
+
 
 
 ### Sleepiness scale 
@@ -75,6 +77,9 @@ epworth<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Epworth_Sleepines
 
 rbd<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
 dat<-read.csv(paste0('ppmi/ppmi_data/imaging/DaTSCAN/DaTScan_Analysis_23Jun2023.csv'))
+bent<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Benton_Judgement_of_Line_Orientation.csv'))
+ger<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Geriatric_Depression_Scale__Short_Version_.csv'))
+sem<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Modified_Semantic_Fluency.csv'))
 
 
 curated<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
@@ -98,6 +103,9 @@ combined<-merge(combined, demographics,by=c('PATNO'),suffixes = c("", 'd'), all=
 combined<-merge(combined, genetics,by=c('PATNO'),suffixes = c("", '_gen'), all=TRUE)
 
 
+
+### cognition
+
 combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
 combined<-merge(combined, non_motor_stait,by=c('PATNO','EVENT_ID'), suffixes = c("", '_st'),  all=TRUE)
 
@@ -112,6 +120,9 @@ combined<-merge(combined, curated,by=c('PATNO','EVENT_ID'), suffixes = c("", '_c
 combined<-merge(combined, rbd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_rbd'),  all=TRUE)
 combined<-merge(combined, dat,by=c('PATNO','EVENT_ID'), suffixes = c("", '_dat'),  all=TRUE)
 combined<-merge(combined, olfactory,by=c('PATNO','EVENT_ID'), suffixes = c("", '_olf'),  all=TRUE)
+combined<-merge(combined, bent,by=c('PATNO','EVENT_ID'), suffixes = c("", '_bn'),  all=TRUE)
+combined<-merge(combined, ger,by=c('PATNO','EVENT_ID'), suffixes = c("", '_gr'),  all=TRUE)
+combined<-merge(combined, sem,by=c('PATNO','EVENT_ID'), suffixes = c("", '_sem'),  all=TRUE)
 
 
 
@@ -158,6 +169,9 @@ combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 combined$AGE
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
+
+
+### TODO: after this run the logs in analyse clinical vars 
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
 combined$COHORT_DEFINITION
@@ -174,10 +188,10 @@ demographics[which(demographics$PATNO==3386),]
 demographics$PATNO
 common
 
+combined$GBA_POS
 
 ## add genetics
 
-genetics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/iu_genetic_consensus'))
 
 
 

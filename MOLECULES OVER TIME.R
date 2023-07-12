@@ -29,10 +29,10 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=3
+fn_sel=2
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='RNA'; process_mirnas=FALSE
-#view='miRNA'; process_mirnas=TRUE
+view='miRNA'; process_mirnas=TRUE
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -353,13 +353,6 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view
 
 
 
-
-
-stat.test2 <- merged_melt_filt %>%
-  group_by(grouping) %>%
-  t_test(value ~ VISIT, p.adjust.method = "bonferroni")
-stat.test2
-
 ##############
 
 ### Plot clinical variables ####
@@ -367,48 +360,77 @@ stat.test2
 na_ps
 ### AND ALSO changed STAGE 
 
-se_V08_cl<-se_filt_V08_pd[,se_filt_V08_pd$PATNO%in% na_ps ]
-se_bl_cl<-se_filt_BL_pd[,se_filt_BL_pd$PATNO%in% na_ps ]
+preprocess_visit_cl<-function(se_filt_V){
+  
+  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
+  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO%in% na_ps ]
+  
+  return(se_filt_V_pd)
+  
+}
+se_V08_cl<-preprocess_visit_cl(se_filt_V08)
+se_V04_cl<-preprocess_visit_cl(se_filt_V04)
+se_V06_cl<-preprocess_visit_cl(se_filt_V06)
+se_bl_cl<-preprocess_visit_cl(se_filt_BL)
 
 
-se_V08_cl$NP4TOT
+
 sel_factors[fn_sel]
 cors_both<-get_correlations(MOFAobject, names(MOFAobject@samples_metadata))
 cors_all=cors_both[[1]]
-
-to_sel_cor<-names(cors_all[names(sel_factors)[fn_sel],][cors_all[names(sel_factors)[fn_sel],]>1.7])
+fn_sel
+to_sel_cor<-names(cors_all[names(sel_factors)[fn_sel],][cors_all[names(sel_factors)[fn_sel],]>1.5])
 to_sel<- c('PATNO', to_sel_cor)
+to_sel
 to_sel<-intersect(names(colData(se_V08_cl)), to_sel)
+to_sel<-intersect(names(colData(se_bl_cl)), to_sel)
+
+se_V08_cl$ESS_TOT
 df_V08_cl<-colData(se_V08_cl)[,to_sel]
 df_bl_cl<-colData(se_bl_cl)[,to_sel]
+df_V06_cl<-colData(se_V06_cl)[,to_sel]
+df_V04_cl<-colData(se_V04_cl)[,to_sel]
 
-df_bl_cl$MCAVFNUM
+
 
 df_V08_cl_ml<-reshape2::melt(df_V08_cl,value.name = to_sel); df_V08_cl_ml$VISIT='V08'
 df_bl_cl_ml<-reshape2::melt(df_bl_cl, value.name=to_sel); df_bl_cl_ml$VISIT='BL'
+df_V04_cl_ml<-reshape2::melt(df_V04_cl, value.name=to_sel); df_V04_cl_ml$VISIT='V04'
+df_V06_cl_ml<-reshape2::melt(df_V06_cl, value.name=to_sel); df_V06_cl_ml$VISIT='V06'
 
-df_V08_cl_ml
+
 
 
 ## Which variables are corelated? 
 
 
 merged_melt_cl<-rbind(df_bl_cl_ml,df_V08_cl_ml)
+merged_melt_cl<-rbind(merged_melt_cl,df_V06_cl_ml)
+merged_melt_cl<-rbind(merged_melt_cl,df_V04_cl_ml)
 
 patnos_z1<-gsub('\\_.*', '', names(Z1))
 patnos_z1
 merged_melt_cl$PATNO
 Z1_matched<-Z1[match(merged_melt_cl$PATNO,patnos_z1) ]
-Z1
+
 hist(Z1_matched);
 quantile(Z1_matched,0.9, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.9, na.rm=TRUE))
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
+
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
+
+sel_factors[fn_sel]
+if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
+  T=0.2
+  Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  
+}
 Z1_grouping
 dim(merged_melt)
 merged_melt_cl$grouping<-Z1_grouping
 
-to_sel
 
 ### for categorical 
 #table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
@@ -429,6 +451,49 @@ table(merged_melt_cl$PDSTATE)
 merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 merged_melt_cl2<-merged_melt_cl3
 merged_melt_cl3$PDSTATE
+to_sel
+
+merged_melt_cl$co
+
+
+to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
+           'con_putamen', 'rigidity')
+
+## todo why is scau missing from baseline? how to measure total? 
+for (y in to_plot){
+
+ggplot(data = merged_melt_cl, aes_string(x = 'VISIT', y = y, 
+                                             fill='grouping', group='grouping', colour='grouping')) + 
+  stat_summary(geom = "pointrange", fun.data = median_IQR, 
+               position=position_dodge(0))+
+  stat_summary(fun = median, position=position_dodge(width=0), 
+               geom = "line", size = 1) + 
+  scale_color_viridis_d(option='turbo')+
+  #facet_wrap(. ~ symbol, scales='free_y', 
+  #           nrow = 1) +
+  
+  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+  theme_bw()+ 
+  geom_signif(comparisons = list(c('BL', 'V08')), 
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  
+  labs(y='logCPM')+
+  # legend(legend=c('Low', 'High'))+
+  theme(strip.text = element_text(
+    size = 12, color = "dark green"), 
+    axis.title.y =element_text(
+      size = 12, color = "dark green") )
+
+
+
+warnings()
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,  '.jpeg'), 
+       width=5, height=3)
+}
+
+
+
 
 for (cov_to_plot in to_sel){
   

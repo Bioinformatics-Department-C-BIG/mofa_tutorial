@@ -193,7 +193,7 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           
           x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
           x2_pass<-x2@termsim>min_overlap_score
-          pos_edges<-rowSums(x2_pass, na.rm = TRUE) > 2L
+          pos_edges<-rowSums(x2_pass, na.rm = TRUE) > 1L
 
           ### update without single nodes 
           enr_full_new<-enr_full[pos_edges, asis=T]
@@ -220,6 +220,10 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           }
         
           set.seed(150)
+          sig_length<-length(which(x2_to_use@result$p.adjust<0.05))
+          nCluster_2<-ifelse(sig_length>nCluster,nCluster, floor(sig_length/2))
+          nCluster_2
+          
           em<-emapplot(x2_to_use, showCategory=N_EMAP,
                        cex_category=0.5, 
                        cex_label_category=cex_label_category,
@@ -228,11 +232,11 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                        cluster.params=list(cluster =TRUE, 
                                 method=cluster::pam, # cluster::clara, cluster::pam , cluster::kmeans
                                 ellipse_style='shadowtext', 
-                                nCluster=nCluster, 
+                                nCluster=nCluster_2, 
                                legend=TRUE),
                        layout.params =list(layout=layout),
                       group_category=TRUE,
-                      nCluster=nCluster,
+                      nCluster=nCluster_2,
                       alpha=0.009,
                       ellipse_style='ggforce',
                       node_label = node_label, 
@@ -250,7 +254,7 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           em+ scale_fill_viridis(option=scale_option)
           #em +  scale_color_gradient(low = "#56B1F7", high = "#132B43")
 
-
+          em
           
           ggsave(fname_net, width=width, height=height, 
                  dpi = 600)  #ggsave(filename=fname_net, plot=last_plot(),width=15, height=15, dpi=300)
@@ -266,7 +270,7 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
 ### Plot for each one independently 
 use_mofa=TRUE
 for (fn in fns){
-        
+     # fn=2
         list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
         print(sel_factors[fn])
           # also write to extra file
@@ -274,6 +278,10 @@ for (fn in fns){
         enrich_rna= list_all[[1]]
         enrich_proteins = list_all[[2]]
         enrich_mirnas = list_all[[3]]
+        enrich_rna$Description=standardize_go_names(enrich_rna$Description)
+        enrich_proteins$Description=standardize_go_names(enrich_proteins$Description)
+        enrich_mirnas$Description=standardize_go_names(enrich_mirnas$Description)
+        
         
         # outdir
         #View(data.frame(enrich_mirnas$geneID))
@@ -295,7 +303,7 @@ for (fn in fns){
         
         factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
         max_ws<-names(which.max(weights_Var))
-        min_overlap_score=0.25
+        min_overlap_score=0.1
         
         if (weights_Var['proteomics']>10){
           prot_names<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
@@ -303,13 +311,13 @@ for (fn in fns){
           factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
           factor1_paths$proteinColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
           factor1_paths$geneColname<-paste(factor1_paths$geneColname, factor1_paths$proteinColname, sep='/')
-          min_overlap_score=0.25
+          min_overlap_score=0.1
           
           
-        }else if(weights_Var['miRNA']>20){
+        }else if(weights_Var['miRNA']>10){
           print(weights_Var)
           factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
-          min_overlap_score=0.60
+          min_overlap_score=0.1
           
         }
         
@@ -351,10 +359,13 @@ for (fn in fns){
           scale_option='plasma'
           
         }
+        top_paths=enr_full@result$ID[order(enr_full@result$p.adjust)][1:30]
+        top_paths
         #### EMAP by factor ####
-        create_multi_emap(enr_full, N_EMAP=80, fname_net=paste0(merged_path_file_mofa, '_network', max_ws,'rna' ,color_by_rna,'.jpeg'), 
-                          color_by = color_by,  min = min_overlap_score, cex_label_category = 0.8,
-                          nCluster=10, scale_option=scale_option, node_label = 'category', max.overlaps=20,
+        fname_net=paste0(merged_path_file_mofa, '_network',v2, max_ws,'rna' ,color_by_rna,'.jpeg')
+        create_multi_emap(enr_full, N_EMAP=50, fname_net=fname_net, 
+                          color_by = color_by,  min = min_overlap_score, cex_label_category = 0.6,
+                          nCluster=7, scale_option=scale_option, node_label = 'category', max.overlaps=1,
                           
                             )
        
@@ -407,7 +418,7 @@ merged_results_sig_all=f_pvals_merged_sig
 dim(merged_results_sig_all)
 
 ### Create filters on nodes 
-high_quant_t=0.3
+high_quant_t=0.4
 #factor_filters<-names(sel_factors)
 rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
 rank_cols
@@ -517,7 +528,7 @@ write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_net
 # run_enrichment_plots(enr_full,results_file = 'test.txt')
 enr_full@result$Description<-enr_full@result$ID
 # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
-top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:300]
+top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:10]
 length(enrich_res_df$Description)
 top_paths
 
@@ -527,11 +538,12 @@ node_label= 'group';cex_label_category=0.7
 node_label= 'all';cex_label_category=0.5
 node_label= 'category';cex_label_category=0.7
 
-fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_', 'hq_', high_quant_t, 
+fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_',v2, 'hq_', high_quant_t, 
                   'bl_',   as.numeric(color_by_bl)[1], 'rna_', as.numeric(color_by_rna)[1], 
                   node_label,'.jpeg')
+enr_full_2<-enr_full
+enr_full_2@result$Description[!(enr_full_2@result$ID %in% top_paths)]<-'_'
 
- 
 create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
                   width=15, height=10,
                   cex_label_category = cex_label_category,

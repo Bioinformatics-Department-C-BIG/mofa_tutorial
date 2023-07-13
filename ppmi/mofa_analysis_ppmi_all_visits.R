@@ -185,7 +185,6 @@ dev.off()
 names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SNCA_rs356181
 
-selected_covars[!(selected_covars %in% names(MOFAobject@samples_metadata))]
 #### correlations between factors 
 cors[,c('stai_state' )]
 format(cors_pearson[,c('stai_trait')], digits=2)
@@ -298,8 +297,20 @@ dev.off()
 ### filter only the ones that are correlated 
 
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
-write.csv(cors_pearson, paste0(outdir, '/covariate_corelations_pearson.csv'))
+dir.create(paste0(outdir, '/covariates/'))
+write.csv(cors_pearson, paste0(outdir, '/covariates/covariate_corelations_pearson.csv'))
+for (fx in 1:N_FACTORS){
+  sig<-cors[fx,]>1.5
+  c1<-cors[fx,][sig]
+   c2<-cors_pearson[fx,][sig]
+  c3<-format(cbind(c1,c2), digits=2); c3<-c3[order(c3[,1], decreasing = TRUE),]
+  write.csv(c3, 
+            paste0(outdir, '/covariates/',fx, '.csv'))
+}
 
+
+
+colnames(ger)
 view='proteomics'; factor=6
 
 vps=length(MOFAobject@dimensions$D)
@@ -1079,127 +1090,6 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 #source('enrichment.R')
   
 #library(AnnotationHub)
-
-library('MOFAdata')
-utils::data(reactomeGS)
-
-head((reactomeGS))
-
-## TODO: if enrichment is already run then just load results
-## load res.positive to be used in the next script
-
-subcategory<- 'CP:KEGG'
-subcategory<- 'CP:KEGG'
-subcategory<- 'GO:MF'
-subcategory<- 'GO:BP'
-dir.create(paste0(outdir, '/enrichment/'))
-#for (subcategory in c('GO:BP' ,'CP:KEGG')){
-
-mode='proteomics'
-mode='RNA'
-
-  for (subcategory in c('GO:BP', 'GO:MF' )){
-        if (mode=='proteomics'){
-          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
-          
-        }else{
-          gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
-          
-        }
-        
-        gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-        colnames(gs)
-        
-        
-        features_names(MOFAobject)$RNA
-        features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
-               function(x) {stringr::str_remove(x, '\\..*')}
-        )
-        # GSEA on negative weights, with default options
-        res.negative <- run_enrichment(MOFAobject, 
-                                       feature.sets = gs, 
-                                       view = mode,
-                                       sign = "negative"
-        )
-        
-        res.positive <- run_enrichment(MOFAobject, 
-                                       feature.sets = gs, 
-                                       view = mode,
-                                       sign = "positive"
-        )
-        
-        
-        
-        
-        ## TODO: create a function to do for both positive and negative 
-        #
-        write_enrich<-function(res, sign_mode){
-          results_enrich<-res$pval.adj
-          all_fs_merged2<-reshape::melt(results_enrich)
-          #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
-          all_fs_merged2<-all_fs_merged2[with(all_fs_merged2, order(X2, value)),]# order 
-          
-          neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
-                           mode, '_enrichment', sign_mode)
-          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file,  '.csv' ))
-          T=0.05
-          all_fs_merged2=all_fs_merged2[ all_fs_merged2$value<T,]
-          write.csv(format(all_fs_merged2, digits=3),paste0(neg_file, '_', T,  '.csv' ))
-          saveRDS(res.negative,paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', sign_mode ))
-          
-        }
-        
-        write_enrich(res.negative, sign_mode='negative')
-        write_enrich(res.positive, sign_mode='positive')
-        
-        
-        
-        
-       
-        ##### which factor is related to parkinsons disease in KEGG
-        ### PROBLEM: this is based on RNA only!!! 
-    
-        
-}
-
-
-
-
-
-# Make enrichment plots for all factors 
-# threshold on p value to zoom in 
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
-
-plot_enrichment_heatmap(res.positive, 
-                        alpha=0.5, 
-                        cap=0.0005,
-                          colnames=TRUE)
-dev.off()
-
-plot_enrichment_heatmap(res.positive$sigPathways, 
-                        alpha=0.5, cap=0.0005)
-
-#ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
-
-
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
-
-plot_enrichment_heatmap(res.negative, 
-                        alpha=0.5, cap=0.00000000005 
-                          )
-
-
-dev.off()
-#ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
-
-
-F3<-res.positive$pval.adj[,'Factor3']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:20]
-
-F3<-res.negative$pval.adj[,'Factor6']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:10]
 
 
 

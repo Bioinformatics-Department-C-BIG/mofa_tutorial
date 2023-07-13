@@ -22,15 +22,19 @@ standardize_go_names<-function(descriptions){
   #'
   #'
   descriptions=gsub('-', ' ', tolower(descriptions))
+  descriptions=gsub('_', ' ', tolower(descriptions))
+  
   #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
   
-  
+
   descriptions=gsub("\\'", '', tolower(descriptions))
   descriptions=gsub("\\,", '', tolower(descriptions))
   
   descriptions=gsub('\\(', '', tolower(descriptions))
   descriptions=gsub('\\)', '', tolower(descriptions))
   descriptions=gsub('\\/', '', tolower(descriptions))
+  
+  
   
   
   return(descriptions)
@@ -64,7 +68,7 @@ concatenate_pvals <- function(enrich_proteins,enrich_rna, enrich_mirnas=FALSE, p
   # all=TRUE does not work well many mirna high are coming up 
   merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description', all=TRUE);
   dim(merged_paths)
-  merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description');
+  #merged_paths<-merge(enrich_proteins_pvals, enrich_rna_pvals, by='Description');
   dim(merged_paths)
   ## TODO: double check the merging here -- maybe there are dashes and different formats 
   if (add_mirs){
@@ -84,22 +88,45 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
   #'
   #' Combine and save 
   
+  #View(merged_paths_fish[grep('oxidative', merged_paths_fish$Description),])
+  #merged_paths[grep('oxidative phosphorylation', merged_paths$Description),]$pvalue.x=0.999999
+  #merged_paths[grep('oxidative phosphorylation', merged_paths$Description),]
+  
   
   library(metapod)
-  merged_paths
-  p1<-merged_paths[,2]; length(p1)
+  merged_paths[is.na(merged_paths)]<-0.999
+  p1<-merged_paths[,2]; length(p1)# proteins 
   p2<-merged_paths[,3];length(p2)
-  pmethod
+  p3<-merged_paths[,3];length(p3)
   #weights=weights_Var
   print(paste0('Weights ', weights_Var))
+  list_total=list()
+  weights_Var_ge1=c()
+  if (weights_Var['proteomics']>1){
+    list_total<-append(list_total, list(p1))
+    weights_Var_ge1=c(weights_Var['proteomics'])
+  }  
+  if (weights_Var['RNA']>1){
+    list_total<-append(list_total, list(p2))
+    weights_Var_ge1=c(weights_Var_ge1,weights_Var['RNA'])
+    
+  }
+  if (weights_Var['miRNA']>1){
+    list_total<-append(list_total, list(p3))
+    weights_Var_ge1=c(weights_Var_ge1,weights_Var['miRNA'])
+    
+  }
+  
+  print(paste('weights ',round(weights_Var_ge1)))
+  length(list_total)
   #weights_Var=c(1/500, 5/100, 5/100)
   hist(p1)
   hist(p2)
   if (add_mirs){
-    p3<-merged_paths[,4];length(p3)
-    fish <- metapod::combineParallelPValues(list(p1, p2, p3),
+    #p3<-merged_paths[,4];length(p3)
+    fish <- metapod::combineParallelPValues(list_total,
                                             method=pmethod, 
-                                            weights = weights_Var)$p.value
+                                            weights = weights_Var_ge1)$p.value
     
   }else{
     fish <- metapod::combineParallelPValues(list(p1, p2),method=pmethod)$p.value
@@ -333,19 +360,34 @@ f_pvals<-list()
 pval_to_use<-'p.adjust'
 pval_to_use<-'pvalue'
 
+v2=FALSE
+
 ## selected factor  indices in numbers 
 fns=c(1:length(sel_factors))
 
         for (fn in fns){
-        #  fn=3
+                #fn=2
                 print(sel_factors[fn])
                 list_all<-get_mofa_paths_and_weights(factor=sel_factors[fn])
                 # also write to extra file
                 
                 enrich_rna= list_all[[1]]
+                
+                if (v2){
+                  res_merged_l<-read.csv(paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ))
+                  res_merged_l_f<-res_merged_l[res_merged_l$Factor ==names(sel_factors[fn]),]
+                }
+                
+                res_merged_l_f$Description<-standardize_go_names(res_merged_l_f$Description)
+                res_merged_l_f$Description<-gsub('gobp ','',res_merged_l_f$Description)
+                res_merged_l_f$pvalue<-res_merged_l_f$pvalue_min
+                
+                #View(res_merged_l_f[grep('oxidative', res_merged_l_f$Description),])
+                
                 enrich_proteins = list_all[[2]]
                 enrich_mirnas = list_all[[3]]
-              
+                #View(enrich_mirnas[grep('oxidative', enrich_mirnas$Description),])
+                
                 adj_weights=c(41,301,298)
                 adj_weights=c(1,1,1)
                 
@@ -363,12 +405,25 @@ fns=c(1:length(sel_factors))
                 
                 ################# ACTUALLY RUN THE combination #### 
                 cors_pearson_l
-                
                 merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,
                                                enrich_rna=enrich_rna,enrich_mirnas=enrich_mirnas, pval_to_use=pval_to_use )
+                
+                if (v2){
+                  enrich_proteins$Description=standardize_go_names(enrich_proteins$Description)
+                  enrich_mirnas$Description=standardize_go_names(enrich_mirnas$Description)
+                  
+                  merged_paths=concatenate_pvals(enrich_proteins=enrich_proteins,
+                                                 enrich_rna=res_merged_l_f,enrich_mirnas=enrich_mirnas, pval_to_use=pval_to_use )
+                  merged_paths
+                  }
                 #merged_paths[merged_paths==1]=0.999999999999999
+                #View(enrich_proteins[grep('oxidative', enrich_proteins$Description),])
+                
+                #View(merged_paths[grep('oxidative', merged_paths$Description),])
+                
                 merged_paths_fish_res=get_combined_pvalue(merged_paths = merged_paths,weights_Var=weights_Var, 
                                                           merged_path_file=merged_path_file_mofa, pval_to_use=pval_to_use)
+                
                 merged_paths_fish=merged_paths_fish_res;dim(merged_paths_fish)
                 which(merged_paths_fish$fish<0.05)
                 
@@ -392,7 +447,8 @@ fns=c(1:length(sel_factors))
 
 ## how many significant for each factor       
 lapply(f_pvals, function(x){length(which(x$fish<0.05))}) 
-lapply(f_pvals, function(x){dim(x)}) 
+lapply(f_pvals, function(x){which(x$fish<0.05)}) 
+
 
 
 #merged_factors_mofa[merged_factors_mofa$Description =='cell cycle',]

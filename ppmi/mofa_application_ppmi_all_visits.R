@@ -43,7 +43,7 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
-combined_bl_log$NP2_TOT
+combined_bl_log$GBA_PATHVAR
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log

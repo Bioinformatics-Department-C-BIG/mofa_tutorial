@@ -16,8 +16,25 @@ combined$COHORT_DEFINITION
 
 combined[which(combined$NHY==101),]$NHY<-NA
 
-
-
+combined$gn
+clipping_values<-function(x){
+  #'
+  #'
+  #' @param 
+  #'
+  higher_val<-quantile(x, 0.99, na.rm=TRUE)
+  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
+  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
+  
+  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
+  lower_val
+  higher_val
+  x[which(x<lower_val)]=as.numeric(lower_val)
+  
+  x[which(x>higher_val)]=as.numeric(higher_val)
+  return(x)
+  
+}
 #### 
 library(ggplot2)
 combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
@@ -70,6 +87,24 @@ get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
 
 }
 
+##### CHOOSE HERE WHAT TO LOG
+
+log_totals<-function(combined, sub_patterns_all){
+  #''
+  #''
+  #''
+  
+  df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
+                & grepl('_TOT',  colnames( combined ) ) ]
+  df=data.frame(df)
+  df=df[sapply(df, is.numeric)]
+  df_log=data.frame(sapply(df, function(x) log2(x+1)))
+  return(df_log)
+  
+}
+
+### Up to here is the function to log specific patterns ####
+
 
 library(stringr)
 
@@ -95,63 +130,47 @@ combined$RBD_TOT
 
 ### TODO: STAIAD SHOULD NOT BE ADDED since some of the variables have reverse health outcome 
 sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'NP4', 'ESS')
-#sub_pattern=paste0(sub_patterns[1],'[1-9]')  #For testing
-
-
-combined$STAIAD10
-combined$NP2_TOT
-combined$NP2PTOT
 # 1. ADD THE TOTALS TO THE  METADATA  
 avs<-sapply(sub_patterns,get_totals, combined=combined)
 colnames(avs)<-paste0(colnames(avs), '_TOT')
 
 
+
+
 ### TODO: FIX THIS HERE IT CREATES PROBLEM IF  I keep adding and there are duplicates
 combined<-cbind(combined,avs)
+
+
+## SUBPATTERNS TO LOG 
+sub_patterns_2=c(sub_patterns, 'RBD', 'stai_state', 'stai_trait')
+sub_patterns_all<-paste(sub_patterns_2, collapse='|')
+
+
+
 ### from now on work on new vars!! 
 
 
 ## LOG only the TOTALS !! 
 #'
 #'
+
+df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
+combined_new<-mutate(combined, df_log)
+metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
+
+
+
+
+
 sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
-clipping_values<-function(x){
-  #'
-  #'
-  #' @param 
-  #'
-  higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
-  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
-  
-  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
-  lower_val
-  higher_val
-  x[which(x<lower_val)]=as.numeric(lower_val)
-  
-  x[which(x>higher_val)]=as.numeric(higher_val)
-  return(x)
-  
-}
-curated$con_caudate
-sub_patterns_2=c(sub_patterns, 'RBD', 'stai_state', 'stai_trait')
 
-sub_patterns_all<-paste(sub_patterns_2, collapse='|')
-sub_patterns_all  
+combined_filt<-combined[combined$PATNO_EVENT_ID %in% sel_sam,]
 
-df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
-                & grepl('_TOT',  colnames( combined ) ) ]
 
-df=data.frame(df)
 
-df$RBD_TOT
-colnames(df)
-df=df[sapply(df, is.numeric)]
+
 df_clipped<-data.frame(apply(df,2, clipping_values))
-df_clipped
-
 ### We choose df_log in the end 
-df_log=data.frame(sapply(df, function(x) log2(x+1)))
 
 df_log_clipped=data.frame(sapply(df_clipped, function(x) log2(x)))
 df_log_clipped_after<-data.frame(apply(df_log,2, clipping_values))
@@ -185,15 +204,15 @@ hist(as.matrix(df_log_sel))
 #combined_new<-merge(combined,df_log)
 # careful to not fail here
 ### todo
-combined_new<-mutate(combined, df_log)
-combined_new$RBD_TOT
+
+
+
+# just for plotting
 combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
-combined_filt<-combined[combined$PATNO_EVENT_ID %in% sel_sam,]
 
 combined_new$RBD_TOT
 
   dim(combined_new)
-  metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
   
   write.csv2(combined_new,metadata_output_all, row.names = FALSE)
   

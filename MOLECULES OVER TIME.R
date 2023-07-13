@@ -29,10 +29,10 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=3
+fn_sel=2
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
+view='miRNA'; process_mirnas=TRUE
 view='RNA'; process_mirnas=FALSE
-#view='miRNA'; process_mirnas=TRUE
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -267,7 +267,7 @@ most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:5,]
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 
-ggplot(data = merged_melt_filt_g2, aes(x = VISIT, y = value)) + 
+ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
   geom_line(aes(group=patno),  col= 'grey') +
   geom_boxplot(aes(fill=VISIT))+

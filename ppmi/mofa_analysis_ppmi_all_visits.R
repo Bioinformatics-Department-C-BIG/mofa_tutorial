@@ -26,6 +26,7 @@
 
 
 library(ggplot2)
+
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
 
@@ -234,11 +235,44 @@ labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_
              'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use')
+
+selected_covars2<-c('COHORT', 'AGE', 'SEX',
+                   'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
+                   'NHY', 
+                   'NP3RIGN', 'SCAU5',
+                   'moca',
+                   'scopa', 
+                   'stai_state', 'stai_trait', 
+                   'rigidity', 
+                    'ptau',  
+                    'PDSTATE',  
+                   'RBD_TOT', 
+                   'con_putamen', 
+                   'td_pigd_old_on', 'PD_MED_USE' )
+
+labels_col2=c('Disease status', 'AGE', 'SEX',
+             'MDS-UPDRS1','MDS-UPDRS2','MDS-UPDRS3', 'MDS-UPDRS4',
+             'Hoehn & Yahr','MDS3-RIGN',
+             'SC-CONSTIP',
+             'MOCA', 
+             'scopa',
+             'stai_state', 'stai_trait', 
+             'rigidity',
+             'ptau',
+             'PDSTATE', 
+             'RBD_TOT', 
+             'PUTAMEN', 
+             'TD/PIGD dominant', 'Medication use')
+
+selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
+
+
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
+selected_covars<-selected_covars2; length(selected_covars)
+labels_col=labels_col2; length(labels_col)
+MOFAobject_gs2@samples_metadata$st
 
-selected_covars<-selected_covars[selected_covars %in% colnames(MOFAobject@samples_metadata)]
-labels_col<-labels_col[selected_covars %in% colnames(MOFAobject@samples_metadata)]
 graphics.off()
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
@@ -247,8 +281,10 @@ MOFAobject@samples_metadata
 
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 800+length(selected_covars)*20, height=1200, res=300)
-P2<-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, plot = "log_pval",
-                                  labels_col=labels_col )
+P2<-correlate_factors_with_covariates(MOFAobject,
+                                      covariates = selected_covars, plot = "log_pval",
+                                  labels_col=labels_col, 
+                                  factors = names(sel_factors))
 dev.off()
 selected_covars
 
@@ -279,16 +315,44 @@ dev.off()
 cors_pearson[,c('DYSKIRAT')]
 
 MOFAobject_nams<-MOFAobject
-colnames(MOFAobject_nams@samples_metadata)
+
 hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
-selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]
+length(selected_covars); length(labels_col)
+labels_cols_pearson<-labels_col[!grepl('con_putamen', selected_covars) ];length(labels_cols_pearson)
+selected_covars
+selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]; length(selected_covars_pearson)
+labels_cols_pearson
 selected_covars_pearson
+selected_covars_pearson
+f_to_plot<-names(sel_factors)
+ind_to_update<-colnames(MOFAobject_nams@samples_metadata) %in%selected_covars_pearson
+colnames(MOFAobject_nams@samples_metadata)[ind_to_update]
+
+
+colnames(MOFAobject_nams@samples_metadata)[ind_to_update]<-labels_cols_pearson
+MOFAobject_nams@samples_metadata$scopa
+labels_cols_pearson
+
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 1000+length(selected_covars)*20, height=1100, res=300)
-correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars_pearson,
+correlate_factors_with_covariates(MOFAobject_nams,covariates =labels_cols_pearson,
                                   plot = "r", 
                                   col.lim=c(-0.5, 0.5), 
                                   is.cor=FALSE, 
+                                  factors = f_to_plot,
+                                  transpose=TRUE
                                   )
+
+
+dev.off()
+
+jpeg(paste0(outdir, 'factors_covariates_img_cor','.jpeg'), width = 1000+length(selected_covars)*20, height=1100, res=300)
+correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars_img,
+                                  plot = "r", 
+                                  col.lim=c(-0.5, 0.9), 
+                                  is.cor=FALSE, 
+                                  factors = f_to_plot,
+                                  transpose=TRUE
+)
 
 dev.off()
 

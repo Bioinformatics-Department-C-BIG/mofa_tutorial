@@ -3,44 +3,20 @@
 ## Utils 
 ## Summarized experiment 
 
-### TODO: move to a utils / preprocessing file because it is used also for proteoomics
-library(SummarizedExperiment)
-
 load_se_all_visits<-function(input_file, combined){
-  #'
-  #'
-  #'
-  raw_counts_all<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+  raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+  raw_counts_all<-raw_counts
   class(raw_counts_all) <- "numeric"
-  ## They seem to have taken averages for replicas so need to fix 
+  ## They seem to have taken averages for replicas so need to fix
   raw_counts_all<-round(raw_counts_all)
-  ## Question: why are there duplicate samples - seems to be controls! 
+  ## Question: why are there duplicate samples - seems to be controls!
   ## first filter what is in metadata and mirnas ?
   se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
   return(se)
-  
 }
 
-
-
-filter_se_byExpr<-function(se_filt){
-  #' @param name description
-  #' @param  
-  #'
-  #'
-  raw_counts=assays(se_filt)[[1]]
-  
-  ## filterbyExpr takes cpm so remove from there 
-  #idx <- edgeR::filterByExpr(raw_counts_all,min.count=min.count)
-  idx <- edgeR::filterByExpr(raw_counts,min.count=min.count)
-  
-  raw_counts <- as.matrix(raw_counts[idx, ])
-  se_filt=se_filt[idx]
-  return(se_filt)
-}
-
-
-
+### TODO: move to a utils / preprocessing file because it is used also for proteoomics
+library(SummarizedExperiment)
 
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
@@ -281,18 +257,18 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
+
+
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
-  
-  require(clusterProfiler)
-  
-  require('GOfuncR')
-  require(DOSE)
-  
+
   #gse=gse_mofa_rna; 
   #geneList=gene_list_ord_g
   #N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
-  
+  #'
+  #'
+  #'
+  #'
   N=25
   ## TODO: ADD FACET IF SIGNED 
   #if (length(showCategory_list)>1){
@@ -348,7 +324,8 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   #if (process_mirnas){N=15}
   p<-emapplot(x2,showCategory = N_EMAP,
               layout = "nicely", 
-              cex_label_category=0.8)
+              cex_label_category=0.8, 
+                )
   p_enrich <- p + theme(text=element_text(size=12))
   p_enrich
   

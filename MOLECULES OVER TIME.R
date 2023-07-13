@@ -4,6 +4,9 @@ library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
 
 
+
+
+
 ## Load baseline and v08 ####
 # run deseqvst
 bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
@@ -91,6 +94,24 @@ function(){
 
 
 
+## outliers
+
+clip_outliers<-function(df1){
+  #'
+  #' @param 
+  #'
+  #'
+  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  for (i in 1:dim(df1)[1]){
+    df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
+  }
+  
+  return(df1)
+}
+
+
+
+
 preprocess_visit<-function(se_filt_V){
   
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
@@ -114,24 +135,6 @@ bl_ens<-preprocess_visit(se_filt_BL)
 
 
 
-
-
-
-
-## outliers
-
-clip_outliers<-function(df1){
-  #'
-  #' @param 
-  #'
-  #'
-  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
-  for (i in 1:dim(df1)[1]){
-    df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
-  }
-  
-  return(df1)
-}
 
 
 
@@ -188,6 +191,10 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   T=0.2
+  Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  
+}else if (names(sel_factors[fn_sel]) %in% c('Factor3')){
+  T=0.8
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
 }
@@ -429,6 +436,7 @@ if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
 }
+
 Z1_grouping
 dim(merged_melt)
 merged_melt_cl$grouping<-Z1_grouping
@@ -464,7 +472,7 @@ to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv',
 ## todo why is scau missing from baseline? how to measure total? 
 for (y in to_plot){
 
-ggplot(data = merged_melt_cl, aes_string(x = 'VISIT', y = y, 
+ggplot(data = merged_melt_cl3, aes_string(x = 'VISIT', y = y, 
                                              fill='grouping', group='grouping', colour='grouping')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
@@ -480,7 +488,7 @@ ggplot(data = merged_melt_cl, aes_string(x = 'VISIT', y = y,
               map_signif_level=TRUE, 
               tip_length = 0, vjust=0.4)+
   
-  labs(y='logCPM')+
+  labs(y=y)+
   # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
     size = 12, color = "dark green"), 

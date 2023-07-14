@@ -35,9 +35,10 @@ v08_only
 fn_sel=2
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='miRNA'; process_mirnas=TRUE
-view='RNA'; process_mirnas=FALSE
 
+view='RNA'; process_mirnas=FALSE
 view='miRNA'; process_mirnas=TRUE
+
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -46,8 +47,15 @@ se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
 se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
 se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 
-#Reduce(intersect, list(a,b,c))
 
+#if (view==proteomics){
+#  
+#}
+### IF proteins??? 
+
+
+#Reduce(intersect, list(a,b,c))
+table( se_filt$COHORT)
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
@@ -86,9 +94,6 @@ if (view=='RNA'){
   
 }
 
-function(){
-  
-}
 
 
 
@@ -180,9 +185,9 @@ Z1<-Z[,sel_factors[fn_sel]]
 patnos_z1<-gsub('\\_.*', '', names(Z1))
 Z1_matched<-Z1[match(merged_melt$patno,patnos_z1) ]
 
-png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
-hist(Z1_matched);
-dev.off()
+#png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
+#hist(Z1_matched);
+#dev.off()
 
 quantile(Z1_matched,0.85, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
@@ -253,11 +258,17 @@ merged_melt_filt$grouping<-as.factor(merged_melt_filt$grouping)
 # TAKE THE low group
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   GROUP=FALSE
+ 
   
   
 }else{
   GROUP=TRUE
 }
+merged_melt_filt$group<-as.logical(merged_melt_filt$grouping)
+merged_melt_filt$group[as.logical(merged_melt_filt$grouping)]<-'HighFactor'
+merged_melt_filt$group[!as.logical(merged_melt_filt$grouping)]<-'LowFactor'
+merged_melt_filt$group<-as.factor(merged_melt_filt$group)
+
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
 merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
 merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
@@ -318,14 +329,14 @@ mean_data
 
   filt_top=TRUE
 if (filt_top){
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:3],]
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
   
 }
 
 ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, 
-                                    fill=grouping, group=grouping, colour=grouping)) + 
+                                    fill=group, group=group, colour=group)) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
@@ -343,15 +354,17 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   labs(y='logCPM')+
  # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
-    size = 12, color = "dark green"), 
+    size = 13, color = "dark green", face="bold"), 
     axis.title.y =element_text(
-      size = 12, color = "dark green") )
+      size = 13, color = "dark green", face="bold",), 
+    axis.text.x = element_text(
+      size = 12 ))
   
   
 
 warnings()
 ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top,   '.jpeg'), 
-       width=10, height=3)
+       width=7, height=2.6)
 
 
 
@@ -455,7 +468,6 @@ to_sel
 
 ### for continous 
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
-cov_to_plot %in% to_sel
 
 table(merged_melt_cl$PDSTATE)
 merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
@@ -464,11 +476,18 @@ merged_melt_cl3$PDSTATE
 to_sel
 
 merged_melt_cl$co
-
-
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
            'con_putamen', 'rigidity')
 
+if (names(sel_factors[fn_sel]) %in% c('Factor3')){
+  to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
+             'con_putamen', 'rigidity')
+ 
+}else{
+  to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
+              'td_pigd_old_on')
+}
+merged_melt_cl3$td_pigd_old_on
 ## todo why is scau missing from baseline? how to measure total? 
 for (y in to_plot){
 
@@ -502,7 +521,7 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view
        width=5, height=3)
 }
 
-
+print(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,  '.jpeg'))
 
 
 for (cov_to_plot in to_sel){

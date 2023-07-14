@@ -237,39 +237,54 @@ labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_
              'TD/PIGD dominant', 'Medication use')
 
 selected_covars2<-c('COHORT', 'AGE', 'SEX',
-                   'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
+                   #'NP1_TOT', 
+                   'NP2_TOT','NP3_TOT',
+                   #'NP4_TOT',
                    'NHY', 
-                   'NP3RIGN', 'SCAU5',
+                   'NP3RIGN',
+                  # 'SCAU5',
                    'moca',
-                   'scopa', 
-                   'stai_state', 'stai_trait', 
+                 #  'scopa', 
+                  # 'stai_state', 'stai_trait', 
                    'rigidity', 
+                  'NP3RTARU',
+                  
+                  
                     'ptau',  
                     'PDSTATE',  
                    'RBD_TOT', 
+                  
                    'con_putamen', 
                    'td_pigd_old_on', 'PD_MED_USE' )
 
 labels_col2=c('Disease status', 'AGE', 'SEX',
-             'MDS-UPDRS1','MDS-UPDRS2','MDS-UPDRS3', 'MDS-UPDRS4',
-             'Hoehn & Yahr','MDS3-RIGN',
-             'SC-CONSTIP',
+             #'MDS-UPDRS1',
+             'MDS-UPDRS2','MDS-UPDRS3', 
+             #'MDS-UPDRS4',
+             'Hoehn & Yahr',
+             'MDS3-RIGN',
+            # 'SC-CONSTIP',
              'MOCA', 
-             'scopa',
-             'stai_state', 'stai_trait', 
+           #  'scopa',
+            # 'stai_state', 'stai_trait', 
              'rigidity',
+            'MDS3-TREMOR', 
+            
              'ptau',
              'PDSTATE', 
              'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use')
 
+cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
 
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
 selected_covars<-selected_covars2; length(selected_covars)
+selected_covars[!selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
+
 labels_col=labels_col2; length(labels_col)
 MOFAobject_gs2@samples_metadata$st
 
@@ -280,11 +295,17 @@ MOFAobject@samples_metadata
 
 
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 800+length(selected_covars)*20, height=1200, res=300)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 1000+length(selected_covars)*20, height=1000, res=300)
 P2<-correlate_factors_with_covariates(MOFAobject,
                                       covariates = selected_covars, plot = "log_pval",
                                   labels_col=labels_col, 
                                   factors = names(sel_factors))
+
+P2<-correlate_factors_with_covariates(MOFAobject,
+                                      covariates = selected_covars, plot = "log_pval",
+                                     labels_col=labels_col, 
+                                      factors = names(sel_factors))
+
 dev.off()
 selected_covars
 
@@ -315,6 +336,7 @@ dev.off()
 cors_pearson[,c('DYSKIRAT')]
 
 MOFAobject_nams<-MOFAobject
+vars_by_factor/rowSums(vars_by_factor)*100
 
 hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
 length(selected_covars); length(labels_col)

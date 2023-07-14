@@ -178,7 +178,7 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                             width=10, height=10,
                             filter_single_nodes=FALSE, cex_label_category=0.6, nCluster=20,
                             node_label='category',scale_option='plasma', max.overlaps=10, 
-                            layout='fr'){
+                            layout='fr', subset_names=TRUE){
           #'
           #' @param enr_full
           #' https://github.com/YuLab-SMU/enrichplot/blob/devel/R/emapplot.R
@@ -219,7 +219,6 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
             x2_to_use=x2
           }
         
-          set.seed(150)
           sig_length<-length(which(x2_to_use@result$p.adjust<0.05))
           nCluster_2<-ifelse(sig_length>nCluster,nCluster, floor(sig_length/2))
           nCluster_2
@@ -247,8 +246,10 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           )
           
           em$data$name[!em$data$name %in% top_paths]<-''
-          
-          em$data$name[c(TRUE, TRUE, FALSE)]<-''
+          if (subset_names){
+            em$data$name[c(TRUE, TRUE, FALSE)]<-''
+            
+          }
           
           
           em+ scale_fill_viridis(option=scale_option)
@@ -303,7 +304,7 @@ for (fn in fns){
         
         factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
         max_ws<-names(which.max(weights_Var))
-        min_overlap_score=0.1
+        min_overlap_score=0.3
         
         if (weights_Var['proteomics']>10){
           prot_names<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
@@ -311,13 +312,13 @@ for (fn in fns){
           factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
           factor1_paths$proteinColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
           factor1_paths$geneColname<-paste(factor1_paths$geneColname, factor1_paths$proteinColname, sep='/')
-          min_overlap_score=0.1
+          min_overlap_score=0.3
           
           
         }else if(weights_Var['miRNA']>10){
           print(weights_Var)
           factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
-          min_overlap_score=0.1
+          min_overlap_score=0.5
           
         }
         
@@ -398,7 +399,10 @@ sel_factors[fn]
 list_all<-get_mofa_paths_and_weights(factor=sel_factors[3])
 list_all2<-get_mofa_paths_and_weights(factor=sel_factors[4])
 sel_factors[2]
-list_all3<-get_mofa_paths_and_weights(factor=sel_factors[1])
+list_all3<-get_mofa_paths_and_weights(factor=sel_factors[2])
+
+list_all4<-get_mofa_paths_and_weights(factor=sel_factors[1])
+
 # also write to extra file
 # where to get lists of common genes 
 enrich_rna= list_all[[1]]
@@ -418,7 +422,7 @@ merged_results_sig_all=f_pvals_merged_sig
 dim(merged_results_sig_all)
 
 ### Create filters on nodes 
-high_quant_t=0.4
+high_quant_t=0.7
 #factor_filters<-names(sel_factors)
 rank_cols<-colnames(merged_results_sig_all)[grep('[1-9]_rank', colnames(merged_results_sig_all))]
 rank_cols
@@ -460,29 +464,31 @@ table(merged_results_sig$min_rank)
 # 
 factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
 factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
-factor_genes3<-list_all3[[1]][match(merged_results_sig$Description, list_all3[[1]]$Description),]$core_enrichment
+factor_genes4<-list_all4[[1]][match(merged_results_sig$Description, list_all4[[1]]$Description),]$core_enrichment
 
 ids_merge_all=c()
 length(factor_genes)
-for (i in length(factor_genes)){
-  
-  ids <- unique(unlist(strsplit(factor_genes[i], "/")))
-  ids2 <-unique(unlist(strsplit(factor_genes2[i], "/")))
-  ids3 <-unique(unlist(strsplit(factor_genes3[i], "/")))
-  
-  ids_merge<-union(ids,ids2)
-  ids_merge
-  ids_merge<-as.character(union(ids_merge,ids3))
-  ids_merge
-  ids_merge_all[i]<-paste0(ids_merge, sep = '/')
-}
+lapply(strsplit(factor_genes_all, '/'), function(x) {
+                                                      print(
+                                                        paste(length(x),length(unique(x))) )})
+
+
 
 factor_genes_all<-paste0(factor_genes, factor_genes2, sep='/')
-factor_genes_all<-paste0(factor_genes_all, factor_genes3, sep='/')
+#factor_genes_all<-paste0(factor_genes_all, factor_genes4, sep='/')
+
+factor_genes_all[100]
+factor_genes_all
+
+# merge genes from all factors and remove duplicates
+
+factor_genes_all_rep<-sapply(strsplit(factor_genes_all, '/'), function(x) {
+  paste0(unique(x),collapse='/') })
+
 ## filter to add only high var?? 
 ## Color genes by weight..?
 merged_results_sig$geneColname<-factor_genes
-merged_results_sig$geneColname<-factor_genes_all
+merged_results_sig$geneColname<-factor_genes_all_rep
 
 # Color the nodes by qfactor
 # hack to get it to color with this attribute 
@@ -495,15 +501,19 @@ merged_results_sig$qvalue = as.numeric(factor(merged_results_sig$qvalue))#, leve
 
 ## OR color by whether it exists in baseline!!
 color_by_rna=FALSE
-color_by_bl=FALSE
+color_by_bl=TRUE
 
 min_overlap_score=0.25
-
+scale_option='plasma'
 if (color_by_bl){
   v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
   merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
-  merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$BL))
+  merged_results_sig$qvalue=as.numeric(factor(!merged_results_sig$BL))
   merged_results_sig[, c('BL', 'qvalue')]
+  scale_option='turbo'
+  
+  min_overlap_score=0.35
+  
 }else if (color_by_rna){
   #  mofa_in_rna<-mofa_rna_common
   
@@ -511,10 +521,11 @@ if (color_by_bl){
   merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$rna))
   merged_results_sig[, c('rna', 'qvalue')]
   min_overlap_score=0.3
+
   
   
 }
-
+merged_results_sig$qvalue
 # TODO: color by miRNA unique or RNA unique
 
 enrich_res_df<-merged_results_sig
@@ -528,35 +539,71 @@ write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_net
 # run_enrichment_plots(enr_full,results_file = 'test.txt')
 enr_full@result$Description<-enr_full@result$ID
 # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
-top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:10]
+top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:300]; subset_names=TRUE
 length(enrich_res_df$Description)
+top_paths[grep('angiogenesis', top_paths)]
+
 top_paths
+top_paths<-c('apoptotic process', 
+             'stress-activated MAPK cascade', 
+             
+             'regulation of MAPK cascade', 
+             'response to cytokine',
+             'vesicle-mediated transport',
+             'tube development',
+             'cell death',
+             'autophagy',
+             'inflammatory response',
+             'defense response',
+             'innate immune response', 
+             'small GTPase mediated signal transduction', 
+             'leukocyte migration', 
+             'transcription by RNA polymerase II', 
+             'peptide biosynthetic process', 
+             'nervous system development', 
+             'protein phosphorylation', 
+             'lipid metabolic process',
+             'cell cycle', 
+             'immune system process',
+             'angiogenesis', 
+             'actin filament-based process'
+             
+
+             
+             
+             
+             
+  
+);subset_names=FALSE
 
 #### EMAP by factor ####
 merged_path_file_mofa
+
 node_label= 'group';cex_label_category=0.7
 node_label= 'all';cex_label_category=0.5
-node_label= 'category';cex_label_category=0.7
+node_label= 'category';cex_label_category=1
 
 fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_',v2, 'hq_', high_quant_t, 
                   'bl_',   as.numeric(color_by_bl)[1], 'rna_', as.numeric(color_by_rna)[1], 
-                  node_label,'.jpeg')
-enr_full_2<-enr_full
-enr_full_2@result$Description[!(enr_full_2@result$ID %in% top_paths)]<-'_'
+                  unlist(strsplit(node_label, ''))[1], unlist(strsplit(as.character(subset_names), ''))[1],'.jpeg')
+
+
+set.seed(50)
 
 create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
                   width=15, height=10,
                   cex_label_category = cex_label_category,
                   filter_single_nodes=TRUE, 
                   nCluster=20,
-                  max.overlaps=2,
+                  max.overlaps=1,
                   ### TODO: add ggrob to add legend etc. 
                   color_by = 'qvalue', 
                   min = min_overlap_score,
                   #node_label = 'all',
                   node_label = node_label,
+                  subset_names = subset_names, 
                   
-                  scale_option = 'plasma')
+                  scale_option = scale_option)
 
 
 

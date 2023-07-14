@@ -96,8 +96,9 @@ sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich
 
-just_load=FALSE
 just_load=TRUE
+just_load=FALSE
+
 sel_factors_to_enrich
 if (!isRStudio){
   

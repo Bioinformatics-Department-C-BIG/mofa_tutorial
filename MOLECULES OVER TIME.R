@@ -470,28 +470,39 @@ to_sel
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
 table(merged_melt_cl$PDSTATE)
-merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 merged_melt_cl2<-merged_melt_cl3
 merged_melt_cl3$PDSTATE
+
+merged_melt_cl3$NP3_TOT
 to_sel
 
 merged_melt_cl$co
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-           'con_putamen', 'rigidity')
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT')
 
 if (names(sel_factors[fn_sel]) %in% c('Factor3')){
   to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-             'con_putamen', 'rigidity')
+             'con_putamen', 'rigidity', 'td_pigd_old')
  
 }else{
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
               'td_pigd_old_on')
 }
 merged_melt_cl3$td_pigd_old_on
+
+to_plot
 ## todo why is scau missing from baseline? how to measure total? 
+merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
+
+remove_off=TRUE
+if (remove_off){
+ df_plot<- merged_melt_cl3
+}else{
+  df_plot<-merged_melt_cl
+}
 for (y in to_plot){
 
-ggplot(data = merged_melt_cl3, aes_string(x = 'VISIT', y = y, 
+ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
                                              fill='grouping', group='grouping', colour='grouping')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
@@ -510,18 +521,19 @@ ggplot(data = merged_melt_cl3, aes_string(x = 'VISIT', y = y,
   labs(y=y)+
   # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
-    size = 12, color = "dark green"), 
+    size = 13, color = "dark green"), 
     axis.title.y =element_text(
-      size = 12, color = "dark green") )
+      size = 13, color = "dark green"), 
+    axis.text.x = element_text(
+      size = 12 ))
 
 
 
 warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,  '.jpeg'), 
-       width=5, height=3)
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,'_', remove_off,  '.jpeg'), 
+       width=3, height=3)
 }
 
-print(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,  '.jpeg'))
 
 
 for (cov_to_plot in to_sel){

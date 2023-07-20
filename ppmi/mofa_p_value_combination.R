@@ -602,25 +602,6 @@ unique(unlist(listInput_all_mods_single), use.names=FALSE)
 
 ### eVALUATION ####
 
-standardize_go_names<-function(descriptions){
-  #'
-  #'
-  #'
-  descriptions=gsub('-', ' ', tolower(descriptions))
-  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
-  
-  
-  descriptions=gsub("\\'", '', tolower(descriptions))
-  descriptions=gsub("\\,", '', tolower(descriptions))
-  
-  descriptions=gsub('\\(', '', tolower(descriptions))
-  descriptions=gsub('\\)', '', tolower(descriptions))
-  descriptions=gsub('\\/', '', tolower(descriptions))
-  
-  
-  return(descriptions)
-  
-}
 
 
 retrieve_path_ids <- function(paths_description, go_ids){

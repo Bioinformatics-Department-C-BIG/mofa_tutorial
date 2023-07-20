@@ -4,6 +4,8 @@ library('igraph')
 library('visNetwork')
 library(purrr)
 library(dplyr)
+source(paste0(script_dir,'ppmi/emap_utils.R'))
+
 
 ### NEEDED to map paths to go ids 
 #
@@ -38,6 +40,7 @@ input_gene_overlap_f
 
 
 
+input_gene_overlap$N1
 
 input_gene_overlap<-read.csv(input_gene_overlap_f, row.names = 1)
 head(input_gene_overlap)
@@ -48,7 +51,11 @@ grep( 'GO:0007399',input_gene_overlap$node2)
 which(input_gene_overlap$common<1)
 mofa_net<-input_gene_overlap[input_gene_overlap$common>1,]
 hist(mofa_net$edgeScore);
-mofa_net<-mofa_net[mofa_net$edgeScore>0.03,]
+
+EDGE_CUTOFF<-0.1
+mofa_net<-mofa_net[mofa_net$edgeScore>EDGE_CUTOFF,]
+
+
 
 hist(log2(mofa_net$edgeScore*100))
 mofa_net$node1 
@@ -64,6 +71,7 @@ emap_mofa<-graph_from_data_frame(mofa_net, directed = FALSE)
 
 terms<-go_ids$TERM[match(V(emap_mofa)$name,go_ids$GOID )]
 node_factors<-f_pvals_merged_sig$Least_factor[match(V(emap_mofa)$name  , f_pvals_merged_sig$GOID)]
+
 ## factor info: select only from the dataframe with specific names 
 ### Here we merge the network with mofa attribute data
 # first merge with 
@@ -79,13 +87,21 @@ V(emap_mofa)$label <- terms
 V(emap_mofa)$label_description <- terms
 E(emap_mofa)$my_edge_score <- E(emap_mofa)$jaccard
 E(emap_mofa)$my_edge_score <- log2(E(emap_mofa)$edgeScore*100)
+
 E(emap_mofa)$weight <- E(emap_mofa)$my_edge_score
+
+
+### settings -  Nodes
+
+## TODO: set the node size
+## TODO: cluster the network 
 V(emap_mofa)$groups <- node_factors
+### Node size is the set size 
+
 
 
 #emap_mofa <- 
-
-colnames(f_pvals_merged_sig_fs)
+f_pvals_merged_sig
 for (i in 1:length(node_fs)){
   emap_mofa<-set_vertex_attr(emap_mofa, name = (colnames(node_fs)[i]), 
                                index = V(emap_mofa), value = node_fs[,i])
@@ -152,18 +168,19 @@ length(emap_mofa_filt)
   
 #### 3. Remove subcomponents of the result ####
 
-emap_mofa_filt<-remove_subcomponents(emap_mofa_filt)
+emap_mofa_filt<-remove_subcomponents(emap_mofa)[[1]]
+
 emap_mofa_filt
 paste0(choose_f, '_rank' ) 
 
 
-vis_emap_mofa
 
 
 ##########################################
 #### Now convert it to a visnetwork ####
 
 vis_emap_mofa<-toVisNetworkData(emap_mofa_filt)
+#vis_emap_mofa<-toVisNetworkData(emap_mofa)
 
 ### make the labeling less dense 
 all_n<-length(vis_emap_mofa$nodes$label_description)
@@ -234,7 +251,7 @@ visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges,
           submain='Color by pvalue')%>%
   visEdges(width=width)%>%
  #visOptions(selectedBy= list(variable="label",multiple=T)) %>%
-  visNodes(font=list(size=30) )%>%
+  visNodes(font=list(size=50) )%>%
   visIgraphLayout(layout = 'layout.fruchterman.reingold') %>%# same as   visLayout(hierarchical = TRUE) 
   
   visSave(file = paste0(outdir, '/enrichment/all_factors',pval_to_use, choose_f,'.html'))

@@ -13,3 +13,5 @@ remove_subcomponents<-function(g, subcomp_min_edge=2){
   g_filt<- delete_vertices(g, rm_nodes)
   return(list(g_filt, rm_nodes))
 }
+
+

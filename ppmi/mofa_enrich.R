@@ -27,7 +27,6 @@ vars_by_factor_all
 dir.create(paste0(outdir, '/enrichment/'))
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
-
 #cors_pearson_l<-read.csv(paste0(outdir, '/covariate_corelations_pearson.csv'))
 cors_pearson_l<-correlate_factors_with_covariates(MOFAobject,
                                   covariates = c('CONCOHORT', 'INEXPAGE'), 

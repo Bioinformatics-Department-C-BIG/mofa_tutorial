@@ -101,42 +101,16 @@ if (view=='RNA'){
 
 ## outliers
 
-clip_outliers<-function(df1){
-  #'
-  #' @param 
-  #'
-  #'
-  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
-  for (i in 1:dim(df1)[1]){
-    df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
-  }
-  
-  return(df1)
-}
 
 
 
-
-preprocess_visit<-function(se_filt_V){
-  
-  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
-  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
-  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
-  df_v<- clip_outliers(df_v)
-  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
-  v_ens=data.frame(df_V_ens,patno=c(se_filt_V_pd$PATNO), PATNO_EVENT_ID=c(se_filt_V_pd$PATNO_EVENT_ID))
-  
-  return(v_ens)
-  
-}
-
-v6_ens<-preprocess_visit(se_filt_V06)
-v8_ens<-preprocess_visit(se_filt_V08)
+v6_ens<-preprocess_visit(se_filt_V06, common=common, feat_names = feat_names)
+v8_ens<-preprocess_visit(se_filt_V08, common=common, feat_names = feat_names)
 se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
 
 
-v4_ens<-preprocess_visit(se_filt_V04)
-bl_ens<-preprocess_visit(se_filt_BL)
+v4_ens<-preprocess_visit(se_filt_V04, common=common, feat_names = feat_names)
+bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names = feat_names)
 
 
 

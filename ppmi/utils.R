@@ -659,3 +659,49 @@ standardize_go_names<-function(descriptions){
   
 }
 
+
+
+
+
+
+
+### PREDICTIONS ON SUMMARIZED EXPERIMENT 
+## predict on each or on multi assay?
+
+
+
+clip_outliers<-function(df1){
+  #'
+  #' @param 
+  #'
+  #'
+  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  for (i in 1:dim(df1)[1]){
+    df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
+  }
+  
+  return(df1)
+}
+
+
+preprocess_visit<-function(se_filt_V, common, feat_names){
+  # 1. Select PD only 
+  # 2. Subselected common samples - for training we can use all of them but 
+  # for testing only the ones that we have 
+  # 3. CPM or VSN
+  # 4. Clip outliers 
+  # 5. Add patient number and event 
+  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
+  # CPM or VSN? # cpm for plotting, vsn for 
+  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  df_v<- clip_outliers(df_v)
+  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  v_ens=data.frame(df_V_ens,patno=c(se_filt_V_pd$PATNO),
+                   PATNO_EVENT_ID=c(se_filt_V_pd$PATNO_EVENT_ID))
+  
+  return(list(v_ens, se_filt_V_pd))
+  
+}
+
+

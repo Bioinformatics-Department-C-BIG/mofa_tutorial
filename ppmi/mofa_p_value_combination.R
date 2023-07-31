@@ -16,7 +16,7 @@ source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 script_dir
 
 ## load single combination enrichment
-source(paste0(script_dir,'ppmi/load_single_combination_pathways.R'))
+#source(paste0(script_dir,'ppmi/load_single_combination_pathways.R'))
 
 ### load mofa enrichment 
 source(paste0(script_dir,'ppmi/mofa_enrich.R'))
@@ -602,25 +602,6 @@ unique(unlist(listInput_all_mods_single), use.names=FALSE)
 
 ### eVALUATION ####
 
-standardize_go_names<-function(descriptions){
-  #'
-  #'
-  #'
-  descriptions=gsub('-', ' ', tolower(descriptions))
-  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
-  
-  
-  descriptions=gsub("\\'", '', tolower(descriptions))
-  descriptions=gsub("\\,", '', tolower(descriptions))
-  
-  descriptions=gsub('\\(', '', tolower(descriptions))
-  descriptions=gsub('\\)', '', tolower(descriptions))
-  descriptions=gsub('\\/', '', tolower(descriptions))
-  
-  
-  return(descriptions)
-  
-}
 
 
 retrieve_path_ids <- function(paths_description, go_ids){

@@ -634,3 +634,28 @@ create_hist<-function(df, name){
 }
 
 
+
+### EVALUATION PURPOSES ######
+######## standardize go names 
+
+
+standardize_go_names<-function(descriptions){
+  #'
+  #'
+  #'
+  descriptions=gsub('-', ' ', tolower(descriptions))
+  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
+  
+  
+  descriptions=gsub("\\'", '', tolower(descriptions))
+  descriptions=gsub("\\,", '', tolower(descriptions))
+  
+  descriptions=gsub('\\(', '', tolower(descriptions))
+  descriptions=gsub('\\)', '', tolower(descriptions))
+  descriptions=gsub('\\/', '', tolower(descriptions))
+  
+  descriptions=tolower(descriptions)
+  return(descriptions)
+  
+}
+

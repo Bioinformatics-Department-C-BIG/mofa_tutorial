@@ -1,4 +1,9 @@
 
+
+
+
+
+
 plot_top_weights2 <- function(object, view = 1, factors = 1,
                              nfeatures = 10, abs = TRUE, scale = TRUE, sign = "all") {
   

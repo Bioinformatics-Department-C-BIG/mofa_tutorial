@@ -23,8 +23,6 @@ selected_feats3<-names(w_fs[abs(w_fs)>quantile(abs(w_fs), 0.95),])
 selected_feats2<-c(selected_feats2,selected_feats3 )
 
 selected_feats2
-x_prots
-x_feats<-rbind(x_rnas, x_prots)
 length(selected_feats)
 ####
 
@@ -55,6 +53,7 @@ se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 ### Selected features from baseline
 # TODO: split by caret package 
 library(caret)
+#install.packages('vctrs')
 set.seed(34569)
 # split so that there are equal numbers of different stages of NHY 
 # For categorical use cut function
@@ -65,14 +64,18 @@ trainIndex <- createDataPartition(x_vars_sel$NHY, p = .8,
                                   list = FALSE, 
                                   times = 1)
 head(trainIndex)  
+x_vars_sel$CONCOHORT
+hist(x_vars_sel$NP3_TOT)
+cut(x_vars_sel$NP3_TOT, breaks = 4)
 
 
-
+trainIndex=1:floor(dim(x_vars_sel)[1] *0.7)
+trainIndex
 x_vars_sel_train<- x_vars_sel[trainIndex, ]
 x_vars_sel_test<- x_vars_sel[-trainIndex, ]
 
-
-
+x_vars_sel_train$SEX
+x_vars_sel_test$SEX
 
 #######
 
@@ -95,33 +98,66 @@ head(x_vars_sel)
 dim(x_vars)
 dim(x_vars)
 
-x_vars_sel_train_y<-cbind(x_vars_sel_train, y)
+
+## PREPROCESSING 
+
+
+x_vars_sel_train
+
+## Molecular markers convert to LOGFC
+get_logFC_bySample<-function(x_vars,feature){
+  #' for each sample
+  cn_mean<-mean(x_vars_controls[,feature ])
+  return((x_vars[,feature]-cn_mean)/cn_mean)
+  
+  
+}
+to_Add<-colnames(x_vars_sel_train[1:20])
+x_vars_controls<-x_vars_sel_train[x_vars_sel_train$CONCOHORT==2,]
+
+log_FCs<-as.data.frame(sapply(to_Add,get_logFC_bySample,x= x_vars_sel_train))
+
+x_vars_sel_train_lfc<-mutate(x_vars_sel_train, log_FCs)
+
+x_vars_sel_train_lfc<-x_vars_sel_train
 
 
 
 
+library(dplyr)
+library(tidyverse)
 
-x_vars_sel_train_y$change= x_vars_sel_train_y$y - x_vars_sel_train_y$NP3_TOT
+
 scale_numeric<-function(x_vars){
-  #''
+  #''DO not scale y? 
   #'
-  x_scaled<-x_vars %>%
-    select(-PATNO_EVENT_ID)%>%
+  x_scaled<-as.data.frame(as_tibble( x_vars) %>%
+    dplyr::select(-c(PATNO_EVENT_ID, PATNO))%>%
     mutate_all(as.numeric)%>%
-    mutate_all(scale)
+    
+    # TODO: scale with caret/based on training
+    mutate_all(scale))
+  xscaled<-cbind(x_scaled,
+        x_vars%>% dplyr::select(c(PATNO_EVENT_ID, PATNO))) 
   return(x_scaled)
 }
 
+x_vars_sel_train_lfc%>% dplyr::select(c(PATNO_EVENT_ID, PATNO))
+x_vars_sel_train_scaled<-scale_numeric(x_vars_sel_train_lfc)
 
-x_vars_sel_train_y_scaled<-scale_numeric(x_vars_sel_train_y)
+x_vars_sel_train_scaled_y<-cbind(x_vars_sel_train_scaled, y)
+dim(x_vars_sel_train)
+length(x_vars_sel_train_scaled_y$y)
+
+
 x_vars_sel_test_scaled<-scale_numeric(x_vars_sel_test)
+dim(x_vars_sel_test_scaled)
 
 
 
-#x_vars_sel_test
-x_vars_sel_train_y_scaled$change
-to_Add<-colnames(x_vars_sel_train_y[1:5])
-to_Add
+
+x_vars_sel_train_y[1:5]
+
 #GGally::ggpairs(x_vars_sel_train_y_scaled)
 # TODO: Try different models, 
 # Measure error
@@ -129,21 +165,45 @@ to_Add
 # compare to rnas 
 fit <- lm(as.formula( paste('y ~ hsa.miR.101.3p + hsa.miR.126.5p+hsa.miR.144.5p+
                       hsa.miR.190a.5p+SEX+AGE+NP3_TOT+',paste(to_Add, collapse=' + ' ))),
-          data = x_vars_sel_train_y_scaled)
+          data = x_vars_sel_train_scaled_y)
 
-formula_base<-'y ~ hsa.miR.101.3p + hsa.miR.126.5p+hsa.miR.144.5p+
-                      hsa.miR.190a.5p+SEX+AGE+NP3_TOT+con_putamen+'
-fit <- randomForest::randomForest(as.formula( paste(formula_base,
-                   paste(to_Add, collapse=' + ' ))),
-         data = x_vars_sel_train_y_scaled)
+formula_base<-'y ~SEX+AGE+NP3_TOT+con_putamen+'
+fit <- lm(as.formula( paste(formula_base,paste(to_Add, collapse=' + ' ))),
+          data = x_vars_sel_train_scaled_y)
 
-library(e1071)
+print(formula_base)
+
+
+
+
+
 
 
 svmfit = svm(y ~ ., data = dat, kernel = "linear", cost = 10, scale = FALSE)
 
 fit <- svm(as.formula( paste(formula_base,paste(to_Add, collapse=' + ' ))),
-                                  data = x_vars_sel_train_y_scaled)
+                                  data = x_vars_sel_train_scaled_y)
+
+
+
+formula_base<-'y ~SEX+AGE+NP3_TOT+con_putamen'
+fit <- lm(as.formula( paste(formula_base)),
+          data = x_vars_sel_train_scaled_y)
+library(e1071)
+
+x_vars_sel_test_scaled$PATNO
+
+predicted<-stats::predict(fit, x_vars_sel_test_scaled)
+predicted
+y_test
+
+x_vars_sel_test_scaled$
+cbind(y_test, predicted)
+
+
+
+error<-sqrt(mean((y_test - predicted)^2,na.rm=TRUE))
+error
 
 
 fit$coefficients
@@ -153,13 +213,20 @@ f <- summary(fit)
 f$r.squared
 f
 
-predicted<-stats::predict(fit, x_vars_sel_test_scaled)
-predicted
-y_test
+
+
+x_vars_df<-as.data.frame(x_vars_sel_train_scaled)
+x_vars_df
+
+x_vars_df[,1:5] %>% mutate_all(as.numeric)
+
+
+hist(x_vars_df[,1:5] %>% mutate_all(as.numeric))
 
 
 
+hist(x_vars_df[,4])
 
-sqrt(mean((y_test - predicted)^2,na.rm=TRUE))
+
 
 

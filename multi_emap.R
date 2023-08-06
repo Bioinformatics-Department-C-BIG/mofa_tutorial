@@ -266,6 +266,11 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           }
           
           if (subset_names){
+            em$data$name[!em$data$name %in% top_paths]<-''
+            
+            
+            
+          }else{
             em$data$name[c(TRUE, TRUE, FALSE)]<-''
             em$plot_env$p$data$name[c(TRUE, TRUE, FALSE)]<-''
             
@@ -330,22 +335,51 @@ for (fn in fns){
         max_ws<-names(which.max(weights_Var))
         min_overlap_score=0.3
         
-        if (weights_Var['proteomics']>10){
-          prot_names<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
-          length(prot_names)
+        
+        prot_names<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
+        length(prot_names)
+        factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
+        factor1_paths$proteinColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
+        
+        #if (weights_Var['proteomics']>10){
+        #  
+        #  factor1_paths$geneColname<-paste(factor1_paths$geneColname, factor1_paths$proteinColname, sep='/')
+        #  min_overlap_score=0.3
+          
+          
+        #}else if(weights_Var['miRNA']>10){
+        #  print(weights_Var)
+        #  factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
+        #  min_overlap_score=0.5
+          
+        #}
+        
+        
+        
+        gs_overlap='proteomics'; 
+        gs_overlap='genes'; 
+        gs_overlap='both'; 
+        
+        #### Weigh edges with both proteins and genes.
+        # TODO: plot an average instead of adding since you might add duplicates!! 
+        ## Choose the weights manually 
+        min_overlap_score=0.2
+        
+        if (gs_overlap == 'proteomics'){
+          factor1_paths$geneColname<-paste(factor1_paths$proteinColname, sep='/')
+          
+          
+        }else if(gs_overlap == 'genes') {
           factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
-          factor1_paths$proteinColname<-enrich_proteins[match(factor1_paths$Description, enrich_proteins$Description),]$core_enrichment
+
+          
+        }else{
+          factor1_paths$geneColname<-enrich_rna[match(factor1_paths$Description, enrich_rna$Description),]$core_enrichment
+          
           factor1_paths$geneColname<-paste(factor1_paths$geneColname, factor1_paths$proteinColname, sep='/')
-          min_overlap_score=0.3
-          
-          
-        }else if(weights_Var['miRNA']>10){
-          print(weights_Var)
-          factor1_paths$geneColname<- enrich_mirnas[match(factor1_paths$Description, enrich_mirnas$Description),]$geneID
-          min_overlap_score=0.5
+
           
         }
-        
         
         ### TODo: Calculate a weighted overlap
         #else if (weights_Var['miRNA']>10){
@@ -387,7 +421,10 @@ for (fn in fns){
         top_paths=enr_full@result$ID[order(enr_full@result$p.adjust)][1:30]
         top_paths
         #### EMAP by factor ####
-        fname_net=paste0(merged_path_file_mofa, '_network',v2, max_ws,'rna' ,color_by_rna,'.jpeg')
+        fname_net=paste0(merged_path_file_mofa, '_network',v2, max_ws,'rna' ,color_by_rna,
+                         unlist(strsplit(as.character(gs_overlap), ''))[1],
+                         min_overlap_score,
+                         '.jpeg')
         create_multi_emap(enr_full, N_EMAP=50, fname_net=fname_net, 
                           color_by = color_by,  min = min_overlap_score, cex_label_category = 0.6,
                           nCluster=7, scale_option=scale_option, node_label = 'category', max.overlaps=1,
@@ -430,7 +467,7 @@ list_all4<-get_mofa_paths_and_weights(factor=sel_factors[1])
 # also write to extra file
 # where to get lists of common genes 
 enrich_rna= list_all[[1]]
-#enrich_proteins = list_all[[2]]
+enrich_proteins = list_all[[2]]
 #enrich_mirnas = list_all[[3]]
 
 # outdir
@@ -489,16 +526,45 @@ table(merged_results_sig$min_rank)
 factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
 list_all<-get_mofa_paths_and_weights(factor=sel_factors[4])
 
+### Set the connections information: GENE OR PROTEIN OVERLAP? 
+
+gs_overlap='proteomics'; 
+gs_overlap='genes'; 
+
+
+if (gs_overlap == 'proteomics'){
+  factor_genes<-  list_all2[[2]][match(merged_results_sig$Description, list_all2[[2]]$Description),]$core_enrichment
+
+  
+}else{
+  factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
+  factor_genes4<-list_all4[[1]][match(merged_results_sig$Description, list_all4[[1]]$Description),]$core_enrichment
+  factor_genes<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
+  
+}
+
+
 factor_genes<-list_all[[1]][match(merged_results_sig$Description, list_all[[1]]$Description),]$core_enrichment
 
 
 
 prot_names<-list_all[[2]][match(merged_results_sig$Description, list_all[[2]]$Description),]$core_enrichment
+#factor_genes_all<-paste0(factor_genes_all, factor_genes4, sep='/')
 
 merged_results_sig$geneColname<-paste(factor_genes, prot_names, sep='/')
 min_overlap_score=0.3
 
 #merged_results_sig$geneColname<-factor_genes
+# merge genes from all factors and remove duplicates
+
+factor_genes_all_rep<-sapply(strsplit(factor_genes_all, '/'), function(x) {
+  paste0(unique(x),collapse='/') })
+
+## filter to add only high var?? 
+## Color genes by weight..?
+merged_results_sig$geneColname<-factor_genes
+# All factors have the same information it seems 
+merged_results_sig$geneColname<-factor_genes
 
 # Color the nodes by qfactor
 # hack to get it to color with this attribute 
@@ -608,19 +674,27 @@ top_paths<-c('apoptotic process',
              
   
 );subset_names=FALSE; cex_label_category=1
+);subset_names=TRUE
 
 #### EMAP by factor ####
 merged_path_file_mofa
 
 
 
+node_label= 'group';cex_label_category=0.7
+node_label= 'category';cex_label_category=1
+node_label= 'all';cex_label_category=0.5; subset_names=FALSE
 
 fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_',v2, 'hq_', high_quant_t, 
                   'bl_',   as.numeric(color_by_bl)[1], 'rna_', as.numeric(color_by_rna)[1], 
-                  unlist(strsplit(node_label, ''))[1], unlist(strsplit(as.character(subset_names), ''))[1],'.jpeg')
+                  unlist(strsplit(node_label, ''))[1],
+                  unlist(strsplit(as.character(subset_names), ''))[1],
+                  unlist(strsplit(as.character(gs_overlap), ''))[1],'.jpeg')
 
 
 set.seed(150)
+fname_net
+set.seed(50)
 
 create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
                   width=15, height=7,
@@ -653,19 +727,37 @@ create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
 
 #### Change the visualization ####
 
+
+# 
+library(visNetwork)
 enr_full@result$Description<-enr_full@result$ID
 
 library(arules)
 library(igraph)
 ## create an emap as an igrpah object
 N_EMAP=100
-x2 <- pairwise_termsim(enr_full_all_fs, showCategory = N_EMAP)
-enr_full_all_fs
+
+enr_choose=enr_full
+x2 <- pairwise_termsim(enr_choose, showCategory = N_EMAP)
 ig_plot<-enrichMapJam(x2, n=N_EMAP)
 # set overlap score
-V(ig_plot)$size<-V(ig_plot)$size/1.8
+# node size 
+V(ig_plot)$size<-V(ig_plot)$size/1.5
 
 V(ig_plot)$min_rank
+
+
+### Make the groupping here?? 
+# TODO: MAKE CLUSTERS 
+# Edit the gene overlap to be weighted proteins and genes 
+
+
+
+#### FORMATTING ####
+#1. text size 
+
+V(ig_plot)$size<-V(ig_plot)$size/1.5
+
 
 vis_emap_mofa<-toVisNetworkData(ig_plot)
 vis_emap_mofa$edges$width
@@ -674,9 +766,19 @@ vis_emap_mofa$edges$weight=width
 vis_emap_mofa$edges$length=1/vis_emap_mofa$edges$width*10
 
 
+### Nodes ####
+# 
+vis_emap_mofa$nodes$font.size=40
+ vis_emap_mofa$nodes$label[c(TRUE,  FALSE)]<-''
+
+
+
+#visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges) %>%
+#  visLayout(hierarchical = TRUE) 
 
 visNetwork(vis_emap_mofa$nodes, vis_emap_mofa$edges) %>%
-  visLayout(hierarchical = TRUE) 
+  visIgraphLayout(layout = 'layout_nicely')# same as   visLayout(hierarchical = TRUE) 
+  
 
 #visIgraphLayout(layout = 'hierarchical')# same as   visLayout(hierarchical = TRUE) 
 

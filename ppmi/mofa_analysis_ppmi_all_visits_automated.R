@@ -49,14 +49,6 @@ library(ensembldb)
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
 
-## Making a "short cut"
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= ens_ids, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-new_ids<-geneIDs1[match(ens_ids,geneIDs1$GENEID ),]
-not_na_ind<-!is.na(new_ids$SYMBOL)
-ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
-features_names(MOFAobject_gs)$RNA<-ens_ids
-MOFAobject_gs@samples_metadata$COHORT_DEFINITION
-
 
 
 
@@ -141,8 +133,8 @@ non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
 non_na_ids_to_plot
 
 sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
-sel_factors
-10^-cors_all[,'CONCOHORT']
+
+
 format(cbind(cors_pearson[, 'CONCOHORT'],10^-cors_all[,'CONCOHORT']), digits=3) [sel_factors,]
 
 MOFAobject@samples_metadata$DATSCAN_CAUDATE_L
@@ -596,7 +588,6 @@ dev.off()
 
 ######## Specific correlations #########
 library(tidyverse)
-loadNamespace(tidyverse)
 factor_cors<-paste0(format(x_cors[factors_to_plot], digits=2), collapse=',')
 factor_cors
   

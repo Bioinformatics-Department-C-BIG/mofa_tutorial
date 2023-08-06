@@ -1,3 +1,5 @@
+
+
 #script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 source(paste0('ppmi/setup_os.R'))
 #source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
@@ -103,7 +105,7 @@ run_mofa_get_cors<-function(N_FACTORS){
   MOFAobject=create_mofa(mofa_multi_to_use)
   dir.create(outdir, showWarnings = FALSE)
   
-  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE )
+  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE, N_FACTORS=N_FACTORS )
   
   
   

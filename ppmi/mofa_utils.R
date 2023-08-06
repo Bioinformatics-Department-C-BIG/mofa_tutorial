@@ -19,7 +19,7 @@ get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
 
 
 
-run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE ){
+run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   ### Run mofa and write to file
   #'
   #' @param MOFAobject 

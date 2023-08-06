@@ -117,7 +117,6 @@ pre_process_proteomics<-function(proteomics){
       ## They seem to have taken averages for replicas so need to fix 
       #raw_counts_all<-round(raw_counts_all)
       
-      dim(proteomics)
       data<-proteomics
       data<-as.data.frame(data)
       

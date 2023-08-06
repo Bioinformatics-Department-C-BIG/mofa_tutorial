@@ -25,7 +25,7 @@ library(rbioapi)
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
-
+filter_se_byExpr()
 
 ### Load metadata 
 metadata_output<-paste0(output_files, 'combined.csv')

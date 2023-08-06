@@ -1,7 +1,7 @@
 
 source(paste0(script_dir,'ppmi/mofa_p_value_combination.R')) ## run to merge 
 source(paste0(script_dir,'ppmi/utils.R'))
-source(paste0(script_dir,'multi_emap_mofa_plot.R'))
+#source(paste0(script_dir,'multi_emap_mofa_plot.R'))
 source(paste0(script_dir,'ppmi/emap_utils.R'))
 
 ###########
@@ -173,19 +173,19 @@ require(enrichplot)
 require(viridis)
 library('stats')
 library('cluster')
-enr_full=enr_full_all_fs
+#enr_full=enr_full_all_fs
 create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qvalue', min=0.2,
                             width=10, height=10,
                             filter_single_nodes=FALSE, cex_label_category=0.6, nCluster=20,
                             node_label='category',scale_option='plasma', max.overlaps=10, 
-                            layout='fr', subset_names=TRUE){
+                            layout='fr', subset_names=TRUE, fontface="bold"){
           #'
           #' @param enr_full
           #' https://github.com/YuLab-SMU/enrichplot/blob/devel/R/emapplot.R
           #'
           #'
           
-          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6; nCluster=50; filter_single_nodes=TRUE; max.overlaps=1
+          #N_EMAP=2000;min=0.3;color_by='qvalue';cex_label_category=0.6; nCluster=50; height=10; width=12; filter_single_nodes=TRUE; max.overlaps=1
   
           options(ggrepel.max.overlaps =max.overlaps)
           #enr_full@result$ID[c(TRUE, TRUE,TRUE, FALSE)]<-'.'
@@ -194,9 +194,14 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           x2 <- pairwise_termsim(enr_full, showCategory = N_EMAP)
           x2_pass<-x2@termsim>min_overlap_score
           pos_edges<-rowSums(x2_pass, na.rm = TRUE) > 1L
-
+          pos_edges_paths<-names(which(pos_edges))
+          length(pos_edges_paths)
           ### update without single nodes 
-          enr_full_new<-enr_full[pos_edges, asis=T]
+          #enr_full_new<-enr_full[pos_edges, asis=T]
+          enr_full_new<-filter(enr_full, ID %in% pos_edges_paths)
+          length(enr_full@result$ID)
+          length(enr_full_new@result$ID)
+          
           #enr_full_new$Description=='organ growth'
           x2_new <- pairwise_termsim(enr_full_new, showCategory = N_EMAP)
           
@@ -222,7 +227,10 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
           sig_length<-length(which(x2_to_use@result$p.adjust<0.05))
           nCluster_2<-ifelse(sig_length>nCluster,nCluster, floor(sig_length/2))
           nCluster_2
+          #x2_to_use@result$ID[!x2_to_use@result$ID %in% top_paths]<-''
           
+          #x2_to_use@result$Description[!x2_to_use@result$Description %in% top_paths]<-''
+         # x2_to_use@result$Description
           em<-emapplot(x2_to_use, showCategory=N_EMAP,
                        cex_category=0.5, 
                        cex_label_category=cex_label_category,
@@ -232,7 +240,7 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                                 method=cluster::pam, # cluster::clara, cluster::pam , cluster::kmeans
                                 ellipse_style='shadowtext', 
                                 nCluster=nCluster_2, 
-                               legend=TRUE),
+                               legend=FALSE),
                        layout.params =list(layout=layout),
                       group_category=TRUE,
                       nCluster=nCluster_2,
@@ -244,19 +252,35 @@ create_multi_emap<-function(enr_full, N_EMAP=25,fname_net, title, color_by='qval
                         
                       ),
           )
+          em
+        
+          new_labs<-data.frame(y=em$data$name)
+          new_labs$y[!em$data$name %in% top_paths]<-NA
+          new_labs$x<-c(em$data$name)
+          new_labs
           
-          em$data$name[!em$data$name %in% top_paths]<-''
+          if (node_label=='none'){
+            em$layers[[4]]<-NULL
+            em$data$new_name<-new_labs$y
+            em<-em+geom_text(aes(x=x, y=y, label=new_name) , fontface = fontface)
+          }
+          
           if (subset_names){
             em$data$name[c(TRUE, TRUE, FALSE)]<-''
+            em$plot_env$p$data$name[c(TRUE, TRUE, FALSE)]<-''
+            
             
           }
           
-          
-          em+ scale_fill_viridis(option=scale_option)
-          #em +  scale_color_gradient(low = "#56B1F7", high = "#132B43")
 
-          em
+          #em+ scale_fill_viridis(alpha = 0.4)
+          em+scale_fill_gradientn( colors = alpha(c('#63a7ff', "white", "tomato3"), alpha = 0.2))
+          #em +  scale_color_gradient(low = "#56B1F7", high = "#132B43")
+          library(igraph)
           
+         
+          #em<-em+geom_text(aes(x=x, y=y, label=NULL) )
+        
           ggsave(fname_net, width=width, height=height, 
                  dpi = 600)  #ggsave(filename=fname_net, plot=last_plot(),width=15, height=15, dpi=300)
      
@@ -389,10 +413,10 @@ for (fn in fns){
 bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 bl<-read.csv(bl_f)
 bl<-bl[!is.na(bl$Description),]
-bl_sig<-bl[bl$Least_value<0.01,]
+bl_sig<-bl[bl$Least_value<0.05,]
 
 sel_factors[fn]
-
+bl_sig
 ##TODO: merge the geneColnames from all factors..?? 
 #https://rdrr.io/github/YuLab-SMU/enrichplot/src/R/emapplot_utilities.R
 
@@ -463,32 +487,18 @@ dim(merged_results_sig)
 table(merged_results_sig$min_rank)
 # 
 factor_genes<-enrich_rna[match(merged_results_sig$Description, enrich_rna$Description),]$core_enrichment
-factor_genes2<-list_all2[[1]][match(merged_results_sig$Description, list_all2[[1]]$Description),]$core_enrichment
-factor_genes4<-list_all4[[1]][match(merged_results_sig$Description, list_all4[[1]]$Description),]$core_enrichment
+list_all<-get_mofa_paths_and_weights(factor=sel_factors[4])
 
-ids_merge_all=c()
-length(factor_genes)
-lapply(strsplit(factor_genes_all, '/'), function(x) {
-                                                      print(
-                                                        paste(length(x),length(unique(x))) )})
+factor_genes<-list_all[[1]][match(merged_results_sig$Description, list_all[[1]]$Description),]$core_enrichment
 
 
 
-factor_genes_all<-paste0(factor_genes, factor_genes2, sep='/')
-#factor_genes_all<-paste0(factor_genes_all, factor_genes4, sep='/')
+prot_names<-list_all[[2]][match(merged_results_sig$Description, list_all[[2]]$Description),]$core_enrichment
 
-factor_genes_all[100]
-factor_genes_all
+merged_results_sig$geneColname<-paste(factor_genes, prot_names, sep='/')
+min_overlap_score=0.3
 
-# merge genes from all factors and remove duplicates
-
-factor_genes_all_rep<-sapply(strsplit(factor_genes_all, '/'), function(x) {
-  paste0(unique(x),collapse='/') })
-
-## filter to add only high var?? 
-## Color genes by weight..?
-merged_results_sig$geneColname<-factor_genes
-merged_results_sig$geneColname<-factor_genes_all_rep
+#merged_results_sig$geneColname<-factor_genes
 
 # Color the nodes by qfactor
 # hack to get it to color with this attribute 
@@ -502,17 +512,17 @@ merged_results_sig$qvalue = as.numeric(factor(merged_results_sig$qvalue))#, leve
 ## OR color by whether it exists in baseline!!
 color_by_rna=FALSE
 color_by_bl=TRUE
-
+grep('mapk', standardize_go_names(bl_sig$Description))
 min_overlap_score=0.25
 scale_option='plasma'
 if (color_by_bl){
-  v08_in_BL<-intersect(bl_sig$Description, merged_results_sig$Description)
+  v08_in_BL<-intersect(standardize_go_names(bl_sig$Description), standardize_go_names(merged_results_sig$Description))
   merged_results_sig$BL<-merged_results_sig$Description %in% v08_in_BL
   merged_results_sig$qvalue=as.numeric(factor(!merged_results_sig$BL))
   merged_results_sig[, c('BL', 'qvalue')]
   scale_option='turbo'
   
-  min_overlap_score=0.35
+  min_overlap_score=0.25
   
 }else if (color_by_rna){
   #  mofa_in_rna<-mofa_rna_common
@@ -520,7 +530,7 @@ if (color_by_bl){
   merged_results_sig$rna<-standardize_go_names(merged_results_sig$Description) %in% standardize_go_names(mofa_rna_common)
   merged_results_sig$qvalue=as.numeric(factor(merged_results_sig$rna))
   merged_results_sig[, c('rna', 'qvalue')]
-  min_overlap_score=0.3
+  min_overlap_score=0.4
 
   
   
@@ -539,16 +549,25 @@ write.csv(merged_results_sig, paste0(merged_path_file_mofa, '_filtered_paths_net
 # run_enrichment_plots(enr_full,results_file = 'test.txt')
 enr_full@result$Description<-enr_full@result$ID
 # enr_full@result$qvalue<-as.factor(enr_full@result$qvalue)
-top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:300]; subset_names=TRUE
+
+
+node_label= 'group';cex_label_category=0.7
+node_label= 'all';cex_label_category=0.5
+node_label= 'category';cex_label_category=0.5
+node_label='none'
+
+
+top_paths<-enrich_res_df$Description[order(enrich_res_df$tot_rank, decreasing=FALSE) ][1:200]; subset_names=TRUE; cex_label_category=0.3
 length(enrich_res_df$Description)
 top_paths[grep('angiogenesis', top_paths)]
 
-top_paths
 top_paths<-c('apoptotic process', 
              'stress-activated MAPK cascade', 
              
              'regulation of MAPK cascade', 
              'response to cytokine',
+             'cytokine production',
+             
              'vesicle-mediated transport',
              'tube development',
              'cell death',
@@ -558,7 +577,12 @@ top_paths<-c('apoptotic process',
              'innate immune response', 
              'small GTPase mediated signal transduction', 
              'leukocyte migration', 
+             'leukocyte chemotaxis', 
+             'chemotaxis', 
+             
              'transcription by RNA polymerase II', 
+             'regulation of RNA biosynthetic process', 
+             
              'peptide biosynthetic process', 
              'nervous system development', 
              'protein phosphorylation', 
@@ -566,7 +590,16 @@ top_paths<-c('apoptotic process',
              'cell cycle', 
              'immune system process',
              'angiogenesis', 
-             'actin filament-based process'
+             'actin filament-based process', 
+             'epithelial cell proliferation', 
+             'neuron death', 
+             'response to growth factor', 
+             'response to nitrogen compound', 
+             'ion transport', 
+             'endothelium development', 
+             'response to reactive oxygen species'
+             
+             
              
 
              
@@ -574,24 +607,23 @@ top_paths<-c('apoptotic process',
              
              
   
-);subset_names=FALSE
+);subset_names=FALSE; cex_label_category=1
 
 #### EMAP by factor ####
 merged_path_file_mofa
 
-node_label= 'group';cex_label_category=0.7
-node_label= 'all';cex_label_category=0.5
-node_label= 'category';cex_label_category=1
+
+
 
 fname_net<-paste0(merged_path_file_mofa, '_network_ALLfs_',v2, 'hq_', high_quant_t, 
                   'bl_',   as.numeric(color_by_bl)[1], 'rna_', as.numeric(color_by_rna)[1], 
                   unlist(strsplit(node_label, ''))[1], unlist(strsplit(as.character(subset_names), ''))[1],'.jpeg')
 
 
-set.seed(50)
+set.seed(150)
 
 create_multi_emap(enr_full, N_EMAP=1000, fname_net=fname_net,
-                  width=15, height=10,
+                  width=15, height=7,
                   cex_label_category = cex_label_category,
                   filter_single_nodes=TRUE, 
                   nCluster=20,

@@ -57,9 +57,30 @@ library(caret)
 set.seed(34569)
 # split so that there are equal numbers of different stages of NHY 
 # For categorical use cut function
-common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO ); length(common)
+common2=intersect(common,  se_filt_V04$PATNO);length(common2)
 
-x_vars_sel=preprocess_visit_predict(se_filt_BL, common=common,feat_names = selected_feats2)
+
+x_vars_sel=preprocess_visit_predict(se_filt_BL, common=common2,feat_names = selected_feats2)
+x_vars_sel_V04=preprocess_visit_predict(se_filt_V04, common=common2,feat_names = selected_feats2)
+
+
+x_vars_sel_V04_2<-x_vars_sel_V04 %>% 
+                    dplyr::select(-c(PATNO_EVENT_ID, PATNO))%>%
+                      mutate_all(as.numeric)
+
+x_vars_sel_2<-x_vars_sel%>%
+                  dplyr::select(-c(PATNO_EVENT_ID, PATNO))%>%
+                  mutate_all(as.numeric)
+  
+
+x_vars_sel_change=x_vars_sel_V04_2-x_vars_sel_2
+colnames(x_vars_sel_change)<-paste0(colnames(x_vars_sel_change), '_ch')
+x_vars_sel2<-cbind(x_vars_sel,x_vars_sel_change)
+colnames(x_vars_sel2)
+x_vars_sel<-x_vars_sel2
+                      
+
 trainIndex <- createDataPartition(x_vars_sel$NHY, p = .8, 
                                   list = FALSE, 
                                   times = 1)
@@ -112,7 +133,14 @@ get_logFC_bySample<-function(x_vars,feature){
   
   
 }
-to_Add<-colnames(x_vars_sel_train[1:20])
+to_Add1<-colnames(x_vars_sel_train[1:20])
+
+to_Add2<-paste0(to_Add1, '_ch')
+to_Add=c(to_Add1, to_Add2)
+to_Add=to_Add2
+to_Add=to_Add1
+
+to_Add %in%  colnames(x_vars_sel_train)
 x_vars_controls<-x_vars_sel_train[x_vars_sel_train$CONCOHORT==2,]
 
 log_FCs<-as.data.frame(sapply(to_Add,get_logFC_bySample,x= x_vars_sel_train))
@@ -122,7 +150,7 @@ x_vars_sel_train_lfc<-mutate(x_vars_sel_train, log_FCs)
 x_vars_sel_train_lfc<-x_vars_sel_train
 
 
-
+x_vars_sel_train
 
 library(dplyr)
 library(tidyverse)
@@ -168,7 +196,7 @@ fit <- lm(as.formula( paste('y ~ hsa.miR.101.3p + hsa.miR.126.5p+hsa.miR.144.5p+
           data = x_vars_sel_train_scaled_y)
 
 formula_base<-'y ~SEX+AGE+NP3_TOT+con_putamen+'
-fit <- lm(as.formula( paste(formula_base,paste(to_Add, collapse=' + ' ))),
+fit <- lm(as.formula( paste(formula_base,paste(to_Add2, collapse=' + ' ))),
           data = x_vars_sel_train_scaled_y)
 
 print(formula_base)
@@ -197,7 +225,6 @@ predicted<-stats::predict(fit, x_vars_sel_test_scaled)
 predicted
 y_test
 
-x_vars_sel_test_scaled$
 cbind(y_test, predicted)
 
 

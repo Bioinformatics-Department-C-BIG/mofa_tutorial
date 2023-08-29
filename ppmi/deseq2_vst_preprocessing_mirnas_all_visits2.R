@@ -25,11 +25,12 @@ library(rbioapi)
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
-filter_se_byExpr()
 
 ### Load metadata 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
+metadata_output<-paste0(output_files, 'combined_log.csv')
+combined_bl_log<-read.csv2(metadata_output)
 
 process_mirnas=TRUE
 ### Perform deseq for each visit (timepoint separately)
@@ -51,7 +52,7 @@ for (VISIT in c(c('V08'))){
         #### Remove low expression 
         
         
-        se=load_se_all_visits(input_file = input_file, combined=combined)
+        se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
         
         ##### 1.  First create the summarized experiment object  
         ### find common samples in mirnas file + metadata

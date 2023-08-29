@@ -37,6 +37,18 @@ plot_factor_cor(MOFAobject)
 dev.off()
 group=1
 
+
+
+
+########### Add some metadata ####
+clusters$cluster
+samples_metadata(MOFAobject)$PATNO_EVENT_ID
+samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
+
+
+
+
+
 ### Change mofa names to gene symbols 
 ### create a new object with rna names 
 MOFAobject_gs<-MOFAobject
@@ -56,6 +68,11 @@ not_na_ind<-!is.na(new_ids$SYMBOL)
 ens_ids[not_na_ind]<-new_ids$SYMBOL[not_na_ind]
 features_names(MOFAobject_gs)$RNA<-ens_ids
 MOFAobject_gs@samples_metadata$COHORT_DEFINITION
+
+
+
+
+
 
 
 
@@ -932,11 +949,19 @@ fps
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
+
+
+heatmap
+
 graphics.off()
+
+
+
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     print(paste('Modality', i, 'factor', ii))
-    cluster_rows=TRUE;cluster_cols=TRUE
+    cluster_rows=TRUE;
+    cluster_cols=TRUE
     
     
     
@@ -1013,12 +1038,10 @@ for (i in seq(1,vps)){
     }
     denoise=FALSE
     
-    #cors_sig_non_na=cors_sig
-    #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', 
                   FT, 'den_', denoise, '.jpeg')
 
-    
+    cors_sig_non_na=c(cors_sig_non_na, 'cluster')
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
     p<-plot_data_heatmap(MOFAobject_gs, 
                          view = views[i], 

@@ -55,20 +55,21 @@ se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 
 
 #Reduce(intersect, list(a,b,c))
-table( se_filt$COHORT)
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
 
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
-
+ws
 
 if (fn_sel==2){
   cut_high<-0.98; cut_low=0.02
   
 }else{
   cut_high<-0.998; cut_low=0.002
+  cut_high<-0.99; cut_low=0.01
+  
   
 }
 ws_high<-ws[ws>quantile(ws, cut_high),]
@@ -83,18 +84,19 @@ length(ws_union)
 
 
 
-
-
-if (view=='RNA'){
-  ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_union), collapse='|'), rownames(assay(se_filt_V08)))]
-  feat_names=ens_genes
+ws_union
+view
+#if (view=='RNA'){
+ # ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_union), collapse='|'), rownames(assay(se_filt_V08)))]
+#  feat_names=ens_genes
   
-}else{
+#}else{
   feat_names=names(ws_union)
   
-}
+#}
 
-
+feat_names_ens<-gsub('\\..*', '',feat_names)
+feat_names_ens
 
 
 
@@ -157,7 +159,7 @@ ens<-gsub('\\..*', '',merged_melt$variable)
 Z <- get_factors(MOFAobject)[[1]]
 Z1<-Z[,sel_factors[fn_sel]]
 patnos_z1<-gsub('\\_.*', '', names(Z1))
-Z1_matched<-Z1[match(merged_melt$patno,patnos_z1) ]
+Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 
 #png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
 #hist(Z1_matched);
@@ -191,8 +193,8 @@ if (view=='RNA'){
   
 }
 
-na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$patno)
-merged_melt_filt<-merged_melt[merged_melt$patno %in% na_ps, ]
+na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$PATNO)
+merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
 
 ### EDIT GROUP TO BE PATNO and GROUP!!
 # OR JUST GROUP  
@@ -263,7 +265,7 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 
 ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
-  geom_line(aes(group=patno),  col= 'grey') +
+  geom_line(aes(group=PATNO),  col= 'grey') +
   geom_boxplot(aes(fill=VISIT))+
   scale_color_viridis_d(option='mako')+
   scale_fill_viridis_d(option='mako')+
@@ -420,13 +422,13 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   T=0.2
-  Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
-  
+  Z1_grouping<-Z1_matched>quantile(Z1_matched,T, na.rm=TRUE)
+
 }
 
 Z1_grouping
 dim(merged_melt)
-merged_melt_cl$grouping<-Z1_grouping
+merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'LowFactor'))
 
 
 ### for categorical 
@@ -444,10 +446,13 @@ to_sel
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
 table(merged_melt_cl$PDSTATE)
-merged_melt_cl2<-merged_melt_cl3
 merged_melt_cl3$PDSTATE
 
 merged_melt_cl3$NP3_TOT
+merged_melt_cl3<-merged_melt_cl
+merged_melt_cl2<-merged_melt_cl3
+
+
 to_sel
 
 merged_melt_cl$co
@@ -460,7 +465,7 @@ if (names(sel_factors[fn_sel]) %in% c('Factor3')){
  
 }else{
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
-              'td_pigd_old_on')
+              'td_pigd_old_on',  'AGE')
 }
 merged_melt_cl3$td_pigd_old_on
 
@@ -504,7 +509,7 @@ ggplot(data = df_plot, aes_string(x = 'VISIT', y = y,
 
 
 warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,'_', remove_off,  '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt_top, y,'_', remove_off,  '.jpeg'), 
        width=3, height=3)
 }
 

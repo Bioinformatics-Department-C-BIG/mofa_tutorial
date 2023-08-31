@@ -13,7 +13,7 @@ mod='miRNA'
 mod='proteomics'
 mod='RNA'
 mod='miRNA'
-mod='RNA'
+mod='RNA' ; nmf_params<-g_params
 
 
 #### Load the dataset ####
@@ -40,15 +40,21 @@ dim(x1)
 res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=8
-nrun=5
+NFACTORS=5
+nrun=2
 
 
 ## SAVE AND LOAD 
 out_nmf<-paste0(outdir,'/../','multirun_', NFACTORS, '_', nrun,'_', 
-                    mod)
+                    mod )
+
+out_nmf<-paste0(outdir,'/../','multirun_', NFACTORS, '_', nrun,'_', 
+                mod )
 
 
+out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '/');
+dir.create(outdir_nmf)
 
 
 if (file.exists(out_nmf)){
@@ -65,6 +71,7 @@ if (file.exists(out_nmf)){
 
 ### return fitted model 
 fit(res)
+
 h <-as.data.frame(coef(res)) # factor coeficients for each sample 
 dim(h)
 h[1,]
@@ -102,45 +109,14 @@ cor <- psych::corr.test(covariates,h_t, method = "pearson", adjust = "BH")
 
 
 
-colnames(cor$r) 
-rownames(cor$sef)
-cors_non_na<-names(which(!is.na( cor$p[,1])))
-T<--log10(0.00)
-sig<-which( rowMins(cor$p)<0.05 & rowMaxs(cor$r)<0.95 ) 
-which( rowMins(cor$p)<0.05)
-
-cor$r['CONCOHORT',]
-stat[sig,]
-
-
-plot='r'
 
 
 nmf_param_str<-paste0('nmf/plots/','cor_', mod, '_', NFACTORS )
-if (plot=="r") {
-  stat <- cor$r
-  png(paste0( nmf_param_str, '.png' ))
-  
-  corrplot::corrplot(stat[sig,], tl.col = "black", title="Pearson correlation coefficient")
-  dev.off()  
-  
-  write.csv(stat[sig,], paste0('nmf/plots/cor_',mod, '.csv'  ))
-} else if (plot=="log_pval") {
-  stat <- cor$p
-  stat[stat>alpha] <- 1.0
-  if (all(stat==1.0)) stop("All p-values are 1.0, cannot plot the histogram")
-  stat <- -log10(stat)
-  stat[is.infinite(stat)] <- 1000
-  if (transpose) stat <- t(stat)
-  if (return_data) return(stat)
-  col <- colorRampPalette(c("lightgrey", "red"))(n=100)
-  pheatmap::pheatmap(stat, main="log10 adjusted p-values", cluster_rows = FALSE, color=col, ...)
-  
-} else {
-  stop("'plot' argument not recognised. Please read the documentation: ?correlate_factors_with_covariates")
-}
-
-
+nmf_outdir<-nmf_param_str
+dir.create(nmf_outdir)
+dir.create(paste0(nmf_outdir, '/top_weights/'))
+dir.create(paste0(nmf_outdir, '/enrichment/'))
+dir.create(paste0(nmf_outdir, '/heatmaps/'))
 
 
 ## Get back a table for all metadata ? 
@@ -158,8 +134,7 @@ summary(res)
 summary(res,class=x1_se$COHORT)
 
 
-w<-basis(res)
-w
+
 ### 
 
 
@@ -167,6 +142,8 @@ s<-featureScore(res)
 
 s
 
+
+#### Top Weights ####
 
 
 

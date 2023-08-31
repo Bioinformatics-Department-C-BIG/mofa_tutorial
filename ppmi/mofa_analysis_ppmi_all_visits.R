@@ -40,11 +40,32 @@ group=1
 
 
 
+### RUN CLUSTERING 
+
+# Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
+clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
+
+ss_scores<-c()
+for (k in 3:15){
+  clusters <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
+  cluster_bt<-clusters$betweenss/clusters$totss
+  print(cluster_bt)
+  ss_scores<-append(  ss_scores,cluster_bt)
+}
+plot(ss_scores)
+
+clusters <- cluster_samples(MOFAobject, k=5, factors=c( 2:14))
+
+clusters
+
+
+
+
+
+
 ########### Add some metadata ####
-clusters$cluster
 samples_metadata(MOFAobject)$PATNO_EVENT_ID
 samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
-
 
 
 
@@ -196,9 +217,9 @@ to_remove_regex<-'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO'
 to_remove_covars<-grepl( to_remove_regex, names(ids_to_plot_strict))
 to_remove_covars
 ids_to_plot_strict_cleaned<-ids_to_plot_strict[!to_remove_covars]
-to_remove_covars
-ids_to_plot_strict_cleaned
-ids_to_plot_strict_cleaned
+
+
+
 jpeg(paste0(outdir, '/factors_covariates_only_nonzero_strict_pval','.jpeg'),width =700+length(ids_to_plot_strict)*20,
      height = 800, res=150)
 correlate_factors_with_covariates(MOFAobject,
@@ -216,6 +237,7 @@ MOFAobject@samples_metadata$SNCA_rs356181
 #### correlations between factors 
 cors[,c('stai_state' )]
 format(cors_pearson[,c('stai_trait')], digits=2)
+
 
 cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
 format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
@@ -313,16 +335,16 @@ selected_covars<-selected_covars2; length(selected_covars)
 selected_covars[!selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
 
 labels_col=labels_col2; length(labels_col)
-MOFAobject_gs2@samples_metadata$st
 
 graphics.off()
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
-MOFAobject@samples_metadata
 
+sel_not_na<-rownames(na.omit(t(MOFAobject_gs2@samples_metadata[selected_covars])))
 
-
+MOFAobject_gs2@samples_metadata[selected_covars]$NP3_TOT 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 1000+length(selected_covars)*20, height=1000, res=300)
+
 P2<-correlate_factors_with_covariates(MOFAobject,
                                       covariates = selected_covars, plot = "log_pval",
                                   labels_col=labels_col, 
@@ -332,8 +354,16 @@ P2<-correlate_factors_with_covariates(MOFAobject,
                                       covariates = selected_covars, plot = "log_pval",
                                      labels_col=labels_col, 
                                       factors = names(sel_factors))
-
 dev.off()
+
+
+selected_covars3<-selected_covars2[selected_covars2 != 'COHORT' ]
+labels_col3<-labels_col[selected_covars2 != 'COHORT' ]
+P2<-correlate_factors_with_covariates(MOFAobject,
+                                      covariates =selected_covars3 , plot = "log_pval", 
+                                      labels_col=labels_col3)
+
+
 selected_covars
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_transpose_strict','.jpeg'),
@@ -442,30 +472,30 @@ dir.create(paste0(outdir, 'top_weights/'))
 
 T=0.3
 for (i in seq(1,vps)){
-  view=views[i]
+    view=views[i]
+    
+    cluego1<-paste0(outdir, 'top_weights/top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
+    
+    all_weights1<-MOFA2::get_weights(MOFAobject_gs,
+                                    views = view, 
+                                    as.data.frame =TRUE)  
+    # threshold each? 
   
-  cluego1<-paste0(outdir, 'top_weights/top_weights_vals_by_view_CLUEGO_', view, '_T_', T, '.txt')
+    all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
+    ens_ids<-gsub('\\..*', '', all_weights_filt$feature)
+    write.csv(ens_ids,cluego1,
+              row.names = FALSE, quote=FALSE)
   
-  all_weights1<-MOFA2::get_weights(MOFAobject_gs,
-                                  views = view, 
-                                  as.data.frame =TRUE)  
-  # threshold each? 
-
-  all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
-  ens_ids<-gsub('\\..*', '', all_weights_filt$feature)
-  write.csv(ens_ids,cluego1,
-            row.names = FALSE, quote=FALSE)
-
-  ### write gene symbols here 
-  all_weights1<-MOFA2::get_weights(MOFAobject_gs,
-                                   views = view, 
-                                   as.data.frame =TRUE)  
-  
-  
-  all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
-  write.table(all_weights_filt,paste0(outdir, 'top_weights/top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
-  
-  # threshold each? 
+    ### write gene symbols here 
+    all_weights1<-MOFA2::get_weights(MOFAobject_gs,
+                                     views = view, 
+                                     as.data.frame =TRUE)  
+    
+    
+    all_weights_filt<-all_weights1[abs(all_weights1$value)>T,]
+    write.table(all_weights_filt,paste0(outdir, 'top_weights/top_weights_vals_by_view_', view, '_T_', T, '.txt'), sep = '\t')
+    
+    # threshold each? 
   
   
   
@@ -476,7 +506,7 @@ outdir
 high_vars_by_factor<-vars_by_factor>0.1
 
 
-#### 2. Save highly weighted features #####
+#### 2. Save highly weighted features and their weights in text files #####
 for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
     
@@ -490,10 +520,10 @@ for (i in seq(1,vps)){
     
     ### get the top highly weighted variables - absolute value
     top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
-    if (high_vars_by_factor[factor, view]){
+    #if (high_vars_by_factor[factor, view]){
       write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
       
-    }
+    #}
     
     
 
@@ -879,7 +909,7 @@ for (i in seq(1,vps)){
     nFeatures=12
     
     ### oNLY SAVE THE ones with high variance
-    if (high_vars_by_factor[ii, i]){
+    #if (high_vars_by_factor[ii, i]){
       print(c(i,ii))
       cols <- c( "red", 'red')
           p_ws<-plot_top_weights(MOFAobject_gs,
@@ -926,9 +956,14 @@ for (i in seq(1,vps)){
           
 
          
-          }
+          
   }
 }
+
+
+
+
+
 
 
 

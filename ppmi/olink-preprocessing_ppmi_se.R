@@ -129,7 +129,7 @@ pre_process_proteomics<-function(proteomics){
 #sample<-colnames(proteomics_se)
 
 
-proteomics<-pre_process_proteomics(proteomics)
+raw_counts_all<-pre_process_proteomics(proteomics)
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 

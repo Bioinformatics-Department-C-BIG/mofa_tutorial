@@ -116,16 +116,19 @@ run_mofa_get_cors<-function(N_FACTORS){
   #'
   
   
-  
-  cors_both<-get_correlations(MOFAobject, c('CONCOHORT'))
-  cors_pearson=cors_both[[2]]
-  cors_t<-paste(round(cors_pearson[,'CONCOHORT'], digits=2), collapse=', ')
-  max_cor<-round(max(cors_pearson), digits=2)
-  print(cors_t)
-  df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
-                run_mofa_complete, N_FACTORS,cors_t , max_cor )
-  
-  write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+  if (length(sel_coh)>1){
+    #' Only check correlations with cohort for more than one cohorts 
+        cors_both<-get_correlations(MOFAobject, c('CONCOHORT'))
+        cors_pearson=cors_both[[2]]
+        cors_t<-paste(round(cors_pearson[,'CONCOHORT'], digits=2), collapse=', ')
+        max_cor<-round(max(cors_pearson), digits=2)
+        print(cors_t)
+        df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+                      run_mofa_complete, N_FACTORS,cors_t , max_cor )
+        
+        write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+        
+  }
   
   
   return(MOFAobject)

@@ -39,10 +39,29 @@ for (i in 1: length(selected_covars3)){
 
 
 
-############## Create boxplots #### 
+############## Create boxplots by group #### 
 
 
+col_data<-samples_metadata(MOFAobject)[c(selected_covars2, 'cluster', 'PATNO')]
+#col_data<-samples_metadata(MOFAobject)[c(selected_covars2)]
 
+col_data_melt<-melt(col_data, id=c('PATNO', 'cluster'))
+
+ggplot(col_data_melt)+ 
+  geom_boxplot(aes(y=value, group=cluster))+
+  facet_wrap(~variable,scales =  'free')
+  
+
+### Means by group 
+library(dplyr)
+group_by(col_data, cluster) %>%
+  summarise(across(everything(), mean)
+  
+  )
+group_by(col_data, cluster) %>%
+  summarise(across(everything(), var)
+            
+  )
 
  
 

@@ -25,6 +25,44 @@
 
 
 
+
+### RUN CLUSTERING 
+
+#TODO: Adjust mode if cohorts are 1 vs 2
+
+# Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
+
+if (length(sel_coh)>1){
+  clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
+  
+}
+
+ss_scores<-c()
+for (k in 3:15){
+  clusters <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
+  cluster_bt<-clusters$betweenss/clusters$totss
+  print(cluster_bt)
+  ss_scores<-append(  ss_scores,cluster_bt)
+}
+plot(ss_scores)
+
+clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
+
+
+
+########### Add some metadata ####
+samples_metadata(MOFAobject)$PATNO_EVENT_ID
+samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
+
+
+clusters
+
+
+## TODP
+
+
+
+
 library(ggplot2)
 
 #BiocManager::install('EnsDb.Hsapiens.v79')
@@ -132,7 +170,15 @@ ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
 non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
 non_na_ids_to_plot
 
-sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+if (length(sel_coh)>1){
+  sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+  
+}else{
+  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
+  
+}
+
+
 
 
 format(cbind(cors_pearson[, 'CONCOHORT'],10^-cors_all[,'CONCOHORT']), digits=3) [sel_factors,]
@@ -238,7 +284,7 @@ labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use')
 
-selected_covars2<-c('COHORT', 'AGE', 'SEX',
+selected_covars2<-c( 'AGE', 'SEX',
                    #'NP1_TOT', 
                    'NP2_TOT','NP3_TOT',
                    #'NP4_TOT',
@@ -259,7 +305,7 @@ selected_covars2<-c('COHORT', 'AGE', 'SEX',
                    'con_putamen', 
                    'td_pigd_old_on', 'PD_MED_USE' )
 
-labels_col2=c('Disease status', 'AGE', 'SEX',
+labels_col2=c( 'AGE', 'SEX',
              #'MDS-UPDRS1',
              'MDS-UPDRS2','MDS-UPDRS3', 
              #'MDS-UPDRS4',
@@ -277,6 +323,11 @@ labels_col2=c('Disease status', 'AGE', 'SEX',
              'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use')
+
+if (length(sel_coh)>1){
+  selected_covars2<-c(selected_covars2, 'COHORT')
+  labels_col2<-c(labels_col2, 'Disease status')
+}
 
 cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )

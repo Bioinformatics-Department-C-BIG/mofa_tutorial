@@ -31,9 +31,11 @@ sel_coh=c(1,2);
 # ONLY PD 
 sel_coh=c(4,2)
 
-sel_coh=c(1,2);
 
 sel_coh=c(1);
+
+sel_coh=c(1,2);
+
 
 sel_subcoh=FALSE;
 sel_subcoh=FALSE

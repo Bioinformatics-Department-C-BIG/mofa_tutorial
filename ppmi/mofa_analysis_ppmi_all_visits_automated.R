@@ -25,39 +25,6 @@
 
 
 
-
-### RUN CLUSTERING 
-
-#TODO: Adjust mode if cohorts are 1 vs 2
-
-# Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
-
-if (length(sel_coh)>1){
-  clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
-  
-}
-
-ss_scores<-c()
-for (k in 3:15){
-  clusters <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
-  cluster_bt<-clusters$betweenss/clusters$totss
-  print(cluster_bt)
-  ss_scores<-append(  ss_scores,cluster_bt)
-}
-plot(ss_scores)
-
-clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
-
-
-
-########### Add some metadata ####
-samples_metadata(MOFAobject)$PATNO_EVENT_ID
-samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
-
-
-clusters
-
-
 ## TODP
 
 
@@ -139,22 +106,79 @@ get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
   round(cors_pearson_top[,COHORT_NAME][sel_factors], digits=2)
 }
 
-cors_both<-get_correlations(MOFAobject, covariates = c('COHORT'))
-cors_both
-
+#cors_both<-get_correlations(MOFAobject, covariates = c('COHORT'))
 
 cors_both<-get_correlations(MOFAobject, names(non_na_vars))
-cors_pearson=cors_both[[2]]
-cors=cors_both[[1]]
-cors_all=cors_both[[1]]
+cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
-cors_pearson
 cors[1,][cors[1,]>1.3]
-#max(round(cors_pearson[,'CONCOHORT'][sel_factors], digits=2))
 
 
 
 ######
+
+
+
+if (length(sel_coh)>1){
+  sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+  
+}else{
+  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
+  
+}
+
+
+
+
+
+
+
+
+
+
+### RUN CLUSTERING 
+
+#TODO: Adjust mode if cohorts are 1 vs 2
+
+# Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
+
+if (length(sel_coh)>1){
+  clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
+  clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
+  
+}
+
+ss_scores<-c()
+for (k in 3:15){
+  clusters <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
+  cluster_bt<-clusters$betweenss/clusters$totss
+  print(cluster_bt)
+  ss_scores<-append(  ss_scores,cluster_bt)
+}
+plot(ss_scores)
+
+clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
+
+
+
+########### Add some metadata ####
+samples_metadata(MOFAobject)$PATNO_EVENT_ID
+samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
+
+
+clusters
+
+
+
+
+
+#### After adding clusters redo calculcations of metadata..? ####
+
+
+
+
+
+
 
 
 ids_to_plot_cor<-colnames(cors_pearson[,colSums(abs(cors_pearson)>0.2)>0L])
@@ -170,13 +194,6 @@ ids_to_plot_strict<-which(apply(cors, 2, sum)>-log10(0.0001))
 non_na_ids_to_plot<-intersect(names(non_na_vars),names(ids_to_plot) )
 non_na_ids_to_plot
 
-if (length(sel_coh)>1){
-  sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
-  
-}else{
-  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
-  
-}
 
 
 

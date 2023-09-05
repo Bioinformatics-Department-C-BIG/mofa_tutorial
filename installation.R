@@ -66,10 +66,9 @@ install.packages('UpSetR')
 
 #### MOFA
 BiocManager::install('MOFAdata')
-<<<<<<< HEAD
 BiocManager::install('MOFA2')
 
-=======
+
 
 #BiocManager::install('MultiAssayExperiment')
 #BiocManager::install("MOFA2")
@@ -80,7 +79,6 @@ BiocManager::install('MOFA2')
 ### proteins
 BiocManager::install('DEP')
 BiocManager::install('vsn')
->>>>>>> 6e75bc7543129daa3d6c96166d5b27e2d9ac433b
 BiocManager::install('MultiAssayExperiment')
 
 

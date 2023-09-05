@@ -1,6 +1,6 @@
 
 os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
-
+#setwd('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/../')
 
 isRStudio <- Sys.getenv("RSTUDIO") == "1"
 if (isRStudio){

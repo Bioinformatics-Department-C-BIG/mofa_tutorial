@@ -8,6 +8,7 @@ suppressWarnings(library("SummarizedExperiment"))
 suppressWarnings(library(data.table))
 suppressWarnings(library(dplyr))
 
+library(org.Hs.eg.db)
 
 ### TODO: Add volcano plot for each time point -DONE
 ### TODO: add heatmap for all tps tpogether -DONE
@@ -25,12 +26,14 @@ suppressWarnings(library('ggplot2'))
 source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 
-VISIT='V08'
-process_mirnas<-FALSE
+# BETTER TO NOT RUN THESE SETTINGS AGAIN IF YOU HAVE RUN PREPROCESSING
+#VISIT='V08'
+process_mirnas=FALSE
 
 
 source(paste0(script_dir, 'ppmi/config.R'))
 
+print(script_dir)
 
 
 print(deseq_file)

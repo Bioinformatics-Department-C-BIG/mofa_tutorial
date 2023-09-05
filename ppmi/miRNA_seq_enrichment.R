@@ -1,11 +1,10 @@
-source('ppmi/setup_os.R')
+#source('ppmi/setup_os.R')
 
 
 #install.packages('VennDiagram')
 library(rbioapi)
 library('VennDiagram')
 library(enrichplot)
-VISIT='V08'
 process_mirnas<-TRUE
 source(paste0(script_dir, 'ppmi/config.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
@@ -19,8 +18,9 @@ order_by_metric<-'abslog2pval'
 order_by_metric<-'abslog2pval'
 order_by_metric<-'log2pval'
 order_by_metric<-'abslog2pval'
-order_by_metric<-'log2FoldChange'
 order_by_metric<-'log2pval'
+order_by_metric<-'log2FoldChange'
+
 VISIT
 use_anticor=FALSE
 ## UPDATED TO 0,1--DO not filter the list of de mirnas, since it runs gsea it needs the complete list 
@@ -51,7 +51,7 @@ if (use_anticor){
 log2fol_T;padj_T;
 log2fol_T
 ### run the enrichment if it has not been ran yet!! 
-
+padj_T;log2fol_T
 Padj_T_paths=0.01
 
 deseq2ResDF = read.csv(paste0(outdir_s, '/results_df.csv'), row.names = 1)
@@ -59,21 +59,31 @@ de_mirs<-deseq2ResDF
 outdir_enrich<-paste0(outdir_s,'/enrichment/')
 dir.create(outdir_enrich)
 
+
+
 gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T, log2fol_T )
-test_type='ORA'; top_n=100
+gene_list_sig_only<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=0.05, log2fol_T=0.1 )
 
 test_type='GSEA';top_n=length(gene_list);
-#top_n=400
+test_type='ORA'; top_n=100
+### BL: there is nothing significant to plot... whyyyy
+
+gene_list_cut_ora<-gene_list_sig_only[order(abs(gene_list_sig_only))]
+length(gene_list_cut_ora)
+gene_list_cut_ora
 
 gene_list_cut<-gene_list[order(abs(gene_list))][1:top_n]
 gene_list_cut<-gene_list_cut[order(gene_list_cut, decreasing=TRUE)]
+
+if (test_type=='ORA'){
+  gene_list_cut=gene_list_cut_ora
+  mirs_ora=names(gene_list_cut_ora)
+}
 
 length(gene_list); length(gene_list_cut)
 mirs=names(gene_list_cut)
 mirs
 
-
-mirs
 enrich_params<-paste0('_', padj_T, '_',  log2fol_T, '_',  order_by_metric,test_type,  top_n)
 mir_results_file<-paste0(outdir_enrich, '/mirs_enrich_', enrich_params)
 
@@ -87,12 +97,15 @@ gene_list_cut
 gsea_results_fname<-paste0(mir_results_file,'_mieaa_res.csv' )
 pvalueCutoff=1
 
+
 if (file.exists(gsea_results_fname)){
   ### Load enrichment results if available
   mieaa_all_gsea<-read.csv(gsea_results_fname, header=TRUE)
   ### TODO: Rerun with updated pvalue cutoff 
 }else{
   ## otherwise run GSEA analysis 
+  
+  
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
                                      mirna_type = "mature",
                                      test_type = test_type,
@@ -134,12 +147,33 @@ if (use_mofa){
 }
 
 
+
+
+
+
+dir.create(paste0(outdir_enrich, Category))
+
+
+mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
+######### convert to enrichResult to use gsego functios
+results_file=mir_results_file_by_cat
+mir_results_file_by_cat
+### Posto process and return enrichresult 
+mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category = Category, mir_results_file = mir_results_file_by_cat)
+mieaa_gsea_1=mieaa_res[[1]]
+enr_full=mieaa_res[[2]]
+enr_full
+
 ##### plot results 
 ##
 #DOSE::enrichResult
 #  EnrichResult(mieaa_all_gsea)
 ### intermediate plot --- remove..??
+
+
 df=mieaa_gsea_1
+min(mieaa_gsea_1$P.adjusted) ### with LOGFC IT WORKS BETTER
+
 df$P.adjusted<-as.numeric(df$P.adjusted)
 df$padj<-as.numeric(df$P.adjusted)
 df$Observed<-as.numeric(df$Observed)
@@ -151,22 +185,7 @@ mir_enrich_p<-ggplot(df_ord, aes(x=reorder(Subcategory, padj), y=Observed, fill=
   coord_flip()
 ggsave(paste0(mir_results_file, '_', Category, '_bar',  '.png'), plot=mir_enrich_p, height = 7, width=8)
 
-dir.create(paste0(outdir_enrich, Category))
 
-mir_results_file_by_cat<-paste0(outdir_enrich, Category, '/mirs_enrich_', enrich_params)
-######### convert to enrichResult to use gsego functios
-
-
-
-results_file=mir_results_file_by_cat
-
-
-mir_results_file_by_cat
-
-### Posto process and return enrichresult 
-mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, Category = Category, mir_results_file = mir_results_file_by_cat)
-mieaa_gsea_1=mieaa_res[[1]]
-enr_full=mieaa_res[[2]]
 
 
 gse_sig=write_filter_gse_results(gse_full=enr_full, mir_results_file_by_cat, pvalueCutoff_sig)
@@ -179,8 +198,8 @@ mir_results_file_by_cat
 
 #write.csv(gse_sig@result, paste0(mir_results_file_by_cat,pvalueCutoff, '.csv'))
 
-text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
-text_p
+#text_p<-get_pval_text(enr_full, pvalueCutoff_sig)
+text_p=''
 process_mirnas
 ### requires source('RNAseq enrichment.R') # TODO: MOVE TO A UTILS SCRIPT 
 run_enrichment_plots(gse=gse_sig, results_file=mir_results_file_by_cat, N_EMAP=15, N_DOT=15, text_p=text_p)

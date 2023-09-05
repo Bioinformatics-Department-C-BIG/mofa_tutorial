@@ -11,7 +11,7 @@ write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 deseq2ResDF <- as.data.frame(deseq2Results)
 deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
 deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
-
+min(deseq2ResDF$padj)
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
@@ -69,14 +69,14 @@ if (!process_mirnas){
 }
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
-
+VISIT
 #symbols[dup_ind]
 
 outdir_s
 
 deseq2ResDF$SYMBOL
 
-
+deseq2ResDF
 
 
 log2fol_T<-0.25
@@ -85,6 +85,7 @@ padj_T<-.005
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 
+min(deseq2ResDF$padj)
 
 ####### MOFA deseq2  
 
@@ -343,60 +344,126 @@ if (run_heatmap){
   
   
   library('pheatmap')
- # detach('ComplexHeatmap',unload=TRUE)
-         
-  df<-vsd_filt$COHORT
-  assay(vsd_filt)
-  vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-
   
-  ### Add the annotations 
-  df<-as.data.frame(colData(vsd_filt_genes)[,c("COHORT", "SEX", 'AGE', 'NHY')])
   
-  ## HEATMAP OPTIONS 
-  cluster_cols=TRUE
+  
+  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE){
+    #'
+    #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
+    #' @param hm: heatmap data nfeats X nsamples 
+    #' @param sigGenes: select genes to plot description
+    #' 
+    #' 
+    #' 
+    #' 
+    #ARRANGE
+    
+    
+    
+    vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+    
+    
+    ### Add the annotations 
+    meta_single<-colData(vsd_filt_genes)
+    
+    
+    
+    
+    ## HEATMAP OPTIONS 
+    cluster_cols=TRUE;    
     #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-                filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
-  
-  #ARRANGE
-  df_ord<-df[order(df$COHORT),]
-  df_ord$COHORT
-  hm<-assay(vsd_filt_genes)
-  hm_ord<-hm[,order(df$COHORT)]
-  
-  ### SCALE!! 
-  hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
-  dim(hm_ord)
-  cluster_cols=TRUE
-  hm_scaled
-  #jpeg(fname, width=2000, height=1500, res=200)
-  graphics.off()
-  library(ggplot2)
-  if(process_mirnas){
-    lab=rownames(rowData(vsd_filt_genes)) }else{
-      lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+    fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+                  filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
+    
+    hm<-assay(vsd_filt_genes)
+    
+    df_ord<-df[order(df$COHORT),]
+    df_ord$COHORT
+    dim(hm)
+    hm_ord<-hm[,order(df$COHORT)]
+    
+    ### SCALE!! 
+    hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
+    dim(hm_ord)
+    cluster_cols=TRUE
+    hm_scaled
+    #jpeg(fname, width=2000, height=1500, res=200)
+    graphics.off()
+    library(ggplot2)
+    if(process_mirnas){
+      lab=rownames(rowData(vsd_filt_genes)) }else{
+        lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
     cluster_cols
     hm_scaled
-      #jpeg(fname, width=10*100, height=7*100, res=300)
-      my_pheatmap<-pheatmap(hm_scaled, 
-                            labels_row=lab,
-                            cluster_rows=TRUE, 
-                            show_rownames=TRUE,
-                            #scale='row', 
-                            cluster_cols=cluster_cols,
-                            annotation_col=df_ord, 
+    
+    hm_scaled_filt=hm_scaled
+    df_ord_filt=df_ord
+    
+    if (remove_cn){
+      d_ind<-df_ord$COHORT==1
+      hm_scaled_filt<-hm_scaled[,d_ind]
+      
+      df_ord_filt<-df_ord[d_ind, ]
+    }
+    
+    #jpeg(fname, width=10*100, height=7*100, res=300)
+    my_pheatmap<-pheatmap(hm_scaled_filt, 
+                          labels_row=lab,
+                          cluster_rows=TRUE, 
+                          show_rownames=TRUE,
+                          #scale='row', 
+                          cluster_cols=cluster_cols,
+                          annotation_col=df_ord_filt, 
+                          
+                          clustering_method = 'ward.D2'
+    )
+    
+    
+    show(my_pheatmap)
+    dev.off()
+    my_pheatmap
+    # ggsave(fname, width=10, height=7)
+    
+    ggsave(fname,plot=my_pheatmap, width=7, height=7, dpi=300)
+    return(my_pheatmap)
+  }
+  
+  
+  my_pheatmap
+ # detach('ComplexHeatmap',unload=TRUE)
+         
+  
+   
+  
+  df<-vsd_filt$COHORT
+  assay(vsd_filt)
+  
+  
+  colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
+  colDataToPlot<-c('NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
+  
+  df<-as.data.frame(colData(vsd_filt)[,c("COHORT", "SEX", 'AGE', 'NHY', colDataToPlot)])
+  colData(vsd_filt_genes)$RBD_TOT
+  # if clusters exist 
+  
+  df$cluster_s<-factor(clusters$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters$cluster ))])
 
-                            clustering_method = 'ward.D2'
-      )
-      
-      
-     show(my_pheatmap)
-      my_pheatmap
-     # ggsave(fname, width=10, height=7)
-      
-      ggsave(fname,plot=my_pheatmap, width=7, height=7, dpi=300)
+  df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
 
+  
+  dim(df)
+  
+  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = feat_names_ens  ,  df=df, remove_cn=FALSE)
+  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE)
+  
+  my_pheatmap
+  
+  ### Plot MOFA too
+  
+  fn_sel
+
+  
+    my_pheatmap
 
   #P2<-pheatmap(assay(vsd_filt_genes), 
   #         cluster_rows=FALSE, 
@@ -416,7 +483,7 @@ if (run_heatmap){
   #plot(hclust(dists))
 }
 
-my_pheatmap
+
 
 ### Add Volcano plots 
 ### Compare to their results 
@@ -432,7 +499,8 @@ mfc<-max(abs(deseq2ResDF$log2FoldChange))
 pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
 pmax
 xlim = c(-mfc-0.2,mfc+0.2)
-ylim = c(0,pmax+1)
+ylim = c(0,pmax+0.2)
+ylim = c(0,pmax-0.5)
 
 ns_full<-table(se_filt$COHORT_DEFINITION)
 ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
@@ -467,6 +535,7 @@ pvol<-EnhancedVolcano(deseq2ResDF,
 
 
 pvol
+
 fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)

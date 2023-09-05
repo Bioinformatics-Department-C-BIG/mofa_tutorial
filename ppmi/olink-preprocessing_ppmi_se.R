@@ -49,8 +49,8 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-VISIT=c('BL')
-process_mirnas=FALSE
+#VISIT=c('V08')
+#process_mirnas=FALSE
 #TISSUE='CSF'
 
 source(paste0(script_dir, 'ppmi/config.R' ))
@@ -83,7 +83,7 @@ in_file_original
 proteomics<-prot_bl_wide_unlog
   
 #proteomics[2,]
-
+## TODO: tidy up!!
 
 colnames(proteomics)
 
@@ -92,89 +92,54 @@ colnames(proteomics)
 # Remove rows with 90% NA 
 
 #### TODO: move this after the selection of the cohort!!! 
-df<-proteomics
-proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
-dim(df); dim(proteomics)
 
+pre_process_proteomics<-function(proteomics){
 
-### filter here before editing more 
-## filter out rows with very low min count
-df<-proteomics; dim(df)
-min.count= quantile(df, na.rm = TRUE, 0.01)
-min.count= min(df, na.rm = TRUE)
-min.count
-dim(df)
-### KEEP
- ## kEEP THE ROWS THAT HAVE MORE THAN 80% NON NA VALUES 
-keep <- rowSums(df>min.count, na.rm = TRUE) >= round(NA_PERCENT*ncol(df))
-length(which(keep))
-proteomics<-proteomics[keep,]
-dim(df); dim(proteomics)
+      df<-proteomics
+      proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
 
-##keep <- colSums(df>min.count, na.rm = TRUE) >= round(0.9*ncol(df))
-#length(keep)
-#length(which(!keep))
-#proteomics<-proteomics[,keep]
+      
+            ### filter here before editing more 
+      ## filter out rows with very low min count
+      df<-proteomics; 
+      min.count= quantile(df, na.rm = TRUE, 0.01)
+      min.count= min(df, na.rm = TRUE)
+      ### KEEP
+       ## kEEP THE ROWS THAT HAVE MORE THAN 80% NON NA VALUES 
+      keep <- rowSums(df>min.count, na.rm = TRUE) >= round(NA_PERCENT*ncol(df))
+      proteomics<-proteomics[keep,]
 
-
-
-
-#### MAKE NUMERIC 
-raw_counts_all=proteomics
-class(raw_counts_all) <- "numeric"
-## They seem to have taken averages for replicas so need to fix 
-#raw_counts_all<-round(raw_counts_all)
-dim(proteomics)
-dim(raw_counts_all)
-head(raw_counts_all[,2])
-
-#### Input to se 
-
-
-
-
-dim(proteomics)
-data<-proteomics
-data<-as.data.frame(data)
-
-data$name<-c(rownames(data))
-data$ID<-data$name
-data_columns=seq(1:dim(proteomics)[2])
-
+      
+      
+      #### MAKE NUMERIC 
+      raw_counts_all=proteomics
+      class(raw_counts_all) <- "numeric"
+      ## They seem to have taken averages for replicas so need to fix 
+      #raw_counts_all<-round(raw_counts_all)
+      
+      data<-proteomics
+      data<-as.data.frame(data)
+      
+      data$name<-c(rownames(data))
+      data$ID<-data$name
+      data_columns=seq(1:dim(proteomics)[2])
+      
+      return(raw_counts_all)
+}
 #sample<-colnames(proteomics_se)
-head(sample)
 
 
-
-
-#exp_design = data.frame(label=sample,
-#                        condition=sample, 
-#                        replicate=rep(1, dim(proteomics)[2]))
-#exp_design
-
-#se <- make_se(data, data_columns,exp_design)
-## just a quick filter because it takes too much memory
-#raw_counts_all_by_visit<-raw_counts_all[,grep(VISIT, colnames(raw_counts_all ))]
+raw_counts_all<-pre_process_proteomics(proteomics)
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 
-head(is.nan(as.matrix(data)))
-boxplot(log(data[1:16]))
-head(raw_counts_all[2,])
-
-#View(head(assays(proteomics_se)[[1]]))
-
 
 cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
-
-sel_coh
 ##### filter here by visits
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
 
 se_filt<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
 
-dim(se_filt)
-table(se_filt$COHORT)
 
 cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
 

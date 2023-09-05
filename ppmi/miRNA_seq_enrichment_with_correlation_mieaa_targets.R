@@ -18,9 +18,12 @@ log2fol_T=0.0
 ################## MIEAA TARGETS 
 ### first retrieve all targets that mieaa returned 
 ## Return a 2d table with mirnas in one column and possible gene targets in the other
+# PROABBLY NEED TO RUN ORA FOR THIS ONE.. 
 mirtars<-mieaa_all_gsea[mieaa_all_gsea$Category=='Target genes (miRTarBase)',]
 # select columns mirnas, gene targets
-all_targets<-mirtars[c('Subcategory', 'miRNAs.precursors')]
+
+all_targets<-mirtars[c('Subcategory', 'miRNAs/precursors')]
+colnames(all_targets)<-c('Subcategory', 'miRNAs.precursors')
 
 dim(all_targets)
 colnames(all_targets)
@@ -44,9 +47,10 @@ colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 ##############
 #### Targets 2: TARGET SCAN ############
 run_tscan=FALSE
+library(purrr)
 if (run_tscan){
-  
-
+      
+        length(mirs_ora)
         all_target_scan<-mget(names(mirs), revmap(targetscan.Hs.egTARGETS))
         tars<-all_target_scan[[1]]
         
@@ -70,6 +74,8 @@ if (run_tscan){
         merged_gene_tars<-merge(ids_ens_df@listData, DataFrame(nlist_stack_filt), by='entrezid' )
         merged_gene_tars_unique<-unique(merged_gene_tars)
         colnames(merged_gene_tars_unique)
+        merged_gene_tars_unique
+        write.csv(merged_gene_tars_unique,paste0(outdir_s, '/enrichment/anticor/target_scan_de_mirs.csv'), row.names=FALSE )
         }
 
 
@@ -82,17 +88,20 @@ cor_results_read<-read.csv(paste0(outdir_s, '/',   TOP_GN_all, '_', TOP_MN_all, 
 cor_results_read<-read.csv(paste0(outdir_s, '/',   TOP_GN, '_', TOP_MN, '_','cor_results.csv')) ## not sure try it 
 
 cor_results_long_all<-melt(cor_results_read, varnames = c('target_ensembl', 'mature_mirna_id'), value.name = 'cor' )
-
+cor_results_long_all
 colnames(cor_results_long_all)
 cor_results_long_all
-colnames(cor_results_long_all)<-c('target_ensembl', 'mature_mirna_id', 'cor')
 colnames(cor_results_long_all)<-c('mature_mirna_id', 'target_ensembl', 'cor')
+colnames(cor_results_long_all)<-c('target_ensembl', 'mature_mirna_id', 'cor')
+colnames(cor_results_long_all)<-c('symbol', 'mature_mirna_id', 'cor')
 
 #cor_results_long_all<-cor_results_long
 # could filter here
 ### filter using binary threhsold 
 
+
 cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=T_cor,]
+write.csv(cor_results_long_all, paste0(outdir_s, '/enrichment/anticor/', 'mieaa_target_scan.csv'), row.names=FALSE) ## not sure try it 
 
 cor_results_long_ints
 #cor_results_long_ints<-cor_results_long_all[cor_results_long_all$cor<=-0.3,]
@@ -106,28 +115,29 @@ if (turn_to_symb){
   cor_results_long_symbol<-cor_results_long[non_na,] 
   head(cor_results_long_symbol)
   length(symb);length(which(non_na))
-  cor_results_long_symbol$mature_mirna_id<-gsub('\\.', '-', cor_results_long_symbol$mature_mirna_id)
-  hist(cor_results_long_symbol$cor)
+  
   
   
 }
 
-hist(cor_results_long_symbol$cor)
+hist(cor_results_long_ints$cor)
 hist(cor_results_long$cor)
 
 ##################### merge all possible targets with correlation values 
 ###
 head(cor_results_long_symbol)
 head(all_targets_long_true)
+cor_results_long_symbol=cor_results_long
+cor_results_long_symbol$mature_mirna_id<-gsub('\\.', '-', cor_results_long_symbol$mature_mirna_id)
+hist(cor_results_long_symbol$cor)
 
 merged_targets<-merge(all_targets_long_true, cor_results_long_symbol, by=c('mature_mirna_id', 'symbol'))
-
-
+merged_targets
+run_tscan
 if (run_tscan){
       merged_gene_tars_unique$mature_mirna_id<-gsub('-', '.', merged_gene_tars_unique$mature_mirna_id)
       cor_results_long$mature_mirna_id<- gsub('hsa.', '', cor_results_long$mature_mirna_id)
-      head(merged_gene_tars_unique); head(cor_results_long)
-      
+
       
       merged_targets_scan<-merge(merged_gene_tars_unique, cor_results_long, by=c('mature_mirna_id', 'target_ensembl'))
       

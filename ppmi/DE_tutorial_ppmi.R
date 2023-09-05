@@ -361,12 +361,12 @@ gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
 run_anova=FALSE
-run_ORA=FALSE; 
+run_ORA=TRUE; 
 use_protein_pval=FALSE ## Proteins to use a sinput 
 use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
 
 
-pvalueCutoff_sig=0.05
+pvalueCutoff_sig=0.1
 if (run_anova){
   order_statistic<-'statistic'
   gene_list2<-pull(anova_results_oneway, statistic)

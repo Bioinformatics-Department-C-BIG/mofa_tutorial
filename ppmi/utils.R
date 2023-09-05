@@ -1,7 +1,21 @@
 
+library(DESeq2)
+library(edgeR)
 
 ## Utils 
 ## Summarized experiment 
+
+load_se_all_visits<-function(input_file, combined){
+  raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+  raw_counts_all<-raw_counts
+  class(raw_counts_all) <- "numeric"
+  ## They seem to have taken averages for replicas so need to fix
+  raw_counts_all<-round(raw_counts_all)
+  ## Question: why are there duplicate samples - seems to be controls!
+  ## first filter what is in metadata and mirnas ?
+  se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
+  return(se)
+}
 
 ### TODO: move to a utils / preprocessing file because it is used also for proteoomics
 library(SummarizedExperiment)
@@ -141,9 +155,10 @@ get_symbols_vector<-function(ens ){
 ######## DE ANALYSIS #######
 #results_de<-mark_signficant(
   # test
-  #de_res= results_de
-  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='adj.P.Val'
-  #log2fc_name = 'logFC'   
+ # de_res= deseq2ResDF
+##deseq2ResDF$padj
+  #padj_T = padj_T_overall; log2fol_T = log2fol_T_overall; padj_name ='padj'
+  #log2fc_name = 'log2FoldChange'   
   #outdir_single=outdir_s_p
 
 mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_name='log2FoldChange', outdir_single=outdir_s ){
@@ -156,12 +171,15 @@ mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_n
   # Examine this data frame
   # Order the significant to save as a new output file 
   head(de_res)
+  which(de_res$significant=='Significant')
   # LARGER ONE not saved 
   sign_only<-de_res[de_res$sign_lfc=='Significant',]
   sign_only_ordered<-sign_only[order(sign_only[,padj_name], decreasing = FALSE),]
   sign_only_ordered<-sign_only[order(-sign_only[,'abslog2pval'], decreasing = FALSE),]
   
-  sign_only_ordered<-sign_only_ordered[!is.na(de_res$sign_lfc),]
+  sign_only_ordered<-sign_only_ordered[!is.na(sign_only_ordered$sign_lfc=='Significant'),]
+
+  which(sign_only_ordered$significant=='Significant')
   write.csv(sign_only_ordered,signif_file, row.names = TRUE)
   ### create also a more strict file? 
   return(de_res)
@@ -241,26 +259,29 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE, process_mofa=FALSE, text_p='', title_p=''){
-  
-  require(clusterProfiler)
-  
-  require('GOfuncR')
-  require(DOSE)
-  
-  
-  
+
+
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
+                               process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
+
+  #gse=gse_mofa_rna; 
+  #geneList=gene_list_ord_g
+  #N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
+  #'
+  #'
+  #'
+  #'
   N=25
   ## TODO: ADD FACET IF SIGNED 
-  if (length(showCategory_list)>1){
-    print('Filter by selected category')
-    N_DOT<-showCategory_list
-    N_TREE<-showCategory_list
-    N_NET<-showCategory_list
-    N_EMAP<-showCategory_list
-    
+  #if (length(showCategory_list)>1){
+  #  print('Filter by selected category')
+  #  N_DOT<-showCategory_list
+  #  N_TREE<-showCategory_list
+  #  N_NET<-showCategory_list
+  #  N_EMAP<-showCategory_list
+  ##  
     write_n=FALSE
-  }
+  
   
   ### print a signed and unsigned dotplot 
   # because it does not make sense if we dont rank by logFC
@@ -305,7 +326,8 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   #if (process_mirnas){N=15}
   p<-emapplot(x2,showCategory = N_EMAP,
               layout = "nicely", 
-              cex_label_category=0.8)
+              cex_label_category=0.8, 
+                )
   p_enrich <- p + theme(text=element_text(size=12))
   p_enrich
   
@@ -322,8 +344,11 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   if ( !(process_mirnas) && !(process_mofa) && !(run_ORA)){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
-    r_p
-    ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
+    if (dim(r_p$data)[1]>0){
+      r_p
+      ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
+      
+    }
   }
   
   
@@ -342,18 +367,22 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   }
   
   
-  p1_net <- cnetplot(gse_x)
-  
+  p1_net <- cnetplot(gse_x, foldChange =  geneList)
+  show(p1_net)
   node_label<-"gene"
   node_label<-"category"
   node_label<-"all"
-  
+  graphics.off()
   
   p2_net<- cnetplot(gse_x,
                     node_label=node_label,
-                    cex_label_category = 1.2, showCategory=N_NET)
+                    cex_label_category = 1.2,
+                    showCategory=N_NET, 
+                    foldChange =  geneList)
   
   p2_net
+  show(p2_net)
+  #graphics.off()
   if (is.numeric(N_NET)){write_n=N_NET}
   
   ggsave(paste0(results_file, '_geneconcept_', node_label, '_',write_n, '.jpeg'), width=8, height=8)
@@ -488,6 +517,16 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 
 
 
+get_pval_text<-function(gse, pvalueCutoff_sig){
+  text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
+  text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', length(which(gse@result$p.adjust<pvalueCutoff_sig)), 
+                  '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
+  text_p=paste0(text_p1, text_p2)
+}
+
+
+
+
 ################ MOFA ####
 
 
@@ -586,6 +625,16 @@ create_multi_experiment<-function(data_full, combined_bl){
 }
 
 
+filter_se_byExpr<-function(se_filt){
+      raw_counts <- assay(se_filt)
+      
+      idx <- edgeR::filterByExpr(raw_counts)
+      raw_counts <- as.matrix(raw_counts[idx, ])
+      
+      se_filt = se_filt[idx,]
+      return(se_filt)
+      
+}
 
 
 create_hist<-function(df, name){
@@ -596,4 +645,116 @@ create_hist<-function(df, name){
   ggsave(paste0(outdir, 'data_histograms',name,  '.jpeg' ), width = 10, height=8)
 }
 
+
+
+### EVALUATION PURPOSES ######
+######## standardize go names 
+
+
+standardize_go_names<-function(descriptions){
+  #'
+  #'
+  #'
+  descriptions=gsub('-', ' ', tolower(descriptions))
+  #descriptions=gsub('^[:alnum:]', '', tolower(descriptions))
+  
+  
+  descriptions=gsub("\\'", '', tolower(descriptions))
+  descriptions=gsub("\\,", '', tolower(descriptions))
+  
+  descriptions=gsub('\\(', '', tolower(descriptions))
+  descriptions=gsub('\\)', '', tolower(descriptions))
+  descriptions=gsub('\\/', '', tolower(descriptions))
+  
+  descriptions=tolower(descriptions)
+  return(descriptions)
+  
+}
+
+
+
+
+
+
+
+### PREDICTIONS ON SUMMARIZED EXPERIMENT 
+## predict on each or on multi assay?
+
+
+
+clip_outliers<-function(df1){
+  #'
+  #' @param 
+  #'
+  #'
+  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  for (i in 1:dim(df1)[1]){
+    df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
+  }
+  
+  return(df1)
+}
+
+
+preprocess_visit<-function(se_filt_V, common, feat_names){
+  # 1. Select PD only 
+  # 2. Subselected common samples - for training we can use all of them but 
+  # for testing only the ones that we have 
+  # 3. CPM or VSN
+  # 4. Clip outliers 
+  # 5. Add patient number and event 
+  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
+  # CPM or VSN? # cpm for plotting, vsn for 
+  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  df_v<- clip_outliers(df_v)
+  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  v_ens=data.frame(df_V_ens)
+  v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
+      c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT')])
+  
+  
+  return(v_ens)
+  
+}
+
+
+
+preprocess_visit_predict<-function(se_filt_V, common, feat_names){
+  # 1. Select PD only 
+  # 2. Subselected common samples - for training we can use all of them but 
+  # for testing only the ones that we have 
+  # 3. CPM or VSN
+  # 4. Clip outliers 
+  # 5. Add patient number and event 
+  #se_filt_V<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V[,se_filt_V$PATNO %in% common]
+  # CPM or VSN? # cpm for plotting, vsn for 
+  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  
+  # trim min counts before size factor estimation? 
+  ddsSE <- DESeqDataSet(se_filt_V_pd, 
+                        design =as.formula(~COHORT ))
+  ddsSE<-estimateSizeFactors(ddsSE)
+  
+  
+  ### separate vsd? 
+  # se_filt[]
+  # vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+  vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+  
+  df_v<-assay(vsd)
+    
+    
+  df_v<- clip_outliers(df_v)
+  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  v_ens=data.frame(df_V_ens)
+  v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
+            c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 
+              'CONCOHORT', 'con_putamen')])
+  
+  
+  return(v_ens)
+  
+}
 

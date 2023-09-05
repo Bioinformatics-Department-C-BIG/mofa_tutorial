@@ -165,7 +165,7 @@ clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
 samples_metadata(MOFAobject)$PATNO_EVENT_ID
 samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
 
-
+clusters_mofa<-clusters
 clusters
 
 

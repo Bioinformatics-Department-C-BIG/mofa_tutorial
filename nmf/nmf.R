@@ -1,5 +1,5 @@
 
-setwd('/tmp/')
+#setwd('/tmp/')
 library(FactoMineR)
 library(pixmap)
 #install.packages('NMF')
@@ -69,6 +69,9 @@ if (file.exists(out_nmf)){
 }
    
 
+
+
+
 ### return fitted model 
 fit(res)
 
@@ -129,7 +132,7 @@ dim(V.hat)
 
 summary(res)
 
-
+#### Evaluation ####
 ###prior knowledge on class labels
 summary(res,class=x1_se$COHORT)
 
@@ -140,7 +143,24 @@ summary(res,class=x1_se$COHORT)
 
 s<-featureScore(res)
 
+
+## TUNING #### 
+# Print the cophonetic coefficient , the RSS curve to decide number of factors #
+
+estim.r <- nmf(x1, 2:6, nrun=3, seed=123456)
+plot(estim.r)
+
+
+## plot also annotation datasets 
+#anndf<-as.data.frame(colData(x1_se)[, c('COHORT')]); rownames(anndf)=x1_se$PATNO
+
+consensusmap(estim.r, annCol=x1_se$COHORT, labCol=NA, labRow=NA)
+
+
 s
+plot(estim.r)
+
+
 
 
 #### Top Weights ####

@@ -317,7 +317,7 @@ if (run_heatmap){
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
   orderedSigGenes
   n_sig_f='all'
-  n_sig_f=30
+  n_sig_f=50
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
@@ -446,14 +446,15 @@ if (run_heatmap){
   colData(vsd_filt_genes)$RBD_TOT
   # if clusters exist 
   
-  df$cluster_s<-factor(clusters$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters$cluster ))])
-
+  
+  # clusters_single
+  df$cluster_s<-factor(clusters_single$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_single$cluster ))])
+  #### Add different clustering? 
   df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
-
   
-  dim(df)
   
-  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = feat_names_ens  ,  df=df, remove_cn=FALSE)
+  
+  #my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = feat_names_ens  ,  df=df, remove_cn=FALSE)
   my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE)
   
   my_pheatmap

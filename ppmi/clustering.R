@@ -11,6 +11,11 @@ library(DescTools)
 #model <- load_model(file)
 
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
+
+
+
+
+
 clusters <- cluster_samples(MOFAobject, k=3, factors=c( 1,3,4,14))
 clusters
 #### TODO: tune with silhouette score ####

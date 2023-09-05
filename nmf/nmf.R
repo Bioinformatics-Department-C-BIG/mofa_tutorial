@@ -53,7 +53,8 @@ out_nmf<-paste0(outdir,'/../','multirun_', NFACTORS, '_', nrun,'_',
 
 
 out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
-outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '/');
+outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
+
 dir.create(outdir_nmf)
 
 
@@ -100,16 +101,6 @@ rownames(covariates)
 rownames(t(h))
 h_t<-as.data.frame(t(h))
 
-library(psych)
-duplicated(row.names(h_t))
-duplicated(row.names(covariates))
-colnames(covariates)
-covariates$PATNO
-dim(t(covariates))
-
-dim(covariates)
-cor <- psych::corr.test(covariates,h_t, method = "pearson", adjust = "BH")
-
 
 
 
@@ -146,22 +137,26 @@ s<-featureScore(res)
 
 ## TUNING #### 
 # Print the cophonetic coefficient , the RSS curve to decide number of factors #
+run_tuning=FALSE
+if (run_tuning){
+  estim.r <- nmf(x1, 2:6, nrun=2, seed=123)
+  saveRDS(estim.r, './estimr')
+  
+  plot(estim.r)
+  
+  
+  ## plot also annotation datasets 
+  #anndf<-as.data.frame(colData(x1_se)[, c('COHORT')]); rownames(anndf)=x1_se$PATNO
+  
+  jpeg(paste0(out_nmf_params,'_consensus_map.jpeg'), res=300,units = 'in', width=10, height=9)
+  p<-consensusmap(estim.r, annCol=x1_se$COHORT)
+  dev.off()
+  
+  s
+  plot(estim.r)
+  summary(estim.r$fit,class=)
+}
 
-estim.r <- nmf(x1, 2:6, nrun=2, seed=123)
-saveRDS(estim.r, './estimr')
-
-plot(estim.r)
-
-
-## plot also annotation datasets 
-#anndf<-as.data.frame(colData(x1_se)[, c('COHORT')]); rownames(anndf)=x1_se$PATNO
-
-jpeg(paste0(out_nmf_params,'_consensus_map.jpeg'), res=300,units = 'in', width=10, height=9)
-p<-consensusmap(estim.r, annCol=x1_se$COHORT)
-dev.off()
-
-s
-plot(estim.r)
 
 
 

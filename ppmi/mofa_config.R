@@ -93,11 +93,11 @@ if (run_rna_mirna){
     TOP_GN=0.40
     TOP_PN=0.9
     
-    #
+    # FINAL
     TOP_MN=0.50
     TOP_GN=0.30
     TOP_PN=0.9
-    
+
   
   }
 

@@ -347,7 +347,7 @@ if (run_heatmap){
   
   
   
-  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE){
+  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, cluster_cols=FALSE){
     #'
     #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
     #' @param hm: heatmap data nfeats X nsamples 
@@ -370,22 +370,22 @@ if (run_heatmap){
     
     
     ## HEATMAP OPTIONS 
-    cluster_cols=TRUE;    
+    cluster_cols=cluster_cols;    
     #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
     fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
                   filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
     
     hm<-assay(vsd_filt_genes)
     
-    df_ord<-df[order(df$COHORT),]
+    df_ord<-df[order(df$cluster_s),]
     df_ord$COHORT
     dim(hm)
-    hm_ord<-hm[,order(df$COHORT)]
+    hm_ord<-hm[,order(df$cluster_s)]
     
     ### SCALE!! 
     hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
     dim(hm_ord)
-    cluster_cols=TRUE
+    cluster_cols=cluster_cols
     hm_scaled
     #jpeg(fname, width=2000, height=1500, res=200)
     graphics.off()
@@ -413,6 +413,7 @@ if (run_heatmap){
                           show_rownames=show_rownames,
                           #scale='row', 
                           cluster_cols=cluster_cols,
+                          
                           annotation_col=df_ord_filt, 
                           
                           clustering_method = 'ward.D2'

@@ -37,11 +37,11 @@ g_params
 
 
 dim(x1)
-res<-NMF::nmf(x1, 8)
+#res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
 NFACTORS=9
-nrun=3
+nrun=2
 
 
 ## SAVE AND LOAD 
@@ -54,15 +54,15 @@ out_nmf=paste0(outdir_nmf, 'model')
 dir.create(outdir_nmf)
 
 
-if (file.exists(outdir_nmf)){
-  res=loadRDS(outdir_nmf)
+if (file.exists(out_nmf)){
+  res=loadRDS(out_nmf)
   
   
 }else{
   
   res.multirun<-NMF::nmf(x1,NFACTORS,nrun=nrun )
   res=res.multirun
-  saveRDS(res.multirun,outdir_nmf)
+  saveRDS(res.multirun,out_nmf)
 }
    
 

@@ -143,8 +143,12 @@ if (length(sel_coh)>1){
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
 if (length(sel_coh)>1){
-  clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
-  clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
+  for (k_centers_m in c(3,4,5,6)){
+    clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
+    print(clusters)
+    print(k_centers_m)
+  }
+ # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
   
 }
 
@@ -157,12 +161,12 @@ for (k in 3:15){
 }
 plot(ss_scores)
 
-clusters <- cluster_samples(MOFAobject, k=3, factors=sel_factors)
 
 
 
 ########### Add some metadata ####
 samples_metadata(MOFAobject)$PATNO_EVENT_ID
+samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
 samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
 
 clusters_mofa<-clusters

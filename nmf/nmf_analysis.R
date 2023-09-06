@@ -111,10 +111,11 @@ for (fn in 1:NFACTORS){
 #sel_factors=c(2,4)
 #sel_factors=c(1,2,3)
 k_centers=5
-clusters_single <- kmeans(t(h)[,sel_factors], centers = 3)
+clusters_single <- kmeans(t(h)[,sel_factors], centers = k_centers)
 
 covariates$cluster_s<-clusters_single$cluster[match(rownames(covariates),names(clusters_single$cluster))]
 covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
+chisq.test(df1$cluster_m, df1$COHORT)
 
 
 
@@ -125,6 +126,7 @@ df1=covariates
 chisq.test(df1$cluster_m, df1$COHORT)
 
 chisq.test(df1$cluster_s, df1$COHORT)
+
 
 kruskal.test(df1$NHY, as.factor(df1$cluster_m ))
 kruskal.test(df1$NHY, as.factor(df1$cluster_s ))

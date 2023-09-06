@@ -36,10 +36,6 @@ sig
 
 
 
-which( rowMins(cor$p)<0.05)
-
-cor$r['CONCOHORT',]
-stat[sig,]
 
 
 plot='r'
@@ -47,7 +43,7 @@ plot='r'
 
 chosen_covars
   
-if (plot=="r") {
+#if (plot=="r") {
   stat <- cor$r
   png(paste0( outdir_nmf, './covariates.png' ))
   
@@ -55,7 +51,7 @@ if (plot=="r") {
   dev.off()  
   
   write.csv(stat[sig,], paste0(outdir_nmf, 'cor_',mod, '.csv'  ))
-} else if (plot=="log_pval") {
+#} else if (plot=="log_pval") {
   stat <- cor$p
   stat[stat>alpha] <- 1.0
   if (all(stat==1.0)) stop("All p-values are 1.0, cannot plot the histogram")
@@ -76,10 +72,18 @@ if (plot=="r") {
   dev.off()  
   
   
-} else {
-  stop("'plot' argument not recognised. Please read the documentation: ?correlate_factors_with_covariates")
-}
+#} else {
+#  stop("'plot' argument not recognised. Please read the documentation: ?correlate_factors_with_covariates")
+#}
 
+which( rowMins(cor$p)<0.05)
+
+cor$r['CONCOHORT',]
+cor$p['CONCOHORT',]
+
+sel_factors<-which(cor$p['COHORT',]<0.05)
+sel_factors
+stat[sig,]
 
 #### Top Weights ####
 
@@ -101,10 +105,12 @@ for (fn in 1:NFACTORS){
 
 
 
-#### Cluser ####
-sel_factors=c(2,4)
-sel_factors=c(1,2,3)
-
+#### Cluster ####
+# 1. K-means 
+#  TODO: other clusters 
+#sel_factors=c(2,4)
+#sel_factors=c(1,2,3)
+k_centers=5
 clusters_single <- kmeans(t(h)[,sel_factors], centers = 3)
 
 covariates$cluster_s<-clusters_single$cluster[match(rownames(covariates),names(clusters_single$cluster))]

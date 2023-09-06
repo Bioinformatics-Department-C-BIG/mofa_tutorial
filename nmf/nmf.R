@@ -32,7 +32,7 @@ x1=assays(x1_se)[[mod]]
 
 
 #### select the highly variable #### 
-
+g_params
 
 
 
@@ -40,33 +40,29 @@ dim(x1)
 res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=5
-nrun=2
+NFACTORS=9
+nrun=3
 
 
 ## SAVE AND LOAD 
-out_nmf<-paste0(outdir,'/../','multirun_', NFACTORS, '_', nrun,'_', 
-                    mod )
-
-out_nmf<-paste0(outdir,'/../','multirun_', NFACTORS, '_', nrun,'_', 
-                mod )
 
 
 out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
 outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
+out_nmf=paste0(outdir_nmf, 'model')
 
 dir.create(outdir_nmf)
 
 
-if (file.exists(out_nmf)){
-  res=loadRDS(out_nmf)
+if (file.exists(outdir_nmf)){
+  res=loadRDS(outdir_nmf)
   
   
 }else{
   
   res.multirun<-NMF::nmf(x1,NFACTORS,nrun=nrun )
   res=res.multirun
-  saveRDS(res.multirun,out_nmf)
+  saveRDS(res.multirun,outdir_nmf)
 }
    
 
@@ -87,19 +83,13 @@ x1_se$PATNO
 #### Correlations for each factor
 # 1. Tune to maximize cohort correlations ####
 round(apply(h, 1, cor, x=x1_se$COHORT), 2)
-
-
-
-
-
 covariates <- as.data.frame(lapply(colData(x1_se), as.numeric))
 rownames(covariates)<-colData(x1_se)$PATNO_EVENT_ID
-dim(colData(x1_se))
-dim(t(covariates))
-
-rownames(covariates)
-rownames(t(h))
 h_t<-as.data.frame(t(h))
+
+
+
+
 
 
 

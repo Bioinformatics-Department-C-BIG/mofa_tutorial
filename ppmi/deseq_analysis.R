@@ -317,7 +317,7 @@ if (run_heatmap){
   orderedSigGenes<-oSigGenes[order(-oSigGenes[,order_by_metric]),]
   orderedSigGenes
   n_sig_f='all'
-  n_sig_f=50
+  n_sig_f=1000; show_rownames=FALSE
   
   if (n_sig_f=='all'){
     n_sig=dim(orderedSigGenes)[1]
@@ -347,7 +347,7 @@ if (run_heatmap){
   
   
   
-  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE){
+  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE){
     #'
     #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
     #' @param hm: heatmap data nfeats X nsamples 
@@ -410,7 +410,7 @@ if (run_heatmap){
     my_pheatmap<-pheatmap(hm_scaled_filt, 
                           labels_row=lab,
                           cluster_rows=TRUE, 
-                          show_rownames=TRUE,
+                          show_rownames=show_rownames,
                           #scale='row', 
                           cluster_cols=cluster_cols,
                           annotation_col=df_ord_filt, 
@@ -440,9 +440,9 @@ if (run_heatmap){
   
   
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
-  colDataToPlot<-c('NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
+  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT')
   
-  df<-as.data.frame(colData(vsd_filt)[,c("COHORT", "SEX", 'AGE', 'NHY', colDataToPlot)])
+  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE',"COHORT", 'NHY', colDataToPlot)])
   colData(vsd_filt_genes)$RBD_TOT
   # if clusters exist 
   
@@ -455,13 +455,13 @@ if (run_heatmap){
   
   
   #my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = feat_names_ens  ,  df=df, remove_cn=FALSE)
-  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE)
+  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE, show_rownames = show_rownames )
   
   my_pheatmap
   
   ### Plot MOFA too
   
-  fn_sel
+  
 
   
     my_pheatmap

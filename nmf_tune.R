@@ -11,13 +11,16 @@ unregister_dopar()
 run_nmf_get_cors<-function(){
   
   output_cors=list()
-  for (g_params in c('0.05_100_', '0.1_100_', '0.2_100_', '0.3_100_')){
-   # for (g_params in c( '0.3_100_')){
-      for  (k_centers in c(3,4,5)){
+  #for (g_params in c('0.05_100_', '0.1_100_', '0.2_100_', '0.3_100_')){
+  #  for (g_params in c( '0.3_100_')){
+  for (g_params in c( '0.4_100_')){
+    
+    for (NFACTORS in seq(5,11)){
+      
+      for  (k_centers in c(3,4,5,6,7,8,9)){
          print(k_centers)
       
 
-          for (NFACTORS in seq(5,11)){
             
             print(paste(g_params, NFACTORS))
             #### Load the dataset ####
@@ -36,24 +39,23 @@ run_nmf_get_cors<-function(){
             x1=assays(x1_se)[[mod]]
             
             print(NFACTORS)
-            nrun=5
+            nrun=3
             
             
             ## SAVE AND LOAD 
            # out_nmf<-paste0('nmf/plots/','multirun_', param_str_g, NFACTORS, '_', nrun,'_', 
            #                 mod)
-            out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+            out_nmf_params<- paste0( 'g_', g_params,'_coh_', sel_coh_s,'_', VISIT_S)
             outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
             out_nmf=paste0(outdir_nmf, 'model')
-            
+            seed=135
             
             if (file.exists(out_nmf)){
               res=loadRDS(out_nmf)
               
-              
             }else{
               
-              res.multirun<-NMF::nmf(x1,NFACTORS,nrun=nrun )
+              res.multirun<-NMF::nmf(x1,NFACTORS,nrun=nrun, seed=seed )
               res=res.multirun
               saveRDS(res.multirun,out_nmf)
             }
@@ -102,7 +104,7 @@ run_nmf_get_cors<-function(){
             sel_factors<-which(cor$p['COHORT',]<0.05)
             
           
-            cor_clusters=NULL
+            cor_clusters=NULL; mut_inf=NULL
            
             print(sel_factors)
             print(paste0('kcenters: ', k_centers))
@@ -117,14 +119,18 @@ run_nmf_get_cors<-function(){
               cor_clusters<-chisq.test(clusters_single$cluster,covariates$COHORT )
               print(cor_clusters)
               cor_clusters$p.value
+              
+              mut_inf<-round( MutInf(clusters_single$cluster,covariates$COHORT),digits = 3)
+              print(paste('MI:', mut_inf, digits = 4))
+              
             }
               
             #df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
             #              run_mofa_complete, N_FACTORS,cors_t , max_cor )
             
             
-            df_stats = c(g_params, NFACTORS, k_centers, cor_clusters$p.value, cor_clusters$statistic, length(sel_factors) )
-            write.table(t(df_stats), paste0(outdir_orig,'nmf_all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+            df_stats = c(g_params, NFACTORS, k_centers, cor_clusters$p.value, cor_clusters$statistic, mut_inf, length(sel_factors), nrun )
+            write.table(t(df_stats), paste0(outdir_orig,'nmf_all_stats_mi.csv'), append=TRUE,sep=',', col.names = FALSE)
             
           }
 
@@ -137,3 +143,4 @@ run_nmf_get_cors<-function(){
 
 
 run_nmf_get_cors()
+

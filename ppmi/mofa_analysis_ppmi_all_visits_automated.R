@@ -54,7 +54,15 @@ library(ensembldb)
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
 
-
+get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
+  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+  cors_top<-cors_both[[1]]
+  cors_pearson_top<-cors_both[[2]]
+  sel_factors<-abs(cors_pearson_top[,COHORT_NAME])>0.15
+  
+  round(cors_top[,COHORT_NAME][sel_factors], digits=2)
+  round(cors_pearson_top[,COHORT_NAME][sel_factors], digits=2)
+}
 
 
 
@@ -86,34 +94,16 @@ ggsave(paste0(outdir, 'data_overview.jpeg'), dpi=300,
 
 
 
-stats<-apply(MOFAobject@samples_metadata, 2,table )
-stats$COHORT
-sapply(stats,var)>0
 
-non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
-non_na_vars
-NROW(non_na_vars)
+
 #### Covariance of factors with metadata 
 source('ppmi/mofa_utils.R')
 
-get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
-  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
-  cors_top<-cors_both[[1]]
-  cors_pearson_top<-cors_both[[2]]
-  sel_factors<-abs(cors_pearson_top[,COHORT_NAME])>0.15
-  
-  round(cors_top[,COHORT_NAME][sel_factors], digits=2)
-  round(cors_pearson_top[,COHORT_NAME][sel_factors], digits=2)
-}
 
-#cors_both<-get_correlations(MOFAobject, covariates = c('COHORT'))
-
+stats<-apply(MOFAobject@samples_metadata, 2,table )
+non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
-
-cors[1,][cors[1,]>1.3]
-
-
 
 ######
 
@@ -143,10 +133,17 @@ if (length(sel_coh)>1){
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
 if (length(sel_coh)>1){
-  for (k_centers_m in c(3,4,5,6)){
+  for (k_centers_m in c(3,4,5,6, 7, 8, 9,10)){
     clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
-    print(clusters)
     print(k_centers_m)
+    clusters_mofa<-clusters
+    
+    covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
+    df1=covariates
+    #print(chisq.test(df1$cluster_m, df1$COHORT))
+    mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
+    print(mut_inf)
+    
   }
  # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
   

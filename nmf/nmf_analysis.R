@@ -41,7 +41,7 @@ sig
 plot='r'
 
 
-chosen_covars
+
   
 #if (plot=="r") {
   stat <- cor$r
@@ -121,6 +121,11 @@ chisq.test(df1$cluster_m, df1$COHORT)
 
 chisq.test(clusters_single$cluster,covariates$COHORT )
 chisq.test(clusters_single$cluster,covariates$COHORT )
+
+MutInf(clusters_single$cluster,covariates$COHORT)
+
+
+mutinformation()
 
 df1=covariates
 chisq.test(df1$cluster_m, df1$COHORT)

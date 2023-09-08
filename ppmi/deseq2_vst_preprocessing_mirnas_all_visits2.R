@@ -25,13 +25,14 @@ library(rbioapi)
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, '/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
-filter_se_byExpr()
 
 ### Load metadata 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
+metadata_output<-paste0(output_files, 'combined_log.csv')
+combined_bl_log<-read.csv2(metadata_output)
 
-process_mirnas=TRUE
+process_mirnas=FALSE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
@@ -51,7 +52,7 @@ for (VISIT in c(c('V08'))){
         #### Remove low expression 
         
         
-        se=load_se_all_visits(input_file = input_file, combined=combined)
+        se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
         
         ##### 1.  First create the summarized experiment object  
         ### find common samples in mirnas file + metadata
@@ -134,7 +135,7 @@ for (VISIT in c(c('V08'))){
           print('Single cohort and visit deseq ')
           
           ddsSE <- DESeqDataSet(se_filt, 
-                                design = formula_deseq3)
+                                design = as.formula('~AGE_AT_VISIT+SEX'))
           ddsSE<-estimateSizeFactors(ddsSE)
           
           vsd <- varianceStabilizingTransformation(ddsSE)
@@ -151,7 +152,15 @@ for (VISIT in c(c('V08'))){
           disease_group=1    
           
         }
-        deseq2Results <- results(deseq2Data, contrast=c('COHORT', disease_group,2))
+        
+        if (length(sel_coh)>1){
+          # Check if there is more than one cohort
+          deseq2Results <- results(deseq2Data, contrast=c('COHORT', disease_group,2))
+        }else{
+          deseq2Results <- results(deseq2Data)
+          
+        }
+        
         datalist=list(ddsSE, vsd, se_filt, deseq2Results)
         saveRDS(datalist,deseq_file)
         saveRDS(se, se_file)

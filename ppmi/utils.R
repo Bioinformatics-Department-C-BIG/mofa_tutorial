@@ -625,6 +625,16 @@ create_multi_experiment<-function(data_full, combined_bl){
 }
 
 
+filter_se_byExpr<-function(se_filt){
+      raw_counts <- assay(se_filt)
+      
+      idx <- edgeR::filterByExpr(raw_counts)
+      raw_counts <- as.matrix(raw_counts[idx, ])
+      
+      se_filt = se_filt[idx,]
+      return(se_filt)
+      
+}
 
 
 create_hist<-function(df, name){

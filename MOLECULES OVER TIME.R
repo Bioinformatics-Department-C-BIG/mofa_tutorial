@@ -55,20 +55,21 @@ se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 
 
 #Reduce(intersect, list(a,b,c))
-table( se_filt$COHORT)
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
 
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
-
+ws
 
 if (fn_sel==2){
   cut_high<-0.98; cut_low=0.02
   
 }else{
   cut_high<-0.998; cut_low=0.002
+  cut_high<-0.99; cut_low=0.01
+  
   
 }
 ws_high<-ws[ws>quantile(ws, cut_high),]
@@ -83,18 +84,19 @@ length(ws_union)
 
 
 
-
-
-if (view=='RNA'){
-  ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_union), collapse='|'), rownames(assay(se_filt_V08)))]
-  feat_names=ens_genes
+ws_union
+view
+#if (view=='RNA'){
+ # ens_genes<-rownames(assay(se_filt_V08))[grep(paste0(names(ws_union), collapse='|'), rownames(assay(se_filt_V08)))]
+#  feat_names=ens_genes
   
-}else{
+#}else{
   feat_names=names(ws_union)
   
-}
+#}
 
-
+feat_names_ens<-gsub('\\..*', '',feat_names)
+feat_names_ens
 
 
 
@@ -157,7 +159,7 @@ ens<-gsub('\\..*', '',merged_melt$variable)
 Z <- get_factors(MOFAobject)[[1]]
 Z1<-Z[,sel_factors[fn_sel]]
 patnos_z1<-gsub('\\_.*', '', names(Z1))
-Z1_matched<-Z1[match(merged_melt$patno,patnos_z1) ]
+Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 
 #png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
 #hist(Z1_matched);
@@ -191,8 +193,8 @@ if (view=='RNA'){
   
 }
 
-na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$patno)
-merged_melt_filt<-merged_melt[merged_melt$patno %in% na_ps, ]
+na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$PATNO)
+merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
 
 ### EDIT GROUP TO BE PATNO and GROUP!!
 # OR JUST GROUP  
@@ -263,7 +265,7 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 
 ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
-  geom_line(aes(group=patno),  col= 'grey') +
+  geom_line(aes(group=PATNO),  col= 'grey') +
   geom_boxplot(aes(fill=VISIT))+
   scale_color_viridis_d(option='mako')+
   scale_fill_viridis_d(option='mako')+
@@ -284,7 +286,9 @@ ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'
 
 
 #######################################################
-############ TIME TRAJECTORY FOR ALL VISITS #####
+############ TIME TRAJECTORY FOR ALL VISITS ###########
+#######################################################
+
 
 
 
@@ -388,6 +392,13 @@ df_bl_cl<-colData(se_bl_cl)[,to_sel]
 df_V06_cl<-colData(se_V06_cl)[,to_sel]
 df_V04_cl<-colData(se_V04_cl)[,to_sel]
 
+### Add also from other time points only the clinical data ####
+
+df_V08_cl$PATNO
+
+
+
+
 
 
 df_V08_cl_ml<-reshape2::melt(df_V08_cl,value.name = to_sel); df_V08_cl_ml$VISIT='V08'
@@ -405,75 +416,174 @@ merged_melt_cl<-rbind(df_bl_cl_ml,df_V08_cl_ml)
 merged_melt_cl<-rbind(merged_melt_cl,df_V06_cl_ml)
 merged_melt_cl<-rbind(merged_melt_cl,df_V04_cl_ml)
 
+dim(merged_melt_cl)
+
+colnames(merged_melt_cl)
+
+
+
 patnos_z1<-gsub('\\_.*', '', names(Z1))
-patnos_z1
-merged_melt_cl$PATNO
+
 Z1_matched<-Z1[match(merged_melt_cl$PATNO,patnos_z1) ]
 
 hist(Z1_matched);
 quantile(Z1_matched,0.9, na.rm=TRUE)
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.9, na.rm=TRUE))
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1,0.9, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1,0.8, na.rm=TRUE))
 
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
+Z1_grouping<-factor(Z1_matched>quantile(Z1,0.8, na.rm=TRUE))
+
+
+
+
+
+
+#####
+
+
+
 
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   T=0.2
-  Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  Z1_grouping<-Z1_matched>quantile(Z1_matched,T, na.rm=TRUE)
+  group_by_patient<-factor(Z1>quantile(Z1,0.2, na.rm=TRUE))
   
 }
 
 Z1_grouping
 dim(merged_melt)
-merged_melt_cl$grouping<-Z1_grouping
+
+merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'LowFactor'))
+
+
+
+
+### Create groups 
+
+### Decide on the grouping #### 
+group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
+group_by_patient<-clusters$cluster
+
+names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
+
+
+combined_bl_log_common<-combined_bl_log[combined_bl_log$PATNO %in% na_ps,]
+
+combined_bl_log_common
+
+combined_bl_log_common$Z1_grouping<-group_by_patient[match(combined_bl_log_common$PATNO, names(group_by_patient))]
+
+
+
+#combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
+combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
+combined_bl_log_common$grouping<-factor(combined_bl_log_common$Z1_grouping)
+combined_bl_log_common$grouping
+
+combined_bl_log_common$VISIT=factor(combined_bl_log_common$EVENT_ID)
+
+
 
 
 ### for categorical 
 #table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
 #table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'], )
-ggplot(data = merged_melt_cl, aes( x=factor(grouping), 
+ggplot(data = combined_bl_log_common, aes( x=factor(grouping), 
                                    fill = factor(PDSTATE) )) + 
   geom_bar()+
   facet_wrap(. ~ VISIT, scales='free_y') 
   
+
+ggplot(data = combined_bl_log_common, aes( x=factor(grouping), 
+                                           fill = factor(PDSTATE) )) + 
+  geom_bar()+
+  facet_wrap(. ~ EVENT_ID, scales='free_y') 
+
 #theme_bw() 
 to_sel
 
 ### for continous 
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
-table(merged_melt_cl$PDSTATE)
-merged_melt_cl2<-merged_melt_cl3
 merged_melt_cl3$PDSTATE
 
-merged_melt_cl3$NP3_TOT
+merged_melt_cl$NP3_TOT
+
+
 to_sel
 
 merged_melt_cl$co
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT')
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT'
+           )
 
 if (names(sel_factors[fn_sel]) %in% c('Factor3')){
   to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-             'con_putamen', 'rigidity', 'td_pigd_old')
+             'con_putamen', 'rigidity', 'td_pigd_old', 
+             'RBD_TOT', 'NP3_TOT', 'NP2_TOT' , 'moca')
  
 }else{
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
-              'td_pigd_old_on')
+              'td_pigd_old_on',  'AGE')
 }
 merged_melt_cl3$td_pigd_old_on
 
 to_plot
 ## todo why is scau missing from baseline? how to measure total? 
-merged_melt_cl3<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
+merged_melt_cl_off<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 
-remove_off=TRUE
-if (remove_off){
- df_plot<- merged_melt_cl3
+
+
+
+
+### Filters #### 
+# 1. 
+
+
+
+
+
+
+remove_on=FALSE
+if (remove_on){
+ df_plot<- merged_melt_cl_off
+ 
+ combined_bl_log_common_off=combined_bl_log_common[combined_bl_log_common$PDSTATE %in% c('OFF', ''),]
+ 
 }else{
   df_plot<-merged_melt_cl
+  
+  
+  combined_bl_log_common_off=combined_bl_log_common
+  
 }
+
+
+
+
+
+  
+
+
+
+#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
+combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V', combined_bl_log_common_off$EVENT_ID) ,]
+
+
+df_plot<-combined_bl_log_common_off
+
+
+df_plot %>% 
+  group_by(EVENT_ID, grouping)%>% 
+  summarize(count_distinct = n_distinct(PATNO))
+
+smaller_group<-df_plot[df_plot$EVENT_ID=='V16',]$PATNO
+
+df_plot<-df_plot[df_plot$PATNO %in% smaller_group,]
+
+
+
 for (y in to_plot){
 
 ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
@@ -488,24 +598,24 @@ ggplot(data = df_plot, aes_string(x = 'VISIT', y = y,
   
   #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
   theme_bw()+ 
-  geom_signif(comparisons = list(c('BL', 'V08')), 
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.4)+
+ # geom_signif(comparisons = list(c('BL', 'V08')), 
+  #            map_signif_level=TRUE, 
+   #           tip_length = 0, vjust=0)+
   
   labs(y=y)+
   # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
-    size = 13, color = "dark green"), 
+    size = 10, color = "dark green"), 
     axis.title.y =element_text(
       size = 13, color = "dark green"), 
     axis.text.x = element_text(
-      size = 12 ))
+      size = 9 ))
 
 
 
 warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top, y,'_', remove_off,  '.jpeg'), 
-       width=3, height=3)
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt_top, y,'_', remove_on,  '.jpeg'), 
+       width=5, height=3)
 }
 
 
@@ -537,6 +647,10 @@ for (cov_to_plot in to_sel){
 
 
 ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
+
+
+
+
 
 
 

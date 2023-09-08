@@ -39,6 +39,8 @@ run_mofa_complete<-FALSE
 
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
+source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
+
 
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
@@ -138,8 +140,11 @@ run_mofa_get_cors<-function(N_FACTORS){
 
 
 # n_factors best=15
-for (N_FACTORS in c(15)){
+for (N_FACTORS in c(10:15)){
+  #
   ## MOFA parameters, set directory 
+  #'
+  #'
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
@@ -149,31 +154,72 @@ for (N_FACTORS in c(15)){
   
   
   
+  MOFAobject@samples_metadata=attach_clinvars(MOFAobject,combined_bl_log )
+  
+  
+  ### Correlations ####
+  
+  cors_both<-get_correlations(MOFAobject, 'COHORT')
+  cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+  
+  
+  ## Cluster and eval MI ####
+  
+  if (length(sel_coh)>1){
+    sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+    
+    
+    for (k_centers_m in c(3,4,5,6, 7, 8, 9,10)){
+      
+      # TODO: create cluster and eval function
+      
+      clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
+      clusters_mofa<-clusters
+      
+      covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
+      df1=covariates
+      #print(chisq.test(df1$cluster_m, df1$COHORT))
+      mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
+      print(mut_inf)
+      
+    }
+  
+  
+  
+  
+  }
 }
 
 ## attach some extra clinical variables 
-sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
-combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
-table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$COHORT )
+  
+  attach_clinvars<-function(MOFAobject,combined_bl_log ){
+    
+    #'
+    #' bind new metadata 
+    #'
+    sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
+    combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
+    
+    combined_bl_log_sel_OFF<- combined_bl_log_sel[combined_bl_log_sel$PDSTATE %in% c('OFF', 'NA', ''),]
+    
+    length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
+    
+    
+    table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
+    combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
+    combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
+    
 
-combined_bl_log_sel_OFF<- combined_bl_log_sel[combined_bl_log_sel$PDSTATE %in% c('OFF', 'NA', ''),]
-
-length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
-
-
-table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
-combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
-combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
-
-combined_bl_log_sel$PDSTATE
-
-
-### Merging and remove duplicates 
-meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
-meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
-meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
-
-MOFAobject@samples_metadata=meta_merged_ord
+    
+    ### Merging and remove duplicates 
+    meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
+    meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
+    meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
+    return(meta_merged_ord)
+    
+  }
+  
+    
 
 
 

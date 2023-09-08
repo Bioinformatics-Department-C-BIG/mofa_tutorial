@@ -748,3 +748,42 @@ preprocess_visit_predict<-function(se_filt_V, common, feat_names){
   
 }
 
+
+#### Use changes 
+preprocess_visit_predict<-function(se_filt_V, common, feat_names){
+  # 1. Select PD only 
+  # 2. Subselected common samples - for training we can use all of them but 
+  # for testing only the ones that we have 
+  # 3. CPM or VSN
+  # 4. Clip outliers 
+  # 5. Add patient number and event 
+  #se_filt_V<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V[,se_filt_V$PATNO %in% common]
+  # CPM or VSN? # cpm for plotting, vsn for 
+  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  
+  # trim min counts before size factor estimation? 
+  ddsSE <- DESeqDataSet(se_filt_V_pd, 
+                        design =as.formula(~COHORT ))
+  ddsSE<-estimateSizeFactors(ddsSE)
+  
+  
+  ### separate vsd? 
+  # se_filt[]
+  # vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+  vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+  
+  df_v<-assay(vsd)
+  
+  
+  df_v<- clip_outliers(df_v)
+  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  v_ens=data.frame(df_V_ens)
+  v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
+                                             c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 
+                                               'CONCOHORT', 'con_putamen')])
+  
+  
+  return(v_ens)
+  
+}

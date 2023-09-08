@@ -40,8 +40,8 @@ dim(x1)
 #res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=9
-nrun=2
+NFACTORS=6
+nrun=10
 
 
 ## SAVE AND LOAD 

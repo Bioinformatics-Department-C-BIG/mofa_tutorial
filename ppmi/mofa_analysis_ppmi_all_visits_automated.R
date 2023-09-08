@@ -127,16 +127,22 @@ if (length(sel_coh)>1){
 
 
 ### RUN CLUSTERING 
+library(DescTools)
 
 #TODO: Adjust mode if cohorts are 1 vs 2
 
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
 if (length(sel_coh)>1){
-  for (k_centers_m in c(3,4,5,6, 7, 8, 9,10)){
+  #for (k_centers_m in c(6)){
+  for (k_centers_m in c(5)){
+    
     clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
-    print(k_centers_m)
     clusters_mofa<-clusters
+    
+    clusters_mofa_34 <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(3,4))
+    clusters_mofa_moca <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(14,10,8))
+    
     
     covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
     df1=covariates
@@ -151,8 +157,8 @@ if (length(sel_coh)>1){
 
 ss_scores<-c()
 for (k in 3:15){
-  clusters <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
-  cluster_bt<-clusters$betweenss/clusters$totss
+  clusters_test <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
+  cluster_bt<-clusters_test$betweenss/clusters_test$totss
   print(cluster_bt)
   ss_scores<-append(  ss_scores,cluster_bt)
 }
@@ -163,11 +169,10 @@ plot(ss_scores)
 
 ########### Add some metadata ####
 samples_metadata(MOFAobject)$PATNO_EVENT_ID
-samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
-samples_metadata(MOFAobject)$cluster<-factor(clusters$cluster)
+samples_metadata(MOFAobject)$cluster<-factor(clusters_mofa$cluster)
+samples_metadata(MOFAobject)$cluster<-factor(clusters_mofa$cluster)
 
-clusters_mofa<-clusters
-clusters
+
 
 
 

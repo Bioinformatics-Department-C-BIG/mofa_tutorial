@@ -39,6 +39,7 @@ run_mofa_complete<-FALSE
 
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
+source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')

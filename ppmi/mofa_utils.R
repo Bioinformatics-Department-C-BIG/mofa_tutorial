@@ -66,5 +66,26 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
 
 
 
+select_top_bottom_perc<-function(view, factors, top_fr=.01 ){
+  #'select top bottom features 
+  #'#'
+  #'
+  ws<-get_weights(MOFAobject, views = view, factors=factors)[[1]]
+  print(factors)
+  cut_high<-0.99; cut_low=0.01
+  high<-apply(ws,2, function(x){ ll<-as.data.frame(x) %>%
+    top_frac(top_fr)
+  return(rownames(ll))})
+  low<-apply(ws,2, function(x){ ll<--as.data.frame(x) %>%
+    top_frac(top_fr)
+  return(rownames(ll))})
+  
+  high_names<-melt(high)$value
+  low_names<-melt(low)$value
+  ws_union<-unique(c(high_names, low_names))
+  return(ws_union)
+}
+
+
 
 

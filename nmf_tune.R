@@ -13,11 +13,11 @@ run_nmf_get_cors<-function(){
   output_cors=list()
   #for (g_params in c('0.05_100_', '0.1_100_', '0.2_100_', '0.3_100_')){
   #  for (g_params in c( '0.3_100_')){
-  for (g_params in c( '0.4_100_')){
+  for (g_params in c( '0.4_100_', '0.3_100_', '0.5_100_')){
     
     for (NFACTORS in seq(5,11)){
       
-      for  (k_centers in c(3,4,5,6,7,8,9)){
+      for  (k_centers in c(3,4,5,6,7,8,9, 10)){
          print(k_centers)
       
 
@@ -39,7 +39,7 @@ run_nmf_get_cors<-function(){
             x1=assays(x1_se)[[mod]]
             
             print(NFACTORS)
-            nrun=3
+            nrun=10
             
             
             ## SAVE AND LOAD 

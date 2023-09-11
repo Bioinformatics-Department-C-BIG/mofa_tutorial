@@ -40,8 +40,8 @@ dim(x1)
 #res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=9
-nrun=2
+NFACTORS=6
+nrun=10
 
 
 ## SAVE AND LOAD 
@@ -59,12 +59,14 @@ if (file.exists(out_nmf)){
   
   
 }else{
-  
+  dir.create('./ppmi/tmp/'); setwd('./ppmi/tmp/')
   res.multirun<-NMF::nmf(x1,NFACTORS,nrun=nrun )
   res=res.multirun
   saveRDS(res.multirun,out_nmf)
+  setwd(data_dir)
 }
    
+outdir_nmf
 
 
 
@@ -96,11 +98,11 @@ h_t<-as.data.frame(t(h))
 
 
 nmf_param_str<-paste0('nmf/plots/','cor_', mod, '_', NFACTORS )
-nmf_outdir<-nmf_param_str
-dir.create(nmf_outdir)
-dir.create(paste0(nmf_outdir, '/top_weights/'))
-dir.create(paste0(nmf_outdir, '/enrichment/'))
-dir.create(paste0(nmf_outdir, '/heatmaps/'))
+
+dir.create(outdir_nmf)
+suppressWarnings(dir.create(paste0(outdir_nmf, '/top_weights/')))
+dir.create(paste0(outdir_nmf, '/enrichment/'))
+dir.create(paste0(outdir_nmf, '/heatmaps/'))
 
 
 ## Get back a table for all metadata ? 

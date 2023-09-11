@@ -4,6 +4,8 @@ source(paste0('ppmi/setup_os.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+source(paste0(script_dir,'ppmi/plotting_utils.R'))
+
 
 process_mirnas
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
@@ -347,90 +349,8 @@ if (run_heatmap){
   
   
   
-  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, cluster_cols=FALSE){
-    #'
-    #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
-    #' @param hm: heatmap data nfeats X nsamples 
-    #' @param sigGenes: select genes to plot description
-    #' 
-    #' 
-    #' 
-    #' 
-    #ARRANGE
-    
-    
-    
-    vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-    
-    
-    ### Add the annotations 
-    meta_single<-colData(vsd_filt_genes)
-    
-    
-    
-    
-    ## HEATMAP OPTIONS 
-    cluster_cols=cluster_cols;    
-    #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-    fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-                  filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
-    
-    hm<-assay(vsd_filt_genes)
-    
-    df_ord<-df[order(df$cluster_s),]
-    df_ord$COHORT
-    dim(hm)
-    hm_ord<-hm[,order(df$cluster_s)]
-    
-    ### SCALE!! 
-    hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
-    dim(hm_ord)
-    cluster_cols=cluster_cols
-    hm_scaled
-    #jpeg(fname, width=2000, height=1500, res=200)
-    graphics.off()
-    library(ggplot2)
-    if(process_mirnas){
-      lab=rownames(rowData(vsd_filt_genes)) }else{
-        lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
-    cluster_cols
-    hm_scaled
-    
-    hm_scaled_filt=hm_scaled
-    df_ord_filt=df_ord
-    
-    if (remove_cn){
-      d_ind<-df_ord$COHORT==1
-      hm_scaled_filt<-hm_scaled[,d_ind]
-      
-      df_ord_filt<-df_ord[d_ind, ]
-    }
-    
-    #jpeg(fname, width=10*100, height=7*100, res=300)
-    my_pheatmap<-pheatmap(hm_scaled_filt, 
-                          labels_row=lab,
-                          cluster_rows=TRUE, 
-                          show_rownames=show_rownames,
-                          #scale='row', 
-                          cluster_cols=cluster_cols,
-                          
-                          annotation_col=df_ord_filt, 
-                          
-                          clustering_method = 'ward.D2'
-    )
-    
-    
-    show(my_pheatmap)
-    dev.off()
-    my_pheatmap
-    # ggsave(fname, width=10, height=7)
-    
-    ggsave(fname,plot=my_pheatmap, width=7, height=7, dpi=300)
-    return(my_pheatmap)
-  }
   
   
-  my_pheatmap
  # detach('ComplexHeatmap',unload=TRUE)
          
   
@@ -443,7 +363,7 @@ if (run_heatmap){
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
   colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT')
   
-  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE',"COHORT", 'NHY', colDataToPlot)])
+  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY', colDataToPlot, "COHORT")])
   colData(vsd_filt_genes)$RBD_TOT
   # if clusters exist 
   
@@ -452,14 +372,19 @@ if (run_heatmap){
   df$cluster_s<-factor(clusters_single$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_single$cluster ))])
   #### Add different clustering? 
   df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
+  df$cluster_m_34<-factor(clusters_mofa_34$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa_34$cluster ))])
   
   
   
-  #my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = feat_names_ens  ,  df=df, remove_cn=FALSE)
-  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE, show_rownames = show_rownames )
+  ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(3,4))
+
   
-  my_pheatmap
   
+    
+  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
+                            show_rownames = show_rownames,cluster_cols = TRUE )
+  
+dev.off()
   ### Plot MOFA too
   
   
@@ -467,21 +392,9 @@ if (run_heatmap){
   
     my_pheatmap
 
-  #P2<-pheatmap(assay(vsd_filt_genes), 
-  #         cluster_rows=FALSE, 
-  #         show_rownames=TRUE,
-  #         cluster_cols=TRUE, annotation_col=df)
-  #P2
+
   
   
-  #fname<-paste0(outdir_s, '/heatmap2.jpeg')
-  #ggsave(fname, width=8, height=8)
-  
-  #dev.off()
-  
-  
-  
-  #dists <- dist(t(assay(vsd_filt)))
   #plot(hclust(dists))
 }
 

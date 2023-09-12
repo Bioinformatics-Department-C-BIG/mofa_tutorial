@@ -183,6 +183,14 @@ samples_metadata(MOFAobject)$cluster<-factor(clusters_mofa$cluster)
 
 
 
+mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
+
+
+
+mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
+mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
+
+
 
 
 
@@ -243,7 +251,8 @@ ids_to_plot_strict_cleaned<-ids_to_plot_strict[!to_remove_covars]
 to_remove_covars
 ids_to_plot_strict_cleaned
 ids_to_plot_strict_cleaned
-jpeg(paste0(outdir, '/factors_covariates_only_nonzero_strict_pval','.jpeg'),width =700+length(ids_to_plot_strict)*20,
+jpeg(paste0(outdir, '/factors_covariates_only_nonzero_strict_pval','.jpeg'),
+     width =700+length(ids_to_plot_strict)*20,
      height = 800, res=150)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates = names(ids_to_plot_strict_cleaned), 
@@ -284,7 +293,7 @@ selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT'
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
-                   'NP3RIGN', 'SCAU5', 'MCATOT',
+                   'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
                    'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 'ptau', 'abeta', 'ess_cat', 
                    'HVLTRDLY',
                    'PDSTATE', 'NP3RTCON', 
@@ -298,7 +307,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
 labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON',
              'MDS1_log','MDS2_log','MDS3_log', 'MDS4_log',
              'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
-             'SC-CONSTIP', 'MCA-cognit-tot'  , 
+             'SC-CONSTIP', 'MCA-cognit-tot'  , 'moca', 
              'MCA-verb fluency','MCA-visuoconstruct', 'cogstate', 'SEM fluency', 'SEM FL FRUIT',
              'ptau','abeta' ,'EPWORTH sleep cat' ,
              'HOP VERB LEARNING-recall', 
@@ -360,6 +369,24 @@ cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
 
+plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000 ){
+  
+  # filter if some do not exist in the colnames of metadata
+  selected_covars=selected_covars[selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
+  labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
+  
+  jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
+  P2<-correlate_factors_with_covariates(MOFAobject,
+                                        covariates =selected_covars , plot = plot,
+                                        labels_col=labels_col, 
+                                        factors = factors, 
+                                        cluster_cols=TRUE)
+  
+  dev.off()
+  
+  
+}
+
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
 selected_covars<-selected_covars2; length(selected_covars)
@@ -372,7 +399,7 @@ MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[sel
 
 plot="log_pval"
 # Plot 1: strict ones we are interested in
-
+# conference poster 
 fname<-'factors_covariates_only_nonzero_strict'
 factors=names(sel_factors)
 plot_covars_mofa(selected_covars2,fname,plot,factors,labels_col )
@@ -386,22 +413,6 @@ plot_covars_mofa(selected_covars_broad,fname,plot,c(sel_factors, 10, 8),labels_c
 
 
 
-plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000 ){
-  
-  
-  selected_covars=selected_covars[selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
-  
-  jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
-  P2<-correlate_factors_with_covariates(MOFAobject,
-                                        covariates =selected_covars , plot = plot,
-                                        labels_col=labels_col, 
-                                        factors = factors, 
-                                        cluster_cols=TRUE)
-  
-  dev.off()
-  
-  
-}
 
 selected_covars
 

@@ -11,12 +11,18 @@ unregister_dopar()
 g_params_set<-c( '0.4_100_', '0.3_100_', '0.5_100_');var_prefix = 'rnas_'
 
 m_params_set<-c( '0.1_10_', '0.2_10_', '0.3_10_','0.4_10_', '0.5_10_' , '0.75_10_', '0.9_10_');var_prefix = 'mirnas_'
+m_params_set<-c(  '0.75_10_', '0.9_10_', '0.4_10_', '0.5_10_' );var_prefix = 'mirnas_'
+
+
 var_prefix = 'mirnas_'
 
 params_set=m_params_set
 mod='miRNA'
 nrun=10
   
+
+
+# TODO: ADD SEED 
 run_nmf_get_cors<-function(){
   
   output_cors=list()
@@ -24,11 +30,10 @@ run_nmf_get_cors<-function(){
   #  for (g_params in c( '0.3_100_')){
   for (nmf_params in params_set){
     
-    for (NFACTORS in seq(2:10)){
+    for (NFACTORS in seq(9,10)){
       
       for  (k_centers in c(3,4,5,6,7,8,9, 10)){
-         print(k_centers)
-      
+
 
             
             print(paste(nmf_params, NFACTORS))

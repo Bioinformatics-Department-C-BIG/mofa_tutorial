@@ -4,6 +4,10 @@ library(FactoMineR)
 library(pixmap)
 #install.packages('NMF')
 library(NMF)
+source(paste0(script_dir, '/ppmi/config.R'))
+source(paste0(script_dir, '/ppmi/mofa_config.R'))
+source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
+
 
 
 # TODO: setup the home dir 
@@ -12,9 +16,11 @@ library(NMF)
 mod='miRNA'
 mod='proteomics'
 mod='RNA'
-mod='RNA' ; nmf_params<-g_params
+mod='RNA' ; nmf_params<-g_params;  NFACTORS=10; nrun=10
 
-mod='miRNA'
+
+mod='miRNA'; nmf_params<-m_params; NFACTORS=5; nrun=10
+
 
 #### Load the dataset ####
 ## get list of three mats 
@@ -40,15 +46,14 @@ dim(x1)
 #res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=10
-nrun=5
 
 
 ## SAVE AND LOAD 
 
-prefix='g_'
 
 if (mod=='RNA'){
+  prefix='g_'
+  nmf_params=g_params
       out_nmf_params<- paste0( prefix, g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
      
 }else if(mod=='miRNA'){

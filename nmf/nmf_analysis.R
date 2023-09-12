@@ -13,17 +13,27 @@ library(psych)
 dim(covariates)
 cor <- psych::corr.test(covariates,h_t, method = "pearson", adjust = "BH")
 
+covars_to_plot=sig2_names
+plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FALSE, height=1200, res=300, 
+                             alpha=0.05, sel_factors=NULL){
+ # if (is.logical(labels_col)){labels_col=covars_to_plot}
+  
 
-plot_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FALSE){
-  if (is.logical(labels_col)){labels_col=covars_to_plot}
   
+  labels_col<-mt_kv$V2[match(covars_to_plot,mt_kv$V1)]
+  labels_col
   
-  labels_col<-ll$V2[match(covars_to_plot, ll$V1)]
+  if (is.null(sel_factors)){
+    sel_factors=c(1:dim(cor$r)[2])
+  }
+  
   
   if (plot=="r") {
     
-    stat <- cor$r
-    png(paste0( outdir_nmf, '/',fname,  '.png' ))
+    stat <- cor$r[,sel_factors]
+    
+
+    png(paste0( outdir_nmf, '/',fname,  '.png' ), width = 1000+length(selected_covars)*20, height=height, res=300)
     corrplot::corrplot(stat[covars_to_plot,], tl.col = "black", title="Pearson correlation coefficient")
     dev.off()  
     
@@ -31,20 +41,29 @@ plot_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FALSE){
     
     
   } else if (plot=="log_pval") {
-    stat <- cor$p
+    
+    stat <- cor$p[,sel_factors]
     #stat[stat>alpha] <- 1.0
     if (all(stat==1.0)) stop("All p-values are 1.0, cannot plot the histogram")
+    stat[stat>alpha] <- 1.0
+    
+    
     stat <- -log10(stat)
     
     
     stat_filt<-  as.data.frame(stat[covars_to_plot,])
+    
     stat_filt<-as.data.frame(na.omit(stat_filt))
-    stat[is.infinite(stat)] <- 1000
+    
+    #stat[is.infinite(stat)] <- 1000
     #if (transpose) stat <- t(stat)
     #if (return_data) return(stat)
+    
+    labels_col<-mt_kv$V2[match(rownames(stat_filt),mt_kv$V1)]
+    
     col <- colorRampPalette(c("lightgrey", "red"))(n=100)
     
-    png(paste0( outdir_nmf, '/', fname, '.png' ), res=300, width=10, height=7, units='in')
+    png(paste0( outdir_nmf, '/', fname, '.png' ), res=res,  width = 1000+length(selected_covars)*20, height=height)
     
     pheatmap::pheatmap(t(stat_filt), main="log10 adjusted p-values", cluster_rows = TRUE, color=col, 
                        labels_col = labels_col )
@@ -68,14 +87,14 @@ to_remove_covars<-grepl( to_remove_regex, rownames(cor$p))
 
 
 sig<-which( rowMins(cor$p)<0.01 & rowMaxs(cor$r)<0.95 & !to_remove_covars ) 
-sig<-which( rowMins(cor$p)<0.01 & !to_remove_covars ) 
+sig_names<-rownames(cor$p)[which( rowMins(cor$p)<0.01 & !to_remove_covars ) ]
 
 
 sig2<-which( rownames(cor$p) %in% selected_covars2 ) 
-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars2 ) ]
+sig2_names<-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars2 ) ]
 
 
-sig_broad<-which( rownames(cor$p) %in% selected_covars_broad &  !(rownames(cor$p) %in% 'con_putamen')  ) 
+sig_broad<-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars_broad &  !(rownames(cor$p) %in% 'con_putamen')  ) ]
 
 
 plot='r'
@@ -86,16 +105,15 @@ fname='covariates'
 covars_to_plot=sig
 sig
 
-plot_covars(cor, sig, fname='covariates_sig', plot='r')
+plot_factor_covars(cor, sig2_names, fname='covariates_sig', plot='r')
 
-plot_covars(cor, sig2, fname='covariates',  plot='r')
-plot_covars(cor, sig_broad, fname='covariates_broad', plot='r')
+plot_factor_covars(cor, sig2_names, fname='covariates',  plot='r')
+plot_factor_covars(cor, sig_broad, fname='covariates_broad', plot='r')
 
 
-plot_covars(cor, sig, fname='covariates_sig_logpval', plot='log_pval')
-plot_covars(cor, sig2, fname='covariates_logpval',  plot='log_pval')
-plot_covars(cor, sig_broad, fname='covariates_broad_logpval',  plot='log_pval')
-
+plot_factor_covars(cor, sig_names, fname='covariates_sig_logpval', plot='log_pval', res=300)
+plot_factor_covars(cor, sig2_names, fname='covariates_logpval',  plot='log_pval',  res=400, sel_factors = sel_factors_s )
+plot_factor_covars(cor, sig_broad, fname='covariates_broad_logpval',  plot='log_pval', height=1400, res=300)
   
 #} else {
 #  stop("'plot' argument not recognised. Please read the documentation: ?correlate_factors_with_covariates")
@@ -142,7 +160,7 @@ clusters_single <- kmeans(t(h)[,sel_factors_s], centers = k_centers)
 #clusters_single_rna<-clusters_single
 
 covariates$cluster_s<-clusters_single$cluster[match(rownames(covariates),names(clusters_single$cluster))]
-if (mod=='RNA'){covariates$cluster_s_rna<-clusters_single}
+#if (mod=='RNA'){covariates$cluster_s_rna<-clusters_single}
 covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
 covariates$clusters_mofa_moca<-clusters_mofa_moca$cluster[match(rownames(covariates),names(clusters_mofa_moca$cluster))]
 
@@ -215,7 +233,7 @@ all_tests_moca<-get_cluster_assoc(df1, 'clusters_mofa_moca', to_test)
 all_tests_m_mi<-get_cluster_mi(df1, 'cluster_m', to_test) 
 all_tests_s_mi<-get_cluster_mi(df1, 'cluster_s', to_test) 
 
-
+# TODO: add also RNA
 all_tests_compare<-rbind(all_tests_m, all_tests_s);rownames(all_tests_compare)<-c('MOFA', 'RNA')
 #all_tests_compare<-rbind(all_tests_compare, all_tests_moca); rownames(all_tests_compare)<-c('MOFA', 'RNA', 'mofa_moca')
 

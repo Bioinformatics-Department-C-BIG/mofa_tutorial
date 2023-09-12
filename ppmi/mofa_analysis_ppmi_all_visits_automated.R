@@ -281,7 +281,7 @@ cors[,'ess_cat']
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
 
-selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT', 'updrs3_score_on', 
+selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
                    'NP3RIGN', 'SCAU5', 'MCATOT',
@@ -295,7 +295,7 @@ selected_covars<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP4TOT
                  'td_pigd_old_on', 'pd_med_use' )
                    #'DYSKIRAT')
 # STAIAD
-labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_ON',
+labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON',
              'MDS1_log','MDS2_log','MDS3_log', 'MDS4_log',
              'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
              'SC-CONSTIP', 'MCA-cognit-tot'  , 
@@ -306,6 +306,8 @@ labels_col=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS4', 'MDS3_
              'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use')
+
+
 
 selected_covars2<-c( 'AGE', 'SEX',
                    #'NP1_TOT', 
@@ -326,7 +328,8 @@ selected_covars2<-c( 'AGE', 'SEX',
                    'RBD_TOT', 
                   
                    'con_putamen', 
-                   'td_pigd_old_on', 'PD_MED_USE' )
+                   'td_pigd_old_on', 
+                 'PD_MED_USE' )
 
 labels_col2=c( 'AGE', 'SEX',
              #'MDS-UPDRS1',
@@ -345,7 +348,8 @@ labels_col2=c( 'AGE', 'SEX',
              'PDSTATE', 
              'RBD_TOT', 
              'PUTAMEN', 
-             'TD/PIGD dominant', 'Medication use')
+             'TD/PIGD dominant',
+           'Medication use')
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
@@ -359,30 +363,46 @@ selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putame
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
 selected_covars<-selected_covars2; length(selected_covars)
-selected_covars[!selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
 
 labels_col=labels_col2; length(labels_col)
-MOFAobject_gs2@samples_metadata$st
 
-graphics.off()
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
-MOFAobject@samples_metadata
+
+
+plot="log_pval"
+# Plot 1: strict ones we are interested in
+
+fname<-'factors_covariates_only_nonzero_strict'
+factors=names(sel_factors)
+plot_covars_mofa(selected_covars2,fname,plot,factors,labels_col )
+
+# Plot 1: some more non motor that we discovered
+
+
+fname<-'factors_covariates_only_nonzero_broad'
+plot_covars_mofa(selected_covars_broad,fname,plot,c(sel_factors, 10, 8),labels_col_broad, height=1500 )
 
 
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict','.jpeg'), width = 1000+length(selected_covars)*20, height=1000, res=300)
-P2<-correlate_factors_with_covariates(MOFAobject,
-                                      covariates = selected_covars, plot = "log_pval",
-                                  labels_col=labels_col, 
-                                  factors = names(sel_factors))
 
-P2<-correlate_factors_with_covariates(MOFAobject,
-                                      covariates = selected_covars, plot = "log_pval",
-                                     labels_col=labels_col, 
-                                      factors = names(sel_factors))
+plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000 ){
+  
+  
+  selected_covars=selected_covars[selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
+  
+  jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
+  P2<-correlate_factors_with_covariates(MOFAobject,
+                                        covariates =selected_covars , plot = plot,
+                                        labels_col=labels_col, 
+                                        factors = factors, 
+                                        cluster_cols=TRUE)
+  
+  dev.off()
+  
+  
+}
 
-dev.off()
 selected_covars
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_transpose_strict','.jpeg'),
@@ -401,8 +421,6 @@ ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
      width = 700+length(selected_covars)*20, height=1100, res=300)
 
-
-
 correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
                                   plot = "log_pval",
                                  # alpha=0.000000001,
@@ -419,9 +437,7 @@ length(selected_covars); length(labels_col)
 labels_cols_pearson<-labels_col[!grepl('con_putamen', selected_covars) ];length(labels_cols_pearson)
 selected_covars
 selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]; length(selected_covars_pearson)
-labels_cols_pearson
-selected_covars_pearson
-selected_covars_pearson
+
 f_to_plot<-names(sel_factors)
 ind_to_update<-colnames(MOFAobject_nams@samples_metadata) %in%selected_covars_pearson
 colnames(MOFAobject_nams@samples_metadata)[ind_to_update]
@@ -430,6 +446,8 @@ colnames(MOFAobject_nams@samples_metadata)[ind_to_update]
 colnames(MOFAobject_nams@samples_metadata)[ind_to_update]<-labels_cols_pearson
 MOFAobject_nams@samples_metadata$scopa
 labels_cols_pearson
+
+### Corelation not log_pval####
 
 jpeg(paste0(outdir, 'factors_covariates_only_nonzero_strict_cor','.jpeg'), width = 1000+length(selected_covars)*20, height=1100, res=300)
 correlate_factors_with_covariates(MOFAobject_nams,covariates =labels_cols_pearson,

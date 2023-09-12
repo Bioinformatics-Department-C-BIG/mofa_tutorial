@@ -8,24 +8,33 @@ unregister_dopar <- function() {
 
 unregister_dopar()
 
+g_params_set<-c( '0.4_100_', '0.3_100_', '0.5_100_');var_prefix = 'rnas_'
+
+m_params_set<-c( '0.1_10_', '0.2_10_', '0.3_10_','0.4_10_', '0.5_10_' , '0.75_10_', '0.9_10_');var_prefix = 'mirnas_'
+var_prefix = 'mirnas_'
+
+params_set=m_params_set
+mod='miRNA'
+nrun=10
+  
 run_nmf_get_cors<-function(){
   
   output_cors=list()
   #for (g_params in c('0.05_100_', '0.1_100_', '0.2_100_', '0.3_100_')){
   #  for (g_params in c( '0.3_100_')){
-  for (g_params in c( '0.4_100_', '0.3_100_', '0.5_100_')){
+  for (nmf_params in params_set){
     
-    for (NFACTORS in seq(5,11)){
+    for (NFACTORS in seq(2:10)){
       
       for  (k_centers in c(3,4,5,6,7,8,9, 10)){
          print(k_centers)
       
 
             
-            print(paste(g_params, NFACTORS))
+            print(paste(nmf_params, NFACTORS))
             #### Load the dataset ####
             ## get list of three mats 
-            param_str_g<-paste0('rnas_', VISIT_S, '_', g_params, 'coh_', sel_coh_s, '_'  , sel_subcoh_s)
+            param_str_g<-paste0(var_prefix, VISIT_S, '_', nmf_params, 'coh_', sel_coh_s, '_'  , sel_subcoh_s)
             
             data_full=prepare_multi_data(p_params, param_str_g, param_str_m, mofa_params)
             # create multi experiment 
@@ -39,15 +48,15 @@ run_nmf_get_cors<-function(){
             x1=assays(x1_se)[[mod]]
             
             print(NFACTORS)
-            nrun=10
+            nrun=nrun
             
             
             ## SAVE AND LOAD 
            # out_nmf<-paste0('nmf/plots/','multirun_', param_str_g, NFACTORS, '_', nrun,'_', 
            #                 mod)
-            out_nmf_params<- paste0( 'g_', g_params,'_coh_', sel_coh_s,'_', VISIT_S)
+            out_nmf_params<- paste0( 'g_', nmf_params,'_coh_', sel_coh_s,'_', VISIT_S)
             outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
-            out_nmf=paste0(outdir_nmf, 'model')
+            out_nmf=paste0(outdir_nmf,'_', nrun, 'model')
             seed=135
             
             if (file.exists(out_nmf)){
@@ -129,8 +138,8 @@ run_nmf_get_cors<-function(){
             #              run_mofa_complete, N_FACTORS,cors_t , max_cor )
             
             
-            df_stats = c(g_params, NFACTORS, k_centers, cor_clusters$p.value, cor_clusters$statistic, mut_inf, length(sel_factors), nrun )
-            write.table(t(df_stats), paste0(outdir_orig,'nmf_all_stats_mi.csv'), append=TRUE,sep=',', col.names = FALSE)
+            df_stats = c(nmf_params, NFACTORS, k_centers, cor_clusters$p.value, cor_clusters$statistic, mut_inf, length(sel_factors), nrun )
+            write.table(t(df_stats), paste0(outdir_orig,'nmf_all_stats_mi_', mod, '.csv'), append=TRUE,sep=',', col.names = FALSE)
             
           }
 

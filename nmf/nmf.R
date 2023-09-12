@@ -12,9 +12,9 @@ library(NMF)
 mod='miRNA'
 mod='proteomics'
 mod='RNA'
-mod='miRNA'
 mod='RNA' ; nmf_params<-g_params
 
+mod='miRNA'
 
 #### Load the dataset ####
 ## get list of three mats 
@@ -40,20 +40,31 @@ dim(x1)
 #res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=6
-nrun=10
+NFACTORS=10
+nrun=5
 
 
 ## SAVE AND LOAD 
 
+prefix='g_'
 
-out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+if (mod=='RNA'){
+      out_nmf_params<- paste0( prefix, g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+     
+}else if(mod=='miRNA'){
+  prefix='m_'
+  nmf_params=m_params  
+  out_nmf_params<- paste0( prefix, g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+  
+  }
+
+
 outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
+
+
 out_nmf=paste0(outdir_nmf, 'model')
 
 dir.create(outdir_nmf)
-
-
 if (file.exists(out_nmf)){
   res=loadRDS(out_nmf)
   

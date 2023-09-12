@@ -4,56 +4,57 @@
 
 
 # TODO: check that nrun==10!! and plot only the ones with 10 replicas
+######## single NMF ####
+mod='RNA'; selected_params<-'0.3_100_'; sel_NFACTORS=10
+mod='miRNA'; selected_params<-'0.75_10_'; sel_NFACTORS=5
 
-s_stats<-read.csv( paste0(outdir_orig,'nmf_all_stats_mi.csv'))
-colnames(s_stats)<-c('1','g_params', 'NFACTORS', 'k_centers', 'pvalue', 'cor', 'mi', 'nf')
-s_stats$g_params=as.factor(s_stats$g_params)
 
+s_stats<-read.csv( paste0(outdir_orig,'nmf_all_stats_mi_', mod, '.csv'))
+colnames(s_stats)<-c('1','nmf_params', 'NFACTORS', 'k_centers', 'pvalue', 'cor', 'mi', 'nf')
+s_stats$nmf_params=as.factor(s_stats$nmf_params)
+s_stats
 
 ### Plot mutual information 
-ggplot(s_stats, aes(x=k_centers, y=mut_inf))+
-  geom_point(aes(x=k_centers, y=mut_inf, color=NFACTORS))+ 
+ggplot(s_stats, aes(x=k_centers, y=mi))+
+  geom_point(aes(x=k_centers, y=mi, color=NFACTORS))+ 
   geom_smooth()+
-  facet_grid(~g_params)+
+  facet_grid(~nmf_params)+
   ylab('MI')
 
 
 ## Plot by nfactors 
-ggplot(s_stats[s_stats$g_params=='0.3_100_',], aes(x=NFACTORS, y=-log10(pvalue)))+
+ggplot(s_stats[s_stats$nmf_params==selected_params,], aes(x=NFACTORS, y=-log10(pvalue)))+
   geom_point(aes(x=NFACTORS, y=-log10(pvalue), color=k_centers))+ 
   geom_smooth()+
-  facet_grid(~g_params)+
+  facet_grid(~nmf_params)+
   ylab('-log10pvalue')
 
 
-### Plot mutual information 
-ggplot(s_stats, aes(x=k_centers, y=cor))+
-  geom_point(aes(x=k_centers, y=mut_inf, color=NFACTORS))+ 
-  geom_smooth()+
-  facet_grid(~g_params) 
   
-ggplot(s_stats[s_stats$g_params=='0.3_100_',], aes(x=k_centers, y=-log10(pvalue)))+
+ggplot(s_stats[s_stats$nmf_params==selected_params,], aes(x=k_centers, y=-log10(pvalue)))+
   geom_point(aes(x=k_centers, y=-log10(pvalue), color=NFACTORS))+ 
   geom_smooth()+
-  facet_grid(~g_params)+
+  facet_grid(~nmf_params)+
   ylab('-log10pvalue')
 
 
 # choose factors too 
-ggplot(s_stats[s_stats$g_params=='0.3_100_' & s_stats$NFACTORS==10,], aes(x=k_centers, y=mi))+
+ggplot(s_stats[s_stats$nmf_params==selected_params & s_stats$NFACTORS==sel_NFACTORS,], aes(x=k_centers, y=mi))+
   geom_point(aes(x=k_centers, y=mi, color=NFACTORS))+ 
   geom_smooth()+
-  facet_grid(~g_params)+
+  facet_grid(~nmf_params)+
   ylab('MI')
 
 # choose factors too 
-ggplot(s_stats[s_stats$g_params=='0.3_100_' & s_stats$NFACTORS==10,], aes(x=k_centers, y=mi))+
+ggplot(s_stats[s_stats$nmf_params==selected_params & s_stats$NFACTORS==sel_NFACTORS,], aes(x=k_centers, y=mi))+
   geom_point(aes(x=k_centers, y=mi, color=NFACTORS))+ 
   geom_smooth()+
-  facet_grid(~g_params)+
+  facet_grid(~nmf_params)+
   ylab('MI')
 
 
+
+########## MOFA ########
 
 
 s_stats<-read.csv( paste0(outdir_orig,'all_stats_clusters.csv'), header = FALSE)
@@ -69,7 +70,7 @@ colnames(s_stats)<- c('1', 'TOP_PN', 'TOP_GN', 'MIN_COUNT_G', 'TOP_MN', 'MIN_COU
 
 #s_stats$g_params=as.factor(s_stats$g_params)
 
-ggplot(s_stats, aes(x=k_centers_m, y=mut_inf))+
+ggplot(s_stats, aes(x=k_centers_m, y=mi))+
   geom_point(aes(x=k_centers_m, y=mut_inf, color=N_FACTORS))+ 
   geom_smooth()+ 
   facet_grid(~TOP_GN)

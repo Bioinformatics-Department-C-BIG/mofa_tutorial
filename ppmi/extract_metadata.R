@@ -48,6 +48,10 @@ characteristics<-merge(clinical, ps, by=c('PATNO'), suffixes = c("", '_ps'),  al
 dim(characteristics)
 
 
+othfeatpd<-read.csv(paste0(input_data, 'characteristics/Medical/Other_Clinical_Features.csv'))
+prodromal_history<-read.csv(paste0(input_data, 'characteristics/Medical/Prodromal_History.csv'))
+
+
 
 # todo: add more motor mds-updrs
 motor_assess<-read.csv(paste0(input_data, 'motor_assess/Motor___MDS-UPDRS/MDS-UPDRS_Part_I.csv'))
@@ -105,8 +109,11 @@ combined<-merge(combined, genetics,by=c('PATNO'),suffixes = c("", '_gen'), all=T
 
 
 ### cognition
+combined<-merge(combined, othfeatpd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_oth'),  all=TRUE)
+combined<-merge(combined, prodromal_history,by=c('PATNO','EVENT_ID'), suffixes = c("", '_prod'),  all=TRUE)
 
 combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
+
 combined<-merge(combined, non_motor_stait,by=c('PATNO','EVENT_ID'), suffixes = c("", '_st'),  all=TRUE)
 
 combined<-merge(combined, epworth,by=c('PATNO','EVENT_ID'), suffixes = c("", '_ep'),  all=TRUE)
@@ -123,7 +130,6 @@ combined<-merge(combined, olfactory,by=c('PATNO','EVENT_ID'), suffixes = c("", '
 combined<-merge(combined, bent,by=c('PATNO','EVENT_ID'), suffixes = c("", '_bn'),  all=TRUE)
 combined<-merge(combined, ger,by=c('PATNO','EVENT_ID'), suffixes = c("", '_gr'),  all=TRUE)
 combined<-merge(combined, sem,by=c('PATNO','EVENT_ID'), suffixes = c("", '_sem'),  all=TRUE)
-
 
 
 
@@ -159,6 +165,10 @@ rbd
 #combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
 
 
+combined$SCAU26CT<-tolower(combined$SCAU26CT)
+combined$SCAU26CT<-as.factor(combined$SCAU26CT)
+
+levels(as.factor(combined$SCAU26CT))
 # filtering here only to produce separate files for each visit? 
 
 ## add demographics with suffix if common? 

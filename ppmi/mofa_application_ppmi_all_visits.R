@@ -2,6 +2,8 @@
 
 #script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 source(paste0('ppmi/setup_os.R'))
+source(paste0(script_dir, 'ppmi/setup_os.R'))
+
 #source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
 #BiocManager::install('GOSemSim')
 # SCENARIOS: 
@@ -99,11 +101,12 @@ run_mofa_get_cors<-function(N_FACTORS){
     mofa_multi_to_use=mofa_multi
   }
   
+  MOFAobject=create_mofa(mofa_multi_to_use)
+  
   if (length(VISIT)>1){
     MOFAobject <- create_mofa(mofa_multi_to_use, groups= mofa_multi_to_use$EVENT_ID)
   }
   
-  MOFAobject=create_mofa(mofa_multi_to_use)
   dir.create(outdir, showWarnings = FALSE)
   
   MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE, N_FACTORS=N_FACTORS )
@@ -159,14 +162,35 @@ table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$COHORT )
 
 combined_bl_log_sel_OFF<- combined_bl_log_sel[combined_bl_log_sel$PDSTATE %in% c('OFF', 'NA', ''),]
 
+combined_bl_log[combined_bl_log$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT', 'EVENT_ID')]
+combined_bl_log[combined_bl_log$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT')]
+
+
 length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
 
 
 table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
-combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
-combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
 
-combined_bl_log_sel$PDSTATE
+## Filters for duplicate motor symptom exam
+### Filter by PDSTATE
+#combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
+#combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
+
+
+### or filter by 
+#lapply(combined_bl_log_sel)        
+dim(combined_bl_log_sel)
+
+### GET THE WORSE MEASUREMENT 
+combined_bl_log_sel<-combined_bl_log_sel %>%
+  group_by(NP3_TOT) %>%
+  summarize(across(everything(), max))%>%
+  as.data.frame()
+
+combined_bl_log_sel[combined_bl_log_sel$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT', 'EVENT_ID')]
+
+
+
 
 
 ### Merging and remove duplicates 

@@ -27,6 +27,12 @@
 
 ## TODP
 
+#as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
+#as.factor(samples_metadata(MOFAobject)$SCAU26CT)
+
+samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
+
+
 
 
 
@@ -68,8 +74,11 @@ get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
 
 ######### VARIANCE EXPLAINED ###########
 
+group=2
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
+vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
+
 vars_by_factor_f<-format(vars_by_factor*100, digits=2)
 vars_by_factor
 write.table(format(vars_by_factor_f,digits = 2)
@@ -82,7 +91,7 @@ ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
        width = 5, height=N_FACTORS/2,
        dpi=300)
 
-MOFAobject@samples_metadata$SEX
+MOFAobject@samples_metadata$Outcome
 
 plot_data_overview(MOFAobject)+
   theme(axis.title.x=element_text(size=16), 
@@ -117,8 +126,9 @@ if (length(sel_coh)>1){
   
 }
 
+sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
 
-
+sel_factors_outcome
 
 
 
@@ -133,6 +143,8 @@ library(DescTools)
 
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
+MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
+
 if (length(sel_coh)>1){
   #for (k_centers_m in c(6)){
   for (k_centers_m in c(5)){
@@ -142,6 +154,7 @@ if (length(sel_coh)>1){
     
     clusters_mofa_34 <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(3,4))
     clusters_mofa_moca <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(14,10,8))
+    clusters_mofa_outcome <- cluster_samples(MOFAobjectBL, k=6, factors=sel_factors_outcome)
     
     
     covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
@@ -154,6 +167,7 @@ if (length(sel_coh)>1){
  # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
   
 }
+MOFAobject@samples_metadata$clusters=clusters$cluster
 
 ss_scores<-c()
 for (k in 3:15){
@@ -289,6 +303,7 @@ cors[,'ess_cat']
 
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
+samples_metadata(MOFAobject)$Outcome
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
@@ -301,7 +316,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                    'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
                    'NP3RTARU', 'RBD_TOT', 
                   'con_putamen', 
-                 'td_pigd_old_on', 'pd_med_use' )
+                 'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
+                 'rigidity')
                    #'DYSKIRAT')
 # STAIAD
 labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON',
@@ -314,7 +330,8 @@ labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON
              'PDSTATE', 'MDS3-REST TREMOR', 'STAI_STATE', 'STAI_TRAIT', 'STAI-FEEL RESTED', 'MDSI-anxious', 'MDS3-GAIT', 
              'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
              'PUTAMEN', 
-             'TD/PIGD dominant', 'Medication use')
+             'TD/PIGD dominant', 'Medication use', 'Outcome', 
+             'rigidity')
 
 
 
@@ -368,12 +385,12 @@ if (length(sel_coh)>1){
 cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
-
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000 ){
   
   # filter if some do not exist in the colnames of metadata
   selected_covars=selected_covars[selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
   labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
+  labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
   
   jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
   P2<-correlate_factors_with_covariates(MOFAobject,
@@ -396,6 +413,7 @@ labels_col=labels_col2; length(labels_col)
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
 
+graphics.off()
 
 plot="log_pval"
 # Plot 1: strict ones we are interested in
@@ -405,11 +423,12 @@ factors=names(sel_factors)
 plot_covars_mofa(selected_covars2,fname,plot,factors,labels_col )
 
 # Plot 1: some more non motor that we discovered
+samples_metadata(MOFAobject)$Outcome
 
 
 fname<-'factors_covariates_only_nonzero_broad'
 plot_covars_mofa(selected_covars_broad,fname,plot,c(sel_factors, 10, 8),labels_col_broad, height=1500 )
-
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col_broad, height=1500 )
 
 
 
@@ -1035,7 +1054,7 @@ for (i in seq(1,vps)){
     
     
     ###### Heatmaps 
-    nfs=20
+    nfs=40
     #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     # Plot heatmaps for each factor only for miRNA 
     
@@ -1108,16 +1127,18 @@ for (i in seq(1,vps)){
     denoise=FALSE
     
     #cors_sig_non_na=cors_sig
+    groups='all';groups=2; 
+    
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', 
-                  FT, 'den_', denoise, '.jpeg')
+                  FT, 'den_', denoise, groups, '.jpeg')
 
-    
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
     p<-plot_data_heatmap(MOFAobject_gs, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,
+                         groups = groups, 
                          denoise = denoise,
                          cluster_rows = cluster_rows, 
                          cluster_cols = cluster_cols,
@@ -1174,7 +1195,7 @@ if (length(MOFAobject@data_options$groups)>1){
         
         library(cowplot)
         library(ComplexHeatmap)
-        nfs=20
+        nfs=40
         
         breaksList = seq(-3, 3, by = 0.01)
         groups='all'

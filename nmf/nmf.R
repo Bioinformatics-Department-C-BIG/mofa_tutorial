@@ -16,10 +16,10 @@ source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 mod='miRNA'
 mod='proteomics'
 mod='RNA'
+
+
+mod='miRNA'; nmf_params<-m_params; NFACTORS=10; nrun=10
 mod='RNA' ; nmf_params<-g_params;  NFACTORS=10; nrun=10
-
-
-mod='miRNA'; nmf_params<-m_params; NFACTORS=5; nrun=10
 
 
 #### Load the dataset ####
@@ -54,12 +54,12 @@ outdir
 if (mod=='RNA'){
   prefix='g_'
   nmf_params=g_params
-      out_nmf_params<- paste0( prefix, g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+      out_nmf_params<- paste0( prefix,  nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
      
 }else if(mod=='miRNA'){
   prefix='m_'
   nmf_params=m_params  
-  out_nmf_params<- paste0( prefix, g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+  out_nmf_params<- paste0( prefix,  nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
   
   }
 

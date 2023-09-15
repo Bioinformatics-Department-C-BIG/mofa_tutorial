@@ -11,30 +11,32 @@ library(psych)
 
 
 dim(covariates)
-cor <- psych::corr.test(covariates,h_t, method = "pearson", adjust = "BH")
+cor_all <- psych::corr.test(covariates,h_t, method = "pearson", adjust = "BH")
 
-covars_to_plot=sig2_names
+covars_to_plot=sig_names
+sel_factors=sel_factors_s
+
 plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FALSE, height=1200, res=300, 
-                             alpha=0.05, sel_factors=NULL){
+                             alpha=0.05, sel_factors=NULL, width_base=1000){
  # if (is.logical(labels_col)){labels_col=covars_to_plot}
   
-
   
-  labels_col<-mt_kv$V2[match(covars_to_plot,mt_kv$V1)]
-  labels_col
+  
+  
   
   if (is.null(sel_factors)){
     sel_factors=c(1:dim(cor$r)[2])
   }
-  
+  cor_sel <- psych::corr.test(covariates,h_t[,sel_factors], method = "pearson", adjust = "BH")
+  cor_sel
   
   if (plot=="r") {
     
-    stat <- cor$r[,sel_factors]
+    stat <- cor_sel$r
     
 
-    png(paste0( outdir_nmf, '/',fname,  '.png' ), width = 1000+length(selected_covars)*20, height=height, res=300)
-    corrplot::corrplot(stat[covars_to_plot,], tl.col = "black", title="Pearson correlation coefficient")
+    png(paste0( outdir_nmf, '/',fname,  '.png' ), width = 1000+length(selected_covars)*25, height=height, res=300)
+    cp<-corrplot::corrplot(as.matrix(stat[covars_to_plot,]), tl.col = "black", title="Pearson correlation coefficient")
     dev.off()  
     
     write.csv(stat[covars_to_plot,], paste0(outdir_nmf, 'cor_',mod, '.csv'  ))
@@ -42,7 +44,7 @@ plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FA
     
   } else if (plot=="log_pval") {
     
-    stat <- cor$p[,sel_factors]
+    stat <- cor_sel$p
     #stat[stat>alpha] <- 1.0
     if (all(stat==1.0)) stop("All p-values are 1.0, cannot plot the histogram")
     stat[stat>alpha] <- 1.0
@@ -58,14 +60,17 @@ plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FA
     #stat[is.infinite(stat)] <- 1000
     #if (transpose) stat <- t(stat)
     #if (return_data) return(stat)
+    covars_to_plot_filt<-rownames(stat_filt)
     
-    labels_col<-mt_kv$V2[match(rownames(stat_filt),mt_kv$V1)]
-    
+    ### Write the labels here because some have been omited #
+    labels_col<-mt_kv$V2[match(covars_to_plot_filt,mt_kv$V1)]
+    labels_col[is.na(labels_col)]<-covars_to_plot_filt[is.na(labels_col)]
+
     col <- colorRampPalette(c("lightgrey", "red"))(n=100)
     
-    png(paste0( outdir_nmf, '/', fname, '.png' ), res=res,  width = 1000+length(selected_covars)*20, height=height)
+    png(paste0( outdir_nmf, '/', fname, '.png' ), res=res,  width = width_base+length(selected_covars)*20, height=height)
     
-    pheatmap::pheatmap(t(stat_filt), main="log10 adjusted p-values", cluster_rows = TRUE, color=col, 
+    pp<-pheatmap::pheatmap(t(stat_filt), main="log10 adjusted p-values", cluster_rows = TRUE, color=col, 
                        labels_col = labels_col )
     
     
@@ -74,12 +79,13 @@ plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FA
 }
 
 
+sel_factors_s<-which(cor$p['COHORT',]<0.05)
 
 
 colnames(cor$r) 
 rownames(cor$sef)
 cors_non_na<-names(which(!is.na( cor$p[,1])))
-T<--log10(0.00)
+T<--log10(0.05)
 
 
 to_remove_regex<-'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO|PATNO|cluster'
@@ -89,6 +95,7 @@ to_remove_covars<-grepl( to_remove_regex, rownames(cor$p))
 sig<-which( rowMins(cor$p)<0.01 & rowMaxs(cor$r)<0.95 & !to_remove_covars ) 
 sig_names<-rownames(cor$p)[which( rowMins(cor$p)<0.01 & !to_remove_covars ) ]
 
+'SCAU26C' %in% sig_names
 
 sig2<-which( rownames(cor$p) %in% selected_covars2 ) 
 sig2_names<-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars2 ) ]
@@ -107,14 +114,18 @@ sig
 
 plot_factor_covars(cor, sig2_names, fname='covariates_sig', plot='r')
 
-plot_factor_covars(cor, sig2_names, fname='covariates',  plot='r')
 plot_factor_covars(cor, sig_broad, fname='covariates_broad', plot='r')
 
 
-plot_factor_covars(cor, sig_names, fname='covariates_sig_logpval', plot='log_pval', res=300)
+plot_factor_covars(cor, sig_names, fname='covariates_sig_logpval', plot='log_pval', res=300, width_base=3500)
+
+if (length(sel_factors_s)==0){
+  sel_factors_s=c(1:NFACTORS)
+}
 plot_factor_covars(cor, sig2_names, fname='covariates_logpval',  plot='log_pval',  res=400, sel_factors = sel_factors_s )
-plot_factor_covars(cor, sig_broad, fname='covariates_broad_logpval',  plot='log_pval', height=1400, res=300)
+plot_factor_covars(cor, sig_broad, fname='covariates_broad_logpval',  plot='log_pval', height=1400, res=300, width_base=2000)
   
+graphics.off()
 #} else {
 #  stop("'plot' argument not recognised. Please read the documentation: ?correlate_factors_with_covariates")
 #}
@@ -125,7 +136,7 @@ cor$r['CONCOHORT',]
 cor$p['CONCOHORT',]
 
 sel_factors_s<-which(cor$p['COHORT',]<0.05)
-
+sel_factors_s
 stat[sig,]
 
 #### Top Weights ####
@@ -245,7 +256,6 @@ labels_col<-mt_kv$V2[match(colnames(all_tests_compare),mt_kv$V1)]
 png(paste0(output_files, 'cluster_covars.png'), height=5, width=8, units='in', res=600)
 ph<-pheatmap(as.matrix(-log10(all_tests_compare)), cluster_rows = FALSE, labels_col=labels_col)
 #pheatmap(as.matrix(all_tests_compare), cluster_rows = FALSE)
-ph
 dev.off()
 
 
@@ -261,7 +271,7 @@ kruskal.test(df1$NP2_TOT, as.factor(df1$cluster_m ))
 kruskal.test(df1$NP2_TOT, as.factor(df1$cluster_s ))
 
 
-
+graphics.off()
 
 dim(df1)
 

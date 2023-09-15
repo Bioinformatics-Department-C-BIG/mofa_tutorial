@@ -161,9 +161,7 @@ Z1<-Z[,sel_factors[fn_sel]]
 patnos_z1<-gsub('\\_.*', '', names(Z1))
 Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 
-#png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
-#hist(Z1_matched);
-#dev.off()
+
 
 quantile(Z1_matched,0.85, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
@@ -464,7 +462,8 @@ merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'L
 ### Decide on the grouping #### 
 group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
 group_by_patient<-clusters$cluster
-
+group_by_patient<-clusters_mofa_outcome$cluster
+group_by_patient<-clusters_mofa$cluster
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
 
 
@@ -506,16 +505,12 @@ to_sel
 ### for continous 
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
-merged_melt_cl3$PDSTATE
-
-merged_melt_cl$NP3_TOT
-
 
 to_sel
 
 merged_melt_cl$co
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT'
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT'
            )
 
 if (names(sel_factors[fn_sel]) %in% c('Factor3')){
@@ -526,8 +521,11 @@ if (names(sel_factors[fn_sel]) %in% c('Factor3')){
 }else{
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
               'td_pigd_old_on',  'AGE')
+  to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
+             'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
+  to_plot<-selected_covars_broad
+  
 }
-merged_melt_cl3$td_pigd_old_on
 
 to_plot
 ## todo why is scau missing from baseline? how to measure total? 
@@ -567,7 +565,9 @@ if (remove_on){
 
 
 
-#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
+combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
+#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08', combined_bl_log_common_off$EVENT_ID) ,]
+
 combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V', combined_bl_log_common_off$EVENT_ID) ,]
 
 
@@ -577,17 +577,39 @@ df_plot<-combined_bl_log_common_off
 df_plot %>% 
   group_by(EVENT_ID, grouping)%>% 
   summarize(count_distinct = n_distinct(PATNO))
+time_nos<-df_plot %>% 
+  group_by(EVENT_ID)%>% 
+  summarize(count_distinct = n_distinct(PATNO))
 
-smaller_group<-df_plot[df_plot$EVENT_ID=='V16',]$PATNO
+smaller_group_id<-time_nos$EVENT_ID[which.min(time_nos$count_distinct)]
+smaller_group<-df_plot[df_plot$EVENT_ID==smaller_group_id,]$PATNO
 
 df_plot<-df_plot[df_plot$PATNO %in% smaller_group,]
 
 
+df_V16<-df_plot[c(df_plot$VISIT=='V16'), ]
+df_BL<-df_plot[df_plot$VISIT=='BL', ]
+
+kruskal.test(df_V16$grouping,df_V16$NP3_TOT)
+kruskal.test(df_BL$grouping,df_BL$NP3_TOT)
+
+
+df_plot$grouping
+######### boxplots by cluster over time
+df_plot[,c('VISIT', 'grouping')][df_plot$VISIT=='V12',]
+to_plot
+df_plot_2k<-df_plot[df_plot$grouping %in% c(1,4),]
+
+df_plot_2k<-df_plot[df_plot$grouping %in% c(4,5),]
+
+df_plot_2k<-df_plot
+
+df_plot_2k<-df_plot[df_plot$grouping %in% c(2,5),]
 
 for (y in to_plot){
 
-ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
-                                             fill='grouping', group='grouping', colour='grouping')) + 
+ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
+          fill='grouping', group='grouping', colour='grouping')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
@@ -619,6 +641,50 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt
 }
 
 
+for (y in to_plot){
+  ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
+                                    fill='grouping')) + 
+   geom_boxplot()+
+    scale_color_viridis_d(option='turbo')+
+    #facet_wrap(. ~ symbol, scales='free_y', 
+    #           nrow = 1) +
+    
+    #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+    theme_bw()+ 
+    # geom_signif(comparisons = list(c('BL', 'V08')), 
+    #            map_signif_level=TRUE, 
+    #           tip_length = 0, vjust=0)+
+    
+    labs(y=y)+
+    # legend(legend=c('Low', 'High'))+
+    theme(strip.text = element_text(
+      size = 10, color = "dark green"), 
+      axis.title.y =element_text(
+        size = 13, color = "dark green"), 
+      axis.text.x = element_text(
+        size = 9 ))
+  
+  
+  
+  warnings()
+  ggsave(paste0(outdir, '/trajectories/box_', sel_factors[fn_sel],'_', filt_top, y,'_', remove_on,  '.jpeg'), 
+         width=5, height=3)
+}
+
+
+
+
+
+
+
+
+
+
+
+merged_melt_cl3=merged_melt_cl
+merged_melt_cl2=merged_melt_cl
+
+
 
 for (cov_to_plot in to_sel){
   
@@ -643,7 +709,7 @@ for (cov_to_plot in to_sel){
     }
 }
 
-
+  sm=samples_metadata(MOFAobject)
 
 
 ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))

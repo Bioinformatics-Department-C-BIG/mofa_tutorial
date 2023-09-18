@@ -19,7 +19,7 @@ mod='RNA'
 
 
 mod='miRNA'; nmf_params<-m_params; NFACTORS=10; nrun=10
-mod='RNA' ; nmf_params<-g_params;  NFACTORS=10; nrun=10
+mod='RNA' ; nmf_params<-g_params;  NFACTORS=20; nrun=10
 
 
 #### Load the dataset ####
@@ -30,15 +30,24 @@ mofa_multi<-create_multi_experiment(data_full, combined_bl)
 
 mofa_multi$COHORT
 
+ns<-dim(assays(mofa_multi )[['RNA']])
+## Split in test/ train #### 
 
+for (tt in 1:ns){
+  mofa_multi_test=mofa_multi[,tt ]
+  mofa_multi_train=mofa_multi[,-tt ]
+  
+  
+}
 x1_se<-mofa_multi[, , mod]
+x1_se<-mofa_multi_train[, , mod]
 
 x1=assays(x1_se)[[mod]]
 
 
 
 #### select the highly variable #### 
-g_params
+
 
 
 

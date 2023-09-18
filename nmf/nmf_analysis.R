@@ -79,7 +79,7 @@ plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FA
 }
 
 
-sel_factors_s<-which(cor$p['COHORT',]<0.05)
+sel_factors_s<-which(cor_all$p['COHORT',]<0.05)
 
 
 colnames(cor$r) 
@@ -278,6 +278,11 @@ dim(df1)
 
 
 
+########## 
+##########
+sel_factors_s
+
+as.factor(MOFAobject@samples_metadata$COHORT)
 
 
 

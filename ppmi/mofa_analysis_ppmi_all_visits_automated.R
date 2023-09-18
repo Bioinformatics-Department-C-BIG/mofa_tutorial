@@ -114,6 +114,7 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
+
 ######
 
 
@@ -131,7 +132,7 @@ sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
 sel_factors_outcome
 
 
-
+sel_factors
 
 
 
@@ -1351,26 +1352,39 @@ names(which(res.negative$pval.adj[,'Factor4']<0.05))[1:5]
 suppressPackageStartupMessages(library(randomForest))
 
 # Prepare data
-df <- as.data.frame(get_factors(MOFAobject, factors=c(4))[[1]])
+df <- as.data.frame(get_factors(MOFAobject, factors=sel_factors)[[1]])
 df
 
 
+
+#install.packages()
+# library('caret')
+# Do predictions with the factors 
 # Train the model for eortc.risk
-df$EORTC.risk <- as.factor(MOFAobject@samples_metadata$EORTC.risk)
-model.EORTC.risk <- randomForest(EORTC.risk ~ ., data=df, ntree=10)
+
+# Use the pricnipal components 
+df$COHORT <- as.factor(MOFAobject@samples_metadata$COHORT)
+model.COHORT <- randomForest(COHORT ~ ., data=df, ntree=10)
 
 # Do predictions
-MOFAobject@samples_metadata$EORTC.risk.pred <- stats::predict(model.EORTC.risk, df)
-MOFAobject@samples_metadata$EORTC.risk.pred
+MOFAobject@samples_metadata$COHORT.pred <- stats::predict(model.COHORT, df)
+MOFAobject@samples_metadata$COHORT.pred
 
 # Assess performance 
-predicted<-as.factor(MOFAobject@samples_metadata$EORTC.risk.pred)
-actual = MOFAobject@samples_metadata$EORTC.risk
+predicted<-as.factor(MOFAobject@samples_metadata$COHORT.pred)
+actual = MOFAobject@samples_metadata$COHORT
 confusion_mat = as.matrix(table(actual, predicted )) 
+
+confusion_mat
+ConfusionMatrix(as.matrix(table(actual, predicted )) )
+accuracy_score(actual, predicted )
+
 print(confusion_mat)
 
+
+N_FACTORS
 ## Show "importance" of variables: higher value mean more important:
-round(importance(model.EORTC.risk), 2)
+round(importance(model.COHORT), 2)
 #install.packages('randomForest')
 
 # Prepare data

@@ -25,9 +25,9 @@ source(paste0(script_dir,'ppmi/utils.R'))
 
 split=FALSE
 run_rna_mirna=FALSE
-if (split){
-  N_FACTORS=8
-}
+#if (split){
+#  N_FACTORS=8
+#}
 VISIT=c('BL');
 VISIT=c('BL', 'V08');
 VISIT=c('V08');
@@ -101,15 +101,50 @@ run_mofa_get_cors<-function(N_FACTORS){
     mofa_multi_to_use=mofa_multi
   }
   
-  MOFAobject=create_mofa(mofa_multi_to_use)
+  ##### Split and run many times ###
+  ns<-dim(assays(mofa_multi_to_use)[['RNA']])[2]
   
-  if (length(VISIT)>1){
-    MOFAobject <- create_mofa(mofa_multi_to_use, groups= mofa_multi_to_use$EVENT_ID)
-  }
+  if (split){
+    for (i in 1:ns){
+      # separate and train on training data. Also save test data in outdir 
+      mofa_multi_test<-mofa_multi_to_use[, ns]
+      mofa_multi_train<-mofa_multi_to_use[, -ns]
+      outdir=paste0(outdir, '_ns_', ns)
+      
+      if (complete.cases(mofa_multi_test)){
+        
+    
+        MOFAobject_test=create_mofa(mofa_multi_test)
+        
+        
+        
+      }
+      
+
+    }
+    }else{
+      ## just use all data 
+      mofa_multi_train=mofa_multi_to_use
+      
+    
+    
+    
+    }
   
-  dir.create(outdir, showWarnings = FALSE)
+    MOFAobject=create_mofa(mofa_multi_train)
+    if (length(VISIT)>1){
+      MOFAobject <- create_mofa(mofa_multi_train, groups= mofa_multi_train$EVENT_ID)
+    }
+    
+    dir.create(outdir, showWarnings = FALSE)
+    
+    MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE, N_FACTORS=N_FACTORS )
+    
+    
   
-  MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE, N_FACTORS=N_FACTORS )
+
+
+ 
   
   
   
@@ -147,7 +182,7 @@ for (N_FACTORS in c(15)){
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-  outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
+  outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE)
   MOFAobject=run_mofa_get_cors(N_FACTORS)
   

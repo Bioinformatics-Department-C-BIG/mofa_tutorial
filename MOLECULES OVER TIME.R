@@ -306,10 +306,10 @@ mean_data
   }
   
 
-  filt_top=FALSE
+  filt_top=TRUE
 if (filt_top){
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:3],]
-  nrow=1; height=2.6
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:15],]
+  nrow=NULL; height=2.6*4
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
   nrow=NULL; height=7

@@ -21,6 +21,7 @@ library('MultiAssayExperiment')
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
+source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
 
 split=FALSE
@@ -162,11 +163,28 @@ run_mofa_get_cors<-function(N_FACTORS){
         cors_t<-paste(round(cors_pearson[,'CONCOHORT'], digits=2), collapse=', ')
         max_cor<-round(max(cors_pearson), digits=2)
         print(cors_t)
-        df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
-                      run_mofa_complete, N_FACTORS,cors_t , max_cor )
-        
-        write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
-        
+       
+  
+    
+    
+    ### write cross val
+    ### todo: save random forest results 
+    cors_pvalue=cors_both[[1]]
+    sel_factors<-which(cors_pvalue>-log10(0.05))
+    N_final<-MOFAobject@dimensions$K
+    df_mofa <- as.data.frame(get_factors(MOFAobject, factors=1:N_final)[[1]])
+    df_mofa$y<- as.factor(MOFAobject@samples_metadata$COHORT)
+    df_mofa_age <- cbind(df_mofa,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
+    res_age_mofa<-run_train_validation( df=df_mofa_age)
+    acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])
+    print(acc_mean)
+    
+    df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+                  run_mofa_complete, N_FACTORS,cors_t , max_cor, acc_mean )
+    
+    write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+    
+    
   }
   
   

@@ -111,6 +111,8 @@ if (process_mirnas){
 
 
 input_file<-paste0(output_files, prefix, 'all_visits.csv')
+input_file<-paste0(output_files, prefix, 'all_visits.csv.gz')
+
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')

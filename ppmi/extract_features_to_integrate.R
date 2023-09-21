@@ -10,7 +10,6 @@ source(paste0('ppmi/setup_os.R'))
 
 
 
-rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 
 output_files='ppmi/output/'
 
@@ -18,10 +17,18 @@ output_files='ppmi/output/'
 VISIT='V08'
 VISIT='BL'
 Visits<-c('BL', 'V04', 'V06', 'V08')
+#rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
+#gz1<-gzfile(paste('ppmi/ppmi_data/rnaseq/', 'rnas.gz'), 'w')
+#write.csv2(rnas, gz1)
+#close(gz1)
+
+### rnas_fname includes the merged counts for all patients for all visits that I merged together on the server
+rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
 
 getwd()
 for (VISIT in Visits){
-  rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
+  rnas<-read.csv2(rnas_fname, sep = ',')
+  #rnas<-read.csv2(gzfile(gz1))
   rownames(rnas)<-rnas$Geneid
   rnas$Geneid<-NULL
   rnas_BL<-select(rnas,contains(VISIT))
@@ -64,7 +71,19 @@ rna_all_visits_list<-sapply(Visits,
 # bind all visits for all patients together with underscore PATNO_VISIT
 rna_all_visits<-do.call(cbind,rna_all_visits_list )
 
-write.csv2(rna_all_visits, paste0(output_files, 'rnas_all_visits.csv'), row.names = TRUE)
+rnas_all_visits_fname<-paste0(output_files, 'rnas_all_visits.csv.gz')
+
+# save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
+gz1 <- gzfile(rnas_all_visits_fname, "w")
+write.csv2(rna_all_visits, gz1, row.names = TRUE)
+close(gz1)
+
+
+
+
+
+#write.csv2(rna_all_visits, paste0(output_files, 'rnas_all_visits.csv'), row.names = TRUE)
+
 
 
 #### Read in the mirnas 
@@ -135,8 +154,15 @@ rownames(mirnas_df)
 dim(mirnas_df)
 length(colnames(rna_all_visits)); 
 length(unique(colnames(rna_all_visits)))
-write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
 
+
+#write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
+mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
+
+# save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
+gz1 <- gzfile(mirnas_all_visits_fname, "w")
+write.csv2(mirnas_df, gz1, row.names = TRUE)
+close(gz1)
 
 
 library(tidyr)

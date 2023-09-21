@@ -74,7 +74,7 @@ get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
 
 ######### VARIANCE EXPLAINED ###########
 
-group=2
+group=1
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
@@ -539,6 +539,8 @@ views
 dir.create(paste0(outdir, 'top_weights/'))
 
 T=0.3
+
+# TODO: save to zip file!
 for (i in seq(1,vps)){
   view=views[i]
   
@@ -1349,35 +1351,80 @@ names(which(res.negative$pval.adj[,'Factor4']<0.05))[1:5]
 ## Prediction of clinical subgroups 
 ## Predict the EORTC.risk
 
+#install.packages('caret')
+#install.packages('tibble')
+library('tibble')
+library('caret')
+packages <- c('dplyr', 'ggplot2', 'caret', 'party')
+invisible(lapply(packages, library, character.only = TRUE))
+
 suppressPackageStartupMessages(library(randomForest))
 
 # Prepare data
+df <- as.data.frame(get_factors(MOFAobject, factors=1:15)[[1]])
 df <- as.data.frame(get_factors(MOFAobject, factors=sel_factors)[[1]])
-df
 
 
 
-#install.packages()
-# library('caret')
+
+
 # Do predictions with the factors 
 # Train the model for eortc.risk
 
 # Use the pricnipal components 
-df$COHORT <- as.factor(MOFAobject@samples_metadata$COHORT)
-model.COHORT <- randomForest(COHORT ~ ., data=df, ntree=10)
+# Train-validation split #
+# Cross-Validation ####
 
-# Do predictions
+
+df$y <- as.factor(MOFAobject@samples_metadata$NHY)
+
+df$y<- as.factor(MOFAobject@samples_metadata$COHORT)
+df_age <- cbind(df,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
+
+
+
+## Set seed for reproducibility
+set.seed(123)
+
+## Define repeated cross validation with 5 folds and three repeats
+repeat_cv <- trainControl(method='repeatedcv', number=5, repeats=3)
+train_index <- createDataPartition(y=df$y, p=0.7, list=FALSE)
+
+val_folds<-createFolds(df$y, k = 10, list = TRUE, returnTrain = TRUE)
+val_folds#
+
+
+## TODO: issues : there is class imbalance 
+# TODO: issues 
+res<-sapply(val_folds, cross_val_score, df=df)
+res_age<-sapply(val_folds, cross_val_score, df=df_age)
+
+
+
+
+
+
+
+
+
+
+
+#########
+
+
+
+
+
+model.COHORT <- randomForest(COHORT ~ ., data=training_set, ntree=10)
 MOFAobject@samples_metadata$COHORT.pred <- stats::predict(model.COHORT, df)
-MOFAobject@samples_metadata$COHORT.pred
 
 # Assess performance 
 predicted<-as.factor(MOFAobject@samples_metadata$COHORT.pred)
 actual = MOFAobject@samples_metadata$COHORT
 confusion_mat = as.matrix(table(actual, predicted )) 
 
-confusion_mat
-ConfusionMatrix(as.matrix(table(actual, predicted )) )
-accuracy_score(actual, predicted )
+
+
 
 print(confusion_mat)
 

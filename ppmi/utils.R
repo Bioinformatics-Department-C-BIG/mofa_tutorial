@@ -6,7 +6,15 @@ library(edgeR)
 ## Summarized experiment 
 
 load_se_all_visits<-function(input_file, combined){
+  #'
+  #' @param input_file file cntaining rnas or mirnas counts for all visits 
+  #' 
+  #' 
+  #write.csv2(rna_all_visits, gz1, row.names = TRUE)
+  
   raw_counts<-as.matrix(fread(input_file, header=TRUE), rownames=1)
+
+  
   raw_counts_all<-raw_counts
   class(raw_counts_all) <- "numeric"
   ## They seem to have taken averages for replicas so need to fix

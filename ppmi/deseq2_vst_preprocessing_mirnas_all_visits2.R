@@ -32,15 +32,16 @@ combined<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
 
-process_mirnas=FALSE
+process_mirnas=TRUE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
 # tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
 VISIT='V08'
-for (VISIT in c(c('V08'))){
+VISIT=c('BL','V08')
+#for (VISIT in list( list('V08', 'BL')) ){
 
-  
+        print(VISIT)
         filter_common=TRUE
 
         source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -236,5 +237,5 @@ for (VISIT in c(c('V08'))){
   
   
   
-}
+
 

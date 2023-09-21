@@ -19,7 +19,9 @@ mod='RNA'
 
 
 mod='miRNA'; nmf_params<-m_params; NFACTORS=10; nrun=10
-mod='RNA' ; nmf_params<-g_params;  NFACTORS=20; nrun=10
+
+mod='RNA' ; nmf_params<-g_params;  NFACTORS=10; nrun=10
+mod='miRNA'; nmf_params<-m_params; NFACTORS=14; nrun=10
 
 
 #### Load the dataset ####
@@ -33,14 +35,14 @@ mofa_multi$COHORT
 ns<-dim(assays(mofa_multi )[['RNA']])
 ## Split in test/ train #### 
 
-for (tt in 1:ns){
-  mofa_multi_test=mofa_multi[,tt ]
-  mofa_multi_train=mofa_multi[,-tt ]
-  
-  
-}
+#for (tt in 1:ns){
+#  mofa_multi_test=mofa_multi[,tt ]
+#  mofa_multi_train=mofa_multi[,-tt ]
+#  
+#  
+#}
 x1_se<-mofa_multi[, , mod]
-x1_se<-mofa_multi_train[, , mod]
+#x1_se<-mofa_multi_train[, , mod]
 
 x1=assays(x1_se)[[mod]]
 
@@ -114,9 +116,13 @@ covariates <- as.data.frame(lapply(colData(x1_se), as.numeric))
 rownames(covariates)<-colData(x1_se)$PATNO_EVENT_ID
 h_t<-as.data.frame(t(h))
 
+covariates=covariates[match(rownames(h_t),covariates$PATNO_EVENT_ID ),]
+dim(h_t)
+covariates=match()
 
 
 
+covariates
 
 
 

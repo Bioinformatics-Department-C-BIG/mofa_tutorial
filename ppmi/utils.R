@@ -716,6 +716,7 @@ preprocess_visit<-function(se_filt_V, common, feat_names){
   # CPM or VSN? # cpm for plotting, vsn for 
   df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
   df_v<- clip_outliers(df_v)
+  rownames(df_v) = gsub('\\..*', '',rownames(df_v))
   df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
   v_ens=data.frame(df_V_ens)
   v_ens = cbind(v_ens, colData(se_filt_V_pd)[,

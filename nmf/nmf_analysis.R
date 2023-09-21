@@ -82,26 +82,24 @@ plot_factor_covars<-function(cor, covars_to_plot ,fname, plot='r', labels_col=FA
 sel_factors_s<-which(cor_all$p['COHORT',]<0.05)
 
 
-colnames(cor$r) 
-rownames(cor$sef)
-cors_non_na<-names(which(!is.na( cor$p[,1])))
+colnames(cor_all$r) 
+rownames(cor_all$sef)
+cors_non_na<-names(which(!is.na( cor_all$p[,1])))
 T<--log10(0.05)
 
 
 to_remove_regex<-'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO|PATNO|cluster'
-to_remove_covars<-grepl( to_remove_regex, rownames(cor$p))
+to_remove_covars<-grepl( to_remove_regex, rownames(cor_all$p))
 
 
-sig<-which( rowMins(cor$p)<0.01 & rowMaxs(cor$r)<0.95 & !to_remove_covars ) 
-sig_names<-rownames(cor$p)[which( rowMins(cor$p)<0.01 & !to_remove_covars ) ]
+sig_names<-rownames(cor_all$p)[which( rowMins(cor_all$p)<0.01 & !to_remove_covars ) ]
 
 'SCAU26C' %in% sig_names
 
-sig2<-which( rownames(cor$p) %in% selected_covars2 ) 
-sig2_names<-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars2 ) ]
+sig2_names<-rownames(cor_all$p)[which( rownames(cor_all) %in% selected_covars2 ) ]
 
 
-sig_broad<-rownames(cor$p)[which( rownames(cor$p) %in% selected_covars_broad &  !(rownames(cor$p) %in% 'con_putamen')  ) ]
+sig_broad<-rownames(cor_all$p)[which( rownames(cor_all$p) %in% selected_covars_broad &  !(rownames(cor_all$p) %in% 'con_putamen')  ) ]
 
 
 plot='r'
@@ -112,18 +110,18 @@ fname='covariates'
 covars_to_plot=sig
 sig
 
-plot_factor_covars(cor, sig2_names, fname='covariates_sig', plot='r')
+plot_factor_covars(cor_all, sig2_names, fname='covariates_sig', plot='r')
 
-plot_factor_covars(cor, sig_broad, fname='covariates_broad', plot='r')
+plot_factor_covars(cor_all, sig_broad, fname='covariates_broad', plot='r')
 
 
-plot_factor_covars(cor, sig_names, fname='covariates_sig_logpval', plot='log_pval', res=300, width_base=3500)
+plot_factor_covars(cor_all, sig_names, fname='covariates_sig_logpval', plot='log_pval', res=300, width_base=3500)
 
 if (length(sel_factors_s)==0){
   sel_factors_s=c(1:NFACTORS)
 }
-plot_factor_covars(cor, sig2_names, fname='covariates_logpval',  plot='log_pval',  res=400, sel_factors = sel_factors_s )
-plot_factor_covars(cor, sig_broad, fname='covariates_broad_logpval',  plot='log_pval', height=1400, res=300, width_base=2000)
+plot_factor_covars(cor_all, sig2_names, fname='covariates_logpval',  plot='log_pval',  res=400, sel_factors = sel_factors_s )
+plot_factor_covars(cor_all, sig_broad, fname='covariates_broad_logpval',  plot='log_pval', height=1400, res=300, width_base=2000)
   
 graphics.off()
 #} else {
@@ -132,10 +130,10 @@ graphics.off()
 
 which( rowMins(cor$p)<0.05)
 
-cor$r['CONCOHORT',]
-cor$p['CONCOHORT',]
+cor_all$r['CONCOHORT',]
+cor_all$p['CONCOHORT',]
 
-sel_factors_s<-which(cor$p['COHORT',]<0.05)
+sel_factors_s<-which(cor_all$p['COHORT',]<0.05)
 sel_factors_s
 stat[sig,]
 
@@ -187,6 +185,9 @@ chisq.test(clusters_single$cluster,covariates$COHORT )
 MutInf(clusters_single$cluster,covariates$COHORT)
 
 
+
+df1$PATNO
+rownames(h_t)
 
 df1=covariates
 chisq.test(df1$cluster_m, df1$COHORT)

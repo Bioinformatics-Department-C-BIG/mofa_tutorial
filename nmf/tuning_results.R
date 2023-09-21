@@ -7,6 +7,7 @@
 ######## single NMF ####
 mod='RNA'; selected_params<-'0.3_100_'; sel_NFACTORS=10
 mod='miRNA'; selected_params<-'0.75_10_'; sel_NFACTORS=10
+mod='miRNA'; selected_params<-'0.3_10_'; sel_NFACTORS=15
 
 
 s_stats<-read.csv( paste0(outdir_orig,'nmf_all_stats_mi_', mod, '.csv'))
@@ -20,6 +21,14 @@ s_stats
 
 ggplot(s_stats, aes(x=k_centers, y=mi))+
   geom_point(aes(x=k_centers, y=mi, color=NFACTORS))+ 
+  geom_smooth()+
+  facet_grid(~nmf_params)+
+  ylab('MI')
+ggsave(paste0(tun_dir, mod,'.png'), height=4, width=10)
+graphics.off()
+
+ggplot(s_stats, aes(x=NFACTORS, y=mi))+
+  geom_point(aes(x=NFACTORS, y=mi, color=k_centers))+ 
   geom_smooth()+
   facet_grid(~nmf_params)+
   ylab('MI')
@@ -79,7 +88,7 @@ colnames(s_stats)<-c('1','TOP_PN', 'TOP_GN', 'MIN_COUNT_G', 'TOP_MN', 'MIN_COUNT
 #s_stats$g_params=as.factor(s_stats$g_params)
 
 ggplot(s_stats, aes(x=k_centers_m, y=mi))+
-  geom_point(aes(x=k_centers_m, y=mi, color=N_FACTORS))+ 
+  geom_point(aes(x=k_centers_m, y=mi, color=NFACTORS))+ 
   geom_smooth()+ 
   facet_grid(~TOP_GN)
 

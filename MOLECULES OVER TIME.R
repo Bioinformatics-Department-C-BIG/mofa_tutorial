@@ -36,8 +36,10 @@ fn_sel=2
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='miRNA'; process_mirnas=TRUE
 
-view='RNA'; process_mirnas=FALSE
+
 view='miRNA'; process_mirnas=TRUE
+
+view='RNA'; process_mirnas=FALSE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -251,13 +253,14 @@ merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
 merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 
 
-
+######## First find out which of the molecules significantly change over time ####
+#
 wilcox_stats<-merged_melt_filt_g1 %>% group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
-most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:5,]
+most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:15,]
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 
@@ -275,11 +278,11 @@ ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) +
               map_signif_level=TRUE, 
               tip_length = 0, vjust=0.4)+
 
-  facet_wrap(. ~ symbol, scales='free_y', nrow=1) +
+  facet_wrap(. ~ symbol, scales='free_y') +
   
     theme_bw() 
 ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
-       width=12, height=3)
+       width=12, height=12)
 
 
 
@@ -303,11 +306,13 @@ mean_data
   }
   
 
-  filt_top=TRUE
+  filt_top=FALSE
 if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:3],]
+  nrow=1; height=2.6
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
+  nrow=NULL; height=7
   
 }
 
@@ -319,7 +324,7 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
                geom = "line", size = 1) + 
   scale_color_viridis_d(option='turbo')+
   facet_wrap(. ~ symbol, scales='free_y', 
-            nrow = 1) +
+            nrow = nrow) +
   
   #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
   theme_bw()+ 
@@ -338,9 +343,9 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   
   
 
-warnings()
+#warnings()
 ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top,   '.jpeg'), 
-       width=7, height=2.6)
+       width=7, height=height)
 
 
 

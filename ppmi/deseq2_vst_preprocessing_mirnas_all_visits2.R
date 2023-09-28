@@ -39,11 +39,13 @@ process_mirnas=TRUE
 # tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
 VISIT='V08'
 VISIT=c('BL','V08')
+VISIT=c('BL','V04', 'V06',  'V08');
+
 #for (VISIT in list( list('V08', 'BL')) ){
 
         print(VISIT)
         filter_common=TRUE
-
+        same_samples=FALSE
         source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
         
         
@@ -71,11 +73,24 @@ VISIT=c('BL','V08')
         se_filt<-filter_se(se, VISIT, sel_coh)
         se_filt<-filter_se(se, VISIT, sel_coh, sel_ps)
         
-        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
-        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
+        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh, sel_ps)
+        se_filt_V04<-filter_se(se, VISIT='V04', sel_coh, sel_ps)
+        se_filt_V06<-filter_se(se, VISIT='V06', sel_coh, sel_ps)
+        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh, sel_ps)
+        se_filt_V04<-se_filt_V04[,!(is.na(se_filt_V04$SEX))]
+        
         
         dim(se_filt)
+
         common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+        if (same_samples){
+          common=Reduce(intersect, list(se_filt_V08$PATNO,se_filt_BL$PATNO , se_filt_V04$PATNO, se_filt_V06$PATNO))
+          
+        }
+        
+        
+        
+        
         if (filter_common){
           se_filt<-se_filt[,se_filt$PATNO %in% common]
         }
@@ -103,18 +118,34 @@ VISIT=c('BL','V08')
         hist(se_filt$AGE_AT_VISIT)
         hist(se_filt$AGE_SCALED)
         
+        # impute: 
+        # which()
+        se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
+        se_filt<-se_filt[,!(is.na(se_filt$SEX))]
+        
+        table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
+
+        colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
         
         ### Perform the appropriate test depending on what you want as prediction variable
         if (length(sel_coh)>1){
           
           if (length(VISIT)>1){
             print('Two cohorts and visits detected, running deseq and vsd with design formula')
+             
+           
+            if (same_samples){
+              se_filt = se_filt[, se_filt$COHORT==2]
+              formula_deseq = '~PATNO+EVENT_ID'
+              
+            }
             
             ddsSE <- DESeqDataSet(se_filt, 
                                   design = as.formula(formula_deseq))
             ddsSE<-estimateSizeFactors(ddsSE)
             
             vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+            
             
             
             
@@ -143,6 +174,9 @@ VISIT=c('BL','V08')
           
           
         }
+        
+        
+      
         
         deseq2Data <- DESeq(ddsSE)
         ### Contrast disease-control: parkinsons = 1, control = 2 

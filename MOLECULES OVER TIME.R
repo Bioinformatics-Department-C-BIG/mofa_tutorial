@@ -14,7 +14,7 @@ bl<-read.csv(bl_f)
 bl<-bl[!is.na(bl$Description),]
 bl_sig<-bl[bl$Least_value<0.01,]
 
-v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
+#v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 v08<-read.csv(v08_f)
 
 
@@ -32,7 +32,7 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=2
+fn_sel=1
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='miRNA'; process_mirnas=TRUE
 
@@ -61,6 +61,8 @@ common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
 
+f_v<-get_factors(MOFAobject, factors = sel_factors[fn_sel] )[[1]]
+hist(f_v, breaks = 25)
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
 ws
@@ -171,19 +173,26 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
-  T=0.2
+
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  
   
 }else if (names(sel_factors[fn_sel]) %in% c('Factor3')){
   T=0.8
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
 }
-T
-Z1_grouping
+
+T=0.8
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+
+T=0.2;Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+
+
 dim(merged_melt)
 merged_melt$grouping<-Z1_grouping
-merged_melt
+merged_melt$Z2grouping<-Z2_grouping
 
 if (view=='RNA'){
   symb<-get_symbols_vector(ens)
@@ -240,10 +249,17 @@ if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
 }else{
   GROUP=TRUE
 }
+
+
 merged_melt_filt$group<-as.logical(merged_melt_filt$grouping)
-merged_melt_filt$group[as.logical(merged_melt_filt$grouping)]<-'HighFactor'
-merged_melt_filt$group[!as.logical(merged_melt_filt$grouping)]<-'LowFactor'
-merged_melt_filt$group<-as.factor(merged_melt_filt$group)
+group_cat='Z2grouping'
+group_cat='grouping'
+
+merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
+
+merged_melt_filt$group[as.logical(merged_melt_filt[, group_cat])]<-'HighFactor'
+merged_melt_filt$group[!as.logical(merged_melt_filt[, group_cat])]<-'LowFactor'
+merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
 
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
 merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
@@ -316,8 +332,8 @@ if (filt_top){
   
 }
 
-ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, 
-                                    fill=group, group=group, colour=group)) + 
+ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+                                    fill='group', group='group', colour='group')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
@@ -344,8 +360,18 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top,   '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
        width=7, height=height)
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -607,9 +633,9 @@ df_plot_2k<-df_plot[df_plot$grouping %in% c(1,4),]
 
 df_plot_2k<-df_plot[df_plot$grouping %in% c(4,5),]
 
-df_plot_2k<-df_plot
 
 df_plot_2k<-df_plot[df_plot$grouping %in% c(2,5),]
+df_plot_2k<-df_plot
 
 for (y in to_plot){
 

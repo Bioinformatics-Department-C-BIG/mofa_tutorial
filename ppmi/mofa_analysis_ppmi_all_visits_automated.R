@@ -113,7 +113,7 @@ stats<-apply(MOFAobject@samples_metadata, 2,table )
 non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 cors_both<-get_correlations(MOFAobject, names(non_na_vars))
 cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
-
+cors_both
 
 ######
 
@@ -146,9 +146,15 @@ library(DescTools)
 
 MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
 
+PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT==2]
+
+MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
+
+
+
 if (length(sel_coh)>1){
   #for (k_centers_m in c(6)){
-  for (k_centers_m in c(5)){
+  for (k_centers_m in c(3)){
     
     clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
     clusters_mofa<-clusters
@@ -157,12 +163,13 @@ if (length(sel_coh)>1){
     clusters_mofa_moca <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(14,10,8))
     clusters_mofa_outcome <- cluster_samples(MOFAobjectBL, k=6, factors=sel_factors_outcome)
     
+    clusters_patients <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=sel_factors)
     
-    covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
-    df1=covariates
+    #covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
+    #df1=covariates
     #print(chisq.test(df1$cluster_m, df1$COHORT))
-    mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
-    print(mut_inf)
+    #mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
+    #print(mut_inf)
     
   }
  # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
@@ -282,11 +289,11 @@ names(non_na_vars)[ids_to_plot]
 MOFAobject@samples_metadata$SNCA_rs356181
 
 #### correlations between factors 
-cors[,c('stai_state' )]
+#cors[,c('stai_state' )]
 format(cors_pearson[,c('stai_trait')], digits=2)
 
-cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
-format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
+#cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
+#format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
 
 
 hist(log2(MOFAobject@samples_metadata$td_pigd_on))
@@ -306,6 +313,13 @@ cors[,'ess_cat']
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
 samples_metadata(MOFAobject)$Outcome
 
+
+EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
+EVENT_MAP[['BL']]
+samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
+
+
+
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
@@ -318,7 +332,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                    'NP3RTARU', 'RBD_TOT', 
                   'con_putamen', 
                  'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
-                 'rigidity')
+                 'rigidity','months')
                    #'DYSKIRAT')
 # STAIAD
 labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON',
@@ -332,7 +346,7 @@ labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON
              'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant', 'Medication use', 'Outcome', 
-             'rigidity')
+             'rigidity', 'months')
 
 
 
@@ -348,15 +362,14 @@ selected_covars2<-c( 'AGE', 'SEX',
                   # 'stai_state', 'stai_trait', 
                    'rigidity', 
                   'NP3RTARU',
-                  
-                  
-                    'ptau',  
+                                      'ptau',  
                     'PDSTATE',  
                    'RBD_TOT', 
                   
                    'con_putamen', 
                    'td_pigd_old_on', 
-                 'PD_MED_USE' )
+                 'PD_MED_USE' , 
+                 'months')
 
 labels_col2=c( 'AGE', 'SEX',
              #'MDS-UPDRS1',
@@ -376,7 +389,8 @@ labels_col2=c( 'AGE', 'SEX',
              'RBD_TOT', 
              'PUTAMEN', 
              'TD/PIGD dominant',
-           'Medication use')
+           'Medication use', 
+           'months')
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
@@ -386,12 +400,22 @@ if (length(sel_coh)>1){
 cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
-plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000 ){
+MOFAobjectPD
+plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000, MOFAobject=MOFAobject){
   
   # filter if some do not exist in the colnames of metadata
-  selected_covars=selected_covars[selected_covars%in% colnames(MOFAobject_gs2@samples_metadata)]
+  #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
+  sds<-apply(MOFAobject@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
+  sd_na<-c(is.na(sds)|sds==0)
+  
+  selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject@samples_metadata) & !(sd_na)]
+  print(selected_covars)
+  
+  
   labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
   labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
+  
+  
   
   jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
   P2<-correlate_factors_with_covariates(MOFAobject,
@@ -419,20 +443,28 @@ graphics.off()
 plot="log_pval"
 # Plot 1: strict ones we are interested in
 # conference poster 
-fname<-'factors_covariates_only_nonzero_strict'
 factors=names(sel_factors)
-plot_covars_mofa(selected_covars2,fname,plot,factors,labels_col )
+fname<-'factors_covariates_only_nonzero_strict_PD'
+plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col, MOFAobject=MOFAobjectPD )
+
+
+fname<-'factors_covariates_only_nonzero_strict'
+plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col, MOFAobject=MOFAobject )
 
 # Plot 1: some more non motor that we discovered
 samples_metadata(MOFAobject)$Outcome
 
 
+fname<-'factors_covariates_only_nonzero_broad_PD'
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col_broad, height=1500, MOFAobject=MOFAobjectPD  )
+
 fname<-'factors_covariates_only_nonzero_broad'
-plot_covars_mofa(selected_covars_broad,fname,plot,c(sel_factors, 10, 8),labels_col_broad, height=1500 )
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col_broad, height=1500 )
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col_broad, height=1500, MOFAobject=MOFAobject  )
 
 
 
+
+MOFAobjectPD
 
 selected_covars
 
@@ -521,7 +553,6 @@ for (fx in 1:N_FACTORS){
 
 
 
-colnames(ger)
 view='proteomics'; factor=6
 
 vps=length(MOFAobject@dimensions$D)
@@ -1131,7 +1162,7 @@ for (i in seq(1,vps)){
     
     #cors_sig_non_na=cors_sig
     groups='all';groups=2; 
-    
+    groups=1
     #hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, res, '_cor_', cor_T, 'FT_', FT, '.jpeg')
     hname<-paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs,'_cr_', cluster_rows, '_cor_', cor_T, 'FT_', 
                   FT, 'den_', denoise, groups, '.jpeg')

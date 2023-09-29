@@ -4,6 +4,10 @@ library(FactoMineR)
 library(pixmap)
 #install.packages('NMF')
 library(NMF)
+source(paste0(script_dir, '/ppmi/config.R'))
+source(paste0(script_dir, '/ppmi/mofa_config.R'))
+source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
+
 
 
 # TODO: setup the home dir 
@@ -12,8 +16,12 @@ library(NMF)
 mod='miRNA'
 mod='proteomics'
 mod='RNA'
-mod='miRNA'
-mod='RNA' ; nmf_params<-g_params
+
+
+mod='miRNA'; nmf_params<-m_params; NFACTORS=10; nrun=10
+
+mod='RNA' ; nmf_params<-g_params;  NFACTORS=10; nrun=10
+mod='miRNA'; nmf_params<-m_params; NFACTORS=14; nrun=10
 
 
 #### Load the dataset ####
@@ -24,15 +32,24 @@ mofa_multi<-create_multi_experiment(data_full, combined_bl)
 
 mofa_multi$COHORT
 
+ns<-dim(assays(mofa_multi )[['RNA']])
+## Split in test/ train #### 
 
+#for (tt in 1:ns){
+#  mofa_multi_test=mofa_multi[,tt ]
+#  mofa_multi_train=mofa_multi[,-tt ]
+#  
+#  
+#}
 x1_se<-mofa_multi[, , mod]
+#x1_se<-mofa_multi_train[, , mod]
 
 x1=assays(x1_se)[[mod]]
 
 
 
 #### select the highly variable #### 
-g_params
+
 
 
 
@@ -40,20 +57,30 @@ dim(x1)
 #res<-NMF::nmf(x1, 8)
 outdir
 ## MULTI RUN
-NFACTORS=6
-nrun=10
 
 
 ## SAVE AND LOAD 
 
 
-out_nmf_params<- paste0( 'g_', g_params, nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+if (mod=='RNA'){
+  prefix='g_'
+  nmf_params=g_params
+      out_nmf_params<- paste0( prefix,  nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+     
+}else if(mod=='miRNA'){
+  prefix='m_'
+  nmf_params=m_params  
+  out_nmf_params<- paste0( prefix,  nmf_params, '_coh_', sel_coh_s,'_', VISIT_S)
+  
+  }
+
+
 outdir_nmf = paste0(outdir_orig, '/nmf/',out_nmf_params, '_', NFACTORS );
+
+
 out_nmf=paste0(outdir_nmf, 'model')
 
 dir.create(outdir_nmf)
-
-
 if (file.exists(out_nmf)){
   res=loadRDS(out_nmf)
   
@@ -89,9 +116,13 @@ covariates <- as.data.frame(lapply(colData(x1_se), as.numeric))
 rownames(covariates)<-colData(x1_se)$PATNO_EVENT_ID
 h_t<-as.data.frame(t(h))
 
+covariates=covariates[match(rownames(h_t),covariates$PATNO_EVENT_ID ),]
+dim(h_t)
+covariates=match()
 
 
 
+covariates
 
 
 

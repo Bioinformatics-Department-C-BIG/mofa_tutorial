@@ -14,7 +14,7 @@ bl<-read.csv(bl_f)
 bl<-bl[!is.na(bl$Description),]
 bl_sig<-bl[bl$Least_value<0.01,]
 
-v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
+#v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
 v08<-read.csv(v08_f)
 
 
@@ -32,12 +32,14 @@ head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
 v08_only
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=2
+fn_sel=1
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='miRNA'; process_mirnas=TRUE
 
-view='RNA'; process_mirnas=FALSE
+
 view='miRNA'; process_mirnas=TRUE
+
+view='RNA'; process_mirnas=FALSE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -59,6 +61,8 @@ common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
 
+f_v<-get_factors(MOFAobject, factors = sel_factors[fn_sel] )[[1]]
+hist(f_v, breaks = 25)
 
 ws<-get_weights(MOFAobject, views = view, factors=sel_factors[fn_sel])[[1]]
 ws
@@ -161,9 +165,7 @@ Z1<-Z[,sel_factors[fn_sel]]
 patnos_z1<-gsub('\\_.*', '', names(Z1))
 Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 
-#png(paste0(outdir, '/trajectories/','hist_', sel_factors[fn_sel],'_', view,  '.jpeg'))
-#hist(Z1_matched);
-#dev.off()
+
 
 quantile(Z1_matched,0.85, na.rm=TRUE)
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.2, na.rm=TRUE))
@@ -171,19 +173,26 @@ Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,0.8, na.rm=TRUE))
 
 sel_factors[fn_sel]
 if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
-  T=0.2
+
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+  
   
 }else if (names(sel_factors[fn_sel]) %in% c('Factor3')){
   T=0.8
   Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
   
 }
-T
-Z1_grouping
+
+T=0.8
+Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+
+T=0.2;Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
+
+
 dim(merged_melt)
 merged_melt$grouping<-Z1_grouping
-merged_melt
+merged_melt$Z2grouping<-Z2_grouping
 
 if (view=='RNA'){
   symb<-get_symbols_vector(ens)
@@ -240,10 +249,17 @@ if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
 }else{
   GROUP=TRUE
 }
+
+
 merged_melt_filt$group<-as.logical(merged_melt_filt$grouping)
-merged_melt_filt$group[as.logical(merged_melt_filt$grouping)]<-'HighFactor'
-merged_melt_filt$group[!as.logical(merged_melt_filt$grouping)]<-'LowFactor'
-merged_melt_filt$group<-as.factor(merged_melt_filt$group)
+group_cat='Z2grouping'
+group_cat='grouping'
+
+merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
+
+merged_melt_filt$group[as.logical(merged_melt_filt[, group_cat])]<-'HighFactor'
+merged_melt_filt$group[!as.logical(merged_melt_filt[, group_cat])]<-'LowFactor'
+merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
 
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$grouping %in% c(GROUP),]
 merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
@@ -253,13 +269,14 @@ merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
 merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 
 
-
+######## First find out which of the molecules significantly change over time ####
+#
 wilcox_stats<-merged_melt_filt_g1 %>% group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
-most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:5,]
+most_sig_over_time<-wilcox_stats[order(wilcox_stats$Wilcox),][1:15,]
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 
@@ -277,11 +294,11 @@ ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) +
               map_signif_level=TRUE, 
               tip_length = 0, vjust=0.4)+
 
-  facet_wrap(. ~ symbol, scales='free_y', nrow=1) +
+  facet_wrap(. ~ symbol, scales='free_y') +
   
     theme_bw() 
 ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
-       width=12, height=3)
+       width=12, height=12)
 
 
 
@@ -307,21 +324,23 @@ mean_data
 
   filt_top=TRUE
 if (filt_top){
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:3],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:15],]
+  nrow=NULL; height=2.6*4
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
+  nrow=NULL; height=7
   
 }
 
-ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, 
-                                    fill=group, group=group, colour=group)) + 
+ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+                                    fill='group', group='group', colour='group')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
                geom = "line", size = 1) + 
   scale_color_viridis_d(option='turbo')+
   facet_wrap(. ~ symbol, scales='free_y', 
-            nrow = 1) +
+            nrow = nrow) +
   
   #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
   theme_bw()+ 
@@ -340,9 +359,19 @@ ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value,
   
   
 
-warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view, filt_top,   '.jpeg'), 
-       width=7, height=2.6)
+#warnings()
+ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
+       width=7, height=height)
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -462,8 +491,15 @@ merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'L
 ### Create groups 
 
 ### Decide on the grouping #### 
-group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
+
 group_by_patient<-clusters_mofa$cluster
+
+
+group_by_patient<-clusters$cluster
+group_by_patient<-clusters_mofa_outcome$cluster
+group_by_patient<-clusters_mofa$cluster
+group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
+
 
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
 
@@ -507,13 +543,11 @@ to_sel
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
 
-
-
 to_sel
 
 merged_melt_cl$co
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT'
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT'
            )
 
 if (names(sel_factors[fn_sel]) %in% c('Factor3')){
@@ -524,6 +558,10 @@ if (names(sel_factors[fn_sel]) %in% c('Factor3')){
 }else{
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
               'td_pigd_old_on',  'AGE')
+  to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
+             'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
+  to_plot<-selected_covars_broad
+  
 }
 
 to_plot
@@ -564,7 +602,9 @@ if (remove_on){
 
 
 
-#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
+combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
+#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08', combined_bl_log_common_off$EVENT_ID) ,]
+
 combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V', combined_bl_log_common_off$EVENT_ID) ,]
 
 
@@ -574,17 +614,39 @@ df_plot<-combined_bl_log_common_off
 df_plot %>% 
   group_by(EVENT_ID, grouping)%>% 
   summarize(count_distinct = n_distinct(PATNO))
+time_nos<-df_plot %>% 
+  group_by(EVENT_ID)%>% 
+  summarize(count_distinct = n_distinct(PATNO))
 
-smaller_group<-df_plot[df_plot$EVENT_ID=='V16',]$PATNO
+smaller_group_id<-time_nos$EVENT_ID[which.min(time_nos$count_distinct)]
+smaller_group<-df_plot[df_plot$EVENT_ID==smaller_group_id,]$PATNO
 
 df_plot<-df_plot[df_plot$PATNO %in% smaller_group,]
 
 
+df_V16<-df_plot[c(df_plot$VISIT=='V16'), ]
+df_BL<-df_plot[df_plot$VISIT=='BL', ]
+
+kruskal.test(df_V16$grouping,df_V16$NP3_TOT)
+kruskal.test(df_BL$grouping,df_BL$NP3_TOT)
+
+
+df_plot$grouping
+######### boxplots by cluster over time
+df_plot[,c('VISIT', 'grouping')][df_plot$VISIT=='V12',]
+to_plot
+df_plot_2k<-df_plot[df_plot$grouping %in% c(1,4),]
+
+df_plot_2k<-df_plot[df_plot$grouping %in% c(4,5),]
+
+
+df_plot_2k<-df_plot[df_plot$grouping %in% c(2,5),]
+df_plot_2k<-df_plot
 
 for (y in to_plot){
 
-ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
-                                             fill='grouping', group='grouping', colour='grouping')) + 
+ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
+          fill='grouping', group='grouping', colour='grouping')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
@@ -617,6 +679,51 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt
 
 
 merged_melt_cl3<-merged_melt_cl
+for (y in to_plot){
+  ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
+                                    fill='grouping')) + 
+   geom_boxplot()+
+    scale_color_viridis_d(option='turbo')+
+    #facet_wrap(. ~ symbol, scales='free_y', 
+    #           nrow = 1) +
+    
+    #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+    theme_bw()+ 
+    # geom_signif(comparisons = list(c('BL', 'V08')), 
+    #            map_signif_level=TRUE, 
+    #           tip_length = 0, vjust=0)+
+    
+    labs(y=y)+
+    # legend(legend=c('Low', 'High'))+
+    theme(strip.text = element_text(
+      size = 10, color = "dark green"), 
+      axis.title.y =element_text(
+        size = 13, color = "dark green"), 
+      axis.text.x = element_text(
+        size = 9 ))
+  
+  
+  
+  warnings()
+  ggsave(paste0(outdir, '/trajectories/box_', sel_factors[fn_sel],'_', filt_top, y,'_', remove_on,  '.jpeg'), 
+         width=5, height=3)
+}
+
+
+
+
+
+
+
+
+
+
+
+merged_melt_cl3=merged_melt_cl
+merged_melt_cl2=merged_melt_cl
+
+
+
 for (cov_to_plot in to_sel){
   
     if (is.numeric(merged_melt_cl3[, cov_to_plot])){
@@ -640,7 +747,7 @@ for (cov_to_plot in to_sel){
     }
 }
 
-
+  sm=samples_metadata(MOFAobject)
 
 
 ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))

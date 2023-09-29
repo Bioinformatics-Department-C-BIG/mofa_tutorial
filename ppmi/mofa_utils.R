@@ -26,16 +26,16 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   #' @param outdir
   #' 
 
-  #MOFAobject <- create_mofa(mofa_multi_complete)
-  
+
   
   model_opts <- get_default_model_options(MOFAobject)
   data_opts <- get_default_data_options(MOFAobject)
   model_opts$num_factors <- N_FACTORS
-  data_opts
   data_opts$scale_views=scale_views
   train_opts<-get_default_training_options(MOFAobject)
-  train_opts
+
+  
+  
   MOFAobject <- prepare_mofa(MOFAobject,
                              model_options = model_opts,
                              data_options = data_opts, 
@@ -43,6 +43,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   )
   
   mofa_file<-paste0(outdir,'mofa_ppmi.hdf5')
+  
   if (file.exists(mofa_file) & !(force) ){
     pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
     MOFAobject<-pre_trained

@@ -39,7 +39,6 @@ run_mofa_complete<-FALSE
 
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
-source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 
 
 # metadata source 
@@ -47,13 +46,11 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
-combined_bl_log$GBA_PATHVAR
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log
 
-combined_bl_log$RBD_TOT
-combined_bl_log$stai_state
+
 #combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 #combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 
@@ -124,11 +121,59 @@ run_mofa_get_cors<-function(N_FACTORS){
         cors_pearson=cors_both[[2]]
         cors_t<-paste(round(cors_pearson[,'CONCOHORT'], digits=2), collapse=', ')
         max_cor<-round(max(cors_pearson), digits=2)
-        print(cors_t)
-        df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
-                      run_mofa_complete, N_FACTORS,cors_t , max_cor )
         
-        write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+        
+        
+        
+        MOFAobject@samples_metadata=attach_clinvars(MOFAobject,combined_bl_log )
+        
+        
+        ### Correlations ####
+        
+        cors_both<-get_correlations(MOFAobject, 'COHORT')
+        cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+        
+        
+        ## Cluster and eval MI ####
+        
+        sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+          
+          
+          for (k_centers_m in c(3,4,5,6, 7, 8, 9,10)){
+            
+            # TODO: create cluster and eval function
+            
+            clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
+            clusters_mofa<-clusters
+            
+            covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
+            df1=covariates
+            #print(chisq.test(df1$cluster_m, df1$COHORT))
+            mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
+            print(mut_inf)
+            
+            
+            
+            
+            print(cors_t)
+            df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+                          run_mofa_complete, N_FACTORS,cors_t , max_cor,k_centers_m, mut_inf )
+            
+            write.table(t(df_stats), paste0(outdir_orig,'all_stats_clusters.csv'), append=TRUE,sep=',', col.names = FALSE)
+            
+          }
+          
+          
+        
+        
+        
+        
+        
+        
+        
+        
+        
+      
         
   }
   
@@ -146,48 +191,26 @@ for (N_FACTORS in c(10:15)){
   #'
   #'
   #'
-  mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
-  out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
-  outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
-  dir.create(outdir, showWarnings = FALSE)
-  MOFAobject=run_mofa_get_cors(N_FACTORS)
+  #for (TOP_GN in c(0.1, 0.2,0.3,0.4,0.5)){
+  for (TOP_GN in c( 0.75, 0.9)){
   
-  
-  
-  MOFAobject@samples_metadata=attach_clinvars(MOFAobject,combined_bl_log )
-  
-  
-  ### Correlations ####
-  
-  cors_both<-get_correlations(MOFAobject, 'COHORT')
-  cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
-  
-  
-  ## Cluster and eval MI ####
-  
-  if (length(sel_coh)>1){
-    sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+    source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
     
-    
-    for (k_centers_m in c(3,4,5,6, 7, 8, 9,10)){
-      
-      # TODO: create cluster and eval function
-      
-      clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
-      clusters_mofa<-clusters
-      
-      covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
-      df1=covariates
-      #print(chisq.test(df1$cluster_m, df1$COHORT))
-      mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
-      print(mut_inf)
-      
-    }
-  
-  
-  
-  
+    mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
+    out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
+    outdir = paste0(outdir_orig,out_params, '_split_', split , '/');outdir
+    dir.create(outdir, showWarnings = FALSE)
+    MOFAobject=run_mofa_get_cors(N_FACTORS)
   }
+  
+ 
+  
+  
+  
+ 
+  
+  
+  
 }
 
 ## attach some extra clinical variables 

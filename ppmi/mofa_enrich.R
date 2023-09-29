@@ -107,7 +107,7 @@ if (!isRStudio){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-          for (view in c( 'RNA', 'proteomics')){
+          for (view in c( 'RNA', 'proteomics', 'miRNA')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -277,8 +277,8 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 #### Now run the prot view ? 
 run_plots=ifelse(isRStudio, FALSE, TRUE)
 # TODO: PASS 
-run_plots=TRUE
 run_plots=FALSE
+run_plots=TRUE
 
 if (run_plots){
 
@@ -332,6 +332,7 @@ if (run_plots){
           ### RNAS ####
           sel_factors_to_p
           pvalueCutoff=1
+         # factor=4
           for (factor in sel_factors_to_p){
             #'
             #'
@@ -343,10 +344,12 @@ if (run_plots){
             gene_lists<-list1_genes[[factor]]
             write.csv(as.data.frame(gse_mofa_rna@result), paste0(results_file_mofa, '.csv'))
             gene_list_ord_g<-list1_genes[[factor]]
-            ### to run mofa results
+            ### to run ofa results
+            try({
             run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
-            run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =gene_list_ord_g  )
             
+            run_enrichment_plots(gse=gse_mofa_rna, results_file = results_file_mofa, N_EMAP=50,geneList =gene_list_ord_g  )
+            })
           } 
 
           

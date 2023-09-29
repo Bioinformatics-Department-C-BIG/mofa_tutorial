@@ -463,7 +463,7 @@ merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'L
 
 ### Decide on the grouping #### 
 group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
-group_by_patient<-clusters$cluster
+group_by_patient<-clusters_mofa$cluster
 
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
 
@@ -506,9 +506,7 @@ to_sel
 ### for continous 
 is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
-merged_melt_cl3$PDSTATE
 
-merged_melt_cl$NP3_TOT
 
 
 to_sel
@@ -527,7 +525,6 @@ if (names(sel_factors[fn_sel]) %in% c('Factor3')){
   to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
               'td_pigd_old_on',  'AGE')
 }
-merged_melt_cl3$td_pigd_old_on
 
 to_plot
 ## todo why is scau missing from baseline? how to measure total? 
@@ -619,7 +616,7 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt
 }
 
 
-
+merged_melt_cl3<-merged_melt_cl
 for (cov_to_plot in to_sel){
   
     if (is.numeric(merged_melt_cl3[, cov_to_plot])){

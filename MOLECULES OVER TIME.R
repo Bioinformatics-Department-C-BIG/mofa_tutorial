@@ -37,9 +37,9 @@ view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- 
 view='miRNA'; process_mirnas=TRUE
 
 
-view='miRNA'; process_mirnas=TRUE
 
 view='RNA'; process_mirnas=FALSE
+view='miRNA'; process_mirnas=TRUE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -184,6 +184,8 @@ if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
   
 }
 
+
+# TODO: create groups by 3 means as in mofa 
 T=0.8
 Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
 
@@ -193,6 +195,15 @@ T=0.2;Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
 dim(merged_melt)
 merged_melt$grouping<-Z1_grouping
 merged_melt$Z2grouping<-Z2_grouping
+Z2_grouping_patnos<-Z2_grouping
+names(Z2_grouping_patnos)<-gsub('\\_.*', '', names(Z2_grouping))
+
+Z2_grouping_patnos
+
+
+
+
+
 
 if (view=='RNA'){
   symb<-get_symbols_vector(ens)
@@ -332,6 +343,9 @@ if (filt_top){
   
 }
 
+  
+  
+### BY GROUP ####
 ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
                                     fill='group', group='group', colour='group')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
@@ -360,10 +374,77 @@ ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
   
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
        width=7, height=height)
 
 
+
+
+graphics.off()
+
+#### BY PATIENT #####
+p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+                                                    fill='group', group='group', colour='group')) + 
+  
+  geom_point(aes_string(x = 'VISIT', y = 'value', 
+             fill='group', group='group', colour='group' ),size=0.1, alpha=0.5)+
+  geom_line(aes_string(x = 'VISIT', y = 'value', 
+                         group='PATNO', colour='group' ),size=0.1, alpha=0.5)+
+  stat_summary(fun = median, position=position_dodge(width=0), 
+               geom = "line", size = 1) + 
+  
+  
+theme(legend.position = "none")+
+
+  
+ 
+  scale_color_viridis_d(option='turbo')+
+  facet_wrap(. ~ symbol, scales='free_y', 
+             nrow = 4) +
+  
+  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
+  theme_bw()+ 
+  geom_signif(comparisons = list(c('BL', 'V08')), 
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  
+  labs(y='logCPM')+
+  # legend(legend=c('Low', 'High'))+
+  theme(strip.text = element_text(
+    size = 13, color = "dark green", face="bold"), 
+    axis.title.y =element_text(
+      size = 13, color = "dark green", face="bold",), 
+    axis.text.x = element_text(
+      size = 12 ))
+
+show(p)
+
+#warnings()
+ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
+       width=7, height=height)
+
+merged_melt_filt_most_sig 
+
+df2$change
+
+
+
+#### ADD 18 month progression 
+Z2_grouping_df<-data.frame(group=Z2_grouping_patnos, PATNO=names(Z2_grouping_patnos))
+df18_months<-merge(df18_months, Z2_grouping_df, by='PATNO')
+df18_months<-df18_months[!duplicated(df18_months),]
+df18_months
+
+ggplot(df18_months, aes(x=variable,y=value, group=group, colour=group)  )+
+  geom_point(aes(x=variable,y=value, colour=group), alpha=0.5 )+
+ # geom_line(aes(x=variable,y=value, group=PATNO, colour=group), lwd=0.2 )+
+  stat_summary(fun = median, position=position_dodge(width=0), 
+               geom = "line", size = 1.3) + 
+  
+  scale_color_viridis_d(option='turbo')
+  
+  
+  
 
 
 
@@ -491,10 +572,16 @@ merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'L
 ### Create groups 
 
 ### Decide on the grouping #### 
-group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
+
+group_by_patient<-clusters_mofa$cluster
+
+
 group_by_patient<-clusters$cluster
 group_by_patient<-clusters_mofa_outcome$cluster
 group_by_patient<-clusters_mofa$cluster
+group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
+
+
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
 
 
@@ -672,6 +759,7 @@ ggsave(paste0(outdir, '/trajectories/trajectory_', sel_factors[fn_sel],'_', filt
 }
 
 
+merged_melt_cl3<-merged_melt_cl
 for (y in to_plot){
   ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
                                     fill='grouping')) + 

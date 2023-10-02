@@ -233,8 +233,42 @@ combined_new$RBD_TOT
 
 #combined %>% 
 
+  #concatenate a patient into one row
   
+  
+  cm<-combined  %>% 
+    group_by(EVENT_ID) %>%
+    left_join(.data, by=PATNO)
+  
+  combined_by_visit<-split(combined, combined$EVENT_ID )
+  
+  cm2<-combined_by_visit[c('BL',  'V12')]
+  combinded_wide<-cm2 %>% reduce(full_join, by = "PATNO")
+  combinded_wide$patno
+  df2<-combinded_wide[,c('NP3TOT.x', 'NP3TOT.y', 'PATNO', 'PDSTATE.y')]
+  
+  df2<-df2%>% dplyr::filter(PDSTATE.y%in%c('OFF', ' '))
+  df2<-df2[,!colnames(df2)=='PDSTATE.y']
+  df2<-df2[!duplicated(df2),]
+  df2$change<-log2(log2(df2$NP3TOT.y)/log2(df2$NP3TOT.x))
+  
+  hist(df2$change)
+  
+  
+  df2_melt<-reshape::melt(df2, id=c( 'PATNO'))
+  
+  colnames(df2_melt)
+  df2_melt$variable=as.numeric(df2_melt$variable)
+  df18_months<-df2_melt
+ 
+  ggplot(df2_melt, aes(x=variable,y=value)  )+
+    geom_point(aes(x=variable,y=value, color=PATNO) )+
+    geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.5 )
+    
 
+  df2
+  
+  
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')
 
 #

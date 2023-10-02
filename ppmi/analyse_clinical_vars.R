@@ -106,6 +106,16 @@ log_totals<-function(combined, sub_patterns_all){
 ### Up to here is the function to log specific patterns ####
 
 
+
+
+##### Get clinvar changes over time ####
+
+
+
+
+
+
+
 library(stringr)
 
 

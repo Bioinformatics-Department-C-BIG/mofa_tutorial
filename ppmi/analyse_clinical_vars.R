@@ -54,12 +54,18 @@ ggplot(combined)+
 
 
 
+
 library(ggplot2)
+
 
 graphics.off()
 
 ### Create new variables from the averages 
 ## scopa does not have a total - maybe just add scopa total ? 
+### TODO: scopa total needs to be updated : 
+# For questions 1-21 (SCAU1 - SCAU21), add 3 points for each response of “9.” 
+# For questions 22-25 (SCAU22 - SCAU25), add 0 points for each response of “9.” 
+
 # because the average is the same as np3total
 get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
   #' groups and averages specific columns 
@@ -173,13 +179,16 @@ metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
 
 
 sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
+sel_pats<-MOFAobject@samples_metadata$PATNO
+
 
 combined_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
+combined_filt<-combined_new[combined_new$PATNO %in% sel_pats,]
 
 
 
 
-df_clipped<-data.frame(apply(df,2, clipping_values))
+#df_clipped<-data.frame(apply(df,2, clipping_values))
 ### We choose df_log in the end 
 
 df_log_clipped=data.frame(sapply(df_clipped, function(x) log2(x)))
@@ -233,40 +242,95 @@ combined_new$RBD_TOT
 
 #combined %>% 
 
-  #concatenate a patient into one row
+  #concatenate a patient into one row to add 
   
-  
-  cm<-combined  %>% 
+  library(dplyr)
+  library(data.table)
+  cm_data <- combined_new  %>% 
     group_by(EVENT_ID) %>%
-    left_join(.data, by=PATNO)
+    left_join(.data, by='PATNO', 
+              copy=TRUE, keep=NULL)
   
   combined_by_visit<-split(combined, combined$EVENT_ID )
+  # 72 MONTHS 
+  cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16','V18')]
+  cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16')]
+  cm2<-combined_by_visit[c('BL','V08','V14')]
+  sel_visit='V14'
+ # cm2<-combined_by_visit[c('BL' ,'V12')]
   
-  cm2<-combined_by_visit[c('BL',  'V12')]
-  combinded_wide<-cm2 %>% reduce(full_join, by = "PATNO")
-  combinded_wide$patno
-  df2<-combinded_wide[,c('NP3TOT.x', 'NP3TOT.y', 'PATNO', 'PDSTATE.y')]
+  combinded_wide_all<-cm2 %>% 
+    imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
+    reduce(full_join, by = "PATNO")
   
-  df2<-df2%>% dplyr::filter(PDSTATE.y%in%c('OFF', ' '))
-  df2<-df2[,!colnames(df2)=='PDSTATE.y']
+  
+  combinded_wide_all$SCAU_TOT_V08
+  
+  cl_var<-'scopa'
+  combinded_wide<-combinded_wide_all[!is.na(combinded_wide_all[, paste0( cl_var,'_', sel_visit)]),]
+  df2<-combinded_wide
+  
+ # df2<-df2%>% dplyr::filter(PDSTATE.y%in%c('OFF', ' '))
+  #df2<-df2[,!colnames(df2)=='PDSTATE.y']
   df2<-df2[!duplicated(df2),]
-  df2$change<-log2(log2(df2$NP3TOT.y)/log2(df2$NP3TOT.x))
+ 
+
+  id_vars<-colnames(df2)[!grepl( cl_var, colnames(df2))]
+ # id_vars<-colnames(df2)[!grepl( 'NP3TOT|PDSTATE', colnames(df2))]
   
-  hist(df2$change)
-  
-  
-  df2_melt<-reshape::melt(df2, id=c( 'PATNO'))
+  df2_melt<-reshape::melt(df2, id=c( id_vars))
   
   colnames(df2_melt)
-  df2_melt$variable=as.numeric(df2_melt$variable)
+  df2_melt=df2_melt[df2_melt$COHORT_BL==1 & df2_melt$PATNO %in% sel_pats,]
+  
+  df2_melt[, c('scopa_V08', 'SCAU_TOT_V08')]
+  
+  #df2_melt$variable=as.numeric(df2_melt$variable)
   df18_months<-df2_melt
- 
-  ggplot(df2_melt, aes(x=variable,y=value)  )+
-    geom_point(aes(x=variable,y=value, color=PATNO) )+
-    geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.5 )
-    
+  #df2$change<-log2(log2(df2$NP3TOT.y)/log2(df2$NP3TOT.x))
+  
+  #df2_melt$group_line<-paste0(df2_melt$PATNO,'_', df2_melt$PDS )
+  
+ graphics.off()
+  pp<-ggplot(df2_melt, aes(x=variable,y=value)  )+
+    geom_point(aes(x=variable,y=value, color=PATNO), size=0.2 )+
+    geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.4) +
+    scale_color_viridis_c(option='turbo')
+  
+pp  
+sel_pats
+NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
+NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
 
-  df2
+  #  facet_wrap('', nrow=3)
+  
+  ## filter for off:
+  df2_off<-df2[df2$PDSTATE_V16=='OFF', ]
+  df2_off<-df2[df2$PDSTATE_V16=='ON', ]
+  df2_off<-df2[df2$PDSTATE_V16=='', ]
+  df2_off<-df2[df2$PDSTATE_V14=='ON', ]
+  table(df2_melt$PDSTATE_V14)
+  
+  df_to_calc<-df2_off
+  df_to_calc<-df2_off
+  #table(unique(df2_melt[,c('PATNO', 'PDMEDYN_V14', 'PDSTATE_V14', 'DBSYN_V14') ])[c('PDMEDYN_V14','DBSYN_V14' )])
+  #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ])$PDSTATE_V14)
+  #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ][,c('PDMEDYN_V14','DBSYN_V14' )]))
+
+  df_to_calc$log_FC<-log2(log2(df_to_calc[,paste0('NP3TOT','_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
+  
+  X2=df_to_calc[,paste0('NP3TOT','_',sel_visit)]
+  X1=df_to_calc[,paste0('NP3TOT','_','BL')]
+  df_to_calc$log_FC<-(X2-X1)/(X2+X1)
+  df_to_calc$log_FC<-log2(log(X2)/log(X1))
+  
+  
+  median(df_to_calc$log_FC, na.rm=TRUE)
+  hist( df_to_calc$log_FC)
+  hist( df_to_calc$log_FC)
+  
+  pp
+
   
   
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')

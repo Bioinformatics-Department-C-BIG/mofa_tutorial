@@ -107,7 +107,7 @@ if (!isRStudio){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-          for (view in c( 'RNA', 'proteomics', 'miRNA')){
+          for (view in c( 'RNA', 'proteomics')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'

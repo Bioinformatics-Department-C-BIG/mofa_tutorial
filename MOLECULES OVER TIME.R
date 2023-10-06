@@ -7,32 +7,12 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 
-## Load baseline and v08 ####
-# run deseqvst
-#bl_f<-'ppmi/plots/p_BL_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_BL_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
-#bl<-read.csv(bl_f)
-##bl<-bl[!is.na(bl$Description),]
-#bl_sig<-bl[bl$Least_value<0.01,]
-
-#v08_f<-'ppmi/plots/p_V08_Plasma_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.3_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/merged_factors_pvals.csv'
-#v08<-read.csv(v08_f)
-
-
-#tms<-list(bl=bl$Description, v08= v08$Description)
-
-#venn.diagram(tms, 
-#             filename = paste0(outdir,prefix,'14_venn_diagramm.png'), output=FALSE)
-
-
-#v08_only<-v08[!(v08$Description %in% bl$Description),]
-#head(v08_only[order(v08_only$Least_value, decreasing = FALSE),]$Description, 50)
-#head(v08_only[order(v08_only$tot_rank, decreasing = FALSE),]$Description, 100)
-
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=5; 
+fn_sel=1; 
 
 factor=sel_factors[fn_sel]
+factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
@@ -40,8 +20,8 @@ view='miRNA'; process_mirnas=TRUE
 
 
 
-view='miRNA'; process_mirnas=TRUE
 view='RNA'; process_mirnas=FALSE
+view='miRNA'; process_mirnas=TRUE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -62,11 +42,11 @@ se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
-v6_ens<-preprocess_visit(se_filt_V06, common=common)
-v8_ens<-preprocess_visit(se_filt_V08, common=common)
+v6_ens<-preprocess_visit(se_filt_V06, common=common, sel_cohorts = c(1,2))
+v8_ens<-preprocess_visit(se_filt_V08, common=common,sel_cohorts = c(1,2))
 se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
-v4_ens<-preprocess_visit(se_filt_V04, common=common)
-bl_ens<-preprocess_visit(se_filt_BL, common=common)
+v4_ens<-preprocess_visit(se_filt_V04, common=common,sel_cohorts = c(1,2))
+bl_ens<-preprocess_visit(se_filt_BL, common=common, sel_cohorts = c(1,2 ))
 
 
 
@@ -88,9 +68,9 @@ v6_melt$VISIT<-'V06'
 
 
 
-merged_melt<-rbind(bl_melt, v4_melt)
-merged_melt<-rbind(merged_melt,v6_melt)
-merged_melt<-rbind(merged_melt,v8_melt)
+merged_melt_orig<-rbind(bl_melt, v4_melt)
+merged_melt_orig<-rbind(merged_melt_orig,v6_melt)
+merged_melt_orig<-rbind(merged_melt_orig,v8_melt)
 
 
 
@@ -146,69 +126,90 @@ feat_names_ens
 
 ## outliers
 
+### choose from deseq@
+feat_names= sigLRT_genes$gene
+merged_melt_orig<-merged_melt_orig[merged_melt_orig$variable %in% make.names(feat_names),]
 
-
-merged_melt<-merged_melt[merged_melt$variable %in% make.names(feat_names),]
-merged_melt
 
 #merged_df<-merge(bl_ens, v8_ens, by='patno')
 #merged_df
 
-ens<-gsub('\\..*', '',merged_melt$variable)
 
+ens<-gsub('\\..*', '',merged_melt_orig$variable)
 
+if (view=='RNA'){
+  symb<-get_symbols_vector(ens)
+  merged_melt_orig$symbol<-symb
+}else{
+  merged_melt_orig$symbol<-merged_melt_orig$variable
+  
+}
 
 
 #
 ### ### NOW match factors to samples
-Z <- get_factors(MOFAobject)[[1]]
-Z1<-Z[,sel_factors[fn_sel]]
-patnos_z1<-gsub('\\_.*', '', names(Z1))
-Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
+# CREATE GROUPS BY FACTOR 
+############################################
 
+sel_cohort=FALSE
+sel_cohort<-c(1)
 
-groups_kmeans<-kmeans(Z1, centers=2)
-patnos_z1<-gsub('\\_.*', '', names(groups_kmeans))
-
-table(groups_kmeans$cluster)
-high_label<-which.max(groups_kmeans$centers)
-groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
-pats<-names(groups_kmeans$cluster)
-patnos_z1<-gsub('\\_.*', '', pats)
-kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, patnos_z1 )]
-kmeans_matched
-
-# TODO: create groups by 3 means as in mofa 
-T=0.8
-Z1_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
-T=0.2;Z2_grouping<-factor(Z1_matched>quantile(Z1_matched,T, na.rm=TRUE))
-
-
-kmeans_grouping<-factor(kmeans_matched)
-
-dim(merged_melt)
-merged_melt$grouping<-Z1_grouping
-merged_melt$Z2grouping<-Z2_grouping
-merged_melt$kmeans_grouping<-kmeans_grouping
-
-Z2_grouping_patnos<-Z2_grouping
-names(Z2_grouping_patnos)<-gsub('\\_.*', '', names(Z2_grouping))
+if (sel_cohort){
+  #'
+  #'
+  merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
+}
+merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
+merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
 
 
 
-kmeans_grouping
 
 
+merged_melt_pd<-merged_melt
 
-if (view=='RNA'){
-  symb<-get_symbols_vector(ens)
-  merged_melt$symbol<-symb
-}else{
-  merged_melt$symbol<-merged_melt$variable
+
+#### GROUP BY MOFA FACTOR ####
+# TODO: FUNCTION
+### Wcich mofa run to get factors from??? 
+
+
+groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
+ 
+  #'
+  #' @param MOFAobject description
+  #'
+  Z <- get_factors(MOFAobject)[[1]]
+  Z1<-Z[,sel_factors[fn_sel]]
+  patnos_z1<-gsub('\\_.*', '', names(Z1))
+  Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
   
+  
+  groups_kmeans<-kmeans(Z1, centers=2)
+  patnos_z1<-gsub('\\_.*', '', names(groups_kmeans))
+  
+  table(groups_kmeans$cluster)
+  high_label<-which.max(groups_kmeans$centers)
+  groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
+  pats<-names(groups_kmeans$cluster)
+  patnos_z1<-gsub('\\_.*', '', pats)
+  kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, patnos_z1 )]
+  kmeans_matched
+  kmeans_grouping<-factor(kmeans_matched)
+  
+  return(kmeans_grouping)
 }
 
-na_ps<-unique(merged_melt[!is.na(merged_melt$grouping),]$PATNO)
+
+merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject)
+
+
+
+
+
+
+
+na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
 merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
 
 ### EDIT GROUP TO BE PATNO and GROUP!!
@@ -232,7 +233,6 @@ G2<-se_filt_V08_pd_g2[,!(se_filt_V08_pd_g2$PDSTATE == 'ON')]
 
 merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
 
-merged_melt_filt$grouping<-as.factor(merged_melt_filt$grouping)
 
 
 
@@ -248,13 +248,16 @@ merged_melt_filt$grouping<-as.factor(merged_melt_filt$grouping)
 ### Plot to remove the other group ####
 # TAKE THE low group  
 # TODO: decide how to take the lowest x and highest x 
+### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
 
 
+merged_melt_filt$grouping<-merged_melt_filt$kmeans_grouping
 
 merged_melt_filt$group<-as.logical(merged_melt_filt$grouping)
 group_cat='grouping'
 group_cat='Z2grouping'
 group_cat='kmeans_grouping'
+
 merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
 
 merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
@@ -270,7 +273,8 @@ merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 
 ######## First find out which of the molecules significantly change over time ####
 
-
+#### TODO: do this ONLY  for disease AND SAVE THEM !! 
+# THEREFORE MAKE THE GROUPING INTO A FUNCTION
 # TODO: check both groups for significant changes
 merged_melt_filt_g1
 wilcox_stats1<-merged_melt_filt_g1 %>% group_by(symbol) %>%
@@ -293,6 +297,7 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 
 
 
+
 ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
   geom_line(aes(group=PATNO),  col= 'grey') +
@@ -310,7 +315,7 @@ ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) +
   facet_wrap(. ~ symbol, scales='free_y') +
   
     theme_bw() 
-ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_', GROUP, '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
        width=12, height=12)
 
 
@@ -335,7 +340,17 @@ mean_data
   }
   
 
+  
+  colnames(merged_melt_filt)
+  colnames(merged_melt_ct)
+  
+  merged_melt_ct$kmeans_grouping='CONTROL'
+  merged_melt_ct$group='CONTROL'
+  merged_melt_ct$grouping='CONTROL'
+  
   filt_top=TRUE
+  
+  merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
 if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   nrow=NULL; height=2.6*4
@@ -348,6 +363,7 @@ if (filt_top){
   
   merged_melt_filt_most_sig
 ### BY GROUP ####
+  #### TODO: plot also for CONTROLS! the same exact molecules thought.... so select them with PD 
 ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
                                     fill='group', group='group', colour='group')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
@@ -376,7 +392,7 @@ ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
   
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory', sel_factors[fn_sel],'_', view,  group_cat, filt_top,sel_cohort,  '.jpeg'), 
        width=7, height=height)
 
 
@@ -422,7 +438,7 @@ theme(legend.position = "none")+
 show(p)
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,  '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', sel_factors[fn_sel],'_', view,  group_cat, filt_top,'_', sel_cohort, '.jpeg'), 
        width=12, height=height)
 
 merged_melt_filt_most_sig 

@@ -9,8 +9,14 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
+#BiocManager::install("MOFA2", version="1.8")
+
+
+#install.packages("MOFA2", version="1.8")
+#nstall.packages("MOFA2", version="1.8", repos = c("https://bioconductor.org/packages/3.16/bioc" ))
+
 library(MOFA2)
-#install.packages("broom", type="binary")
+
 
 library(data.table)
 library(tidyverse)
@@ -30,7 +36,9 @@ run_rna_mirna=FALSE
 #  N_FACTORS=8
 #}
 VISIT=c('BL');
-VISIT=c('BL', 'V08');
+
+VISIT=c('BL','V04', 'V06',  'V08');
+
 VISIT=c('V08');
 
 
@@ -77,7 +85,7 @@ if (run_mofa_complete){
 
 
 
-run_mofa_get_cors<-function(N_FACTORS){
+run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
   ### run mofa and write stats of corelation to file!! 
   #'
   #'
@@ -86,15 +94,15 @@ run_mofa_get_cors<-function(N_FACTORS){
   #create_hist(data_full['RNA'], 'RNA')
   #create_hist(data_full['miRNA'], 'miRNA')
   
-  
+  #combined_bl=combined_bl_log
   ## get list of three mats 
   data_full=prepare_multi_data(p_params, param_str_g, param_str_m, mofa_params)
   # create multi experiment 
   mofa_multi<-create_multi_experiment(data_full, combined_bl)
   mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
   
-  mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
-  mofa_multi_rna_mir_complete<-mofa_multi_rna_mir[,complete.cases(mofa_multi_rna_mir)]
+  #mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
+ # mofa_multi_rna_mir_complete<-mofa_multi_rna_mir[,complete.cases(mofa_multi_rna_mir)]
   
   
   
@@ -133,13 +141,15 @@ run_mofa_get_cors<-function(N_FACTORS){
     }
   
     MOFAobject=create_mofa(mofa_multi_train)
-    if (length(VISIT)>1){
-      MOFAobject <- create_mofa(mofa_multi_train, groups= mofa_multi_train$EVENT_ID)
-    }
+    #if (length(VISIT)>1){
+    #  MOFAobject <- create_mofa(mofa_multi_train, groups= mofa_multi_train$EVENT_ID)
+    ##  
+    #}
+    
     
     dir.create(outdir, showWarnings = FALSE)
-    
-    MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=FALSE, N_FACTORS=N_FACTORS )
+   # force=FALSE
+    MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=force, N_FACTORS=N_FACTORS )
     
     
   
@@ -165,25 +175,28 @@ run_mofa_get_cors<-function(N_FACTORS){
         print(cors_t)
        
   
+        if (length(VISIT)==1){
+          
     
-    
-    ### write cross val
-    ### todo: save random forest results 
-    cors_pvalue=cors_both[[1]]
-    sel_factors<-which(cors_pvalue>-log10(0.05))
-    N_final<-MOFAobject@dimensions$K
-    df_mofa <- as.data.frame(get_factors(MOFAobject, factors=1:N_final)[[1]])
-    df_mofa$y<- as.factor(MOFAobject@samples_metadata$COHORT)
-    df_mofa_age <- cbind(df_mofa,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
-    res_age_mofa<-run_train_validation( df=df_mofa_age)
-    acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])
-    print(acc_mean)
-    
-    df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
-                  run_mofa_complete, N_FACTORS,cors_t , max_cor, acc_mean )
-    
-    write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
-    
+        ### write cross val
+        ### todo: save random forest results 
+        cors_pvalue=cors_both[[1]]
+        sel_factors<-which(cors_pvalue>-log10(0.05))
+        
+        print(sel_factors)
+        N_final<-MOFAobject@dimensions$K
+        df_mofa <- as.data.frame(get_factors(MOFAobject, factors=1:N_final)[[1]])
+        df_mofa$y<- as.factor(MOFAobject@samples_metadata$COHORT)
+        df_mofa_age <- cbind(df_mofa,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
+        res_age_mofa<-run_train_validation( df=df_mofa_age)
+        acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])
+        print(acc_mean)
+        
+        df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+                      run_mofa_complete, N_FACTORS,cors_t , max_cor, acc_mean )
+        
+        write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+        }
     
   }
   
@@ -202,7 +215,8 @@ for (N_FACTORS in c(15)){
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE)
-  MOFAobject=run_mofa_get_cors(N_FACTORS)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+  outdir = paste0(outdir,'/' );outdir
   
   
   
@@ -257,7 +271,7 @@ MOFAobject@samples_metadata=meta_merged_ord
 
 
 
-
+MOFAobject
 
 
 

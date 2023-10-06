@@ -96,6 +96,7 @@ if (run_rna_mirna){
     # FINAL
     TOP_MN=0.75
     TOP_MN=0.50
+    TOP_MN=0.3
     
     TOP_GN=0.3
     

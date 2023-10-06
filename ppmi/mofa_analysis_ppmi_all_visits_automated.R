@@ -11,7 +11,6 @@
 # 3. clinical variables
 # 4. outdirs 
 # 5. csf/plasma/untargeted flags
-
 #source('enrichment.R')
 
 
@@ -53,9 +52,13 @@ group=1
 MOFAobject_gs<-MOFAobject
 
 ens_ids_full<- features_names(MOFAobject)$RNA
-ens_ids<-   ens_ids<-gsub('\\..*', '', ens_ids_full)
+ens_ids<-gsub('\\..*', '', ens_ids_full)
 
+symbols_ids<-get_symbols_vector(ens_ids)
+features_names(MOFAobject_gs)$RNA<-symbols_ids
+features_names(MOFAobject_gs)$RNA
 
+  
 library(ensembldb)
 #BiocManager::install('EnsDb.Hsapiens.v79')
 library(EnsDb.Hsapiens.v79)
@@ -233,7 +236,7 @@ non_na_ids_to_plot
 
 
 
-
+format(cors_pearson[, 'CONCOHORT'], digits=1)
 format(cbind(cors_pearson[, 'CONCOHORT'],10^-cors_all[,'CONCOHORT']), digits=3) [sel_factors,]
 
 MOFAobject@samples_metadata$DATSCAN_CAUDATE_L
@@ -401,15 +404,22 @@ cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
 MOFAobjectPD
+
+
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col, height=1000, MOFAobject=MOFAobject){
   
   # filter if some do not exist in the colnames of metadata
   #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
+  # first check if the requested names exist in the metadata 
+  selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject@samples_metadata) ]
+  
+  
   sds<-apply(MOFAobject@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
   sd_na<-c(is.na(sds)|sds==0)
   
-  selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject@samples_metadata) & !(sd_na)]
   print(selected_covars)
+  # then check that the sd is not NA
+  selected_covars=selected_covars[ !(sd_na) ]
   
   
   labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
@@ -524,19 +534,17 @@ correlate_factors_with_covariates(MOFAobject_nams,covariates =labels_cols_pearso
 
 dev.off()
 
-jpeg(paste0(outdir, 'factors_covariates_img_cor','.jpeg'), width = 1000+length(selected_covars)*20, height=1100, res=300)
-correlate_factors_with_covariates(MOFAobject_nams,covariates =selected_covars_img,
-                                  plot = "r", 
-                                  col.lim=c(-0.5, 0.9), 
-                                  is.cor=FALSE, 
-                                  factors = f_to_plot,
-                                  transpose=TRUE
-)
 
-dev.off()
+fname<-'factors_covariates_img_cor'
+plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='r',factors,labels_col, MOFAobject=MOFAobject_nams )
+
+fname<-'factors_covariates_img_pval'
+plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='log_pval',factors,labels_col, MOFAobject=MOFAobject_nams )
 
 
 
+
+### Write the covariates for each factor to files ####
 ### filter only the ones that are correlated 
 
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
@@ -558,11 +566,12 @@ view='proteomics'; factor=6
 vps=length(MOFAobject@dimensions$D)
 
 fps= as.numeric(MOFAobject@dimensions$K)
-fps
 views<-names(MOFAobject@dimensions$D)
-views
 
 
+
+###########################################################
+#### Weights ####
 ##### WRITE ALL weights for each factor in one file 
 
 
@@ -664,7 +673,7 @@ positive_cors<-cors[,colSums(pos_cors)>n_factors_pos]
 x_cor_t=2
 
 i=111
-
+#### Factor plots ####
 
 positive_cors_to_plot<-positive_cors[,!grepl(tolower(to_remove_regex),tolower(colnames(positive_cors))) ]
 positive_cors_to_plot
@@ -770,16 +779,30 @@ FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',colo
 MOFAobject@samples_metadata$NP3_TOT
 
 
+
+
+
+
+
 ########## Scatter plots - FACTORS to variables ################
 # here find the view for which the variability of the factor maximum
-color_by='NP3_TOT'
-plot_data_scatter(MOFAobject_gs, 
-                  view = "miRNA",
-                  factor = 3,  
-                  features = 6,
-                  sign = "negative",
-                  color_by = color_by
-) + labs(y=color_by)
+plot_data_scatter_by_factor<-function(factor, color_by){
+  #'
+  #' @param 
+  #'
+  
+  top_view<-which.max(vars_by_factor[factor,])
+  plot_data_scatter(MOFAobject_gs, view = top_view,factor = factor,  features = 15,sign = "negative",color_by = color_by) + 
+    labs(y=color_by)
+  ggsave(paste0(outdir, '/scatter_plots/',  views[top_view], '_', factor, '_',  color_by, '.png' ), height=8, width=12, dpi=100)
+  
+  
+}
+
+color_by='NP3_TOT';
+dir.create(paste0(outdir, '/scatter_plots/'))
+sapply(sel_factors, plot_data_scatter_by_factor, color_by=color_by)
+
 
 
 

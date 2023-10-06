@@ -42,8 +42,8 @@ sel_subcoh=FALSE
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=c( 'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=FALSE
-
 sel_subcoh=FALSE
+
 sel_subcoh=c('INEXPD');
 
 
@@ -85,9 +85,9 @@ outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 
 ### setup deseq formula 
 
-formula_deseq<-'~AGE_AT_VISIT+SEX+EVENT_ID+COHORT'
-formula_deseq2<-'~AGE_AT_VISIT+SEX+COHORT'
-formula_deseq3<-'~PATNO+AGE_AT_VISIT+SEX'
+formula_deseq<-'~AGE_SCALED+SEX+EVENT_ID+COHORT'
+formula_deseq2<-'~AGE_SCALED+SEX+COHORT'
+formula_deseq3<-'~PATNO+AGE_SCALED+SEX'
 
 
 des=gsub('~', '', formula_deseq2)

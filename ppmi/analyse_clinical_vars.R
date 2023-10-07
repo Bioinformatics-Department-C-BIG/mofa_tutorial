@@ -298,6 +298,7 @@ combined_new$RBD_TOT
   
   
   ### Clinical scale trends per patient - is there a difference with controls ?
+  # ISSUE WE CANNOT SEE IT for controls -it was not measured..
  graphics.off()
   pp<-ggplot(df2_melt, aes(x=variable,y=value)  )+
     geom_point(aes(x=variable,y=value, color=PATNO), size=0.2 )+
@@ -356,8 +357,8 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   median(df_to_calc$log_FC, na.rm=TRUE)
   
   
-  unique(df_to_plot$log_FC)
-    
+
+  
     
   df_to_plot=df_to_calc[df_to_calc$PATNO %in% sel_pats,]
   ggplot(df_to_plot,aes(x=diff_scale, group=COHORT_BL))+
@@ -366,6 +367,7 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   hist( df_to_calc$log_FC)
   hist( df_to_calc$log_FC)
   
+  #### DOES  a large change in molecules means a large change in the clinical variables of those patients too? 
   
   
   

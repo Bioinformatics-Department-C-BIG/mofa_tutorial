@@ -246,17 +246,15 @@ combined_new$RBD_TOT
   
   library(dplyr)
   library(data.table)
-  cm_data <- combined_new  %>% 
-    group_by(EVENT_ID) %>%
-    left_join(.data, by='PATNO', 
-              copy=TRUE, keep=NULL)
+
   
   combined_by_visit<-split(combined, combined$EVENT_ID )
   # 72 MONTHS 
   cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16','V18')]
-  cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16')]
   cm2<-combined_by_visit[c('BL','V08','V14')]
-  sel_visit='V14'
+  cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16')]
+  
+  sel_visit='V16'
  # cm2<-combined_by_visit[c('BL' ,'V12')]
   
   combinded_wide_all<-cm2 %>% 
@@ -266,7 +264,9 @@ combined_new$RBD_TOT
   
   combinded_wide_all$SCAU_TOT_V08
   
-  cl_var<-'scopa'
+  cl_var<-'NP2_TOT'
+  combinded_wide_all$np3tot
+  combinded_wide_all[combinded_wide_all$COHORT_V16==1,]$scopa_BL
   combinded_wide<-combinded_wide_all[!is.na(combinded_wide_all[, paste0( cl_var,'_', sel_visit)]),]
   df2<-combinded_wide
   
@@ -279,9 +279,14 @@ combined_new$RBD_TOT
  # id_vars<-colnames(df2)[!grepl( 'NP3TOT|PDSTATE', colnames(df2))]
   
   df2_melt<-reshape::melt(df2, id=c( id_vars))
+  df2$COHORT_BL
   
   colnames(df2_melt)
-  df2_melt=df2_melt[df2_melt$COHORT_BL==1 & df2_melt$PATNO %in% sel_pats,]
+  #df2_melt=df2_melt[df2_melt$COHORT_BL==1 & df2_melt$PATNO %in% sel_pats,]
+  
+  df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
+  df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
+  
   
   df2_melt[, c('scopa_V08', 'SCAU_TOT_V08')]
   
@@ -291,13 +296,17 @@ combined_new$RBD_TOT
   
   #df2_melt$group_line<-paste0(df2_melt$PATNO,'_', df2_melt$PDS )
   
+  
+  ### Clinical scale trends per patient - is there a difference with controls ?
  graphics.off()
   pp<-ggplot(df2_melt, aes(x=variable,y=value)  )+
     geom_point(aes(x=variable,y=value, color=PATNO), size=0.2 )+
     geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.4) +
-    scale_color_viridis_c(option='turbo')
+    scale_color_viridis_c(option='turbo')+
+    facet_wrap(~COHORT_BL, nrow=2)
   
 pp  
+
 sel_pats
 NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
 NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
@@ -305,29 +314,61 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   #  facet_wrap('', nrow=3)
   
   ## filter for off:
-  df2_off<-df2[df2$PDSTATE_V16=='OFF', ]
-  df2_off<-df2[df2$PDSTATE_V16=='ON', ]
-  df2_off<-df2[df2$PDSTATE_V16=='', ]
-  df2_off<-df2[df2$PDSTATE_V14=='ON', ]
+
+  df2_off<-df2[df2$PDSTATE_V14=='OFF', ]
+  df2_off<-df2[df2[, paste0('PDSTATE_',sel_visit)]=='ON', ]
+  
   table(df2_melt$PDSTATE_V14)
   
   df_to_calc<-df2_off
-  df_to_calc<-df2_off
+  df_to_calc<-df2
+  
+  
+  ### HOW many are controls? 
+  table(df2[df2$PATNO %in% sel_pats,]$COHORT_BL)
   #table(unique(df2_melt[,c('PATNO', 'PDMEDYN_V14', 'PDSTATE_V14', 'DBSYN_V14') ])[c('PDMEDYN_V14','DBSYN_V14' )])
   #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ])$PDSTATE_V14)
   #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ][,c('PDMEDYN_V14','DBSYN_V14' )]))
 
-  df_to_calc$log_FC<-log2(log2(df_to_calc[,paste0('NP3TOT','_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
+  df_to_calc$log_FC<-log2(log2(df_to_calc[,paste0(cl_var,'_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
   
-  X2=df_to_calc[,paste0('NP3TOT','_',sel_visit)]
-  X1=df_to_calc[,paste0('NP3TOT','_','BL')]
-  df_to_calc$log_FC<-(X2-X1)/(X2+X1)
-  df_to_calc$log_FC<-log2(log(X2)/log(X1))
+  X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
+  X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
   
+  calc_change<-function(X1,X2){
+    change<-((X2-X1)/(X2+X1))
+  }
+  calc_change2<-function(X1,X2){
+    change<-log2(X2/X1)
+  }
+  calc_change_diff<-function(X1,X2){
+    change<-X2-X1
+  }
+  
+  
+  df_to_calc$FC<-calc_change(X1_cl, X2_cl)
+  df_to_calc$log_FC<-calc_change2(X1_cl, X2_cl)
+  df_to_calc$diff<-calc_change_diff(X1_cl, X2_cl)
+  
+  #df_to_calc$log_FC<-log2(log(X2)/log(X1))
+  df_to_calc$COHORT_BL=factor(df_to_calc$COHORT_BL)
   
   median(df_to_calc$log_FC, na.rm=TRUE)
+  
+  
+  unique(df_to_plot$log_FC)
+    
+    
+  df_to_plot=df_to_calc[df_to_calc$PATNO %in% sel_pats,]
+  ggplot(df_to_plot,aes(x=diff, group=COHORT_BL))+
+    geom_histogram(aes(x=diff, fill=COHORT_BL))+
+    geom_density(aes(x=diff))
   hist( df_to_calc$log_FC)
   hist( df_to_calc$log_FC)
+  
+  
+  
+  
   
   pp
 
@@ -514,8 +555,8 @@ tps[,1]<-gsub(' ','', tps[,1] )
 
 
 ##  
-inds<-match(combined_filt$EVENT_ID, as.character( tps[,1]))
-combined_filt$months<-as.numeric(tps[inds,2])
+#inds<-match(combined_filt$EVENT_ID, as.character( tps[,1]))
+#combined_filt$months<-as.numeric(tps[inds,2])
 x='months'
 combined$INEX
 combined_to_plot<-combined_filt%>% select(c( y, x, group,

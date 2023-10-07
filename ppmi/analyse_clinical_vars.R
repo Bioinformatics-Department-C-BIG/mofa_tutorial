@@ -330,7 +330,7 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ])$PDSTATE_V14)
   #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ][,c('PDMEDYN_V14','DBSYN_V14' )]))
 
-  df_to_calc$log_FC<-log2(log2(df_to_calc[,paste0(cl_var,'_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
+  df_to_calc$log_FC_scale<-log2(log2(df_to_calc[,paste0(cl_var,'_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
   
   X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
   X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
@@ -346,9 +346,9 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   }
   
   
-  df_to_calc$FC<-calc_change(X1_cl, X2_cl)
-  df_to_calc$log_FC<-calc_change2(X1_cl, X2_cl)
-  df_to_calc$diff<-calc_change_diff(X1_cl, X2_cl)
+  df_to_calc$FC_scale<-calc_change(X1_cl, X2_cl)
+  df_to_calc$log_FC_scale<-calc_change2(X1_cl, X2_cl)
+  df_to_calc$diff_scale<-calc_change_diff(X1_cl, X2_cl)
   
   #df_to_calc$log_FC<-log2(log(X2)/log(X1))
   df_to_calc$COHORT_BL=factor(df_to_calc$COHORT_BL)
@@ -360,9 +360,9 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
     
     
   df_to_plot=df_to_calc[df_to_calc$PATNO %in% sel_pats,]
-  ggplot(df_to_plot,aes(x=diff, group=COHORT_BL))+
-    geom_histogram(aes(x=diff, fill=COHORT_BL))+
-    geom_density(aes(x=diff))
+  ggplot(df_to_plot,aes(x=diff_scale, group=COHORT_BL))+
+    geom_histogram(aes(x=diff_scale, fill=COHORT_BL))+
+    geom_density(aes(x=diff_scale))
   hist( df_to_calc$log_FC)
   hist( df_to_calc$log_FC)
   

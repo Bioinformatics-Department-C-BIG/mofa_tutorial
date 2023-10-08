@@ -35,6 +35,7 @@ sel_coh=c(4,2)
 sel_coh=c(1);
 
 sel_coh=c(1,2);
+sel_coh=c(1,2);
 
 
 sel_subcoh=FALSE;
@@ -44,8 +45,8 @@ sel_subcoh=c( 'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=FALSE
 sel_subcoh=FALSE
 
+sel_subcoh=FALSE
 sel_subcoh=c('INEXPD');
-
 
 #sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 
@@ -123,13 +124,13 @@ outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 ######## PROCESS PROTEINS 
 
 
-TISSUE='CSF'
 
 TOP_PN=0.9
 
 TISSUE='CSF'
 
 TISSUE='Plasma'
+TISSUE='CSF'
 
 NA_PERCENT=0.9
 

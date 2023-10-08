@@ -5,13 +5,20 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 ### TODO: run analyze clin vars to load clinvars for later times 
 
-
+mode='diagnosis'
+# IN THE DIAGNOSIS MODE we select factors related
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=1; 
+fn_sel=3; 
+if (mode=='diagnosis'){
+  factor=sel_factors[fn_sel]
+  
+}else{
+  factor=sel_factors_pd_np3[fn_sel]
+}
 
-factor=sel_factors[fn_sel]
+
 factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
@@ -20,8 +27,8 @@ view='miRNA'; process_mirnas=TRUE
 
 
 
-view='RNA'; process_mirnas=FALSE
 view='miRNA'; process_mirnas=TRUE
+view='RNA'; process_mirnas=FALSE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -150,13 +157,18 @@ if (view=='RNA'){
 # CREATE GROUPS BY FACTOR 
 ############################################
 
+
 sel_cohort=FALSE
+# IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
 sel_cohort<-c(1)
+
 
 if (sel_cohort){
   #'
   #'
   merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
+}else{
+  merged_melt=merged_melt_orig
 }
 merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
 merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
@@ -165,7 +177,7 @@ merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
 
 
 
-merged_melt_pd<-merged_melt
+#merged_melt_pd<-merged_melt
 
 
 #### GROUP BY MOFA FACTOR ####
@@ -210,7 +222,7 @@ groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
   return(kmeans_grouping)
 }
 
-
+### Important: create groups only for the patients.
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject)
 
 merged_melt$kmeans_grouping
@@ -287,34 +299,72 @@ merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 # THEREFORE MAKE THE GROUPING INTO A FUNCTION
 # TODO: check both groups for significant changes
 merged_melt_filt_g1
-wilcox_stats1<-merged_melt_filt_g1 %>% group_by(symbol) %>%
+
+wilcox_stats1<-merged_melt_filt_g1 %>%
+  group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
 
-wilcox_stats2<-merged_melt_filt_g2 %>% group_by(symbol) %>%
+wilcox_stats2<-merged_melt_filt_g2 %>%
+group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
+
+### remove the ones insiude copntrols
+wilcox_stats_controls<-merged_melt_filt_g1 %>%
+  group_by(symbol) %>%
+  do(w=wilcox.test(value~VISIT, data=.))%>%
+  summarize(symbol, Wilcox=w$p.value) %>%
+  as.data.frame()
+
+
+
 
 
 most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
-most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
 
+most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
+most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$Wilcox),][1:15,]
+
+
+# they should chgange in pd but not in controls!! 
+# remove the ones in the controls
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
 most_sig_over_time_deseq = c('hsa.let.7a.3p', 'hsa.let.7f.1.3p', 'hsa.miR.101.3p', 'hsa.miR.142.5p')
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq,]
 
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
+merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
+
+merged_melt_filt_g2_sig$COHORT=factor(merged_melt_filt_g2_sig$COHORT)
+merged_melt_filt_g2_sig$VISIT=factor(merged_melt_filt_g2_sig$VISIT)
 
 
 
-ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
-  geom_point(aes(col=VISIT), size = 2) +
-  geom_line(aes(group=PATNO),  col= 'grey') +
-  geom_boxplot(aes(fill=VISIT))+
+
+
+### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
+# TODO: ADD DISEASE CONTROL
+
+merged_melt_ct$kmeans_grouping='CONTROL'
+merged_melt_ct$group='CONTROL'
+merged_melt_ct$grouping='CONTROL'
+
+filt_top=TRUE
+
+#merged_melt_filt_g2_sig_CT=rbind(merged_melt_filt_g2_sig,merged_melt_ct )
+
+
+
+ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
+  #geom_point(aes(col=VISIT), size = 2) +
+  #geom_line(aes(group=PATNO),  col= 'grey') +
+  # subgroup should be in the fill parameter!!! 
+  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
   scale_color_viridis_d(option='mako')+
   scale_fill_viridis_d(option='mako')+
   
@@ -330,6 +380,29 @@ ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) +
   theme_bw() 
 ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
        width=12, height=12)
+
+
+ggplot(data = merged_melt_filt_g1_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
+  #geom_point(aes(col=VISIT), size = 2) +
+  #geom_line(aes(group=PATNO),  col= 'grey') +
+  # subgroup should be in the fill parameter!!! 
+  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
+  scale_color_viridis_d(option='mako')+
+  scale_fill_viridis_d(option='mako')+
+  
+  #geom_line(aes(group=patno), palette='jco') +
+  #facet_wrap(. ~ symbol) +
+  
+  geom_signif(comparisons = list(c('BL', 'V08')),  
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  
+  facet_wrap(. ~ symbol, scales='free_y') +
+  
+  theme_bw() 
+ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
+       width=12, height=12)
+
 
 
 
@@ -367,8 +440,9 @@ merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
 
 
 if (filt_top){
+  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq,]
+  
   
   nrow=NULL; height=2.6*4
 }else{
@@ -470,28 +544,31 @@ merged_melt_filt$value
 ### 1. LARGE DIFFERENCES
 # 2. Large changes 
 # 3. large end points 
-top_change<-molecules_change_by_patno[order(molecules_change_by_patno$diff, decreasing = FALSE)[1:20],'PATNO']
-top_change2<-molecules_change_by_patno[order(molecules_change_by_patno$log_FC, decreasing = FALSE)[1:20],'PATNO']
-just_molecules<-merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ][, c('value', 'PATNO')]
-top_change3<-just_molecules[just_molecules$value< (-0),]$PATNO
-
-
-
-groups_kmeans$cluster
-groups_kmeans$cluster
-
-
-
-
-hist(merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ]$value)
-top_change3
+add_molecules_changes=FALSE
 merged_melt_filt_most_sig$TOP=FALSE
-merged_melt_filt_most_sig[merged_melt_filt_most_sig$PATNO %in% c( top_change2,top_change,top_change3) ,]$TOP<-TRUE
-any(merged_melt_filt_most_sig$TOP)
+
+if (add_molecules_changes){
+  top_change<-molecules_change_by_patno[order(molecules_change_by_patno$diff, decreasing = FALSE)[1:20],'PATNO']
+  top_change2<-molecules_change_by_patno[order(molecules_change_by_patno$log_FC, decreasing = FALSE)[1:20],'PATNO']
+  just_molecules<-merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ][, c('value', 'PATNO')]
+  top_change3<-just_molecules[just_molecules$value< (-0),]$PATNO
+  
+  
+  hist(merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ]$value)
+  top_change3
+  merged_melt_filt_most_sig$TOP=FALSE
+  merged_melt_filt_most_sig[merged_melt_filt_most_sig$PATNO %in% c( top_change2,top_change,top_change3) ,]$TOP<-TRUE
+  any(merged_melt_filt_most_sig$TOP)
+  
+  
+  top_molecular_patients<-c( top_change2,top_change,top_change3)
+  top_molecular_patients
+  
+  
+}
 
 
-top_molecular_patients<-c( top_change2,top_change,top_change3)
-top_molecular_patients
+
 
 
 

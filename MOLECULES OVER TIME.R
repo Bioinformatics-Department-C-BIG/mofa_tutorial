@@ -48,8 +48,7 @@ se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
 v4_ens<-preprocess_visit(se_filt_V04, common=common,sel_cohorts = c(1,2))
 bl_ens<-preprocess_visit(se_filt_BL, common=common, sel_cohorts = c(1,2 ))
 
-
-
+bl_ens$COHORT
 ######### PLOT molecular markers 
 
 
@@ -68,12 +67,12 @@ v6_melt$VISIT<-'V06'
 
 
 
-merged_melt_orig<-rbind(bl_melt, v4_melt)
-merged_melt_orig<-rbind(merged_melt_orig,v6_melt)
-merged_melt_orig<-rbind(merged_melt_orig,v8_melt)
+merged_melt_orig_1<-rbind(bl_melt, v4_melt)
+merged_melt_orig_1<-rbind(merged_melt_orig_1,v6_melt)
+merged_melt_orig_1<-rbind(merged_melt_orig_1,v8_melt)
 
 
-
+levels(merged_melt_orig_1$variable)
 
 
 #### mofa preprocess
@@ -93,7 +92,7 @@ if (fn_sel==2){
   
   
 } 
-cut_high<-0.98; cut_low=0.02
+cut_high<-0.5; cut_low=0.5
 
 ws_high<-ws[ws>quantile(ws, cut_high),]
 ws_low<-ws[ws<quantile(ws, cut_low),]
@@ -128,9 +127,9 @@ feat_names_ens
 
 ### choose from deseq@
 feat_names= sigLRT_genes$gene
-merged_melt_orig<-merged_melt_orig[merged_melt_orig$variable %in% make.names(feat_names),]
+merged_melt_orig<-merged_melt_orig_1[merged_melt_orig_1$variable %in% make.names(feat_names),]
 
-
+levels(merged_melt_orig$variable)
 #merged_df<-merge(bl_ens, v8_ens, by='patno')
 #merged_df
 
@@ -172,6 +171,14 @@ merged_melt_pd<-merged_melt
 #### GROUP BY MOFA FACTOR ####
 # TODO: FUNCTION
 ### Wcich mofa run to get factors from??? 
+Z <- get_factors(MOFAobject)[[1]]
+Z1<-Z[,sel_factors[fn_sel]]
+patnos_z1<-gsub('\\_.*', '', names(Z1))
+Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
+
+groups_kmeans<-kmeans(Z1, centers=2)
+patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+groups_kmeans$cluster
 
 
 groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
@@ -186,7 +193,7 @@ groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
   
   
   groups_kmeans<-kmeans(Z1, centers=2)
-  patnos_z1<-gsub('\\_.*', '', names(groups_kmeans))
+  patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
   
   table(groups_kmeans$cluster)
   high_label<-which.max(groups_kmeans$centers)
@@ -203,7 +210,7 @@ groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
 
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject)
 
-
+merged_melt$kmeans_grouping
 
 
 
@@ -445,28 +452,72 @@ merged_melt_filt_most_sig
 
 #df2$change
 
+merged_melt$kmeans_grouping
 
 
 #### ADD 18 month progression 
-Z2_grouping_df<-data.frame(group=Z2_grouping_patnos, PATNO=names(Z2_grouping_patnos))
+
+patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+groups_kmeans$cluster
+
+
+Z2_grouping_df<-data.frame(group=groups_kmeans$cluster, PATNO=patnos_z1)
 df18_months_2<-merge(df18_months, Z2_grouping_df, by='PATNO')
 df18_months_2<-df18_months_2[!duplicated(df18_months_2),]
-df18_months_2
+df18_months_2$value
+
 
 ggplot(df18_months_2, aes(x=variable,y=value, group=group, colour=group)  )+
   geom_point(aes(x=variable,y=value, colour=group), alpha=0.5 )+
  # geom_line(aes(x=variable,y=value, group=PATNO, colour=group), lwd=0.2 )+
   stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 1.3) + 
-  
-  scale_color_viridis_d(option='turbo')
-  
+               geom = "line", size = 1.3) 
   
   
 
 
+### CHANGE OF MOLECULE VS CHANGE OF NP3
+  
 
 
+merged_melt_filt_most_sig$symbol
+levels(merged_melt_filt$symbol)
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
+
+
+merged_melt_filt_1  
+### split by visit 
+molecules_by_visit<-split(merged_melt_filt_1, merged_melt_filt_1$VISIT )
+
+molecules_by_visit2 <- molecules_by_visit %>% 
+  imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
+  reduce(full_join, by = "PATNO")
+
+
+molecules_by_visit2
+
+X2=molecules_by_visit2[,paste0('value','_','V08')]
+X1=molecules_by_visit2[,paste0('value','_','BL')]
+
+length(X2)
+length(X1)
+
+
+molecules_by_visit2$log_FC<-(X2-X1)/(X2+X1)
+#molecules_by_visit2$log_FC<-log2(log(X2)/log(X1))
+
+molecules_by_visit2$log_FC
+
+scale_change<-df_to_calc[,c('log_FC', 'PATNO',paste0('PDSTATE_', sel_visit ))]
+molecules_change_by_patno<-molecules_by_visit2[,c('log_FC', 'PATNO', 'kmeans_grouping_V08')]
+
+molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PATNO')
+
+ggplot(molecules_change_by_patno, aes(x=log_FC.x, y=log_FC.y))+
+  geom_point(aes(color=kmeans_grouping_V08))+
+  geom_smooth()+
+  facet_wrap(~ PDSTATE_V16)
 
 
 

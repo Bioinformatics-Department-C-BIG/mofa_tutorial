@@ -9,14 +9,27 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=1; 
 
-factor=sel_factors[fn_sel]
+mode='diagnosis'
+# IN THE DIAGNOSIS MODE we select factors related
+
+#### Markers over time:
+#### 1. Obtain the markers here 
+fn_sel=3; 
+if (mode=='diagnosis'){
+  factor=sel_factors[fn_sel]
+  
+}else{
+  factor=sel_factors_pd_np3[fn_sel]
+}
+
+
 factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
 view='proteomics'; process_mirnas=FALSE ## NEED TO LOAD proteins df for this -- TODO: fix olink preprocesing
 view='miRNA'; process_mirnas=TRUE
+
 
 
 
@@ -126,7 +139,9 @@ feat_names_ens
 ## outliers
 
 ### choose from deseq@
-feat_names= sigLRT_genes$gene
+
+#feat_names= sigLRT_genes$gene
+
 merged_melt_orig<-merged_melt_orig_1[merged_melt_orig_1$variable %in% make.names(feat_names),]
 
 levels(merged_melt_orig$variable)
@@ -150,13 +165,23 @@ if (view=='RNA'){
 # CREATE GROUPS BY FACTOR 
 ############################################
 
+
 sel_cohort=FALSE
 sel_cohort<-c(1)
+
+
+
+sel_cohort=FALSE
+# IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
+sel_cohort<-c(1)
+
 
 if (sel_cohort){
   #'
   #'
   merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
+}else{
+  merged_melt=merged_melt_orig
 }
 merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
 merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
@@ -167,7 +192,6 @@ merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
 
 merged_melt_pd<-merged_melt
 
-
 #### GROUP BY MOFA FACTOR ####
 # TODO: FUNCTION
 ### Wcich mofa run to get factors from??? 
@@ -177,7 +201,13 @@ patnos_z1<-gsub('\\_.*', '', names(Z1))
 Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 
 groups_kmeans<-kmeans(Z1, centers=2)
+
 patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+
+groups_kmeans$cluster
+patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+groups_kmeans_patnos<-patnos_z1
+
 groups_kmeans$cluster
 
 
@@ -208,6 +238,7 @@ groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
 }
 
 
+### Important: create groups only for the patients.
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject)
 
 merged_melt$kmeans_grouping
@@ -285,12 +316,18 @@ merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 # TODO: check both groups for significant changes
 merged_melt_filt_g1
 wilcox_stats1<-merged_melt_filt_g1 %>% group_by(symbol) %>%
+
+
+wilcox_stats1<-merged_melt_filt_g1 %>%
+  group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
 
-wilcox_stats2<-merged_melt_filt_g2 %>% group_by(symbol) %>%
+
+wilcox_stats2<-merged_melt_filt_g2 %>%
+group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
@@ -303,12 +340,64 @@ most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 
 
+### remove the ones insiude copntrols
+wilcox_stats_controls<-merged_melt_filt_g1 %>%
+  group_by(symbol) %>%
+  do(w=wilcox.test(value~VISIT, data=.))%>%
+  summarize(symbol, Wilcox=w$p.value) %>%
+  as.data.frame()
+
+
+
+
+
+most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
+
+most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
+most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$Wilcox),][1:15,]
+
+
+# they should chgange in pd but not in controls!! 
+# remove the ones in the controls
+most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
+
+most_sig_over_time_deseq = c('hsa.let.7a.3p', 'hsa.let.7f.1.3p', 'hsa.miR.101.3p', 'hsa.miR.142.5p')
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq,]
+
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
+merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
+
+merged_melt_filt_g2_sig$COHORT=factor(merged_melt_filt_g2_sig$COHORT)
+merged_melt_filt_g2_sig$VISIT=factor(merged_melt_filt_g2_sig$VISIT)
+
+
+
 
 
 ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
   geom_line(aes(group=PATNO),  col= 'grey') +
   geom_boxplot(aes(fill=VISIT))+
+
+
+### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
+# TODO: ADD DISEASE CONTROL
+
+merged_melt_ct$kmeans_grouping='CONTROL'
+merged_melt_ct$group='CONTROL'
+merged_melt_ct$grouping='CONTROL'
+
+filt_top=TRUE
+
+#merged_melt_filt_g2_sig_CT=rbind(merged_melt_filt_g2_sig,merged_melt_ct )
+
+
+
+ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
+  #geom_point(aes(col=VISIT), size = 2) +
+  #geom_line(aes(group=PATNO),  col= 'grey') +
+  # subgroup should be in the fill parameter!!! 
+  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
   scale_color_viridis_d(option='mako')+
   scale_fill_viridis_d(option='mako')+
   
@@ -324,6 +413,29 @@ ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) +
   theme_bw() 
 ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
        width=12, height=12)
+
+
+ggplot(data = merged_melt_filt_g1_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
+  #geom_point(aes(col=VISIT), size = 2) +
+  #geom_line(aes(group=PATNO),  col= 'grey') +
+  # subgroup should be in the fill parameter!!! 
+  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
+  scale_color_viridis_d(option='mako')+
+  scale_fill_viridis_d(option='mako')+
+  
+  #geom_line(aes(group=patno), palette='jco') +
+  #facet_wrap(. ~ symbol) +
+  
+  geom_signif(comparisons = list(c('BL', 'V08')),  
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  
+  facet_wrap(. ~ symbol, scales='free_y') +
+  
+  theme_bw() 
+ggsave(paste0(outdir, '/trajectories/boxplots_', sel_factors[fn_sel],'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
+       width=12, height=12)
+
 
 
 
@@ -357,9 +469,12 @@ merged_melt_ct$grouping='CONTROL'
 
 filt_top=TRUE
 
-merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
+
 if (filt_top){
+  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
+  
+  
   nrow=NULL; height=2.6*4
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
@@ -371,7 +486,8 @@ if (filt_top){
 merged_melt_filt_most_sig
 ### BY GROUP ####
 #### TODO: plot also for CONTROLS! the same exact molecules thought.... so select them with PD 
-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+
+ggplot(data = merged_melt_filt_g2_sig, aes_string(x = 'VISIT', y = 'value', 
                                                     fill='group', group='group', colour='group')) + 
   stat_summary(geom = "pointrange", fun.data = median_IQR, 
                position=position_dodge(0))+
@@ -439,12 +555,109 @@ p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
                        group='PATNO', colour='TOP' ),size=0.2, alpha=0.5)+
   stat_summary(fun = median, position=position_dodge(width=0), 
                geom = "line", size = 1) + 
+### CHANGE OF MOLECULE VS CHANGE OF NP3
+
+
+
+merged_melt_filt_most_sig$symbol
+levels(merged_melt_filt$symbol)
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.let.7a.3p',]
+merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
+
+
+merged_melt_filt_1  
+### split by visit 
+molecules_by_visit<-split(merged_melt_filt_1, merged_melt_filt_1$VISIT )
+
+molecules_by_visit2 <- molecules_by_visit %>% 
+  imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
+  reduce(full_join, by = "PATNO")
+
+
+molecules_by_visit2
+
+X2=molecules_by_visit2[,paste0('value','_','V08')]
+X1=molecules_by_visit2[,paste0('value','_','BL')]
+
+length(X2)
+length(X1)
+
+
+molecules_by_visit2$log_FC<-(X2-X1)/(X2+X1)
+molecules_by_visit2$diff<-(X2-X1)
+
+#molecules_by_visit2$log_FC<-log2(log(X2)/log(X1))
+
+molecules_by_visit2$log_FC
+
+
+
+molecules_by_visit2
+
+
+
+
+# TOP NEGATIVE CHANGE!
+merged_melt_filt$value
+### 1. LARGE DIFFERENCES
+# 2. Large changes 
+# 3. large end points 
+add_molecules_changes=FALSE
+merged_melt_filt_most_sig$TOP=FALSE
+
+if (add_molecules_changes){
+  top_change<-molecules_change_by_patno[order(molecules_change_by_patno$diff, decreasing = FALSE)[1:20],'PATNO']
+  top_change2<-molecules_change_by_patno[order(molecules_change_by_patno$log_FC, decreasing = FALSE)[1:20],'PATNO']
+  just_molecules<-merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ][, c('value', 'PATNO')]
+  top_change3<-just_molecules[just_molecules$value< (-0),]$PATNO
+  
+  
+  hist(merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ]$value)
+  top_change3
+  merged_melt_filt_most_sig$TOP=FALSE
+  merged_melt_filt_most_sig[merged_melt_filt_most_sig$PATNO %in% c( top_change2,top_change,top_change3) ,]$TOP<-TRUE
+  any(merged_melt_filt_most_sig$TOP)
+  
+  
+  top_molecular_patients<-c( top_change2,top_change,top_change3)
+  top_molecular_patients
+  
+  
+}
+
+
+
+
+
+
+
+
+#### BY PATIENT #####
+
+merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$TOP
+merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$kmeans_grouping
+
+p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+                                                   fill='group', group='group', colour='group')) + 
+
+
+  geom_point(aes_string(x = 'VISIT', y = 'value', 
+             fill='group', group='group', colour='group' ),size=0.1, alpha=0.5)+
+  geom_line(aes_string(x = 'VISIT', y = 'value', 
+                         group='PATNO', colour='group' ),size=0.1, alpha=0.5)+
+  stat_summary(fun = median, position=position_dodge(width=0), 
+               geom = "line", size = 1) + 
+
   
   theme(legend.position = "none")+
   
   
   
   scale_color_viridis_d(option='turbo')+
+  #scale_color_viridis_d(option='magma')+
+  
   facet_wrap(. ~ symbol, scales='free_y', 
              nrow = 4) +
   
@@ -542,6 +755,44 @@ molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kme
 molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PATNO')
 
 molecules_change_by_patno[which.max(molecules_change_by_patno$diff),'PATNO']
+
+hist(scale_change$diff_scale)
+
+
+### color the top molecular ones too
+
+scale_change$TOP=FALSE
+
+scale_change[scale_change$PATNO%in%top_molecular_patients, ]$TOP=TRUE
+
+### WHICH GROUP
+kmeans_grouping<-groups_kmeans$cluster
+kmeans_grouping<-clusters_patients$cluster
+groups_kmeans$centers
+
+names(kmeans_grouping)<-gsub('\\_.*', '', names(kmeans_grouping))
+
+kmeans_grouping=data.frame(kmeans_grouping)
+kmeans_grouping$PATNO=rownames(kmeans_grouping)
+scale_change$PATNO
+kmeans_grouping$PATNO
+scale_change_gr<-merge(scale_change, kmeans_grouping, by='PATNO')
+scale_change_gr$kmeans_grouping=as.factor(scale_change_gr$kmeans_grouping)
+scale_change_gr
+
+ggplot(scale_change_gr, aes(x=diff_scale))+
+  geom_histogram(aes(fill=kmeans_grouping))
+
+ggplot(scale_change_gr, aes(x=diff_scale))+
+  geom_histogram(aes(fill=TOP))
+
+
+scale_change<-df_to_calc[,c( 'diff_scale', 'PATNO',paste0('PDSTATE_', sel_visit ))]
+
+
+molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kmeans_grouping_V08')]
+molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PATNO')
+
 # Plot the absolute difference between
 # Diff
 ggplot(molecules_change_by_patno, aes(x=diff, y=diff_scale))+
@@ -550,12 +801,7 @@ ggplot(molecules_change_by_patno, aes(x=diff, y=diff_scale))+
   facet_wrap(~ PDSTATE_V16, nrow=3)
 
 
-
-
-
-
-
-
+top_molecular_patients
 
 
 

@@ -264,7 +264,7 @@ combined_new$RBD_TOT
   
   combinded_wide_all$SCAU_TOT_V08
   
-  cl_var<-'NP2_TOT'
+  cl_var<-'NP3_TOT'
   combinded_wide_all$np3tot
   combinded_wide_all[combinded_wide_all$COHORT_V16==1,]$scopa_BL
   combinded_wide<-combinded_wide_all[!is.na(combinded_wide_all[, paste0( cl_var,'_', sel_visit)]),]
@@ -316,13 +316,14 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   
   ## filter for off:
 
-  df2_off<-df2[df2$PDSTATE_V14=='OFF', ]
-  df2_off<-df2[df2[, paste0('PDSTATE_',sel_visit)]=='ON', ]
+  df2_off<-df2[df2$PDSTATE_V14=='ON', ]
+  sel_state='ON'
+  df2_off<-df2[df2[, paste0('PDSTATE_',sel_visit)]==sel_state, ]
   
   table(df2_melt$PDSTATE_V14)
   
   df_to_calc<-df2_off
-  df_to_calc<-df2
+  df_to_calc<-df2_off
   
   
   ### HOW many are controls? 
@@ -335,6 +336,21 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   
   X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
   X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
+  
+  clip_outliers<-function(X){
+    quartiles <- quantile(X, probs=c(.25, .75), na.rm = FALSE)
+    IQR <- IQR(X)
+    # Q3 + 1.5*IQR
+    Lower <- quartiles[1] - 1.5*IQR
+    Upper <- quartiles[2] + 1.5*IQR 
+    
+    X[X>Upper]<-Upper
+    X[X<Lower]<-Lower
+    return(X)
+    
+  }
+  X2_cl<-clip_outliers(X2_cl)
+  
   
   calc_change<-function(X1,X2){
     change<-((X2-X1)/(X2+X1))
@@ -367,18 +383,13 @@ NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
   hist( df_to_calc$log_FC)
   hist( df_to_calc$log_FC)
   
-  #### DOES  a large change in molecules means a large change in the clinical variables of those patients too? 
   
-  
-  
-  
-  pp
+
 
   
   
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')
 
-#
 
 # postural instability gait disorder dominant
 #### Create averages 

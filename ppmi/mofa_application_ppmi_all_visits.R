@@ -1,6 +1,6 @@
 
 
-#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
@@ -40,13 +40,13 @@ VISIT=c('BL');
 
 
 VISIT=c('BL','V04', 'V06',  'V08');
-VISIT=c('V08');
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('V08');
 
 
 run_vsn=TRUE
 ## tissue is set in the config
-use_signif=FALSE
+use_signif=TRUE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 

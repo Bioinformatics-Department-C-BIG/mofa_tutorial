@@ -18,7 +18,7 @@ deseq2Results_time <- results(deseq2Data,  contrast=c('EVENT_ID', 'V08','BL'))
 deseq2Results_time <- results(deseq2Data,  contrast=c('EVENT_ID', 'V08','BL'))
 
 
-deseq2Data$COHORT <- relevel(deseq2Data$COHORT, "1")
+deseq2Data$COHORT <- relevel(deseq2Data$COHORT, "2")
 resultsNames(deseq2Data)
 
 deseq2Results_time <- results(deseq2Data)

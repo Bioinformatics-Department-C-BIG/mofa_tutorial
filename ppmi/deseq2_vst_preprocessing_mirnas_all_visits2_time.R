@@ -152,7 +152,8 @@ VISIT=c('BL','V04', 'V06',  'V08');
               
               
               formula_deseq = '~AGE_SCALED+SEX+COHORT + EVENT_ID + COHORT:EVENT_ID'
-
+              formula_deseq = '~AGE_SCALED+SEX+ COHORT:EVENT_ID'
+              
              
               
             }
@@ -160,6 +161,9 @@ VISIT=c('BL','V04', 'V06',  'V08');
             ddsSE <- DESeqDataSet(se_filt2, 
                                   design = as.formula(formula_deseq))
             ddsSE<-estimateSizeFactors(ddsSE)
+            
+            ddsSE$COHORT <- relevel(ddsSE$COHORT, "2")
+
             
             vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
             

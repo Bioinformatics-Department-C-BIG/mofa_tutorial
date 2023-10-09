@@ -717,7 +717,7 @@ clip_outliers<-function(df1){
 
 
 
-preprocess_visit<-function(se_filt_V, common, sel_cohorts){
+preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 

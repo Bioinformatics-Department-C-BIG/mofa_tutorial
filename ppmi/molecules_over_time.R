@@ -8,14 +8,18 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 #### Markers over time:
-#### 1. Obtain the markers here 
+#### 1. Obtain the markers here either from MOFA OR from deseq 
+
 
 mode='diagnosis'
+## Where to get the molecules from? 
+mode_mols='single_time'
+model_subtyping<-'MOFA'
 # IN THE DIAGNOSIS MODE we select factors related
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=3; 
+fn_sel=2; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   
@@ -33,8 +37,8 @@ view='miRNA'; process_mirnas=TRUE
 
 
 
-view='RNA'; process_mirnas=FALSE
 view='miRNA'; process_mirnas=TRUE
+view='RNA'; process_mirnas=FALSE
 
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -55,6 +59,7 @@ se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
 common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
 
 
+## DO NOT FILTER THE FEAT NAMES HERE 
 v6_ens<-preprocess_visit(se_filt_V06, common=common, sel_cohorts = c(1,2))
 v8_ens<-preprocess_visit(se_filt_V08, common=common,sel_cohorts = c(1,2))
 se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
@@ -89,6 +94,10 @@ levels(merged_melt_orig_1$variable)
 
 
 #### mofa preprocess
+##### Collect molecules that we want to plot over time #### 
+#### 1. top MOFA factor molecules
+#### 2. top deseq molecules 
+#### 3. top timeOmics selected molecules 
 
 
 f_v<-get_factors(MOFAobject, factors = sel_factors[fn_sel] )[[1]]
@@ -141,6 +150,9 @@ feat_names_ens
 ### choose from deseq@
 
 #feat_names= sigLRT_genes$gene
+
+#feat_names= sigLRT_genes$gene
+
 
 merged_melt_orig<-merged_melt_orig_1[merged_melt_orig_1$variable %in% make.names(feat_names),]
 
@@ -211,37 +223,55 @@ groups_kmeans_patnos<-patnos_z1
 groups_kmeans$cluster
 
 
-groups_from_mofa_factors<-function(merged_melt,MOFAobject ){
+cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2 ){
+  ###
+  #' 
+  #' @return clusters_by_patno
+  #' @
+  #' 
+  #' 
+  
+  Z <- get_factors(MOFAobject)[[1]]
+  Z1<-Z[,factors]
+  groups_kmeans<-kmeans(Z1, centers=centers)
+  names(groups_kmeans$cluster)<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+
+  return(groups_kmeans)  
+}
+
+groups_from_mofa_factors<-function(merged_melt, MOFAobject ){
   
   #'
   #' @param MOFAobject description
   #'
-  Z <- get_factors(MOFAobject)[[1]]
-  Z1<-Z[,sel_factors[fn_sel]]
-  patnos_z1<-gsub('\\_.*', '', names(Z1))
-  Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
+
+  ### cluster by one factor 
+  groups_kmeans<-cluster_by_mofa_factors(MOFAobject, factors=sel_factors[fn_sel], centers=2)
+  
+#  Z1_matched<-Z1[match(merged_melt$PATNO,names(groups_kmeans$cluster)) ]
   
   
-  groups_kmeans<-kmeans(Z1, centers=2)
-  patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
-  
-  table(groups_kmeans$cluster)
+
   high_label<-which.max(groups_kmeans$centers)
-  groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
+  #groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
   pats<-names(groups_kmeans$cluster)
-  patnos_z1<-gsub('\\_.*', '', pats)
-  kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, patnos_z1 )]
-  kmeans_matched
+  
+  ### MATCH the clusters with the dataframe 
+  kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, pats )]
   kmeans_grouping<-factor(kmeans_matched)
   
+  groups_from_mofa_factors
+  
+  
   return(kmeans_grouping)
+  
 }
 
 
 ### Important: create groups only for the patients.
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject)
 
-merged_melt$kmeans_grouping
+merged_melt$grouping<-merged_melt$kmeans_grouping
 
 
 
@@ -255,12 +285,11 @@ merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
 merged_melt_filt$VISIT
 
 
-group_up<-unique(names(Z1_grouping[which(Z1_grouping==FALSE)]))
-group_down<-unique(names(Z1_grouping[which(Z1_grouping==TRUE)]))
-### Did they change scales???
 
-se_filt_V08_pd_g1<-se_filt_V08_pd[,se_filt_V08_pd$PATNO_EVENT_ID %in% group_down ]
-se_filt_V08_pd_g2<-se_filt_V08_pd[,se_filt_V08_pd$PATNO_EVENT_ID %in% group_up ]
+### Did they change scales???
+### Breaks down into two groups based on grouping 
+se_filt_V08_pd_g1<-se_filt_V08_pd[,se_filt_V08_pd$PATNO %in% levels(factor(merged_melt$grouping))[1] ]
+se_filt_V08_pd_g2<-se_filt_V08_pd[,se_filt_V08_pd$PATNO %in% levels(factor(merged_melt$grouping))[2] ]
 
 
 G1<-se_filt_V08_pd_g1[,!(se_filt_V08_pd_g1$PDSTATE == 'ON')]
@@ -271,7 +300,7 @@ G2<-se_filt_V08_pd_g2[,!(se_filt_V08_pd_g2$PDSTATE == 'ON')]
 
 merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
 
-
+group_cats<-levels(factor(merged_melt$grouping))
 
 
 
@@ -300,9 +329,9 @@ merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
 
 merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
 
-merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% 'HighFactor',]
+merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% group_cats[1],]
 merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', 'V08'),]
-merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% 'LowFactor',]
+merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[2],]
 merged_melt_filt_g2=merged_melt_filt_g2[merged_melt_filt_g2$VISIT %in% c('BL', 'V08'),]
 
 merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
@@ -315,20 +344,19 @@ merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 # THEREFORE MAKE THE GROUPING INTO A FUNCTION
 # TODO: check both groups for significant changes
 merged_melt_filt_g1
-wilcox_stats1<-merged_melt_filt_g1 %>% group_by(symbol) %>%
 
 
 wilcox_stats1<-merged_melt_filt_g1 %>%
   group_by(symbol) %>%
-  do(w=wilcox.test(value~VISIT, data=.))%>%
+  do(w=wilcox.test(value~VISIT, data=.)) %>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
 
 
 wilcox_stats2<-merged_melt_filt_g2 %>%
-group_by(symbol) %>%
-  do(w=wilcox.test(value~VISIT, data=.))%>%
+  group_by(symbol) %>%
+  do(w=wilcox.test(value~VISIT, data=.) )%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
 
@@ -337,7 +365,13 @@ most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
 most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
 
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
+
+
+#### CHOOSE 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
+
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
+
 
 
 ### remove the ones insiude copntrols
@@ -354,7 +388,7 @@ wilcox_stats_controls<-merged_melt_filt_g1 %>%
 most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
 
 most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
-most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$Wilcox),][1:15,]
+#most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$Wilcox),][1:15,]
 
 
 # they should chgange in pd but not in controls!! 
@@ -362,22 +396,30 @@ most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
 most_sig_over_time_deseq = c('hsa.let.7a.3p', 'hsa.let.7f.1.3p', 'hsa.miR.101.3p', 'hsa.miR.142.5p')
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq,]
+####### CHOOSE 
+
+most_sig_over_time_deseq = make.names(sigLRT_genes$gene)
+most_sig_over_time_deseq<-make.names(colnames(data.filtered.only.pd))
+
+most_sig_over_time_deseq
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq[1:10],]
+
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
+
+
+
 
 merged_melt_filt_g2_sig$COHORT=factor(merged_melt_filt_g2_sig$COHORT)
 merged_melt_filt_g2_sig$VISIT=factor(merged_melt_filt_g2_sig$VISIT)
 
 
 
-
-
-ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
+ggplot(data = merged_melt_all, aes(x = VISIT, y = value)) + 
   geom_point(aes(col=VISIT), size = 2) +
   geom_line(aes(group=PATNO),  col= 'grey') +
-  geom_boxplot(aes(fill=VISIT))+
+  geom_boxplot(aes(fill=VISIT))
 
 
 ### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
@@ -389,15 +431,21 @@ merged_melt_ct$grouping='CONTROL'
 
 filt_top=TRUE
 
-#merged_melt_filt_g2_sig_CT=rbind(merged_melt_filt_g2_sig,merged_melt_ct )
+
+### PUT THEM ALL TOGETHER IN THE BOXPLOTS 
+merged_melt_all<-rbind(merged_melt_ct, merged_melt_filt_g2_sig)
+merged_melt_all<-rbind(merged_melt_all, merged_melt_filt_g1_sig)
 
 
 
-ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
+#### in the boxplots add the groups 
+### first controls-- all markers need to be different in controls
+### and second in the two groups of disease 
+ggplot(data = merged_melt_all, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
   #geom_point(aes(col=VISIT), size = 2) +
   #geom_line(aes(group=PATNO),  col= 'grey') +
   # subgroup should be in the fill parameter!!! 
-  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
+  geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
   scale_color_viridis_d(option='mako')+
   scale_fill_viridis_d(option='mako')+
   
@@ -467,11 +515,15 @@ merged_melt_ct$kmeans_grouping='CONTROL'
 merged_melt_ct$group='CONTROL'
 merged_melt_ct$grouping='CONTROL'
 
+
+merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
+
 filt_top=TRUE
 
 
 if (filt_top){
-  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq,]
+  
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq[1:10],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:5],]
   
   
@@ -561,11 +613,6 @@ p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
 
 merged_melt_filt_most_sig$symbol
 levels(merged_melt_filt$symbol)
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.let.7a.3p',]
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
-
 
 merged_melt_filt_1  
 ### split by visit 
@@ -630,7 +677,7 @@ if (add_molecules_changes){
 
 
 
-
+merged_melt_filt_most_sig
 
 
 
@@ -638,6 +685,9 @@ if (add_molecules_changes){
 
 merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$TOP
 merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$kmeans_grouping
+merged_melt_filt_most_sig
+
+
 
 p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
                                                    fill='group', group='group', colour='group')) + 
@@ -655,8 +705,8 @@ p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
   
   
   
-  scale_color_viridis_d(option='turbo')+
-  #scale_color_viridis_d(option='magma')+
+  #scale_color_viridis_d(option='turbo')+
+  scale_color_viridis_d(option='magma')+
   
   facet_wrap(. ~ symbol, scales='free_y', 
              nrow = 4) +

@@ -41,13 +41,12 @@ VISIT='V08'
 VISIT=c('BL','V08')
 VISIT=c('BL','V04', 'V06',  'V08');
 
-#for (VISIT in list( list('V08', 'BL')) ){
 
         print(VISIT)
         filter_common=TRUE
-        same_samples=FALSE
+        same_samples_all_visits=TRUE
         source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-        
+        filter_by_group=TRUE
         
         ##### Load required data 
         # TODO: input all the visits 
@@ -83,7 +82,7 @@ VISIT=c('BL','V04', 'V06',  'V08');
         dim(se_filt)
 
         common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
-        if (same_samples){
+        if (same_samples_all_visits){
           common=Reduce(intersect, list(se_filt_V08$PATNO,se_filt_BL$PATNO , se_filt_V04$PATNO, se_filt_V06$PATNO))
           
         }
@@ -133,16 +132,32 @@ VISIT=c('BL','V04', 'V06',  'V08');
           if (length(VISIT)>1){
             print('Two cohorts and visits detected, running deseq and vsd with design formula')
              
-           
-            if (same_samples){
-              se_filt = se_filt[, se_filt$COHORT==2]
+            #se_filt2 = se_filt[, se_filt$COHORT==2]
+            se_filt2 = se_filt
+            
+            if (same_samples_all_visits){
+              se_filt2 = se_filt[, se_filt$COHORT==2]
+              se_filt2=se_filt
+             # gsub('\\_.*', '', names(kmeans_grouping))
+              filter_by_group=FALSE
+              if (filter_by_group){
+                patnos_g1<-gsub('\\_.*', '', names(which(groups_kmeans$cluster==2)))
+                
+                cns<-se_filt[,se_filt$COHORT_DEFINITION=='Healthy Control']$PATNO
+                se_filt2 = se_filt[, se_filt$PATNO %in% c(patnos_g1, cns)]
+                
+                
+                
+              }
               
               
-              formula_deseq = '~PATNO+EVENT_ID'
+              formula_deseq = '~AGE_SCALED+SEX+COHORT + EVENT_ID + COHORT:EVENT_ID'
+
+             
               
             }
             
-            ddsSE <- DESeqDataSet(se_filt, 
+            ddsSE <- DESeqDataSet(se_filt2, 
                                   design = as.formula(formula_deseq))
             ddsSE<-estimateSizeFactors(ddsSE)
             

@@ -41,13 +41,12 @@ VISIT='V08'
 VISIT=c('BL','V08')
 VISIT=c('BL','V04', 'V06',  'V08');
 
-#for (VISIT in list( list('V08', 'BL')) ){
 
         print(VISIT)
         filter_common=TRUE
         same_samples_all_visits=TRUE
         source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-        
+        filter_by_group=TRUE
         
         ##### Load required data 
         # TODO: input all the visits 
@@ -139,14 +138,22 @@ VISIT=c('BL','V04', 'V06',  'V08');
             if (same_samples_all_visits){
               se_filt2 = se_filt[, se_filt$COHORT==2]
               se_filt2=se_filt
+             # gsub('\\_.*', '', names(kmeans_grouping))
+              filter_by_group=FALSE
+              if (filter_by_group){
+                patnos_g1<-gsub('\\_.*', '', names(which(groups_kmeans$cluster==2)))
+                
+                cns<-se_filt[,se_filt$COHORT_DEFINITION=='Healthy Control']$PATNO
+                se_filt2 = se_filt[, se_filt$PATNO %in% c(patnos_g1, cns)]
+                
+                
+                
+              }
               
-              formula_deseq = '~AGE_SCALED+SEX+COHORT+EVENT_ID+COHORT:EVENT_ID'
+              
+              formula_deseq = '~AGE_SCALED+SEX+COHORT + EVENT_ID + COHORT:EVENT_ID'
 
-              #se_filt2 = se_filt[, se_filt$COHORT==2]
-              
-              
-              #formula_deseq = '~PATNO+AGE_SCALED+EVENT_ID'
-              
+             
               
             }
             

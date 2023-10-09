@@ -169,11 +169,11 @@ library(DescTools)
 
 
 
-cluster_samples_mofa=FALSE
+cluster_samples_mofa=TRUE
 if (cluster_samples_mofa){
   if (length(sel_coh)>1){
     #for (k_centers_m in c(6)){
-    for (k_centers_m in c(3)){
+    for (k_centers_m in c(3,2)){
       
       clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
       clusters_mofa<-clusters
@@ -184,11 +184,10 @@ if (cluster_samples_mofa){
       
       clusters_patients <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=sel_factors)
       
-      #covariates$cluster_m<-clusters_mofa$cluster[match(rownames(covariates),names(clusters_mofa$cluster))]
-      #df1=covariates
-      #print(chisq.test(df1$cluster_m, df1$COHORT))
-      #mut_inf<-round( MutInf(df1$cluster_m, df1$COHORT),digits = 3)
-      #print(mut_inf)
+      ### cluster patients only 
+      clusters_patients_pd_np3 <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=sel_factors_pd_np3)
+      
+    
       
     }
     # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
@@ -218,10 +217,24 @@ if (cluster_samples_mofa){
 
 
 
+####
+###DO THE CLUSTERS HAVE DIFFERENT NP3? ####
+samples_metadata(MOFAobjectPD)$clusters_np3<-factor(clusters_patients_pd_np3$cluster)
+met<-samples_metadata(MOFAobjectPD)
+
+y='NP3_TOT'
+met%>%
+  group_by(clusters_np3) %>%
+  summarize(across(everything(), mean))
+dev.off()
+p<-ggplot(met ,aes_string(x='clusters_np3' , fill='clusters_np3'))+
+  geom_boxplot(aes_string(y=y, x='clusters_np3'))+
+  geom_signif(comparisons=list(c("1", "2")),
+                               aes_string(y=y))
 
 
-
-
+p
+## TODO: WILCOX TEST BY GROUP
 
 
 #### After adding clusters redo calculcations of metadata..? ####
@@ -391,10 +404,8 @@ selected_covars2<-c( 'AGE', 'SEX',
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
-  labels_col2<-c(labels_col2, 'Disease status')
 }
 
-cbind(selected_covars2, labels_col2)
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
 
 MOFAobjectPD
@@ -442,7 +453,6 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
 # 'STAID:ANXIETY_TOT'
 selected_covars<-selected_covars2; length(selected_covars)
 
-labels_col=labels_col2; length(labels_col)
 
 MOFAobject_gs2<-MOFAobject
 MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
@@ -529,10 +539,10 @@ labels_cols_pearson
 ### Corelation not log_pval####
 
 fname<-'factors_covariates_img_cor'
-plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='r',factors,labels_col, MOFAobject=MOFAobject_nams )
+plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='r',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
 
 fname<-'factors_covariates_img_pval'
-plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='log_pval',factors,labels_col, MOFAobject=MOFAobject_nams )
+plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='log_pval',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
 
 
 

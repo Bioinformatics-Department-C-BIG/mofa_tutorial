@@ -3,14 +3,27 @@
 ###
 #BiocManager::install('DEGreport')
 install.packages('lasso2')
-library('lasso2')
+#library('lasso2')
 library('DEGreport')
 
 # https://github.com/hbctraining/DGE_workshop_salmon_online/blob/master/lessons/08a_DGE_LRT_results.md
+
+### aply deseq time PER GROUP
+resultsNames(deseq2Data)
+
+
 res_LRT <- results(deseq2Data)
 res_LRT$padj
-resultsNames(deseq2Data)
 deseq2Results_time <- results(deseq2Data,  contrast=c('EVENT_ID', 'V08','BL'))
+deseq2Results_time <- results(deseq2Data,  contrast=c('EVENT_ID', 'V08','BL'))
+
+
+deseq2Data$COHORT <- relevel(deseq2Data$COHORT, "1")
+resultsNames(deseq2Data)
+
+deseq2Results_time <- results(deseq2Data)
+
+deseq2Results_time
 #deseq2Results_time <- results(deseq2Data,  contrast=c('COHORT', '1','2'))
 
 deseq2Results_time$padj
@@ -26,12 +39,15 @@ res_LRT_tb <- deseq2Results_time %>%
 
 res_LRT_tb$padj
 # Subset to return genes with padj < 0.05
-padj.cutoff=0.0001
+padj.cutoff=0.00001
+padj.cutoff=0.05
+
 sigLRT_genes <- res_LRT_tb %>% 
   dplyr::filter(padj < padj.cutoff)
 
 # Get number of significant genes
 nrow(sigLRT_genes)
+sigLRT_genes
 
 # Compare to numbers we had from Wald test
 

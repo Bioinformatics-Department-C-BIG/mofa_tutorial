@@ -136,6 +136,8 @@ VISIT=c('BL','V04', 'V06',  'V08');
            
             if (same_samples){
               se_filt = se_filt[, se_filt$COHORT==2]
+              
+              
               formula_deseq = '~PATNO+EVENT_ID'
               
             }

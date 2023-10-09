@@ -157,7 +157,7 @@ MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
 
 if (length(sel_coh)>1){
   #for (k_centers_m in c(6)){
-  for (k_centers_m in c(3)){
+  for (k_centers_m in c(3,2)){
     
     clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
     clusters_mofa<-clusters
@@ -456,6 +456,9 @@ plot="log_pval"
 factors=names(sel_factors)
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col, MOFAobject=MOFAobjectPD )
+
+fname<-'factors_covariates_only_nonzero_strict_cor_PD'
+plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors,labels_col, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict'

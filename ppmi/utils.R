@@ -127,6 +127,9 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
 
 # TODO: fix 
 get_age_at_visit<-function(new){
+  #'
+  #'
+  #'
   AGE_AT_VISIT<-as.numeric(gsub('.*/','',new$STATUS_DATE)) - as.numeric(gsub('.*/','',new$BIRTHDT))
   return(AGE_AT_VISIT)
   }
@@ -267,7 +270,11 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 }
 
 
-
+#gse=gse_mofa_rna
+#results_file = results_file_mofa
+#N_EMAP=50
+#geneList =NULL  
+#title_p
 
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
@@ -617,15 +624,20 @@ create_multi_experiment<-function(data_full, combined_bl){
   common_samples_in_assays=unique(colname)
   ### TODO: is it a problem for duplicates when i make PATNO_EVENT_ID the key column? 
   ### Note: HERE WE lost duplicate metadata ie. double clinical measures for one patient
-  
+  combined_bl<-combined_bl[!duplicated(combined_bl$PATNO_EVENT_ID),]
   metadata_filt<-combined_bl[match(common_samples_in_assays, combined_bl$PATNO_EVENT_ID),]
-  metadata_filt$primary<-metadata_filt$PATNO_EVENT_ID
+  metadata_filt_unique<-metadata_filt[!duplicated(metadata_filt$PATNO_EVENT_ID),]
+  metadata_filt_unique<-metadata_filt_unique[!is.na(metadata_filt_unique$PATNO_EVENT_ID),]
   
-  rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
+  metadata_filt_unique$primary<-metadata_filt_unique$PATNO_EVENT_ID
+  
+  rownames(metadata_filt_unique)<-metadata_filt_unique$PATNO_EVENT_ID
+  
+  #rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
   
   
   mofa_multi<-MultiAssayExperiment(experiments=data_full,
-                                   colData = metadata_filt, 
+                                   colData = metadata_filt_unique, 
                                    sampleMap=sample_map)
   
   
@@ -704,23 +716,37 @@ clip_outliers<-function(df1){
 }
 
 
-preprocess_visit<-function(se_filt_V, common, feat_names){
+preprocess_visit<-function(se_filt_V, common, feat_names=NULL, sel_cohorts=1){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 
   # 3. CPM or VSN
   # 4. Clip outliers 
   # 5. Add patient number and event 
-  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT == 1]
+  se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% c(sel_cohorts)]
   se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
   # CPM or VSN? # cpm for plotting, vsn for 
   df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  
+  
+  # VSN OPTION 
+  #df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  
+  
+  # ??? Why are we clipping? 
   df_v<- clip_outliers(df_v)
   rownames(df_v) = gsub('\\..*', '',rownames(df_v))
-  df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+  if (is.null(feat_names)){
+    df_V_ens=t(df_v)
+    
+    
+  }else{
+    df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
+    
+  }
   v_ens=data.frame(df_V_ens)
   v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
-      c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT')])
+      c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT')])
   
   
   return(v_ens)

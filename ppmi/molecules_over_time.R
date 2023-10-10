@@ -375,7 +375,9 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 
 
 ### remove the ones insiude copntrols
-wilcox_stats_controls<-merged_melt_filt_g1 %>%
+
+# TODO: FIX 
+wilcox_stats_controls<-merged_melt_ct %>%
   group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
@@ -407,7 +409,7 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% mos
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
 merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
-
+## TODO: filter out the ones that change inc ontrols 
 
 
 
@@ -433,15 +435,15 @@ filt_top=TRUE
 
 
 ### PUT THEM ALL TOGETHER IN THE BOXPLOTS 
-merged_melt_all<-rbind(merged_melt_ct, merged_melt_filt_g2_sig)
-merged_melt_all<-rbind(merged_melt_all, merged_melt_filt_g1_sig)
+#merged_melt_all<-rbind(merged_melt_ct, merged_melt_filt_g2_sig)
+#merged_melt_all<-rbind(merged_melt_all, merged_melt_filt_g1_sig)
 
 
 
 #### in the boxplots add the groups 
 ### first controls-- all markers need to be different in controls
 ### and second in the two groups of disease 
-ggplot(data = merged_melt_all, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
+ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
   #geom_point(aes(col=VISIT), size = 2) +
   #geom_line(aes(group=PATNO),  col= 'grey') +
   # subgroup should be in the fill parameter!!! 
@@ -515,7 +517,7 @@ merged_melt_ct$kmeans_grouping='CONTROL'
 merged_melt_ct$group='CONTROL'
 merged_melt_ct$grouping='CONTROL'
 
-
+### ADD THE CONTROLS TOO!!! ####### FIRST CHECK THAT THE TEMPORAL patterns are only visible in PD samples
 merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
 
 filt_top=TRUE

@@ -45,7 +45,7 @@ VISIT=c('V08');
 
 run_vsn=TRUE
 ## tissue is set in the config
-use_signif=FALSE
+use_signif=TRUE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 

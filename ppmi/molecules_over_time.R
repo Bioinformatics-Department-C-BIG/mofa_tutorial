@@ -12,6 +12,8 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 mode='diagnosis'
+mode='prognosis'
+clinical_scale<-'NP3_TOT'
 ## Where to get the molecules from? 
 mode_mols='single_time'
 model_subtyping<-'MOFA'
@@ -408,7 +410,9 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% mos
 
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
-merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
+
+### TODO: ADD THE CLINICAL SCALES TOO 
+merged_melt_filt_g1_sig<-merged_melt_filt_g1[ (merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol) ,]
 ## TODO: filter out the ones that change inc ontrols 
 
 
@@ -800,6 +804,148 @@ molecules_by_visit2$log_FC
 
 
 molecules_by_visit2
+
+###################### ADD FUTURE SCALES AS WELL ####################################
+
+library(dplyr)
+library(data.table)
+
+
+combined_by_visit<-split(combined, combined$EVENT_ID )
+# 72 MONTHS 
+cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16','V18')]
+cm2<-combined_by_visit[c('BL','V08','V14')]
+cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16')]
+
+sel_visit='V16'
+# cm2<-combined_by_visit[c('BL' ,'V12')]
+
+combinded_wide_all<-cm2 %>% 
+  imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
+  reduce(full_join, by = "PATNO")
+
+
+combinded_wide_all$SCAU_TOT_V08
+
+cl_var<-'NP2_TOT'
+combinded_wide_all$np3tot
+combinded_wide_all[combinded_wide_all$COHORT_V16==1,]$scopa_BL
+combinded_wide<-combinded_wide_all[!is.na(combinded_wide_all[, paste0( cl_var,'_', sel_visit)]),]
+df2<-combinded_wide
+
+# df2<-df2%>% dplyr::filter(PDSTATE.y%in%c('OFF', ' '))
+#df2<-df2[,!colnames(df2)=='PDSTATE.y']
+df2<-df2[!duplicated(df2),]
+
+
+id_vars<-colnames(df2)[!grepl( cl_var, colnames(df2))]
+# id_vars<-colnames(df2)[!grepl( 'NP3TOT|PDSTATE', colnames(df2))]
+
+df2_melt<-reshape::melt(df2, id=c( id_vars))
+df2$COHORT_BL
+
+colnames(df2_melt)
+#df2_melt=df2_melt[df2_melt$COHORT_BL==1 & df2_melt$PATNO %in% sel_pats,]
+
+df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
+df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
+
+
+df2_melt[, c('scopa_V08', 'SCAU_TOT_V08')]
+
+#df2_melt$variable=as.numeric(df2_melt$variable)
+df18_months<-df2_melt
+#df2$change<-log2(log2(df2$NP3TOT.y)/log2(df2$NP3TOT.x))
+
+#df2_melt$group_line<-paste0(df2_melt$PATNO,'_', df2_melt$PDS )
+
+
+### Clinical scale trends per patient - is there a difference with controls ?
+# ISSUE WE CANNOT SEE IT for controls -it was not measured..
+graphics.off()
+pp<-ggplot(df2_melt, aes(x=variable,y=value)  )+
+  geom_point(aes(x=variable,y=value, color=PATNO), size=0.2 )+
+  geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.4) +
+  scale_color_viridis_c(option='turbo')+
+  facet_wrap(~COHORT_BL, nrow=2)
+
+pp  
+
+sel_pats
+NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
+NROW(intersect(unique(df2_melt$PATNO), sel_pats ))
+
+#  facet_wrap('', nrow=3)
+
+## filter for off:
+
+df2_off<-df2[df2$PDSTATE_V14=='OFF', ]
+df2_off<-df2[df2[, paste0('PDSTATE_',sel_visit)]=='ON', ]
+
+table(df2_melt$PDSTATE_V14)
+
+df_to_calc<-df2_off
+df_to_calc<-df2
+
+
+### HOW many are controls? 
+table(df2[df2$PATNO %in% sel_pats,]$COHORT_BL)
+#table(unique(df2_melt[,c('PATNO', 'PDMEDYN_V14', 'PDSTATE_V14', 'DBSYN_V14') ])[c('PDMEDYN_V14','DBSYN_V14' )])
+#table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ])$PDSTATE_V14)
+#table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ][,c('PDMEDYN_V14','DBSYN_V14' )]))
+
+df_to_calc$log_FC_scale<-log2(log2(df_to_calc[,paste0(cl_var,'_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
+
+X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
+X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
+
+calc_change<-function(X1,X2){
+  change<-((X2-X1)/(X2+X1))
+}
+calc_change2<-function(X1,X2){
+  change<-log2(X2/X1)
+}
+calc_change_diff<-function(X1,X2){
+  change<-X2-X1
+}
+
+
+df_to_calc$FC_scale<-calc_change(X1_cl, X2_cl)
+df_to_calc$log_FC_scale<-calc_change2(X1_cl, X2_cl)
+df_to_calc$diff_scale<-calc_change_diff(X1_cl, X2_cl)
+
+#df_to_calc$log_FC<-log2(log(X2)/log(X1))
+df_to_calc$COHORT_BL=factor(df_to_calc$COHORT_BL)
+
+median(df_to_calc$log_FC, na.rm=TRUE)
+
+
+
+
+
+df_to_plot=df_to_calc[df_to_calc$PATNO %in% sel_pats,]
+ggplot(df_to_plot,aes(x=diff_scale, group=COHORT_BL))+
+  geom_histogram(aes(x=diff_scale, fill=COHORT_BL))+
+  geom_density(aes(x=diff_scale))
+hist( df_to_calc$log_FC)
+hist( df_to_calc$log_FC)
+
+#### DOES  a large change in molecules means a large change in the clinical variables of those patients too? 
+
+
+
+################################################################
+
+
+
+
+
+
+
+
+
+
+
 
 scale_change<-df_to_calc[,c( 'diff_scale', 'PATNO',paste0('PDSTATE_', sel_visit ))]
 molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kmeans_grouping_V08')]

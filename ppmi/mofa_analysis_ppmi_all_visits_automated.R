@@ -455,7 +455,6 @@ selected_covars<-selected_covars2; length(selected_covars)
 
 
 MOFAobject_gs2<-MOFAobject
-MOFAobject_gs2@samples_metadata[labels_col]<-MOFAobject_gs2@samples_metadata[selected_covars]
 
 graphics.off()
 

@@ -477,7 +477,7 @@ plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors = sel_f
 
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors,labels_col, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict'

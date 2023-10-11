@@ -1,6 +1,6 @@
 
 
-script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
@@ -36,10 +36,6 @@ run_rna_mirna=FALSE
 #  N_FACTORS=8
 #}
 VISIT=c('BL');
-
-
-
-VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('V08');
 
@@ -240,10 +236,8 @@ length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
 
 table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
 
-## Filters for duplicate motor symptom exam
+## Filters for duplicate motor symptom exam - prioritize OFF state if both available. 
 ### Filter by PDSTATE
-#combined_bl_log_sel=combined_bl_log_sel[order(combined_bl_log_sel$PDSTATE),]
-#combined_bl_log_sel=combined_bl_log_sel[!duplicated(combined_bl_log_sel$PATNO_EVENT_ID, fromLast=F),]
 
 
 ### or filter by 

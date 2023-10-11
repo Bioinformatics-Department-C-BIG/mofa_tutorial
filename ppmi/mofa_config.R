@@ -104,6 +104,13 @@ if (run_rna_mirna){
     
     
     TOP_PN=0.9
+    
+    
+    if (use_signif){
+      TOP_MN=0.75
+      TOP_GN=0.3
+      TOP_PN=0.9
+    }
 
   
   }

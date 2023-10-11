@@ -717,7 +717,11 @@ clip_outliers<-function(df1){
 
 
 
-preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts){
+### time utils 
+
+
+
+preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinvars_to_add=c()){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 
@@ -725,6 +729,10 @@ preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts){
   # 4. Clip outliers 
   # 5. Add patient number and event 
 
+  
+  clinvars_to_add<-unique(c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX',  'COHORT',clinvars_to_add))
+  
+  
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% c(sel_cohorts)]
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% sel_cohorts]
   se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
@@ -749,7 +757,7 @@ preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts){
   }
   v_ens=data.frame(df_V_ens)
   v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
-      c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT')])
+      clinvars_to_add])
 
 
   
@@ -759,7 +767,7 @@ preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts){
 
 
 
-preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts){
+preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts, clinvars_to_add=c()){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 
@@ -767,6 +775,10 @@ preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts){
   # 4. Clip outliers 
   # 5. Add patient number and event 
   #se_filt_V<-se_filt_V[,se_filt_V$COHORT == 1]
+  
+  clinvars_to_add<-unique(c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'COHORT', clinvars_to_add))
+  
+  
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% sel_cohorts]
   se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
   # CPM or VSN? # cpm for plotting, vsn for 
@@ -789,13 +801,58 @@ preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts){
   df_v<- clip_outliers(df_v)
   #df_V_ens<-t(df_v[rownames(df_v) %in% feat_names,])
   v_ens=data.frame(df_v)
-  v_ens = cbind(v_ens, colData(se_filt_V_pd)[,
-            c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 
-              'COHORT', 'con_putamen')])
+  v_ens = cbind(v_ens, colData(se_filt_V_pd)[,clinvars_to_add
+            ])
   
   
   return(v_ens)
   
+}
+
+
+
+create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
+  #' create a merged dataframe that includes all visits together 
+  #' use a function to help with memory limit 
+  #' @param se 
+  #' @param
+  se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
+  se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
+  se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
+  se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
+  
+  #Reduce(intersect, list(a,b,c))
+  common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+  
+  
+  ## DO NOT FILTER THE FEAT NAMES HERE 
+  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add )
+  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
+  se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
+  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
+  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2 ), clinvars_to_add=clinvars_to_add)
+  
+  bl_ens$COHORT
+  ######### PLOT molecular markers 
+  ### MELT and MERGE 
+  v8_melt<-reshape2::melt(v8_ens)
+  v6_melt<-reshape2::melt(v6_ens)
+  v4_melt<-reshape2::melt(v4_ens)
+  bl_melt<-reshape2::melt(bl_ens)
+  
+  
+  bl_melt$VISIT<-'BL'
+  v4_melt$VISIT<-'V04'
+  v8_melt$VISIT<-'V08'
+  v6_melt$VISIT<-'V06'
+  
+  
+  
+  merged_melt_orig_1<-rbind(bl_melt, v4_melt)
+  merged_melt_orig_1<-rbind(merged_melt_orig_1,v6_melt)
+  merged_melt_orig_1<-rbind(merged_melt_orig_1,v8_melt)
+  
+  return(merged_melt_orig_1)
 }
 
 

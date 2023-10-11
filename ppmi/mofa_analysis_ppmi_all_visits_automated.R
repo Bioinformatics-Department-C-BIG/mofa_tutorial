@@ -31,6 +31,9 @@
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 
+EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
+
+samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
 
 
@@ -147,7 +150,10 @@ if (length(sel_coh)>1){
   
 }
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT' )]>(-log10(0.05)))
+sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT' )]>(-log10(0.05)))
+
 sel_factors_pd_np3
+
 sel_factors_np3<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
 
 sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
@@ -333,22 +339,14 @@ MOFAobject@samples_metadata[,c('con_putamen', 'COHORT', 'updrs3_score_on', 'td_p
                                'ptau', 'ess_cat')]
 
 cors_pearson[,c('NP2PTOT', 'NP2_TOT', 'con_putamen')]
-cors
-cors[,'updrs3_score_on']
 
-cors[,'NP4_TOT']
-cors[,'ess_cat']
 
 
 selected_covars<-c('COHORT', 'AGE_AT_VISIT', 'SEX', 'NP1TOT', 'NP3TOT', 'NP4TOT', 'SCAU', 'PDSTATE')
 samples_metadata(MOFAobject)$Outcome
 
 
-EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
-EVENT_MAP[['BL']]
-samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
-
-
+sm<-samples_metadata(MOFAobject)
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
@@ -364,19 +362,6 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                  'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
                  'rigidity','months')
                    #'DYSKIRAT')
-# STAIAD
-labels_col_broad=c('Disease status', 'AGE', 'SEX','MDS1','MDS2','MDS3', 'MDS3_ON',
-             'MDS1_log','MDS2_log','MDS3_log', 'MDS4_log',
-             'Hoehn & Yahr','MDS3-BRADY','MDS3-RIGN',
-             'SC-CONSTIP', 'MCA-cognit-tot'  , 'moca', 
-             'MCA-verb fluency','MCA-visuoconstruct', 'cogstate', 'SEM fluency', 'SEM FL FRUIT',
-             'ptau','abeta' ,'EPWORTH sleep cat' ,
-             'HOP VERB LEARNING-recall', 
-             'PDSTATE', 'MDS3-REST TREMOR', 'STAI_STATE', 'STAI_TRAIT', 'STAI-FEEL RESTED', 'MDSI-anxious', 'MDS3-GAIT', 
-             'SC-fec incont', 'MDS3-speech prob', 'MDS3-rising', 'MDS2-eat', 'MDS3-TREMOR', 'RBD_TOT', 
-             'PUTAMEN', 
-             'TD/PIGD dominant', 'Medication use', 'Outcome', 
-             'rigidity', 'months')
 
 
 
@@ -451,8 +436,6 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
 
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
-selected_covars<-selected_covars2; length(selected_covars)
-
 
 MOFAobject_gs2<-MOFAobject
 
@@ -464,9 +447,10 @@ plot="log_pval"
 
 
 factors=names(sel_factors)
+sel_factors
 fname<-'factors_covariates_only_nonzero_strict_PD'
 
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
 plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
@@ -521,19 +505,13 @@ MOFAobject_nams<-MOFAobject
 vars_by_factor/rowSums(vars_by_factor)*100
 
 hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
-length(selected_covars); length(labels_col)
-labels_cols_pearson<-labels_col[!grepl('con_putamen', selected_covars) ];length(labels_cols_pearson)
-selected_covars
+
 selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]; length(selected_covars_pearson)
 
 f_to_plot<-names(sel_factors)
 ind_to_update<-colnames(MOFAobject_nams@samples_metadata) %in%selected_covars_pearson
 colnames(MOFAobject_nams@samples_metadata)[ind_to_update]
-
-
-colnames(MOFAobject_nams@samples_metadata)[ind_to_update]<-labels_cols_pearson
 MOFAobject_nams@samples_metadata$scopa
-labels_cols_pearson
 
 ### Corelation not log_pval####
 

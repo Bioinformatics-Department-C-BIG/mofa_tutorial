@@ -7,6 +7,20 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 
+
+# load this only once..? 
+
+process_mirnas=TRUE;
+source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+
+
+process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+
+
+
+
 #### Markers over time:
 #### 1. Obtain the markers here either from MOFA OR from deseq 
 
@@ -16,6 +30,7 @@ mode='prognosis'
 ## Where to get the molecules from? 
 mode_mols='single_time'
 model_subtyping<-'MOFA'
+mode='diagnosis'
 # IN THE DIAGNOSIS MODE we select factors related
 
 #### Markers over time:
@@ -35,14 +50,15 @@ factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
 if (names(top_view)=='miRNA'){
-  view='miRNA'; process_mirnas=TRUE
+  view='miRNA'; process_mirnas=TRUE; se=se_mirs
   
 }else{
-  view='RNA'; process_mirnas=FALSE
+  view='RNA'; process_mirnas=FALSE; se=se_rnas 
   
 }
 
 view
+se_mirs
 
 #### mofa preprocess
 ##### Collect molecules that we want to plot over time #### 
@@ -54,7 +70,7 @@ if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
   f_v<-get_factors(MOFAobject, factors =factor )[[1]]
   ws<-get_weights(MOFAobject, views = view, factors=factor)[[1]]
-  cut_high<-0.5; cut_low=0.5
+  cut_high<-0.9; cut_low=1-cut_high
   ws_high<-ws[ws>quantile(ws, cut_high),]
   ws_low<-ws[ws<quantile(ws, cut_low),]
   ws_union<-c(ws_high, ws_low)
@@ -68,58 +84,18 @@ if ((mode_mols)=='MOFA'){
 
 
 
-source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 
-create_visits_df<-function(se){
-  #' create a merged dataframe that includes all visits together 
-  #' use a function to help with memory limit 
-  #' @param se 
-  #' @param
-  se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
-  se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
-  se_filt_V06<-filter_se(se, VISIT='V06', sel_coh,sel_ps)
-  se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
-  
-  #Reduce(intersect, list(a,b,c))
-  common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
-  
-  
-  ## DO NOT FILTER THE FEAT NAMES HERE 
-  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2))
-  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2))
-  se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
-  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2))
-  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2 ))
-  
-  bl_ens$COHORT
-  ######### PLOT molecular markers 
-  ### MELT and MERGE 
-  v8_melt<-reshape2::melt(v8_ens)
-  v6_melt<-reshape2::melt(v6_ens)
-  v4_melt<-reshape2::melt(v4_ens)
-  bl_melt<-reshape2::melt(bl_ens)
-  
-  
-  bl_melt$VISIT<-'BL'
-  v4_melt$VISIT<-'V04'
-  v8_melt$VISIT<-'V08'
-  v6_melt$VISIT<-'V06'
-  
-  
-  
-  merged_melt_orig_1<-rbind(bl_melt, v4_melt)
-  merged_melt_orig_1<-rbind(merged_melt_orig_1,v6_melt)
-  merged_melt_orig_1<-rbind(merged_melt_orig_1,v8_melt)
-  
-  return(merged_melt_orig_1)
-}
+
+### add clinvars to the requested features too! 
+clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT', 'NP3_TOT', 'scopa', 'PDSTATE', 'PD_MED_USE')
+
 
 
 # create a merged dataframe with all visits to be used downstream. 
 # might be better to filer molecules now to save memory..? 
-merged_melt_orig_1<-create_visits_df(se)
-levels(merged_melt_orig_1$variable)
+# TODO: which variables are used as id? check when melting feat_names
+merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names)
+levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 
 
 
@@ -135,8 +111,11 @@ feat_names_ens
 #feat_names= sigLRT_genes$gene
 
 # Now filter  for the requested molecules 
-merged_melt_orig<-merged_melt_orig_1[merged_melt_orig_1$variable %in% make.names(feat_names),]
+merged_melt_orig<-merged_melt_orig_1
 
+
+merged_melt_orig$PATNO
+unique(merged_melt_orig$variable)
 ens<-gsub('\\..*', '',merged_melt_orig$variable)
 
 if (view=='RNA'){
@@ -155,11 +134,6 @@ if (view=='RNA'){
 
 
 sel_cohort=FALSE
-sel_cohort<-c(1)
-
-
-
-sel_cohort=FALSE
 # IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
 sel_cohort<-c(1)
 
@@ -173,7 +147,6 @@ if (sel_cohort){
 }
 merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
 merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
-
 
 
 
@@ -207,6 +180,9 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2 ){
 
   return(groups_kmeans)  
 }
+factors=factor
+
+factors=factor
 
 groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
   
@@ -215,6 +191,7 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
   #'
 
   ### cluster by one factor 
+  
   groups_kmeans<-cluster_by_mofa_factors(MOFAobject, factors=factors, centers=2)
   # OR CHOOSE ALL 
 
@@ -225,7 +202,7 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
   high_label<-which.max(groups_kmeans$centers)
   #groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
   pats<-names(groups_kmeans$cluster)
-  
+  pats
   ### MATCH the clusters with the dataframe 
   kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, pats )]
   kmeans_grouping<-factor(kmeans_matched)
@@ -320,7 +297,13 @@ wilcox_stats1<-merged_melt_filt_g1 %>%
   group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.)) %>%
   summarize(symbol, Wilcox=w$p.value) %>%
+  #dplyr::filter(Wilcox<0.05)%>%
+  
   as.data.frame()
+
+unique(merged_melt_filt_g1$symbol)
+
+wilcox_stats1
 
 
 
@@ -328,11 +311,13 @@ wilcox_stats2<-merged_melt_filt_g2 %>%
   group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.) )%>%
   summarize(symbol, Wilcox=w$p.value) %>%
+  dplyr::filter(Wilcox<0.05)%>%
+  
   as.data.frame()
 
 
-most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
-most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
+most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),]
+most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),]
 
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
@@ -350,15 +335,6 @@ wilcox_stats_controls<-merged_melt_filt_g1 %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   as.data.frame()
-
-
-
-
-
-most_sig_over_time1<-wilcox_stats1[order(wilcox_stats1$Wilcox),][1:15,]
-
-most_sig_over_time2<-wilcox_stats2[order(wilcox_stats2$Wilcox),][1:15,]
-#most_sig_over_time_controls<-wilcox_stats1_controls[order(wilcox_stats_controls$Wilcox),][1:15,]
 
 
 # they should chgange in pd but not in controls!! 
@@ -409,54 +385,6 @@ filt_top=TRUE
 
 
 
-#### in the boxplots add the groups 
-### first controls-- all markers need to be different in controls
-### and second in the two groups of disease 
-ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
-  #geom_point(aes(col=VISIT), size = 2) +
-  #geom_line(aes(group=PATNO),  col= 'grey') +
-  # subgroup should be in the fill parameter!!! 
-  geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
-  scale_color_viridis_d(option='mako')+
-  scale_fill_viridis_d(option='mako')+
-  
-  #geom_line(aes(group=patno), palette='jco') +
-  #facet_wrap(. ~ symbol) +
-  
-  geom_signif(comparisons = list(c('BL', 'V08')),  
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.4)+
-  
-  facet_wrap(. ~ symbol, scales='free_y') +
-  
-  theme_bw() 
-ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
-       width=12, height=12)
-
-
-ggplot(data = merged_melt_filt_g1_sig, aes(x = VISIT, y = value, fill=COHORT)) + 
-  #geom_point(aes(col=VISIT), size = 2) +
-  #geom_line(aes(group=PATNO),  col= 'grey') +
-  # subgroup should be in the fill parameter!!! 
-  geom_boxplot(aes(x=VISIT, fill=COHORT ))+
-  scale_color_viridis_d(option='mako')+
-  scale_fill_viridis_d(option='mako')+
-  
-  #geom_line(aes(group=patno), palette='jco') +
-  #facet_wrap(. ~ symbol) +
-  
-  geom_signif(comparisons = list(c('BL', 'V08')),  
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.4)+
-  
-  facet_wrap(. ~ symbol, scales='free_y') +
-  
-  theme_bw() 
-ggsave(paste0(outdir, '/trajectories/boxplots_', factor,'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
-       width=12, height=12)
-
-
-
 
 #######################################################
 ############ TIME TRAJECTORY FOR ALL VISITS ###########
@@ -492,6 +420,8 @@ filt_top=TRUE
 if (filt_top){
   
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq[1:10],]
+  
+  # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:10],]
   
   
@@ -501,6 +431,56 @@ if (filt_top){
   nrow=NULL; height=7
   
 }
+
+
+
+
+
+
+
+
+
+#### in the boxplots add the groups 
+### first controls-- all markers need to be different in controls
+### and second in the two groups of disease 
+# Boxplots of the grouping too !! 
+# TODO: SEPARATE BY PD STATE
+ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
+  #geom_point(aes(col=VISIT), size = 2) +
+  #geom_line(aes(group=PATNO),  col= 'grey') +
+  # subgroup should be in the fill parameter!!! 
+  geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
+  scale_color_viridis_d(option='mako')+
+  scale_fill_viridis_d(option='mako')+
+  
+  #geom_line(aes(group=patno), palette='jco') +
+  #facet_wrap(. ~ symbol) +
+  
+  geom_signif(comparisons = list(c('BL', 'V08')),  
+              map_signif_level=TRUE, 
+              tip_length = 0, vjust=0.4)+
+  
+  facet_wrap(. ~ symbol, scales='free_y') +
+  
+  theme_bw() 
+ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
+       width=12, height=12)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ### BY GROUP ####
@@ -525,11 +505,11 @@ ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
   labs(y='logCPM')+
   # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
-    size = 13, color = "dark green", face="bold"), 
+    size = 10, color = "dark green", face="bold"), 
     axis.title.y =element_text(
-      size = 13, color = "dark green", face="bold",), 
+      size = 10, color = "dark green", face="bold",), 
     axis.text.x = element_text(
-      size = 12 ))
+      size = 10 ))
 
 
 
@@ -701,6 +681,23 @@ merged_melt_filt_most_sig
 merged_melt$kmeans_grouping
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### ADD 18 month progression 
 
 patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
@@ -724,6 +721,26 @@ ggplot(df18_months_2, aes(x=variable,y=value, group=group, colour=group)  )+
 
 ### CHANGE OF MOLECULE VS CHANGE OF NP3
 
+### TODO: PLOT FOR THE SAME PATIENTS THE  FUTURE TRAJECTORIES BY GROUPS!! 
+
+#. 1. Add k-means 
+
+
+
+
+
+sel_visit='V16'
+cl_var<-'NP2_TOT'
+sel_state = 'OFF'
+
+
+
+
+# this contains all future variable 
+df_future_clinvars<-get_future_clinvars(combined_bl_log)
+
+
+df_to_calc<-get_clinvar_changes(df_future_clinvars, sel_visit = sel_visit,   cl_var=cl_var, sel_state=sel_state)
 
 
 merged_melt_filt_most_sig$symbol
@@ -732,8 +749,15 @@ merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3
 merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
 merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.let.7a.3p',]
 
-sel_feature<-most_sig_over_time$symbol[4]
+sel_feature<-most_sig_over_time$symbol[3];sel_feature
+#sel_feature<-'ANXA3'
+#sel_feature<-'DHRS13'
+
 merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% sel_feature,]
+
+
+
+
 
 ### split by visit 
 molecules_by_visit<-split(merged_melt_filt_1, merged_melt_filt_1$VISIT )
@@ -750,6 +774,7 @@ X1=molecules_by_visit2[,paste0('value','_','BL')]
 
 molecules_by_visit2$log_FC<-log(X2/X1)
 molecules_by_visit2$diff<-(X2-X1)
+
 
 scale_change<-df_to_calc[,c( 'diff_scale', 'PATNO',paste0('PDSTATE_', sel_visit ))]
 molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kmeans_grouping_V08')]
@@ -789,20 +814,30 @@ molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PA
 # Plot the absolute difference between
 # Diff
 
-molecules_change_by_patno$PDSTATE_V16<-factor(molecules_change_by_patno$PDSTATE_V16)
+molecules_change_by_patno[, paste0('PDSTATE_', sel_visit )]<-factor(molecules_change_by_patno[, paste0('PDSTATE_', sel_visit )])
 colnames(molecules_change_by_patno)
 ggplot(molecules_change_by_patno[molecules_change_by_patno$kmeans_grouping_V08!='CONTROL',], 
        aes(x=log_FC, y=diff_scale))+
   geom_point(aes(color=kmeans_grouping_V08))+
   geom_smooth(method = "lm")+
- facet_wrap(~ PDSTATE_V16, nrow=3)+
-labs(title=paste(sel_feature, cl_var))
+  facet_wrap(as.formula(paste0('~ PDSTATE_', sel_visit)), nrow=3)+
+  labs(title=paste(sel_feature, cl_var))
 
 
-ggsave(paste0(outdir, '/trajectories/change_', factor, '_',sel_feature,'_', cl_var, '_',sel_visit,sel_state,'.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/change/change_', factor, '_',sel_feature,'_', cl_var, '_',sel_visit,sel_state,'.jpeg'), 
        width=6, height=5)
 
 molecules_change_by_patno
+
+
+
+
+
+
+
+
+
+
 
 
 

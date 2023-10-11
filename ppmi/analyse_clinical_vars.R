@@ -188,31 +188,6 @@ combined_filt<-combined_new[combined_new$PATNO %in% sel_pats,]
 
 
 
-#df_clipped<-data.frame(apply(df,2, clipping_values))
-### We choose df_log in the end 
-
-df_log_clipped=data.frame(sapply(df_clipped, function(x) log2(x)))
-df_log_clipped_after<-data.frame(apply(df_log,2, clipping_values))
-
-
-  
-x=df_log[,1]  
-apply(df, 2, function(x) {plot(hist(x))})
-df[,1]
-hist(df[,1])
-hist(df_log[,1])
-hist(df_log[,'RBD_TOT'])
-
-shapiro.test(df_log[,5][1:100])
-shapiro.test(df_log_clipped[,5][1:100])
-
-hist(df_log_clipped[,1])
-hist(df_log_clipped_after[,1])
-
-x=df[,5]
-
-
-
 #### ATTEMPT TO SELECT SAMPLES BECAUSE OF PERCENTILES THAT WE DID NOT USE 
 df_log_sel=df_log[combined$PATNO_EVENT_ID %in% sel_sam,]
 
@@ -251,151 +226,7 @@ combined_new$RBD_TOT
   library(dplyr)
   library(data.table)
 
-  
-  sel_visit='V16'
-  
-  
-  get_clinvar_changes<-function(combined_bl_log, sel_visit){
-    # TODO: combine multiple clinical variables 
-    
-    
-                        cl_var<-'NP3_TOT'
-                        
-                        
-                        
-                    
-                      combined_by_visit<-split(combined_bl_log, combined_bl_log$EVENT_ID )
-                      # 72 MONTHS 
-                      cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16','V18')]
-                      cm2<-combined_by_visit[c('BL','V08','V14')]
-                      cm2<-combined_by_visit[c('BL','V08','V12', 'V14'  ,'V16')]
-                      
-                     # cm2<-combined_by_visit[c('BL' ,'V12')]
-                      
-                      combinded_wide_all<-cm2 %>% 
-                        imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
-                        reduce(full_join, by = "PATNO")
-                      
-                      
-                      combinded_wide_all$SCAU_TOT_V08
-                      
-                    
-                      combinded_wide_all$np3tot
-                      combinded_wide_all[combinded_wide_all$COHORT_V16==1,]$scopa_BL
-                      combinded_wide<-combinded_wide_all[!is.na(combinded_wide_all[, paste0( cl_var,'_', sel_visit)]),]
-                      df2<-combinded_wide
-                      
-                     # df2<-df2%>% dplyr::filter(PDSTATE.y%in%c('OFF', ' '))
-                      #df2<-df2[,!colnames(df2)=='PDSTATE.y']
-                      df2<-df2[!duplicated(df2),]
-                     
-                    
-                      id_vars<-colnames(df2)[!grepl( cl_var, colnames(df2))]
-                     # id_vars<-colnames(df2)[!grepl( 'NP3TOT|PDSTATE', colnames(df2))]
-                      
-                      df2_melt<-reshape::melt(df2, id=c( id_vars))
-                      df2$COHORT_BL
-                      
-                      colnames(df2_melt)
-                      #df2_melt=df2_melt[df2_melt$COHORT_BL==1 & df2_melt$PATNO %in% sel_pats,]
-                      
-                      df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
-                      df2_melt=df2_melt[ df2_melt$PATNO %in% sel_pats,]
-                      
-                      
-                      df2_melt[, c('scopa_V08', 'SCAU_TOT_V08')]
-                      
-                      #df2_melt$variable=as.numeric(df2_melt$variable)
-                      df18_months<-df2_melt
-                      #df2$change<-log2(log2(df2$NP3TOT.y)/log2(df2$NP3TOT.x))
-                      
-                      #df2_melt$group_line<-paste0(df2_melt$PATNO,'_', df2_melt$PDS )
-                      
-                      
-                      ### Clinical scale trends per patient - is there a difference with controls ?
-                      # ISSUE WE CANNOT SEE IT for controls -it was not measured..
-                     graphics.off()
-                      pp<-ggplot(df2_melt, aes(x=variable,y=value)  )+
-                        geom_point(aes(x=variable,y=value, color=PATNO), size=0.2 )+
-                        geom_line(aes(x=variable,y=value, group=PATNO, color=PATNO), lwd=0.3, alpha=0.4) +
-                        scale_color_viridis_c(option='turbo')+
-                        facet_wrap(~COHORT_BL, nrow=2)
-                      
-           
-                    
-                      #  facet_wrap('', nrow=3)
-                      
-                      ## filter for off:
-                    
-                      df2_off<-df2[df2$PDSTATE_V14=='ON', ]
-                      sel_state='ON'
-                      df2_off<-df2[df2[, paste0('PDSTATE_',sel_visit)]==sel_state, ]
-                      
-                      table(df2_melt$PDSTATE_V14)
-                      
-                      df_to_calc<-df2_off
-                      df_to_calc<-df2_off
-                      
-                      
-                      ### HOW many are controls? 
-                      table(df2[df2$PATNO %in% sel_pats,]$COHORT_BL)
-                      #table(unique(df2_melt[,c('PATNO', 'PDMEDYN_V14', 'PDSTATE_V14', 'DBSYN_V14') ])[c('PDMEDYN_V14','DBSYN_V14' )])
-                      #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ])$PDSTATE_V14)
-                      #table(unique(df2_melt[,c('PATNO', 'PDSTATE_V14') ][,c('PDMEDYN_V14','DBSYN_V14' )]))
-                    
-                      df_to_calc$log_FC_scale<-log2(log2(df_to_calc[,paste0(cl_var,'_',sel_visit)])/ log2(df_to_calc$NP3TOT_BL))
-                      
-                      X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
-                      X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
-                      
-                      clip_outliers<-function(X){
-                        quartiles <- quantile(X, probs=c(.25, .75), na.rm = FALSE)
-                        IQR <- IQR(X)
-                        # Q3 + 1.5*IQR
-                        Lower <- quartiles[1] - 1.5*IQR
-                        Upper <- quartiles[2] + 1.5*IQR 
-                        
-                        X[X>Upper]<-Upper
-                        X[X<Lower]<-Lower
-                        return(X)
-                        
-                      }
-                      X2_cl<-clip_outliers(X2_cl)
-                      
-                      
-                      calc_change<-function(X1,X2){
-                        change<-((X2-X1)/(X2+X1))
-                      }
-                      calc_change2<-function(X1,X2){
-                        change<-log2(X2/X1)
-                      }
-                      calc_change_diff<-function(X1,X2){
-                        change<-X2-X1
-                      }
-                      
-                      
-                      df_to_calc$FC_scale<-calc_change(X1_cl, X2_cl)
-                      df_to_calc$log_FC_scale<-calc_change2(X1_cl, X2_cl)
-                      df_to_calc$diff_scale<-calc_change_diff(X1_cl, X2_cl)
-                      
-                      #df_to_calc$log_FC<-log2(log(X2)/log(X1))
-                      df_to_calc$COHORT_BL=factor(df_to_calc$COHORT_BL)
-                      
-                      median(df_to_calc$log_FC, na.rm=TRUE)
-   return(df_to_calc)
-  }
-  
-  df_to_calc<-get_clinvar_changes(combined_bl_log, sel_visit = sel_visit)
 
-  
-    
-  df_to_plot=df_to_calc[df_to_calc$PATNO %in% sel_pats,]
-  ggplot(df_to_plot,aes(x=diff_scale, group=COHORT_BL))+
-    geom_histogram(aes(x=diff_scale, fill=COHORT_BL))+
-    geom_density(aes(x=diff_scale))
-  hist( df_to_calc$log_FC)
-  hist( df_to_calc$log_FC)
-  
   
   
 ######################################################
@@ -507,12 +338,6 @@ average_if_not_na<-function(df){
 
 #scaled$average=rowMeans(as.data.frame(scaled), na.rm=TRUE)
 
-combined$STAGE_AV<-average_if_not_na(scaled)
-combined$STAGE_LOG_AV<-average_if_not_na(as.data.frame(scaled_log))
-combined$STAGE_LOG_SCALE_AV<-average_if_not_na(as.data.frame(scaled_log_sc))
-
-
-hist(combined$STAGE_AV)
 
 
 
@@ -556,11 +381,14 @@ combined_filt<-combined_filt %>%
 
 
 
-#View(combined_filt[combined_filt$PATNO=='3710',])
-check_dups(combined_filt)
 
 
-
+check_dups<-function(combined_to_plot){
+  V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]);
+  dup_pats<-V08_measures[(duplicated(V08_measures$PATNO)),]$PATNO
+  print(dup_pats)
+  return(dup_pats)
+}
 
 
 
@@ -607,6 +435,7 @@ colour_by<-'PAG_NAME_M3'
 colour_by<-'PDSTATE'
 
 scales<-c('NP1_TOT','NP2_TOT' , 'NP3_TOT', 'NP4_TOT', 'NHY', 'SCAU_TOT', 'PD_MED_USE', 'NP3TOT')
+scales<-c( 'NP3_TOT', 'NP2_TOT' )
 
 
 y='NP1_TOT'
@@ -629,12 +458,6 @@ combined_to_plot_med<-combined_to_plot[combined_to_plot$PDMEDYN==1,]
 
 V08_measures<-combined[combined$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]
 
-check_dups<-function(combined_to_plot){
-  V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]);
-  dup_pats<-V08_measures[(duplicated(V08_measures$PATNO)),]$PATNO
-  print(dup_pats)
-  return(dup_pats)
-}
 med_cols<-c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON","NP3_TOT", "COHORT")
 V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', med_cols]);duplicated(V08_measures$PATNO)
 V08_measures<-unique(combined_to_plot[, c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON", "NP3_TOT","COHORT")]);duplicated(V08_measures$PATNO)
@@ -649,12 +472,13 @@ V08_measures_paired$PDSTATE=as.factor(V08_measures_paired$PDSTATE)
 # density plots 
 V08_measures_paired_A<-V08_measures_paired[!(V08_measures_paired$PAG_NAME_M3 %in% 'NUPDRS3A'& V08_measures_paired$PDSTATE %in% c('OFF')) , ]
 
+combined_to_plot$PDSTATE
 
 
-
-df.shapiro_ttest <- combined_to_plot %>%
+library(dplyr)
+df.shapiro_test <- combined_to_plot %>%
   #filter(PAG_NAME_M3%in% 'NUPDRS3' )%>%
-  filter(PDSTATE%in% c('ON', 'OFF')) %>%
+  dplyr::filter(PDSTATE%in% c('ON', 'OFF')) %>%
  # filter(PDSTATE %in% 'OFF' )%>%
   mutate(log_np3 = NP3TOT) %>%
   group_by(EVENT_ID) %>%
@@ -726,30 +550,42 @@ p
 combined_to_plot %>%
   group_by(PATNO, EVENT_ID) %>%
   mutate(n = n()) %>%
-  filter(n == 2) %>%
+  dplyr::filter(n == 2) %>%
   ungroup() %>%
   select(-PATNO, -n)
 
 
 stats_np3<-combined_to_plot %>% 
   group_by(PATNO, EVENT_ID, PDSTATE ) %>%
-  filter(EVENT_ID=='V08')%>%
+  dplyr::filter(EVENT_ID=='V08')%>%
   arrange(PATNO, EVENT_ID)%>%
   summarise(mean=mean(NP3_TOT), sd=sd(NP3_TOT))%>%
   as.data.frame()
 
 
-View(stats_np3)
-duplicated(stats_np3$PATNO)
-tail(stats_np3, 200)
 ft<-lm(data = combined_to_plot_med, formula = 'NP3_TOT~PDSTATE+EVENT_ID',)
 coefficients(summary(ft))
 
 
 ### keep the pairs only 
 formula_1<-as.formula('~PAG_NAME_M3')
+formula_1<-as.formula('~PD_MED_USE')
+
 #formula_1<-as.formula('~PDSTATE')
 
+
+
+########## PLOTS FOR SPECIFIC PATIENTS OVER TIME ######################
+#######################################################################
+
+#EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
+
+#combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
+
+combined_to_plot$months<-combined_to_plot$EVENT_ID
+combined_to_plot_med_only<-combined_to_plot[!is.na(combined_to_plot$PD_MED_USE), ]
+#### TODO: PLOT SCALES USING SEPARATE GROUPS OF PATIENTS !!! 
+## TODO: CGHECK FUTURE 
 
 
 for (y in scales){
@@ -772,7 +608,7 @@ for (y in scales){
   
   
   #p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
-  p<-ggplot(combined_to_plot, aes_string( x=x,y=y))+
+  p<-ggplot(combined_to_plot_med_only, aes_string( x=x,y=y))+
   
 #    geom_point(aes_string(y=y, shape=shape))+
     #geom_line(aes_string(y=y,col=group, group=group)) +
@@ -795,28 +631,6 @@ for (y in scales){
 
 graphics.off()
 
-
-
-
-  #geom_smooth(aes_string())
- # scale_y_continuous(limits = c(0, 7))
-
-
-
-#### Create averages of all stages! 
-# 
-
-#### WHICH PRODROMAL ARE IN STAGE 3 
-table(combined_filt[combined_filt$COHORT==4, 'STAGE_AV'])
-
-combined_filt[combined_filt$COHORT==4 & combined_filt$STAGE_AV >1,]$PATNO
-
-
-
-
-#### 
-
-combined_new
 
 
 

@@ -71,17 +71,28 @@ get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
   #' groups and averages specific columns 
   #' TODO somehwte it is considering NAs as zeros CHECK 
   #' @param sub_pattern
+  #' 
+  #' 
     if (is.null(sub_pattern_detect)){
       sub_pattern_detect=paste0(sub_pattern,'[1-9]|', sub_pattern,'[A-Z]')  #For testing
       
     }
     #sub_pattern='SCAU[1-9]'
   
+  
+  
     df<-combined[ , grepl( sub_pattern_detect, colnames( combined ) )
                           & !grepl('TOT',  colnames( combined ) ) ]
 
     df<-as.data.frame(apply(df, 2, as.numeric))
-    df
+    
+    
+    ### If the measure is scopa add 3 to 
+    if (sub_pattern=='SCAU'){
+      df[df==9]<-3
+    } 
+
+    
     ind <- rowSums(is.na(df)) == ncol(df)
 
     df$sca_tot<-rowSums(df, na.rm = TRUE)
@@ -92,6 +103,10 @@ get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
     return(df$sca_tot)
 
 }
+
+
+
+
 
 ##### CHOOSE HERE WHAT TO LOG
 
@@ -119,7 +134,7 @@ log_totals<-function(combined, sub_patterns_all){
 
 
 
-
+combined_new$SCAU_TOT
 
 
 library(stringr)
@@ -183,11 +198,9 @@ sel_pats<-MOFAobject@samples_metadata$PATNO
 
 
 combined_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
+
+# 1. Filter by mofa patients 
 combined_filt<-combined_new[combined_new$PATNO %in% sel_pats,]
-
-
-
-
 #### ATTEMPT TO SELECT SAMPLES BECAUSE OF PERCENTILES THAT WE DID NOT USE 
 df_log_sel=df_log[combined$PATNO_EVENT_ID %in% sel_sam,]
 
@@ -255,7 +268,7 @@ scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STA
 i=2
 graphics.off()
 common_samples=common #### loaded from deseq2_vst_preprocessing script 
-combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
+combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
 
 #### Histograms to check the distributions of the clinical variables before and after processing 
 for (i in 1:length(scales_in_stage)){
@@ -345,9 +358,8 @@ average_if_not_na<-function(df){
 ### First filter by combined_filt\
 
 
-combined_filt<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
+combined_filt<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
 
-combined_filt<-combined
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
 
@@ -372,9 +384,12 @@ PS_101<-combined[which(combined$NHY==101),]
 dim(PS_101[,c('COHORT_DEFINITION','NHY' )])
 
 # REMOVE OUTLIERS FOR plot consistency
+
+
+
 combined_filt<-combined_filt %>% 
-            filter(NHY!=101)%>%
-           filter(PAG_NAME_M3 %in% c('NUPDRS3', 'NUPDRS3A'))
+  filter(NHY!=101)
+#  filter(PAG_NAME_M3 %in% c('NUPDRS3', 'NUPDRS3A'))
 
 # NUPDRS3A: post dose 
 
@@ -419,7 +434,7 @@ combined_to_plot<-combined_filt%>% select(c( y, x, group,
                                              scales, 'line_group', 'PATNO' , 'PAG_NAME_M3',
                                 'AGE_AT_VISIT', 'COHORT_DEFINITION', 
                                 'INEXPAGE', 'PDSTATE', 'PAG_NAME_M4'))
-combined_filt$PD
+combined_filt$line_group
 combined_filt$COHORT_DEFINITION
 combined_to_plot$COHORT_DEFINITION
 fw<-'COHORT_DEFINITION'
@@ -449,8 +464,32 @@ combined_to_plot<-combined_filt
 combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c('INEXHC', 'INEXPD'),]
 combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c( 'INEXPD'),]
 
-combined_to_plot$months=as.factor(combined_to_plot$months)
 combined_to_plot$PD_MED_USE
+
+
+#### sLIDES:  get numbers of unique patients and unique records of medicated/unmedicated at each visit 
+sel_pats
+SEL_VIS<-'V16'
+PATS<-combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PDMEDYN')]
+last_visit_patients<-unique(PATS$PATNO)
+unique(PATS) %>%
+  group_by(PDMEDYN) %>%
+  count()
+
+
+
+PATS<-combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PDMEDYN', 'PDSTATE')]
+unique(PATS) %>%
+  group_by(PDSTATE) %>%
+  count()
+
+
+table(as.data.frame(PATS)[, c('PDMEDYN')])
+
+table(unique(combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PD')])) 
+
+NROW(unique(combined_to_plot[combined_to_plot$EVENT_ID=='V14', ]))
+
 
 # ensure same samples
 ## keep pairs - actually could not find any pairs 
@@ -459,6 +498,8 @@ combined_to_plot_med<-combined_to_plot[combined_to_plot$PDMEDYN==1,]
 V08_measures<-combined[combined$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]
 
 med_cols<-c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON","NP3_TOT", "COHORT")
+med_cols<-c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY","NP3PTOT", "COHORT")
+
 V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', med_cols]);duplicated(V08_measures$PATNO)
 V08_measures<-unique(combined_to_plot[, c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON", "NP3_TOT","COHORT")]);duplicated(V08_measures$PATNO)
 V08_measures<-unique(combined_to_plot[, c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON", "NP3_TOT","COHORT")]);duplicated(V08_measures$PATNO)
@@ -546,7 +587,7 @@ p
 
 ### ALL THE CONFOUNDERS: PAG_NAME: NUPDRS3 or 3a (POST DOSE)
 ### PDMEDYN
-
+## Attempt to predict measures from visit and PD state- is it relevant? 
 combined_to_plot %>%
   group_by(PATNO, EVENT_ID) %>%
   mutate(n = n()) %>%
@@ -563,34 +604,56 @@ stats_np3<-combined_to_plot %>%
   as.data.frame()
 
 
+stats_np3
 ft<-lm(data = combined_to_plot_med, formula = 'NP3_TOT~PDSTATE+EVENT_ID',)
 coefficients(summary(ft))
 
 
 ### keep the pairs only 
 formula_1<-as.formula('~PAG_NAME_M3')
+
+formula_1<-as.formula('~PDMEDYN')
 formula_1<-as.formula('~PD_MED_USE')
+formula_1<-as.formula('~PDSTATE')
 
-#formula_1<-as.formula('~PDSTATE')
-
-
+combined_to_plot$PD
 
 ########## PLOTS FOR SPECIFIC PATIENTS OVER TIME ######################
 #######################################################################
 
-#EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
+EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'=12,   'V05'=18,   'V06'=24,   'V07'=30,   
+               'V08'=36,    'V09'=42,    'V10'=48,    'V11'=54,   'V12'=60,   'V13'=72,   'V14'=84,   'V15'=96, 'V16'=108, 'V17'=120,'V18'=132,'V19'=144    )
 
-#combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
 
-combined_to_plot$months<-combined_to_plot$EVENT_ID
+
+
+combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
+
 combined_to_plot_med_only<-combined_to_plot[!is.na(combined_to_plot$PD_MED_USE), ]
 #### TODO: PLOT SCALES USING SEPARATE GROUPS OF PATIENTS !!! 
 ## TODO: CGHECK FUTURE 
+## TODO: check numbers of patients with molecular data available at future scales 
+ scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT', 'moca')
+ scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT', 'moca')
+ scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT')
+ 
+
+NROW(unique(combined_to_plot[combined_to_plot$EVENT_ID=='V14','PATNO']))
+
+# TODO: create another filter: plot patients that we have until V14? OR V16 ? TO understand trends 
+last_visit_patients 
+EVENT_MAP[SEL_VIS]
+# 
+
+x='EVENT_ID'
+combined_to_plot_last_visit
+combined_to_plot_last_visit=combined_to_plot[combined_to_plot$PATNO %in% last_visit_patients & (combined_to_plot$months <= EVENT_MAP[SEL_VIS]), ]
+combined_to_plot_last_visit<-combined_to_plot_last_visit[combined_to_plot_last_visit$NP3_TOT<9,]
 
 
 for (y in scales){
 
-  p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
+  p<-ggplot(combined_to_plot_last_visit, aes_string( x=x, color=colour_by, group='line_group'))+
   geom_point(aes_string(y=y,color=colour_by, shape=shape))+
     geom_line(aes_string(y=y,color=colour_by, group=group))+
     guides( shape='none', group='none')#+
@@ -604,26 +667,31 @@ for (y in scales){
           
   p+facet_wrap(formula_1, nrow = 4)
   p
-  ggsave(paste0(outdir_orig,'metadata/lines_',paste0(formula_1, collapse=''),group, colour_by, y,'.jpeg' ), width=10, height=7)
+  ggsave(paste0(outdir_orig,'metadata/lines_',SEL_VIS, paste0(formula_1, collapse=''),group, colour_by, y,'.jpeg' ), width=10, height=7)
   
   
   #p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
-  p<-ggplot(combined_to_plot_med_only, aes_string( x=x,y=y))+
+  #p<-ggplot(combined_to_plot_med_only, aes_string( x=x,y=y))+
+    p<-ggplot(combined_to_plot_last_visit, aes_string( x=x,y=y))+
+    
   
 #    geom_point(aes_string(y=y, shape=shape))+
     #geom_line(aes_string(y=y,col=group, group=group)) +
   # geom_violin(aes_string(x=x, y=y))+
   #  geom_boxplot(aes_string(x=x, fill='PAG_NAME_M3'))+
-  geom_violin(aes_string(x=x, fill='PDSTATE'))
-  
+ # geom_violin(aes_string(x=x, fill='PDSTATE'))
+    geom_boxplot(aes_string(x=x, fill='PDSTATE'))
+    
     
     #theme(legend.position="none")
   
   #theme(legend.position="bottom", legend.text=element_text(size=2))+
   #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
   
-  p+facet_wrap(formula_1, nrow = 4)
-  ggsave(paste0(outdir_orig,'metadata/box_',paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
+ # p+facet_wrap(formula_1, nrow = 4)
+  ggsave(paste0(outdir_orig,'metadata/box_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=5)
+ # ggsave(paste0(outdir_orig,'metadata/violin_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
+  
   
   
   
@@ -635,7 +703,7 @@ graphics.off()
 
 
 
-
+combined_to_plot$SCAU_TOT
 
 
 

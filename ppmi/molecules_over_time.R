@@ -9,7 +9,7 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 
 # load this only once..? 
-
+### TODO: ADD PROTEINS TOO!!!! 
 process_mirnas=TRUE;
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -35,7 +35,7 @@ mode='diagnosis'
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=2; 
+fn_sel=1; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -158,7 +158,6 @@ merged_melt_pd<-merged_melt
 ### Wcich mofa run to get factors from??? 
 Z <- get_factors(MOFAobject)[[1]]
 Z1<-Z[,sel_factors[fn_sel]]
-Z1_matched<-Z1[match(merged_melt$PATNO,patnos_z1) ]
 groups_kmeans<-kmeans(Z1, centers=2)
 patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
 groups_kmeans_patnos<-patnos_z1
@@ -907,49 +906,10 @@ merged_melt_cl<-rbind(df_bl_cl_ml,df_V08_cl_ml)
 merged_melt_cl<-rbind(merged_melt_cl,df_V06_cl_ml)
 merged_melt_cl<-rbind(merged_melt_cl,df_V04_cl_ml)
 
-dim(merged_melt_cl)
-
-colnames(merged_melt_cl)
 
 
 
-patnos_z1<-gsub('\\_.*', '', names(Z1))
-
-Z1_matched<-Z1[match(merged_melt_cl$PATNO,patnos_z1) ]
-
-hist(Z1_matched);
-quantile(Z1_matched,0.9, na.rm=TRUE)
-Z1_grouping<-factor(Z1_matched>quantile(Z1,0.9, na.rm=TRUE))
-Z1_grouping<-factor(Z1_matched>quantile(Z1,0.8, na.rm=TRUE))
-
-Z1_grouping<-factor(Z1_matched>quantile(Z1,0.8, na.rm=TRUE))
-
-
-
-
-
-
-#####
-
-
-
-
-sel_factors[fn_sel]
-if (names(sel_factors[fn_sel]) %in% c('Factor4', 'Factor14', 'Factor1')){
-  T=0.2
-  Z1_grouping<-Z1_matched>quantile(Z1_matched,T, na.rm=TRUE)
-  group_by_patient<-factor(Z1>quantile(Z1,0.2, na.rm=TRUE))
-  
-}
-
-Z1_grouping
-dim(merged_melt)
-
-merged_melt_cl$grouping<-factor(ifelse(as.logical(Z1_grouping), 'HighFactor', 'LowFactor'))
-
-
-
-
+##### ADD the groups from MOFA or other clusterings  #############
 ### Create groups 
 
 ### Decide on the grouping #### 
@@ -961,24 +921,17 @@ group_by_patient<-clusters$cluster
 group_by_patient<-clusters_mofa_outcome$cluster
 group_by_patient<-clusters_mofa$cluster
 group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
-
+group_by_patient<- groups_kmeans$cluster
 
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
 
 
 combined_bl_log_common<-combined_bl_log[combined_bl_log$PATNO %in% na_ps,]
-
-combined_bl_log_common
-
-combined_bl_log_common$Z1_grouping<-group_by_patient[match(combined_bl_log_common$PATNO, names(group_by_patient))]
+combined_bl_log_common$grouping<-group_by_patient[match(combined_bl_log_common$PATNO, names(group_by_patient))]
 
 
 
 #combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
-combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
-combined_bl_log_common$grouping<-factor(combined_bl_log_common$Z1_grouping)
-combined_bl_log_common$grouping
-
 combined_bl_log_common$VISIT=factor(combined_bl_log_common$EVENT_ID)
 
 
@@ -1008,6 +961,8 @@ is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 to_sel
 
 merged_melt_cl$co
+# TODO: HERE PLOT THE SCALES THAT ARE RELEVANT TO EACH FACTOR!!!!
+## ir. check what are the corelations, and with which variables-for the PD patinets only
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
            'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT'
 )
@@ -1022,10 +977,16 @@ if (names(sel_factors[fn_sel]) %in% c('Factor3')){
              'td_pigd_old_on',  'AGE')
   to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
              'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
-  to_plot<-selected_covars_broad
+  #to_plot<-selected_covars_broad
+  ## note that these are calculated for future values!!! 
+  to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
+             'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
   
 }
+to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
 
+merged_melt_cl$MCA_TOT
 to_plot
 ## todo why is scau missing from baseline? how to measure total? 
 merged_melt_cl_off<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
@@ -1042,19 +1003,17 @@ merged_melt_cl_off<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 
 
 
-remove_on=FALSE
-if (remove_on){
-  df_plot<- merged_melt_cl_off
+PDSTATE_SEL='ON'
+df_plot<- merged_melt_cl_off
+combined_bl_log_common_off=combined_bl_log_common[combined_bl_log_common$PDSTATE %in% c(PDSTATE_SEL),]
+
+combined_bl_log_common_off$MCA_TOT
+
+#df_plot<-merged_melt_cl
   
-  combined_bl_log_common_off=combined_bl_log_common[combined_bl_log_common$PDSTATE %in% c('OFF', ''),]
+#combined_bl_log_common_off=combined_bl_log_common
   
-}else{
-  df_plot<-merged_melt_cl
-  
-  
-  combined_bl_log_common_off=combined_bl_log_common
-  
-}
+
 
 
 
@@ -1097,13 +1056,10 @@ df_plot$grouping
 ######### boxplots by cluster over time
 df_plot[,c('VISIT', 'grouping')][df_plot$VISIT=='V12',]
 to_plot
-df_plot_2k<-df_plot[df_plot$grouping %in% c(1,4),]
+df_plot$grouping<-as.factor(df_plot$grouping)
 
-df_plot_2k<-df_plot[df_plot$grouping %in% c(4,5),]
-
-
-df_plot_2k<-df_plot[df_plot$grouping %in% c(2,5),]
 df_plot_2k<-df_plot
+
 
 for (y in to_plot){
   
@@ -1124,6 +1080,8 @@ for (y in to_plot){
     #           tip_length = 0, vjust=0)+
     
     labs(y=y)+
+    facet_wrap(~PDSTATE)+
+    
     # legend(legend=c('Low', 'High'))+
     theme(strip.text = element_text(
       size = 10, color = "dark green"), 
@@ -1135,7 +1093,7 @@ for (y in to_plot){
   
   
   warnings()
-  ggsave(paste0(outdir, '/trajectories/trajectory_', factor,'_', filt_top, y,'_', remove_on,  '.jpeg'), 
+  ggsave(paste0(outdir, '/trajectories/clinical/trajectory_', factor,'_', filt_top, y,'_', PDSTATE_SEL,  '.jpeg'), 
          width=5, height=3)
 }
 
@@ -1156,6 +1114,7 @@ for (y in to_plot){
     #           tip_length = 0, vjust=0)+
     
     labs(y=y)+
+    facet_wrap(~PDSTATE)+
     # legend(legend=c('Low', 'High'))+
     theme(strip.text = element_text(
       size = 10, color = "dark green"), 
@@ -1167,7 +1126,7 @@ for (y in to_plot){
   
   
   warnings()
-  ggsave(paste0(outdir, '/trajectories/box_', sel_factors[fn_sel],'_', filt_top, y,'_', remove_on,  '.jpeg'), 
+  ggsave(paste0(outdir, '/trajectories/clinical/box_', sel_factors[fn_sel],'_', filt_top, y,'_', PDSTATE_SEL,  '.jpeg'), 
          width=5, height=3)
 }
 
@@ -1254,31 +1213,5 @@ library(rstatix)
 
 
 
-
-
-
-#dir.create(outdir, '/trajectories/')
-
-
-
-#ggpaired(merged_melt, x = "VISIT", y = "value",
-##        # color = "VISIT", line.color = "gray", line.size = 0.4,
-#        color = "VISIT", line.color = 'grouping', line.size = 0.4,
-#         
-#         palette = "jco")+
-# facet_wrap(facets = 'symbol', nrow=ceiling(length(ws_high)/3), ncol=4)+#
-#facet_free(facets = 'symbol')+
-
-#stat_compare_means(paired = TRUE)
-
-
-
-merged_melt$patno
-
-
-library(ggpubr)
-# Create line plots of means
-#ggline(merged_df, x = 'variable', y = "value", 
-#       add = c("mean_sd", "jitter"))
 
 

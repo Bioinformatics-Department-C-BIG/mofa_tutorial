@@ -210,7 +210,9 @@ df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
 colnames(df_log)<-paste0(colnames(df_log),'_LOG')
 combined_new<-mutate(combined, df_log)
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
-combined_new$NP1_TOT
+combined_new$MCA_TOT
+
+write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 
 combined_new[, c('SCAU22','SCAU23','SCAU24','SCAU25','scopa', 'scopa_tot')]
 
@@ -243,7 +245,6 @@ combined_new$RBD_TOT
 
   dim(combined_new)
   
-  write.csv2(combined_new,metadata_output_all, row.names = FALSE)
   
   hist(log2(combined_new$stai_state))
   

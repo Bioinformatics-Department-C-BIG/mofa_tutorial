@@ -115,8 +115,7 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   
   # ggsave(fname, width=10, height=7)
   
-  dev.off()
-  
+
   return(my_pheatmap)
 }
 
@@ -142,7 +141,11 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #ARRANGE
   sigGenes = make.names(sigGenes)
   rownames(vsd_filt) = make.names(rownames(vsd_filt))
-  vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+  
+  ## turn to sumbol? 
+  rows_in_symbs<-get_symbols_vector(rownames(vsd_filt))
+  
+  vsd_filt_genes <- vsd_filt[rows_in_symbs %in% sigGenes,]
   
   
   ### Add the annotations 
@@ -226,7 +229,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   )
   
   
-  my_pheatmap
   ggsave(fname, width=7, height=7, dpi=300)
   
   

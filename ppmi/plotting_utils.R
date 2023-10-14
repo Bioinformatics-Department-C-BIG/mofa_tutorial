@@ -125,19 +125,6 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 
 
 
-remove_cn=FALSE
-order_by_hm='COHORT'
-
-cluster_cols=TRUE
-
-
-groups_kmeans3$cluster
-sel_samples=names(which(groups_kmeans3$cluster==3))
-
-#sel_samples
-mt<-colData(vsd_filt)
-table(mt[mt$PATNO %in% sel_samples, 'NHY'])
-order_by_hm=c('PATNO_EVENT_ID')
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                        cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
@@ -219,6 +206,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   show_rownames=TRUE
   #jpeg(fname, width=10*100, height=7*100, res=300)
   
+  ## Put a blank row in each one 
   split_time<-as.numeric(cumsum(table(df_ord$EVENT_ID)))
   
   df_ord<-df_ord[,!colnames(df_ord) %in% c('PATNO_EVENT_ID', 'PATNO')]
@@ -256,7 +244,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
 
-  dev.off()
+  #dev.off()
   
   return(my_pheatmap)
 }

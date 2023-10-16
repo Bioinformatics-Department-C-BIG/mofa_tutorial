@@ -83,6 +83,9 @@ if (run_mofa_complete){
 
 
 
+
+
+
 run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
   ### run mofa and write stats of corelation to file!! 
   #'

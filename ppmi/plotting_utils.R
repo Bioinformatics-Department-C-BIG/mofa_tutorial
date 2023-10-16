@@ -115,11 +115,10 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   
   # ggsave(fname, width=10, height=7)
   
-  dev.off()
-  
+
+
   return(my_pheatmap)
 }
-
 
 
 
@@ -139,6 +138,7 @@ mt<-colData(vsd_filt)
 table(mt[mt$PATNO %in% sel_samples, 'NHY'])
 order_by_hm=c('PATNO_EVENT_ID')
 
+
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                        cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
   
@@ -156,6 +156,11 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   sigGenes = make.names(sigGenes)
   rownames(vsd_filt) = make.names(rownames(vsd_filt))
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+  
+  ## turn to sumbol? 
+  rows_in_symbs<-get_symbols_vector(rownames(vsd_filt))
+  
+  vsd_filt_genes <- vsd_filt[rows_in_symbs %in% sigGenes,]
   
   
   ### Add the annotations 
@@ -219,6 +224,8 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   show_rownames=TRUE
   #jpeg(fname, width=10*100, height=7*100, res=300)
   
+
+  ## Put a blank row in each one 
   split_time<-as.numeric(cumsum(table(df_ord$EVENT_ID)))
   
   df_ord<-df_ord[,!colnames(df_ord) %in% c('PATNO_EVENT_ID', 'PATNO')]
@@ -239,6 +246,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   my_pheatmap
+
   ggsave(fname, width=7, height=7, dpi=300)
   
   
@@ -256,8 +264,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
 
-  dev.off()
-  
+
   return(my_pheatmap)
 }
 

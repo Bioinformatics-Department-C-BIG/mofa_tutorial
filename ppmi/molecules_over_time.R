@@ -2,6 +2,7 @@
 library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
+source(paste0(script_dir, 'ppmi/time_utils.R'))
 
 ### TODO: run analyze clin vars to load clinvars for later times 
 
@@ -35,7 +36,7 @@ mode='diagnosis'
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=1; 
+fn_sel=2; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -183,6 +184,8 @@ factors=factor
 
 factors=factor
 
+
+
 groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
   
   #'
@@ -215,8 +218,13 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
 
 
 ### Important: create groups only for the patients.
-merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject, factors=factor)
-merged_melt$kmeans_grouping_all<-groups_from_mofa_factors(merged_melt, MOFAobject, factors=sel_factors_mode)
+# cluster patients or controls? 
+
+groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor)
+groups_kmeans3<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor, centers=3)
+
+merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=factor)
+merged_melt$kmeans_grouping_all<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=sel_factors_mode)
 
 merged_melt$grouping<-merged_melt$kmeans_grouping
 
@@ -280,6 +288,10 @@ merged_melt_filt_g1=merged_melt_filt_g1[merged_melt_filt_g1$VISIT %in% c('BL', '
 merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[2],]
 merged_melt_filt_g2=merged_melt_filt_g2[merged_melt_filt_g2$VISIT %in% c('BL', 'V08'),]
 
+
+
+merged_melt_ct_two_vis=merged_melt_ct[merged_melt_ct$VISIT %in% c('BL', 'V08'),]
+
 merged_melt_filt_g1$VISIT<-as.factor(merged_melt_filt_g1$VISIT)
 merged_melt_filt_g2$VISIT<-as.factor(merged_melt_filt_g2$VISIT)
 
@@ -296,7 +308,7 @@ wilcox_stats1<-merged_melt_filt_g1 %>%
   group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.)) %>%
   summarize(symbol, Wilcox=w$p.value) %>%
-  #dplyr::filter(Wilcox<0.05)%>%
+  dplyr::filter(Wilcox<0.05)%>%
   
   as.data.frame()
 
@@ -311,6 +323,7 @@ wilcox_stats2<-merged_melt_filt_g2 %>%
   do(w=wilcox.test(value~VISIT, data=.) )%>%
   summarize(symbol, Wilcox=w$p.value) %>%
   dplyr::filter(Wilcox<0.05)%>%
+  arrange(Wilcox, decreasing=FALSE) %>%
   
   as.data.frame()
 
@@ -329,18 +342,24 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 
 
 ### remove the ones insiude copntrols
-wilcox_stats_controls<-merged_melt_filt_g1 %>%
+wilcox_stats_controls<-merged_melt_ct_two_vis %>%
   group_by(symbol) %>%
   do(w=wilcox.test(value~VISIT, data=.))%>%
   summarize(symbol, Wilcox=w$p.value) %>%
+  dplyr::filter(Wilcox<0.05)%>%
+  arrange(Wilcox, decreasing=FALSE) %>%
   as.data.frame()
 
 
 # they should chgange in pd but not in controls!! 
 # remove the ones in the controls
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
-
+most_sig_over_time<-most_sig_over_time%>%
+  arrange(Wilcox, decreasing=FALSE)
+  
 most_sig_over_time_deseq = c('hsa.let.7a.3p', 'hsa.let.7f.1.3p', 'hsa.miR.101.3p', 'hsa.miR.142.5p')
+most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% wilcox_stats_controls$symbol),]
+
 ####### CHOOSE 
 
 #most_sig_over_time_deseq = make.names(sigLRT_genes$gene)
@@ -697,27 +716,6 @@ merged_melt$kmeans_grouping
 
 
 
-#### ADD 18 month progression 
-
-patnos_z1<-gsub('\\_.*', '', names(groups_kmeans$cluster))
-groups_kmeans$cluster
-
-
-Z2_grouping_df<-data.frame(group=groups_kmeans$cluster, PATNO=patnos_z1)
-df18_months_2<-merge(df18_months, Z2_grouping_df, by='PATNO')
-df18_months_2<-df18_months_2[!duplicated(df18_months_2),]
-df18_months_2$value
-
-
-ggplot(df18_months_2, aes(x=variable,y=value, group=group, colour=group)  )+
-  geom_point(aes(x=variable,y=value, colour=group), alpha=0.5 )+
-  # geom_line(aes(x=variable,y=value, group=PATNO, colour=group), lwd=0.2 )+
-  stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 1.3) 
-
-
-
-
 ### CHANGE OF MOLECULE VS CHANGE OF NP3
 
 ### TODO: PLOT FOR THE SAME PATIENTS THE  FUTURE TRAJECTORIES BY GROUPS!! 
@@ -734,7 +732,7 @@ sel_state = 'OFF'
 
 
 
-
+# TODO FIX 
 # this contains all future variable 
 df_future_clinvars<-get_future_clinvars(combined_bl_log)
 
@@ -920,7 +918,6 @@ group_by_patient<-clusters_mofa$cluster
 group_by_patient<-clusters$cluster
 group_by_patient<-clusters_mofa_outcome$cluster
 group_by_patient<-clusters_mofa$cluster
-group_by_patient<-factor(Z1>quantile(Z1,0.75, na.rm=TRUE))
 group_by_patient<- groups_kmeans$cluster
 
 names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
@@ -960,7 +957,6 @@ is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
 to_sel
 
-merged_melt_cl$co
 # TODO: HERE PLOT THE SCALES THAT ARE RELEVANT TO EACH FACTOR!!!!
 ## ir. check what are the corelations, and with which variables-for the PD patinets only
 to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
@@ -1003,25 +999,11 @@ merged_melt_cl_off<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
 
 
 
-PDSTATE_SEL='ON'
+PDSTATE_SEL='OFF'
 df_plot<- merged_melt_cl_off
 combined_bl_log_common_off=combined_bl_log_common[combined_bl_log_common$PDSTATE %in% c(PDSTATE_SEL),]
 
 combined_bl_log_common_off$MCA_TOT
-
-#df_plot<-merged_melt_cl
-  
-#combined_bl_log_common_off=combined_bl_log_common
-  
-
-
-
-
-
-
-
-
-
 
 combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
 #combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08', combined_bl_log_common_off$EVENT_ID) ,]

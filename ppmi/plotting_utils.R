@@ -124,19 +124,19 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 
 
 
-remove_cn=FALSE
-order_by_hm='COHORT'
+#remove_cn=FALSE
+#order_by_hm='COHORT'
 
-cluster_cols=TRUE
+#cluster_cols=TRUE
 
 
-groups_kmeans3$cluster
-sel_samples=names(which(groups_kmeans3$cluster==3))
+#groups_kmeans3$cluster
+#sel_samples=names(which(groups_kmeans3$cluster==3))
 
 #sel_samples
-mt<-colData(vsd_filt)
-table(mt[mt$PATNO %in% sel_samples, 'NHY'])
-order_by_hm=c('PATNO_EVENT_ID')
+#mt<-colData(vsd_filt)
+#table(mt[mt$PATNO %in% sel_samples, 'NHY'])
+#order_by_hm=c('PATNO_EVENT_ID')
 
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 

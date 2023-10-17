@@ -226,8 +226,7 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   all_frames2<-do.call(rbind, all_frames)
 
   ppmi_prot=all_frames2
-  length(unique(all_frames2$PATNO))
-  length(unique(all_frames2$ASSAY))
+
   ### remove PPMI- suffix from PATNO column 
   ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
   print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
@@ -248,22 +247,34 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   prot_bl_matrix<-as.data.frame(subset(prot_bl,
                                        select=-c( update_stamp, OLINKID, UNIPROT,
                                                   PANEL, PLATEID)))
+  
   ## Extract QC pass only 
     prot_bl_matrix
   prot_bl_matrix_QC<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
-  if (length(prot_bl_matrix_QC==0)){
+  if (length(prot_bl_matrix_QC)==0){
     prot_bl_matrix_QC<-prot_bl_matrix
     
   }
+  table(prot_bl_matrix_QC$QC_WARNING)
   hist(log10(prot_bl_matrix[,pv]))
   
   
   
   ## Reshape: Make a wide matrix with patient in columns 
-  prot_bl_tbl<-as.data.table(prot_bl_matrix)
-  NROW(unique(prot_bl_tbl$PATNO))
+  prot_bl_tbl<-as.data.table(prot_bl_matrix_QC)
   prot_bl_tbl$PATNO_EVENT_ID<-paste0(prot_bl_tbl$PATNO,'_',prot_bl_tbl$EVENT_ID)
 
+  
+  #### prot_bl_tb duplicates wgt
+  
+  ### TODO: FIXED IN 17/10/2023: REDO THE PROTEINS in mofa runs
+ # prot_bl_tbl<-as.data.frame(prot_bl_tbl)
+  pair_keys<-prot_bl_tbl[, c( 'PATNO_EVENT_ID', 'ASSAY')] 
+  dups<-prot_bl_tbl[duplicated(pair_keys),]$PATNO_EVENT_ID[1:100]
+  
+  head(prot_bl_tbl[prot_bl_tbl$PATNO_EVENT_ID %in% dups, ]%>%
+    arrange(PATNO_EVENT_ID, ASSAY))
+  #### duplicates are averaged..... 
   prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO_EVENT_ID,
                                   value.var =pv, fun.aggregate = mean)
   
@@ -295,6 +306,57 @@ dev.off()
 
 
 combined[match(colnames(prot_bl_wide), combined$PATNO_EVENT_ID),]$COHORT_DEFINITION
+
+
+
+
+###### Biospecimen
+
+
+biospecimen_f<-paste0(data_dir,'ppmi/ppmi_data/biospecimen/Current_Biospecimen_Analysis_Results_17Oct2023.csv')
+
+biospecimen<-read.csv(biospecimen_f)
+biospecimen_matrix<-as.data.frame(subset(biospecimen,
+                                     select=-c( update_stamp, PI_NAME, PI_INSTITUTION, RUNDATE, PROJECTID)))
+
+
+## Reshape: Make a wide matrix with patient in columns 
+
+biospecimen_tbl<-as.data.table(biospecimen_matrix)
+biospecimen_tbl$PATNO_EVENT_ID<-paste0(biospecimen_tbl$PATNO,'_',biospecimen_tbl$CLINICAL_EVENT)
+
+
+biospecimen_tbl_filt<-biospecimen_tbl %>%
+  filter(!UNITS %in% c('stdev', 'Stdev'))
+
+
+dups<-biospecimen_tbl_filt[duplicated(biospecimen_tbl_filt[,c('TESTNAME', 'PATNO_EVENT_ID')]),'PATNO_EVENT_ID']$PATNO_EVENT_ID
+
+
+biospecimen_tbl_filt[biospecimen_tbl_filt$PATNO_EVENT_ID%in%dups,]%>%
+  arrange(PATNO_EVENT_ID)
+
+table(biospecimen_tbl_filt$TYPE)
+
+
+
+biospecimen_tbl_wide<-data.table::dcast(biospecimen_tbl,  TESTNAME ~ PATNO_EVENT_ID + )
+                                #,
+                                #value.var =pv, fun.aggregate = mean)
+
+reshape(biospecimen_tbl_wide, idvar = "name", timevar = "numbers", direction = "wide")
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -107,7 +107,8 @@ if (run_rna_mirna){
     
     
     if (use_signif){
-      TOP_MN=0.75
+      TOP_MN=0.75 # PLASMA
+      TOP_MN=0.9# CSF PROTEOMICS
       TOP_GN=0.3
       TOP_PN=0.9
     }

@@ -32,14 +32,18 @@ combined<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
 
+
 process_mirnas=TRUE
+#combined_bl_log$np2
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
 # tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
-VISIT='V08'
 VISIT=c('BL','V08')
+VISIT='V08'
+
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('BL',  'V08');
 
 #for (VISIT in list( list('V08', 'BL')) ){
 

@@ -35,7 +35,7 @@ outdir_orig<-paste0(data_dir,'ppmi/plots/')
 output_files<-paste0(data_dir,'ppmi/output/')
 
 
-metadata_output<-paste0(output_files, 'combined.csv')
+metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
@@ -43,7 +43,7 @@ combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 
 
-metadata_output<-paste0(output_files, 'combined.csv')
+metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 
 
@@ -183,11 +183,15 @@ for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3, 0.9,0.75,0.5)){
    most_var
     p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
-  
+    highly_variable_sign_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa_signif.csv')
+    
   
     highly_variable_proteins_mofa=selectMostVariable(vsn_mat, most_var)
+   # highly_variable_sign_proteins_mofa<-highly_variable_proteins_mofa[rownames(highly_variable_proteins_mofa) %in%  signif_proteins,]
     
     write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
+    
+    
     print(dim(highly_variable_proteins_mofa))
 }
 png(paste0(output_1,'hist_high_var_', p_params_out,'.png' ))

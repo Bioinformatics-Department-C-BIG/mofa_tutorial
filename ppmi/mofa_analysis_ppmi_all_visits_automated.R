@@ -31,7 +31,6 @@
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 
-EVENT_MAP=list('BL'=0, 'V04'=12, 'V06'=24, 'V08'=36)
 
 samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
@@ -95,7 +94,7 @@ p3<-plot_variance_explained(MOFAobject, max_r2=20)+
         axis.text.y=element_text(size=20))
 ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
        width = 5, height=N_FACTORS/2,
-       dpi=300)
+       dpi=100)
 
 MOFAobject@samples_metadata$Outcome
 
@@ -104,7 +103,7 @@ plot_data_overview(MOFAobject)+
   theme(axis.title.x=element_text(size=16), 
         axis.text.y=element_text(size=16), 
         text  = element_text(size=16))
-ggsave(paste0(outdir, 'data_overview.jpeg'), dpi=300, 
+ggsave(paste0(outdir, 'data_overview.jpeg'), dpi=100, 
        width=4, height=3)
 
 
@@ -289,7 +288,7 @@ graphics.off()
 to_remove_covars<-grepl( 'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO', non_na_ids_to_plot)
 non_na_ids_to_plot_cleaned<-non_na_ids_to_plot[!to_remove_covars]
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*30, height=2000, res=300)
+jpeg(paste0(outdir, 'factors_covariates_only_nonzero','.jpeg'), width = length(ids_to_plot)*30, height=2000, res=100)
 correlate_factors_with_covariates(MOFAobject,
                                   covariates =non_na_ids_to_plot_cleaned, 
                                   plot = "log_pval"
@@ -422,7 +421,8 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   
   
   
-  jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=300)
+  jpeg(paste0(outdir, fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=
+         100)
   P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , plot = plot,
                                         labels_col=labels_col, 
@@ -490,14 +490,14 @@ ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
 ## this is the othet
 # = non_na_ids_to_plot[-ind_re]
 
-jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
-     width = 700+length(selected_covars)*20, height=1100, res=300)
+##jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
+#     width = 700+length(selected_covars)*20, height=1100, res=100)
 
-correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
-                                  plot = "log_pval",
+##correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
+#                                  plot = "log_pval",
                                  # alpha=0.000000001,
-                                  col.lim=c(-0.4, 0.4))
-dev.off()
+#                                  col.lim=c(-0.4, 0.4))
+#dev.off()
 
 cors_pearson[,c('DYSKIRAT')]
 

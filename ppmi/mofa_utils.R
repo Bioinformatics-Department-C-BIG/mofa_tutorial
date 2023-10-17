@@ -1,4 +1,6 @@
 
+
+
 get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
   cors<-correlate_factors_with_covariates(MOFAobject,
                                           covariates = covariates, 

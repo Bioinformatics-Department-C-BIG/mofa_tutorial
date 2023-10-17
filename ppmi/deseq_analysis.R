@@ -3,11 +3,17 @@
 source(paste0('ppmi/setup_os.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
+
+
+### disconnect from mofa and other scripts 
+#VISIT=c('BL','V04', 'V06',  'V08');
+process_mirnas=TRUE
+
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
 
-process_mirnas
+
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
@@ -141,6 +147,7 @@ log2fol_T_overall<-0.1
 padj_T_overall<-.05
 deseq2ResDF
 deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
+
 
 num_de_genes<-length(which(!is.na(deseq2ResDF$significant)))
 
@@ -363,34 +370,55 @@ if (run_heatmap){
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
   colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT')
   
-  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY', colDataToPlot, "COHORT")])
-  colData(vsd_filt_genes)$RBD_TOT
+  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   # if clusters exist 
   
   
   # clusters_single
-  df$cluster_s<-factor(clusters_single$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_single$cluster ))])
+#  df$cluster_s<-factor(clusters_single$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_single$cluster ))])
   #### Add different clustering? 
-  df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
-  df$cluster_m_34<-factor(clusters_mofa_34$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa_34$cluster ))])
+ # df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
+  #df$cluster_m_34<-factor(clusters_mofa_34$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa_34$cluster ))])
   
   
   
   ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(3,4))
 
-  
-  
-    
-  my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
-                            show_rownames = show_rownames,cluster_cols = TRUE )
-  
-dev.off()
-  ### Plot MOFA too
+  graphics.off()
   
   
 
+    my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
+                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL )
   
+    
+    remove_cn=FALSE
+    order_by_hm='COHORT'
+    
+    cluster_cols=TRUE
+    
+    
+    groups_kmeans3$cluster
+    sel_samples=names(which(groups_kmeans3$cluster==3))
+    
+    #sel_samples
+    mt<-colData(vsd_filt)
+    table(mt[mt$PATNO %in% sel_samples, 'NHY'])
+    order_by_hm=c('PATNO_EVENT_ID')
+    sigGenes<-most_sig_over_time$symbol[1:40]
+    graphics.off()
+  ### Plot MOFA too
+  if (length(VISIT)>1){
+    
+    ## TODO: symbols vector 
+    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
+                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
+    
     my_pheatmap
+  }
+    
+
+  
 
 
   

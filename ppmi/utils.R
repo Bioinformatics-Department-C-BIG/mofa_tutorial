@@ -5,6 +5,22 @@ library(org.Hs.eg.db)
 ## Utils 
 ## Summarized experiment 
 
+
+
+
+### map event to months 
+
+EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'=12,   'V05'=18,   'V06'=24,   'V07'=30,   
+               'V08'=36,    'V09'=42,    'V10'=48,    'V11'=54,   'V12'=60,   'V13'=72,   'V14'=84,   'V15'=96, 'V16'=108, 'V17'=120,'V18'=132,'V19'=144 , 
+               'ST' = -6)
+
+
+
+
+
+
+
+
 load_se_all_visits<-function(input_file, combined){
   #'
   #' @param input_file file cntaining rnas or mirnas counts for all visits 
@@ -552,19 +568,38 @@ prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
   #' @param  p_params, param_str_g, param_str_m : these are set by the config.R
   #' 
   highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
+  highly_variable_proteins_outfile_csf = paste0(output_files, p_params_csf , '_highly_variable_proteins_mofa.csv')
+  highly_variable_proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_highly_variable_proteins_mofa.csv')
+  
   highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
   highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
   
   if (use_signif){
     highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
     highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+   
+     # TODO: shall I input significant here? 
+    highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
+    highly_variable_proteins_outfile_csf = paste0(output_files, p_params_csf , '_highly_variable_proteins_mofa.csv')
+    highly_variable_proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_highly_variable_proteins_mofa.csv')
+    
+    
   }
   
   
   in_file<-highly_variable_proteins_outfile
+  in_file_csf<-highly_variable_proteins_outfile_csf
+  in_file_plasma<-highly_variable_proteins_outfile_plasma
+  
   highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
+  highly_variable_proteins_mofa_plasma<-as.matrix(fread(in_file_plasma,header=TRUE), rownames=1)
+  highly_variable_proteins_mofa_csf<-as.matrix(fread(in_file_csf,header=TRUE), rownames=1)
+  
+  
   ### Start loading mofa data
   proteomics<-as.data.frame(highly_variable_proteins_mofa)
+  proteomics_plasma<-as.data.frame(highly_variable_proteins_mofa_plasma)
+  proteomics_csf<-as.data.frame(highly_variable_proteins_mofa_csf)
   
   ##### Load mirnas + RNAs 
   ### we use data.table because there are duplicate samples? 
@@ -591,7 +626,10 @@ prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
   
   data_full<-list(miRNA=as.matrix(miRNA), 
                   RNA=as.matrix(RNA),
-                  proteomics=as.matrix(proteomics))
+                  proteomics=as.matrix(proteomics), 
+                  
+                  proteomics_plasma=as.matrix(proteomics_plasma), 
+                  proteomics_csf=as.matrix(proteomics_csf))
   
   
   return(data_full)
@@ -613,12 +651,20 @@ create_multi_experiment<-function(data_full, combined_bl){
   RNA= data_full[['RNA']]
   miRNA= data_full[['miRNA']]
   proteomics= data_full[['proteomics']]
+  
+  proteomics_csf= data_full[['proteomics_csf']]
+  proteomics_plasma= data_full[['proteomics_plasma']]
+  
+  
   assay_full=c(rep('RNA', dim(RNA)[2]),
                rep('miRNA', dim(miRNA)[2]),
-               rep('proteomics', dim(proteomics)[2]))
-  
+               rep('proteomics_csf', dim(proteomics_csf)[2]),
+                rep('proteomics_plasma', dim(proteomics_plasma)[2]))
+
   
   colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics_csf), colnames(proteomics_plasma))
+  
   primary=colname
   sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
   common_samples_in_assays=unique(colname)

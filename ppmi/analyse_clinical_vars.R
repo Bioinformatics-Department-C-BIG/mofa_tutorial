@@ -294,6 +294,9 @@ graphics.off()
 common_samples=common #### loaded from deseq2_vst_preprocessing script 
 combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
 
+scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT', 'STAIAD_TOT')
+
+
 #### Histograms to check the distributions of the clinical variables before and after processing 
 for (i in 1:length(scales_in_stage)){
   
@@ -332,7 +335,6 @@ for (i in 1:length(scales_in_stage)){
 }
 
 
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
 
 
 
@@ -382,7 +384,7 @@ average_if_not_na<-function(df){
 ### First filter by combined_filt\
 
 
-combined_filt<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
+combined_filt<-combined[combined$PATNO %in% common_samples, ]
 
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
@@ -450,8 +452,10 @@ combined$EVENT_ID
 x='EVENT_ID'
 
 
+## Leparates the specific record for each aptient
 combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
 
+combined_filt$SCAU
 combined_to_plot<-combined_filt %>% dplyr::select(c( y, x, group,
                                              scales, 'line_group', 'PATNO' , 'PAG_NAME_M3',
                                 'AGE_AT_VISIT', 'COHORT_DEFINITION', 
@@ -668,7 +672,7 @@ EVENT_MAP[SEL_VIS]
 x='months'
 combined_to_plot_last_visit$months
 combined_to_plot_last_visit=combined_to_plot[combined_to_plot$PATNO %in% last_visit_patients & (combined_to_plot$months <= EVENT_MAP[SEL_VIS]), ]
-combined_to_plot_last_visit<-combined_to_plot_last_visit[combined_to_plot_last_visit$NP3_TOT_LOG<9,]
+#combined_to_plot_last_visit<-combined_to_plot_last_visit[combined_to_plot_last_visit$NP3_TOT_LOG<9,]
 
 combined_to_plot_last_visit$months
 
@@ -769,7 +773,18 @@ for (y in scales){
   }
 
 graphics.off()
+combined_to_plot_final$ptau
 
+
+
+
+combined_to_plot_final$DATSCAN_PUTAMEN_R_ANT
+scales=c('DATSCAN_PUTAMEN_L_ANT','DATSCAN_PUTAMEN_R_ANT','DATSCAN_PUTAMEN_L','ai_putamen','PUTAMEN_L', 'PUTAMEN_R', 'ptau')
+for (y in scales){
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape )
+}
+
+graphics.off()
 
 
 

@@ -90,10 +90,21 @@ sem<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Modified_Semantic_Flu
 
 
 
-curated<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+curated_v1<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+curated_v2<-read.csv(paste0('ppmi/ppmi_data/curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
+curated_total<-merge(curated_v1, curated, by='PATNO', )
+## first bind the common columns 
+common_cols<-intersect(colnames(curated_v1), colnames(curated_v2))
+curated_total<-rbind(curated_v1[, common_cols],curated[, common_cols])
+curated_v2_unique<-curated_v2[, (!(colnames(curated_v2) %in% common_cols))| colnames(curated_v2) %in%c('PATNO', 'EVENT_ID')  ]; 
+curated_v1_unique<-curated_v1[, (!(colnames(curated_v1) %in% common_cols))| colnames(curated_v1) %in%c('PATNO', 'EVENT_ID')  ]; 
+
+curated_total_new_cols<-merge(curated_total, curated_v2_unique, by=c('PATNO', 'EVENT_ID'))
+curated_total_new_cols<-merge(curated_total_new_cols, curated_v1_unique, by=c('PATNO', 'EVENT_ID'))
+
+colnames(curated_total_new_cols)
 
 
-VISIT='BL'
 
 
 ### Eventually merge both by visit and patient
@@ -126,7 +137,7 @@ colnames(rbd)[!colnames(rbd) %in% c('PATNO','EVENT_ID')]<-paste0(rbd_vals, '_rbd
 
 
 
-combined<-merge(combined, curated,by=c('PATNO','EVENT_ID'), suffixes = c("", '_cur'),  all=TRUE)
+combined<-merge(combined, curated_total_new_cols,by=c('PATNO','EVENT_ID'), suffixes = c("", '_cur'),  all=TRUE)
 
 combined<-merge(combined, rbd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_rbd'),  all=TRUE)
 combined<-merge(combined, dat,by=c('PATNO','EVENT_ID'), suffixes = c("", '_dat'),  all=TRUE)
@@ -141,7 +152,8 @@ combined<-merge(combined, sem,by=c('PATNO','EVENT_ID'), suffixes = c("", '_sem')
 combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
 
-
+V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V10', c('mean_striatum', 'PATNO')]
+combined<-merge(combined, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V10'),  all=TRUE)
 
 #which(!is.na(combined$Outcome))
 

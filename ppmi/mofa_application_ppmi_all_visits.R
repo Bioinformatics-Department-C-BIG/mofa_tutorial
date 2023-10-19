@@ -38,6 +38,7 @@ run_rna_mirna=FALSE
 VISIT=c('BL');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL','V08');
+VISIT=c('V08');
 
 
 run_vsn=TRUE
@@ -259,19 +260,36 @@ combined_bl_log_sel[combined_bl_log_sel$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 
 
 
 
+
 ### Merging and remove duplicates 
 meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
 meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
 meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
 
+img_var='con_putamen'
+
+V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V06', c(img_var, 'PATNO')]
+
+dim(meta_merged_ord)
+V10_mean_striatum[, img_var]=as.numeric(V10_mean_striatum[, img_var])
+V10_mean_striatum=V10_mean_striatum[!is.na(V10_mean_striatum[, img_var]),]
+
+V10_mean_striatum<-V10_mean_striatum[!duplicated(V10_mean_striatum$PATNO),]
+meta_merged_ord_V10<-merge(meta_merged_ord, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V06'),  all.x=TRUE)
+#View(meta_merged_ord_V10)
+
+dim(meta_merged_ord_V10)
+dim(meta_merged_ord_V10)
+
+meta_merged_ord_V10$con_putamen_V06
+
 MOFAobject@samples_metadata=meta_merged_ord
+MOFAobject@samples_metadata=meta_merged_ord_V10
 
 
+MOFAobject@samples_metadata
 
-
-
-MOFAobject
-
+meta_merged_ord_V10$con_putamen_V06
 
 
 

@@ -280,6 +280,7 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   
   length(colnames(prot_bl_wide)); length(unique(colnames(prot_bl_wide)))
   
+
   prot_bl_wide<-as.data.frame(prot_bl_wide)
   rownames(prot_bl_wide)<-prot_bl_wide$ASSAY
   prot_bl_wide$ASSAY<-NULL
@@ -319,6 +320,8 @@ biospecimen<-read.csv(biospecimen_f)
 biospecimen_matrix<-as.data.frame(subset(biospecimen,
                                      select=-c( update_stamp, PI_NAME, PI_INSTITUTION, RUNDATE, PROJECTID)))
 
+biospecimen_matrix<-as.data.frame(subset(biospecimen,
+                                         select=-c( update_stamp, PI_NAME, PI_INSTITUTION, RUNDATE)))
 
 ## Reshape: Make a wide matrix with patient in columns 
 
@@ -327,7 +330,7 @@ biospecimen_tbl$PATNO_EVENT_ID<-paste0(biospecimen_tbl$PATNO,'_',biospecimen_tbl
 
 
 biospecimen_tbl_filt<-biospecimen_tbl %>%
-  filter(!UNITS %in% c('stdev', 'Stdev'))
+  dplyr::filter(!UNITS %in% c('stdev', 'Stdev'))
 
 
 dups<-biospecimen_tbl_filt[duplicated(biospecimen_tbl_filt[,c('TESTNAME', 'PATNO_EVENT_ID')]),'PATNO_EVENT_ID']$PATNO_EVENT_ID
@@ -336,17 +339,57 @@ dups<-biospecimen_tbl_filt[duplicated(biospecimen_tbl_filt[,c('TESTNAME', 'PATNO
 biospecimen_tbl_filt[biospecimen_tbl_filt$PATNO_EVENT_ID%in%dups,]%>%
   arrange(PATNO_EVENT_ID)
 
+### ALPHA SYN: 124
+#project_id=207; units='MedianMaxRFU (RFU)'; fun.aggregate=mean
+# 
+project_id=124
+table(biospecimen_tbl_filt[biospecimen_tbl_filt$PROJECTID==project_id, ])
+
+biospecimen_saa<-biospecimen_tbl_filt[biospecimen_tbl_filt$PROJECTID==project_id ,]
+table(biospecimen_saa$TESTNAME)
+table(biospecimen_saa$UNITS)
+#biospecimen_saa<-biospecimen_saa[biospecimen_saa$UNITS=='qualitative' ,]
+biospecimen_saa<-biospecimen_saa[biospecimen_saa$UNITS==units ,]
+
+
+
+dups<-biospecimen_saa[duplicated(biospecimen_saa[,c('TESTNAME','TYPE', 'PATNO_EVENT_ID')]),]$PATNO_EVENT_ID
+dups
+
+biospecimen_saa$PATNO_EVENT_ID %in% dups
+#View(biospecimen_saa[biospecimen_saa$PATNO_EVENT_ID %in% dups,]%>%
+#  arrange(PATNO_EVENT_ID, TESTNAME))
+
+#biospecimen_saa$TESTVALUE[tolower(biospecimen_saa$TESTVALUE)=='not detected']<-0
+
+table(biospecimen_saa$TESTNAME)
+
+
+# with row id it keeps the duplicaes in separate columns 
+
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), PATNO_EVENT_ID+TYPE+TESTNAME+UNITS ~ rowid(PATNO_EVENT_ID) , 
+                            value.var = c("TESTVALUE"))
+
+
+biospecimen_saa_wide[, c(1,2,3)]
+##  observe and then decide what to do with duplicates --> eg. average
+#'MedianMaxRFU (RFU)'  : NUMERIC therefore --> average 
+#' for qualitative take the most frequent 
+biospecimen_saa$TESTVALUE=as.numeric(biospecimen_saa$TESTVALUE)
+
+
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), PATNO_EVENT_ID+TYPE+TESTNAME ~ rowid(PATNO_EVENT_ID) , 
+                            value.var = c("TESTVALUE"), fun.aggregate = mean, na.rm=TRUE)
+
+
+biospecimen_saa_wide
 table(biospecimen_tbl_filt$TYPE)
 
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), TESTNAME+TYPE ~ PATNO_EVENT_ID , 
+                            value.var = c("TESTVALUE"),  fun.aggregate = mean)
 
 
-biospecimen_tbl_wide<-data.table::dcast(biospecimen_tbl,  TESTNAME ~ PATNO_EVENT_ID + )
-                                #,
-                                #value.var =pv, fun.aggregate = mean)
-
-reshape(biospecimen_tbl_wide, idvar = "name", timevar = "numbers", direction = "wide")
-
-
+colnames(biospecimen_saa_wide) %in% samples_metadata(MOFAobject)$PATNO_EVENT_ID
 
 
 

@@ -1,4 +1,5 @@
 
+
 library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
@@ -36,7 +37,7 @@ mode='diagnosis'
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=2; 
+fn_sel=3; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -58,7 +59,7 @@ if (names(top_view)=='miRNA'){
   
 }
 
-view
+view='miRNA'
 se_mirs
 
 #### mofa preprocess
@@ -88,13 +89,20 @@ if ((mode_mols)=='MOFA'){
 
 
 ### add clinvars to the requested features too! 
-clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT', 'NP3_TOT', 'scopa', 'PDSTATE', 'PD_MED_USE')
+clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT', 'NP3_TOT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
+                   'con_putamen')
 
 
 
 # create a merged dataframe with all visits to be used downstream. 
 # might be better to filer molecules now to save memory..? 
 # TODO: which variables are used as id? check when melting feat_names
+## only if rna
+
+if (view=='RNA'){
+  rownames(se)<-gsub('\\..*', '',rownames(se))
+  
+}
 merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names)
 levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 

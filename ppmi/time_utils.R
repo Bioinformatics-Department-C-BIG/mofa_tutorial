@@ -108,15 +108,26 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
   X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
   X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
   
-  clip_outliers<-function(X){
+  clip_outliers<-function(X, x_times=1.5, upper=TRUE, lower=TRUE){
+    #'
+    #'
+    #' outliers more than x-mes the IQR to be cliped 
+    #'
+    #'
     quartiles <- quantile(X, probs=c(.25, .75), na.rm = TRUE)
     IQR <- IQR(X, na.rm=TRUE)
     # Q3 + 1.5*IQR
-    Lower <- quartiles[1] - 1.5*IQR
-    Upper <- quartiles[2] + 1.5*IQR 
+    Lower <- quartiles[1] - x_times*IQR
+    Upper <- quartiles[2] + x_times*IQR 
     
-    X[X>Upper]<-Upper
-    X[X<Lower]<-Lower
+    if (upper){
+      X[X>Upper]<-Upper
+      
+    }
+    if (lower){
+      
+       X[X<Lower]<-Lower
+    }
     return(X)
     
   }

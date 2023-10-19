@@ -874,11 +874,9 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
   ## DO NOT FILTER THE FEAT NAMES HERE 
   v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add )
   v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
-  se_filt_V08_pd<-se_filt_V08[,se_filt_V08$COHORT == 1]
   v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
   bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2 ), clinvars_to_add=clinvars_to_add)
   
-  bl_ens$COHORT
   ######### PLOT molecular markers 
   ### MELT and MERGE 
   v8_melt<-reshape2::melt(v8_ens)

@@ -225,6 +225,7 @@ combined_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 
 # 1. Filter by mofa patients 
 combined_filt<-combined_new[combined_new$PATNO %in% sel_pats,]
+#combined_filt=combined_new
 #### ATTEMPT TO SELECT SAMPLES BECAUSE OF PERCENTILES THAT WE DID NOT USE 
 df_log_sel=df_log[combined$PATNO_EVENT_ID %in% sel_sam,]
 
@@ -384,7 +385,7 @@ average_if_not_na<-function(df){
 ### First filter by combined_filt\
 
 
-combined_filt<-combined[combined$PATNO %in% common_samples, ]
+combined_filt<-combined_new[combined_new$PATNO %in% sel_pats, ]
 
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
@@ -434,7 +435,6 @@ x='EVENT_ID'
 shape='PAG_NAME_M3'
 
 #time points
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT')
 
 
@@ -454,6 +454,9 @@ x='EVENT_ID'
 
 ## Leparates the specific record for each aptient
 combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+
+
 
 combined_filt$SCAU
 combined_to_plot<-combined_filt %>% dplyr::select(c( y, x, group,
@@ -466,9 +469,7 @@ x='months'
 combined$INEX
 #combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
 
-combined_filt$line_group
-combined_filt$COHORT_DEFINITION
-combined_to_plot$COHORT_DEFINITION
+combined_filt$upsit
 fw<-'COHORT_DEFINITION'
 
 combined_filt$line_group
@@ -493,10 +494,11 @@ formula_1<-as.formula('~PDSTATE')
 
 combined_filt$PAG_NAME_M3
 combined_to_plot<-combined_filt
+
 combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c('INEXHC', 'INEXPD'),]
 combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c( 'INEXPD'),]
 
-combined_to_plot$PD_MED_USE
+combined_to_plot$tau_LLOD
 
 
 #### sLIDES:  get numbers of unique patients and unique records of medicated/unmedicated at each visit 
@@ -518,7 +520,6 @@ unique(PATS) %>%
 
 table(as.data.frame(PATS)[, c('PDMEDYN')])
 
-table(unique(combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PD')])) 
 
 
 
@@ -526,17 +527,9 @@ table(unique(combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PD
 ## keep pairs - actually could not find any pairs 
 combined_to_plot_med<-combined_to_plot[combined_to_plot$PDMEDYN==1,]
 
-V08_measures<-combined[combined$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]
-
-med_cols<-c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON","NP3_TOT", "COHORT")
-med_cols<-c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY","NP3PTOT", "COHORT")
-
-V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', med_cols]);duplicated(V08_measures$PATNO)
-V08_measures<-unique(combined_to_plot[, c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON", "NP3_TOT","COHORT")]);duplicated(V08_measures$PATNO)
-V08_measures<-unique(combined_to_plot[, c("PATNO","PDSTATE","EVENT_ID", "PAG_NAME_M3","PD_MED_USE", "NHY_ON", "NP3_TOT","COHORT")]);duplicated(V08_measures$PATNO)
 pat_dups<-check_dups(combined_to_plot)
 
-V08_measures_paired<-combined_to_plot[combined_to_plot$EVENT_ID=='V08' & combined_to_plot$PATNO %in% pat_dups,med_cols]
+V08_measures_paired<-combined_to_plot[combined_to_plot$EVENT_ID=='V08' & combined_to_plot$PATNO %in% pat_dups,]
 
 
 ### IF I FILTER BY PAIRED SAMPLES THEN distributions are NOT normal AND i cannot apply ANOVA 
@@ -604,10 +597,6 @@ data=combined_to_plot[combined_to_plot$EVENT_ID%in%'V08',]
     }
   }
   
-  
-
-length(df.shapiro$Shapiro>0.05)
-
 
 p<-ggplot(V08_measures_paired,aes(x=log(NP3_TOT), fill=PDSTATE))+
   geom_density(aes(fill=PDSTATE), alpha=0.5)+
@@ -647,12 +636,12 @@ formula_1<-as.formula('~PDMEDYN')
 formula_1<-as.formula('~PD_MED_USE')
 formula_1<-as.formula('~PDSTATE')
 
-combined_to_plot$PD
 
 ########## PLOTS FOR SPECIFIC PATIENTS OVER TIME ######################
 #######################################################################
 
 ### RENAME after we remove the 'R*' VISITS
+
 combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
 
 combined_to_plot_med_only<-combined_to_plot[!is.na(combined_to_plot$PD_MED_USE), ]
@@ -670,7 +659,6 @@ EVENT_MAP[SEL_VIS]
 # 
 
 x='months'
-combined_to_plot_last_visit$months
 combined_to_plot_last_visit=combined_to_plot[combined_to_plot$PATNO %in% last_visit_patients & (combined_to_plot$months <= EVENT_MAP[SEL_VIS]), ]
 #combined_to_plot_last_visit<-combined_to_plot_last_visit[combined_to_plot_last_visit$NP3_TOT_LOG<9,]
 
@@ -679,15 +667,20 @@ combined_to_plot_last_visit$months
 
 combined_to_plot[,c('scopa', 'scopa_tot', 'PATNO', 'PDSTATE', 'REC_ID_SC')]
 
-combined_to_plot$SCAU_TOT
-combined_to_plot$REC_ID_SC
-
 combined_to_plot_final=combined_to_plot_last_visit
+table(combined_to_plot_final$CSFSAA)
+
+
+
+### check duplicates 
+
+
+
 
 
 
 y='NP3_TOT'
-plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape ){
+plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape, facet_var=NULL, line_group='line_group' ){
   #'
   #' @paramcombined_to_plot_final
   #' @x :variable in the x axis--> time
@@ -706,31 +699,63 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
   
   # TODO: pagname m3 does not apply to oteher scales 
   #shape= 
+  # fixes error: Error: data must be uniquely named but has duplicate columns
+  #5
+  
+  WIDTH=6
+  HEIGHT=3
   
   
+ # combined_to_plot_final<-combined_to_plot_final %>% 
+#    dplyr::filter(NP3_TOT<500)
+  combined_to_plot_final<-combined_to_plot_final%>%
+    dplyr::filter(!!as.symbol(y) != '.') %>%
+    as.data.frame()
+
+  
+  
+  
+  colnames(combined_to_plot_final) <- make.unique(names(combined_to_plot_final))
+
+  
+  
+  ### MAKE Numeric to remove dots!
   combined_to_plot_final[, colour_by] = as.factor(combined_to_plot_final[, colour_by])
   combined_to_plot_final[, x]=as.factor(combined_to_plot_final[, x])
+  combined_to_plot_final[, y]<-as.numeric(combined_to_plot_final[, y])
+  combined_to_plot_final[, y]<-clip_outliers(combined_to_plot_final[, y], x_times = 5, lower=FALSE)
   
-  p<-ggplot(combined_to_plot_final, aes_string( x=x, color=colour_by, group='line_group'))+
+  
+  if (y=='urate'){
+    combined_to_plot_final<-combined_to_plot_final%>%
+      dplyr::filter(!!as.symbol(y) >100) %>%
+      as.data.frame()
+    
+  }
+  
+  
+  p<-ggplot(combined_to_plot_final, aes_string( x=x, color=colour_by, group=line_group))+
     geom_point(aes_string(y=y,color=colour_by, shape=shape))+
-    geom_line(aes_string(y=y,color=colour_by, group=group))+
+    geom_line(aes_string(y=y,color=colour_by, group=line_group),size=0.5, alpha=0.5 )+
     guides( shape='none', group='none')#+
   
-  
-  
-  p
-  #theme(legend.position="none")
-  #theme(legend.position="bottom", legend.text=element_text(size=2))+
-  #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
-  
-  p+facet_wrap(formula_1, nrow = 4)
-  p
-  ggsave(paste0(outdir_orig,'metadata/lines_',SEL_VIS, paste0(formula_1, collapse=''),group, colour_by, y,'.jpeg' ), width=10, height=7)
+  if (!is.null(facet_var) ){
+    height=HEIGHT*2
+    formula_1=paste0('~', facet_var)
+    
+    p+facet_wrap(formula_1, nrow = 4)
+    p 
+    
+  }else{
+    height=HEIGHT
+  }
+ 
+  ggsave(paste0(outdir_orig,'metadata/lines_',SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=height)
   
   
   #p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
   #p<-ggplot(combined_to_plot_med_only, aes_string( x=x,y=y))+
-  
+
   
   p<-ggplot(combined_to_plot_final, aes_string( x=x,y=y))+
     
@@ -740,6 +765,7 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
     # geom_violin(aes_string(x=x, y=y))+
     #  geom_boxplot(aes_string(x=x, fill='PAG_NAME_M3'))+
     # geom_violin(aes_string(x=x, fill='PDSTATE'))
+
     geom_boxplot(aes_string(x=x, fill=colour_by))
   
   
@@ -750,26 +776,36 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
   #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
   
   # p+facet_wrap(formula_1, nrow = 4)
-  ggsave(paste0(outdir_orig,'metadata/box_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=5)
+  ggsave(paste0(outdir_orig,'metadata/box_', SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=HEIGHT)
   # ggsave(paste0(outdir_orig,'metadata/violin_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
 }
 
 
-colour_by='PDSTATE'
 scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY')
 scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT')
+# , 'NHY', 'td_pigd' --> get counts for these ones at every time point eg. counts of 2, counts of 3 and plot those
+colour_by='PD_MED_USE'
+facet_var='PDSTATE'
+colour_by='PDSTATE'
+
 
 for (y in scales){
-  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape )
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by=colour_by, shape=shape, facet_var = facet_var  )
 
 }
 
-scales<-c( 'SCAU_TOT', 'scopa_tot', 'MCA_TOT')
+# scales not taken at off and on
+combined_to_plot_final
 colour_by='PDMEDYN'
 
-combined_to_plot_final[, c('PATNO','PDMEDYN', 'MCA_TOT')]
+combined_to_plot_final$upsit_pctl
+facet_var='COHORT'
+combined_to_plot_final[, c('PATNO','PDMEDYN', 'MCA_TOT', 'upsit_pctl')]
+scales<-c( 'SCAU_TOT', 'scopa_tot', 'MCA_TOT', 'bjlot', 'moca', 'upsit', 'MSEADLG')
+scales<-c( 'stai' , 'stai_state', 'stai_trait', 'VLTANIM', 'gds', 'hvlt_immediaterecall', 'ess')
+
 for (y in scales){
-  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape )
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape, facet_var=NULL , line_group='PATNO')
   }
 
 graphics.off()
@@ -778,19 +814,43 @@ combined_to_plot_final$ptau
 
 
 
-combined_to_plot_final$DATSCAN_PUTAMEN_R_ANT
-scales=c('DATSCAN_PUTAMEN_L_ANT','DATSCAN_PUTAMEN_R_ANT','DATSCAN_PUTAMEN_L','ai_putamen','PUTAMEN_L', 'PUTAMEN_R', 'ptau')
+combined_to_plot_final[,c('asyn', 'PATNO_EVENT_ID')]
+combined_to_plot_final$asyn<-as.numeric(combined_to_plot_final$asyn)
+  combined_to_plot_final$asyn
+shape
+#iMAGING
+combined_to_plot_final$CSFSAA
+
+# ADD upsit, semantic fluency 
+ 
+ # un==imaging
+scales=c('DATSCAN_PUTAMEN_L', 'DATSCAN_CAUDATE_L', 'DATSCAN_CAUDATE_R', 'DATSCAN_PUTAMEN_R', 'ips_caudate', 'mean_caudate', 'mean_striatum', 
+         'con_caudate', 'con_putamen', 'con_striatum', 'lowput_ratio')
+scales=c('ptau', 'asyn', 'tau', 'abeta', 'tau', 'CSFSAA', 'nfl_csf', 'total_di_18_1_BMP', 'hemohi', 'urate')
+
+combined_to_plot_final$DBSYN
+facet_var=NULL
+#facet_var='DBSYN'
+
+combined_to_plot_final[, scales]
 for (y in scales){
-  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape )
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape, facet_var = facet_var, line_group='PATNO' )
 }
 
 graphics.off()
 
+combined_to_plot_final[combined_to_plot_final$EVENT_ID=='V16', 'mean_striatum']
 
-
+combined_to_plot_final
 ##
 
+curated_v1[curated_v1$EVENT_ID=='V12', 'mean_striatum']
+curated_v2[curated_v2$EVENT_ID=='V16', 'mean_striatum']
+as.numeric(curated_v2[curated_v2$EVENT_ID=='V08', 'urate'])
+as.numeric(curated_v1[curated_v1$EVENT_ID=='V08', 'urate'])
 
+as.numeric(combined_to_plot_final[combined_to_plot_final$EVENT_ID=='V08', 'urate'])
 
-
+curated_v1$urate
+curated_v2$mean_striatum
 

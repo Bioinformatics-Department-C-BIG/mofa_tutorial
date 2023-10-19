@@ -85,7 +85,7 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   }
   dim(df_ord)
   show_rownames=TRUE
-  #jpeg(fname, width=10*100, height=7*100, res=300)
+  jpeg(fname, width=10*100, height=7*100, res=100)
   my_pheatmap<-pheatmap(hm_scaled, 
                         labels_row=lab,
                         cluster_rows=TRUE, 
@@ -100,7 +100,8 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   
   
   my_pheatmap
-  ggsave(fname, width=7, height=7, dpi=300)
+  dev.off()
+  #ggsave(fname, width=7, height=7, dpi=300)
   
   ComplexHeatmap::pheatmap(hm_scaled, 
                            labels_row=lab,

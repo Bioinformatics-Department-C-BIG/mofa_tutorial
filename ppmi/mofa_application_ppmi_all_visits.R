@@ -19,7 +19,6 @@ library(MOFA2)
 
 
 library(data.table)
-library(tidyverse)
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -32,6 +31,7 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
 split=FALSE
 run_rna_mirna=FALSE
+run_validation=FALSE
 #if (split){
 #  N_FACTORS=8
 #}
@@ -43,7 +43,7 @@ VISIT=c('V08');
 
 run_vsn=TRUE
 ## tissue is set in the config
-use_signif=TRUE
+use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 
@@ -98,7 +98,7 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
   
   #combined_bl=combined_bl_log
   ## get list of three mats 
-  data_full=prepare_multi_data(p_params, param_str_g, param_str_m, mofa_params)
+  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
   # create multi experiment 
   mofa_multi<-create_multi_experiment(data_full, combined_bl)
   mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
@@ -190,14 +190,18 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
         df_mofa <- as.data.frame(get_factors(MOFAobject, factors=1:N_final)[[1]])
         df_mofa$y<- as.factor(MOFAobject@samples_metadata$COHORT)
         df_mofa_age <- cbind(df_mofa,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
-        res_age_mofa<-run_train_validation( df=df_mofa_age)
-        acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])
-        print(acc_mean)
         
-        df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
-                      run_mofa_complete, N_FACTORS,cors_t , max_cor, acc_mean )
-        
-        write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+        if (run_validation){
+          res_age_mofa<-run_train_validation( df=df_mofa_age)
+          acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])
+          print(acc_mean)
+          
+          df_stats=  c( TOP_PN, TOP_GN, MIN_COUNT_G, TOP_MN, MIN_COUNT_M, mofa_params, sel_coh_s,VISIT_S,  scale_views[1],  use_signif,
+                        run_mofa_complete, N_FACTORS,cors_t , max_cor, acc_mean )
+          
+          write.table(t(df_stats), paste0(outdir_orig,'all_stats.csv'), append=TRUE,sep=',', col.names = FALSE)
+        }
+       
         }
     
   }
@@ -217,7 +221,7 @@ for (N_FACTORS in c(15)){
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE)
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=TRUE)
   outdir = paste0(outdir,'/' );outdir
   
   
@@ -268,14 +272,34 @@ meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,me
 
 img_var='con_putamen'
 
-V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V06', c(img_var, 'PATNO')]
+#V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V06', c(img_var, 'PATNO')]
+BL_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID=='BL', c(img_var, 'PATNO')]
 
-dim(meta_merged_ord)
-V10_mean_striatum[, img_var]=as.numeric(V10_mean_striatum[, img_var])
-V10_mean_striatum=V10_mean_striatum[!is.na(V10_mean_striatum[, img_var]),]
+get_curated_data<-function(img_var, EVENT_ID){
+  V10_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID==EVENT_ID, c(img_var, 'PATNO')]
+  V10_mean_striatum[, img_var]=as.numeric(V10_mean_striatum[, img_var])
+  V10_mean_striatum=V10_mean_striatum[!is.na(V10_mean_striatum[, img_var]),]
+  V10_mean_striatum<-V10_mean_striatum[!duplicated(V10_mean_striatum$PATNO),]
+  # return one per patient -- gett the latest if multiple?? 
+  return(V10_mean_striatum)
+}
 
-V10_mean_striatum<-V10_mean_striatum[!duplicated(V10_mean_striatum$PATNO),]
-meta_merged_ord_V10<-merge(meta_merged_ord, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V06'),  all.x=TRUE)
+V06_mean_striatum<-get_curated_data(img_var, 'V06')
+BL_mean_striatum<-get_curated_data(img_var, 'BL')
+V10_mean_striatum<-get_curated_data(img_var, 'V10')
+V08_mean_striatum<-get_curated_data(img_var, 'V08')
+
+
+meta_merged_ord_V10<-merge(meta_merged_ord, V06_mean_striatum,by=c('PATNO'), suffixes = c("", '_V06'),  all.x=TRUE)
+meta_merged_ord_V10<-merge(meta_merged_ord_V10, BL_mean_striatum,by=c('PATNO'), suffixes = c("", '_BL'),  all.x=TRUE)
+meta_merged_ord_V10<-merge(meta_merged_ord_V10, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V10'),  all.x=TRUE)
+
+meta_merged_ord_V10$change<-meta_merged_ord_V10[, paste0(img_var, '_V10')]-meta_merged_ord_V10[, paste0(img_var, '_BL')]
+
+
+#meta_merged_ord_V10[meta_merged_ord_V10$COHORT==2,]$change
+hist(meta_merged_ord_V10$change)
+meta_merged_ord_V10$change
 #View(meta_merged_ord_V10)
 
 dim(meta_merged_ord_V10)

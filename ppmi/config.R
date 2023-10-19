@@ -153,6 +153,8 @@ outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_',TISSUE, '_norm_
 
 p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
 
+
+
 p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 p_params_csf<- paste0(VISIT_S, '_','CSF', '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 p_params_plasma<- paste0(VISIT_S, '_','Plasma', '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
@@ -163,6 +165,12 @@ outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT_S,'_',TISSUE, '_nor
 
 
 p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
+
+
+#p_params_all<- paste0(VISIT_S, '_',TISSUE, '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+#p_params_csf_all<- paste0(VISIT_S, '_','CSF', '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+#p_params_plasma_all<- paste0(VISIT_S, '_','Plasma', '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+
 
 
 #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)

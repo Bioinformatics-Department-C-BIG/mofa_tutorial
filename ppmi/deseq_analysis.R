@@ -6,7 +6,7 @@ source(paste0('ppmi/setup_os.R'))
 
 
 ### disconnect from mofa and other scripts 
-#VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 #process_mirnas=TRUE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
@@ -376,13 +376,16 @@ if (run_heatmap){
   
   
   ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(3,4))
-
+  ws_top_bottom<-gsub('\\..*', '',ws_top_bottom)
   graphics.off()
   
   
-
+  vsd_filt=vsd_filt; sigGenes = ws_top_bottom  ;  df=df; remove_cn=FALSE;
+  show_rownames = show_rownames;cluster_cols = TRUE; sel_samples = NULL 
+  order_by_hm='COHORT'
+  
     my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
-                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL )
+                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL ,order_by_hm=order_by_hm)
   
     
     remove_cn=FALSE
@@ -392,19 +395,21 @@ if (run_heatmap){
     
     
     groups_kmeans3$cluster
-    sel_samples=names(which(groups_kmeans3$cluster==3))
+    sel_samples=names(which(groups_kmeans3$cluster==1))
     
     #sel_samples
     mt<-colData(vsd_filt)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
     sigGenes<-most_sig_over_time$symbol[1:40]
+    sigGenes<-most_sig_over_time$symbol[1:40]
+    sigGenes
     graphics.off()
   ### Plot MOFA too
   if (length(VISIT)>1){
     
     ## TODO: symbols vector 
-    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
+    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
     
     my_pheatmap

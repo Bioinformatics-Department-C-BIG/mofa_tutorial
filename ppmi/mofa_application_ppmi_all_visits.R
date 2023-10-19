@@ -221,7 +221,7 @@ for (N_FACTORS in c(15)){
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE)
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=TRUE)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
   outdir = paste0(outdir,'/' );outdir
   
   
@@ -311,9 +311,6 @@ MOFAobject@samples_metadata=meta_merged_ord
 MOFAobject@samples_metadata=meta_merged_ord_V10
 
 
-MOFAobject@samples_metadata
-
-meta_merged_ord_V10$con_putamen_V06
 
 
 

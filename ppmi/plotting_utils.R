@@ -8,6 +8,8 @@ library('ComplexHeatmap')
 
 
 
+
+
 plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                        cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
   
@@ -81,7 +83,6 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
     hm_scaled=hm_scaled_filt
     df_ord=df_ord_filt
   }
-  dim(hm_scaled_filt)
   dim(df_ord)
   show_rownames=TRUE
   #jpeg(fname, width=10*100, height=7*100, res=300)
@@ -168,7 +169,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   
-  
+  #get_symbols_vector
   ## HEATMAP OPTIONS 
   cluster_cols=cluster_cols;   
   
@@ -219,8 +220,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
     hm_scaled=hm_scaled_filt
     df_ord=df_ord_filt
   }
-  dim(hm_scaled_filt)
-  dim(df_ord)
   show_rownames=TRUE
   #jpeg(fname, width=10*100, height=7*100, res=300)
   
@@ -230,6 +229,9 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   df_ord<-df_ord[,!colnames(df_ord) %in% c('PATNO_EVENT_ID', 'PATNO')]
   
+  graphics.off()
+  fname=paste0(outdir_s, '/heatmap_time.jpeg')
+  jpeg(fname, width=10*100, height=7*100, res=100)
   
   my_pheatmap<-pheatmap(hm_scaled, 
                         labels_row=lab,
@@ -243,11 +245,11 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
                         
                         clustering_method = 'ward.D2'
   )
-  
-  
   my_pheatmap
+  dev.off()
+  #my_pheatmap
 
-  ggsave(fname, width=7, height=7, dpi=300)
+ # ggsave(fname, width=7, height=7, dpi=300)
   
   
   

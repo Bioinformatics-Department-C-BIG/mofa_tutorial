@@ -560,23 +560,52 @@ get_pval_text<-function(gse, pvalueCutoff_sig){
 
 ################ MOFA ####
 
+get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_subcoh_s, TOP_N ){
+  #''
+  #' loads vsd and filters on the fly to save memory! 
+  #' @param prefix
+  #' 
+  #' 
+  
+  
+  param_str_tmp<-paste0(prefix, VISIT_S, '_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
+  # also defined in config--> check if updated
+  deseq_file <-paste0(output_files, param_str_tmp, 'deseq.Rds'); deseq_file
+  
+  datalist=loadRDS(deseq_file)
+  #ddsSE=datalist[[1]]
+  vsd=datalist[[2]]
+  vsd_mat=assay(vsd)
+  highly_variable_genes_mofa<-selectMostVariable(vsd_mat, TOP_N)
+  print(paste('Loaded highly variables files with settings: ', param_str_tmp, TOP_N))
+  
+  
+  return(highly_variable_genes_mofa)
+  
+}
 
-prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
+
+prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 
   # TODO: simplify the reading and setting the feature column to null? 
   #' @param  p_params, param_str_g, param_str_m : these are set by the config.R
   #' 
+  
+  
+  #highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
+  #highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+  
+  
   highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
   highly_variable_proteins_outfile_csf = paste0(output_files, p_params_csf , '_highly_variable_proteins_mofa.csv')
   highly_variable_proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_highly_variable_proteins_mofa.csv')
   
-  highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa.csv')
-  highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa.csv')
+  
   
   if (use_signif){
-    highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
-    highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
+    #highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
+    #highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
    
      # TODO: shall I input significant here? 
     highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
@@ -604,25 +633,17 @@ prepare_multi_data<-function(p_params, param_str_g, param_str_m, mofa_params){
   ##### Load mirnas + RNAs 
   ### we use data.table because there are duplicate samples? 
   ### problem with saving of rownmaes 
-  highly_variable_mirnas_mofa<-fread(highly_variable_mirnas_outfile,header=TRUE)
-  colnames(highly_variable_mirnas_mofa)[1]<-'mirnas'
-  rownames(highly_variable_mirnas_mofa)<-highly_variable_mirnas_mofa$mirnas
-  
+  highly_variable_mirnas_mofa = get_highly_variable_matrix(prefix='mirnas_', VISIT_S = VISIT_S ,min.count = MIN_COUNT_M, 
+                                                        sel_coh_s = sel_coh_s, sel_subcoh_s = sel_subcoh_s, TOP_N=TOP_MN)
   # EITHER input to vst or put as is normalized
-  miRNA<-as.data.frame(highly_variable_mirnas_mofa[, mirnas:=NULL])
-  rownames(miRNA)<-rownames(highly_variable_mirnas_mofa)
-  
+  miRNA<-as.data.frame(highly_variable_mirnas_mofa)
   ##### Load RNA seq: 
+  highly_variable_genes_mofa<- get_highly_variable_matrix(prefix='rnas_', VISIT_S = VISIT_S ,min.count = MIN_COUNT_G, 
+                             sel_coh_s = sel_coh_s, sel_subcoh_s = sel_subcoh_s, TOP_N=TOP_GN)
   
-  highly_variable_genes_mofa<-fread(highly_variable_genes_outfile,header=TRUE)
-  colnames(highly_variable_genes_mofa)[1]<-'rnas'
-  rownames(highly_variable_genes_mofa)<-highly_variable_genes_mofa$rnas
-  dim(highly_variable_genes_mofa)
-  # or input to vst or put as is normalized
-  
-  RNA<-as.data.frame(highly_variable_genes_mofa[, rnas:=NULL])
-  rownames(RNA)<-rownames(highly_variable_genes_mofa)
-  head(rownames(RNA)); head(colnames(RNA))
+  #dim(highly_variable_genes_mofa)
+  RNA<-as.data.frame(highly_variable_genes_mofa)
+  head(rownames(miRNA)); head(colnames(RNA))
   
   data_full<-list(miRNA=as.matrix(miRNA), 
                   RNA=as.matrix(RNA),

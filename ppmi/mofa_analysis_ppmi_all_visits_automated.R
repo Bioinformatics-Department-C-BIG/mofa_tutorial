@@ -362,8 +362,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                   'con_putamen', 
                  'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
                  'rigidity','months', 
-                 'mean_striatum_V06', 
-                 'con_putamen_V06')
+                 'con_putamen', 'con_putamen_V10', 
+                 'change')
                    #'DYSKIRAT')
 
 
@@ -387,15 +387,15 @@ selected_covars2<-c( 'AGE', 'SEX',
                    'con_putamen', 
                    'td_pigd_old_on', 
                  'PD_MED_USE' , 
-                 'months', 'DYSKIRAT', 
-                 'mean_striatum_V06', 'con_putamen_V06')
+                 'months', 'DYSKIRAT', 'con_putamen_V10')
 
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
 }
 
-selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'mean_striatum_V06' )
+
+selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'con_putamen_V10' )
 
 sm<-samples_metadata(MOFAobject)
 sm$asyn

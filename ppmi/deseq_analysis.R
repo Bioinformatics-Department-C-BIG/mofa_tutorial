@@ -6,8 +6,8 @@ source(paste0('ppmi/setup_os.R'))
 
 
 ### disconnect from mofa and other scripts 
-#VISIT=c('BL','V04', 'V06',  'V08');
-process_mirnas=TRUE
+VISIT=c('BL','V04', 'V06',  'V08');
+#process_mirnas=TRUE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
@@ -77,16 +77,6 @@ if (!process_mirnas){
 }
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
-VISIT
-#symbols[dup_ind]
-
-outdir_s
-
-deseq2ResDF$SYMBOL
-
-deseq2ResDF
-
-
 log2fol_T<-0.25
 padj_T<-.005
 
@@ -116,6 +106,9 @@ vsd_mat <- assay(vsd)
 ### TODO: ADD SIGNIFICANCE thresholds in the output file!! 
 #for (most_var in c(0.05, 0.5)){
 #  for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3,  0.9,0.75,0.5)){
+#get_highly_variable_matrix(prefix='mirnas_', VISIT_S, MIN_COUNT_M, sel_coh_s , sel_subcoh_s , TOP_MN)
+
+
     for (most_var in c(0.05,0.1, 0.5, 0.9, 0.2,0.3, 0.35, 0.4, 0.45, 0.75)){
     
 
@@ -127,9 +120,9 @@ vsd_mat <- assay(vsd)
   highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
   
   
-  write.csv(highly_variable_genes_mofa, highly_variable_outfile);
+  #write.csv(highly_variable_genes_mofa, highly_variable_outfile);
   
-  write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
+  #write.csv(highly_variable_sign_genes_mofa, highly_variable_sign_outfile)
 
   
   highly_variable_sign_outfile
@@ -368,7 +361,9 @@ if (run_heatmap){
   
   
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
-  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT')
+  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT', 'con_putamen')
+  
+  # TODO:  choose off 
   
   df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   # if clusters exist 
@@ -383,13 +378,16 @@ if (run_heatmap){
   
   
   ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(3,4))
-
+  ws_top_bottom<-gsub('\\..*', '',ws_top_bottom)
   graphics.off()
   
   
-
+  vsd_filt=vsd_filt; sigGenes = ws_top_bottom  ;  df=df; remove_cn=FALSE;
+  show_rownames = show_rownames;cluster_cols = TRUE; sel_samples = NULL 
+  order_by_hm='COHORT'
+  
     my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
-                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL )
+                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL ,order_by_hm=order_by_hm)
   
     
     remove_cn=FALSE
@@ -399,19 +397,21 @@ if (run_heatmap){
     
     
     groups_kmeans3$cluster
-    sel_samples=names(which(groups_kmeans3$cluster==3))
+    sel_samples=names(which(groups_kmeans3$cluster==1))
     
     #sel_samples
     mt<-colData(vsd_filt)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
     sigGenes<-most_sig_over_time$symbol[1:40]
+    sigGenes<-most_sig_over_time$symbol[1:40]
+    sigGenes
     graphics.off()
   ### Plot MOFA too
   if (length(VISIT)>1){
     
     ## TODO: symbols vector 
-    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd_filt, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
+    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
     
     my_pheatmap

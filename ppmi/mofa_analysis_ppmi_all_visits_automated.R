@@ -346,12 +346,14 @@ samples_metadata(MOFAobject)$Outcome
 
 
 sm<-samples_metadata(MOFAobject)
+sm$tau_asyn
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                    'NHY', 'NP3BRADY',
                    'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
-                   'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 'ptau', 'abeta', 'ess_cat', 
+                   'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 
+                   'ptau', 'asyn', 'tau_ab', 'tau_asyn', 'abeta', 'ess_cat', 
                    'HVLTRDLY',
                    'PDSTATE', 'NP3RTCON', 
                   'stai_state', 'stai_trait'  ,'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
@@ -359,7 +361,9 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                    'NP3RTARU', 'RBD_TOT', 
                   'con_putamen', 
                  'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
-                 'rigidity','months')
+                 'rigidity','months', 
+                 'mean_striatum_V06', 
+                 'con_putamen_V06')
                    #'DYSKIRAT')
 
 
@@ -383,17 +387,19 @@ selected_covars2<-c( 'AGE', 'SEX',
                    'con_putamen', 
                    'td_pigd_old_on', 
                  'PD_MED_USE' , 
-                 'months', 'DYSKIRAT')
+                 'months', 'DYSKIRAT', 
+                 'mean_striatum_V06', 'con_putamen_V06')
 
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
 }
 
-selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen' )
+selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'mean_striatum_V06' )
 
+sm<-samples_metadata(MOFAobject)
+sm$asyn
 MOFAobjectPD
-
 selected_covars=selected_covars2
 MOFAobject_to_plot=MOFAobjectPD
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, MOFAobject_to_plot=MOFAobject){

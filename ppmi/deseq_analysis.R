@@ -7,6 +7,8 @@ source(paste0('ppmi/setup_os.R'))
 
 ### disconnect from mofa and other scripts 
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('BL',  'V08');
+
 #process_mirnas=TRUE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
@@ -299,8 +301,7 @@ if (run_heatmap){
     oSigGenes<-deseq2ResDF[deseq2ResDF$pvalue <= padj_T_hm  & abs(deseq2ResDF$log2FoldChange), ] ; dim(oSigGenes)
     
   }
-  oSigGenes
-  
+
   length(rownames(highly_variable_sign_genes_mofa))
   #View(deseq2ResDF)
   filter_highly_var=FALSE
@@ -348,24 +349,29 @@ if (run_heatmap){
   library('pheatmap')
   
   
-  
-  
-  
- # detach('ComplexHeatmap',unload=TRUE)
-         
-  
-   
-  
   df<-vsd_filt$COHORT
   assay(vsd_filt)
   
   
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
-  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT', 'con_putamen')
+  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT', 'con_putamen', 'con_putamen_V10')
+  colDataToPlot<-c('updrs3_score', 'td_pigd_old_on',  'RBD_TOT', 'updrs2_score', 'con_putamen')
   
   # TODO:  choose off 
+  colData(vsd_filt)[, c('PDSTATE', 'PATNO_EVENT_ID')]
+  df_all$updrs3_score
   
-  df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  df<-as.data.frame(colData(vsd)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  
+  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID,pdstate = c(), pag_name_m3 = c() )
+  df_all$PATNO_EVENT_ID
+  vsd$PATNO_EVENT_ID
+  colDataToPlot%in%colnames(df_all) 
+  df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  df
+  
+  # df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  
   # if clusters exist 
   
   
@@ -387,34 +393,50 @@ if (run_heatmap){
   order_by_hm='COHORT'
   
     my_pheatmap<-plot_heatmap(vsd_filt=vsd_filt, sigGenes = ws_top_bottom  ,  df=df, remove_cn=FALSE,
-                            show_rownames = show_rownames,cluster_cols = TRUE, sel_samples = NULL ,order_by_hm=order_by_hm)
+                            show_rownames = show_rownames, cluster_cols = TRUE, sel_samples = NULL ,order_by_hm=order_by_hm)
   
     
+   
+  ### Plot MOFA too
+  if (length(VISIT)>1){
     remove_cn=FALSE
     order_by_hm='COHORT'
-    
     cluster_cols=TRUE
     
     
     groups_kmeans3$cluster
-    sel_samples=names(which(groups_kmeans3$cluster==1))
+    cluster_id = 1
+    sel_samples=names(which(groups_kmeans3$cluster==cluster_id))
     
     #sel_samples
     mt<-colData(vsd_filt)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
     sigGenes<-most_sig_over_time$symbol[1:40]
-    sigGenes<-most_sig_over_time$symbol[1:40]
+    sigGenes<-most_sig_over_time$symbol[1:60]
     sigGenes
-    graphics.off()
-  ### Plot MOFA too
-  if (length(VISIT)>1){
     
+    df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO_EVENT_ID','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+    graphics.off()
+    
+    
+    
+    df$updrs3_score<-as.numeric(df$updrs3_score)
+    df$updrs2_score<-as.numeric(df$updrs2_score)
+    df$con_putamen<-as.numeric(df$con_putamen)
+
     ## TODO: symbols vector 
+    fname=paste0(outdir_s, '/heatmap_time', cluster_id, '.jpeg')
+    graphics.off()
+    
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
     
-    my_pheatmap
+    
+      jpeg(fname, width=10*150, height=7*100, res=100)
+    
+      my_pheatmap
+      dev.off()
   }
     
 

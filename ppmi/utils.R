@@ -46,7 +46,13 @@ library(SummarizedExperiment)
 
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
-  #
+  #'
+  #'
+  #' key id includes patno_event_id + ON_OFF 
+  #'
+  #'
+  
+  
   raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
   combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
   
@@ -57,11 +63,11 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   metadata_filt<-combined[match(common_samples, combined$PATNO_EVENT_ID),]
   raw_counts_filt<-raw_counts_all[,match(common_samples, colnames(raw_counts_all))]
   dim(metadata_filt)[1] ==dim(raw_counts_filt)[2]
-  
+
   
   #subset sample names
 
-  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt)
+  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt_dups)
   
   metadata_filt$COHORT_DEFINITION
   
@@ -69,6 +75,64 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
   
 }
+
+#patno_event_ids<-colData(vsd_filt)$PATNO_EVENT_ID
+#patno_event_ids
+
+#pdstate=c('OFF', '')
+ fetch_metadata_by_patient_visit<-function(patno_event_ids, pdstate, pag_name_m3){
+   #'
+   #' @param PATNO_EVENT_ID
+   #'
+   #' fetch one row per patient back  
+   #' 
+   #' 
+   #pdstate='OFF'; pag_name_m3='NUPDRS3'
+   # PRIORITIZE OFF ? 
+   
+   #combined_bl_log_sel<-combined_bl_log_sel %>%
+  #   group_by(NP3_TOT) %>%
+  #   summarize(across(everything(), max))%>%
+  #   as.data.frame()
+   
+    metadata_filt_dups<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% patno_event_ids ,]
+    #dim(metadata_filt_dups)
+    #metadata_filt_dups<-metadata_filt_dups %>% 
+    #                    dplyr::filter(PDSTATE %in%pdstate )# %>%
+                        #dplyr::filter(PAG_NAME_M3 ==pag_name_m3 )
+     
+    metadata_filt_dups<-as.data.table(metadata_filt_dups)
+    max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3_TOT)], by=PATNO_EVENT_ID]$V1]
+    
+    #max_np3[, c('PATNO_EVENT_ID', 'NP3_TOT' )]
+
+    dups<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3_TOT')]%>%
+     arrange(PATNO_EVENT_ID, PDSTATE, NUPSOURC, PAG_NAME_M3, NP3_TOT))
+    
+    metadata_filt_dups<-metadata_filt_dups[!dups,]
+    
+    metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3_TOT')]%>%
+                       arrange(PATNO_EVENT_ID)
+    
+    dups_strict<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID')])
+    metadata_filt_unique<-metadata_filt_dups[!dups_strict,]
+     
+    
+    ### if we cannot find it for all then use what was given? 
+    max_np3_unique<-as.data.frame(max_np3_unique[match(patno_event_ids, max_np3_unique$PATNO_EVENT_ID ), ])
+    
+    
+    max_np3_unique$PATNO_EVENT_ID = patno_event_ids
+     
+    max_np3_unique$PATNO_EVENT_ID
+     
+     
+  return(max_np3_unique)
+
+ }
+ 
+ metadata_filt_unique$PATNO_EVENT_ID
+
 
 ## Create the summarized experiment by selecting VISITS and cohorts 
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){

@@ -185,7 +185,7 @@ if (cluster_samples_mofa){
       
       clusters_mofa_34 <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(3,4))
       clusters_mofa_moca <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(14,10,8))
-      clusters_mofa_outcome <- cluster_samples(MOFAobjectBL, k=6, factors=sel_factors_outcome)
+      #clusters_mofa_outcome <- cluster_samples(MOFAobjectBL, k=6, factors=sel_factors_outcome)
       
       clusters_patients <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=sel_factors)
       
@@ -228,6 +228,7 @@ samples_metadata(MOFAobjectPD)$clusters_np3<-factor(clusters_patients_pd_np3$clu
 met<-samples_metadata(MOFAobjectPD)
 
 y='NP3_TOT'
+y='NP3_TOT'
 met%>%
   group_by(clusters_np3) %>%
   summarize(across(everything(), mean))
@@ -239,6 +240,7 @@ p<-ggplot(met ,aes_string(x='clusters_np3' , fill='clusters_np3'))+
 
 
 p
+ggsave(paste0(outdir,'/clustering/', y, '.png'))
 ## TODO: WILCOX TEST BY GROUP
 
 
@@ -346,7 +348,7 @@ samples_metadata(MOFAobject)$Outcome
 
 
 sm<-samples_metadata(MOFAobject)
-sm$tau_asyn
+sm$PATNO
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
@@ -363,11 +365,12 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                  'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
                  'rigidity','months', 
                  'con_putamen', 'con_putamen_V10', 
-                 'change')
+                 'change', 
+                 'asyn')
                    #'DYSKIRAT')
 
 
-
+# sPLIT DIAGNOSIS vs progression  
 selected_covars2<-c( 'AGE', 'SEX',
                    #'NP1_TOT', 
                    'NP2_TOT','NP3_TOT',
@@ -387,14 +390,19 @@ selected_covars2<-c( 'AGE', 'SEX',
                    'con_putamen', 
                    'td_pigd_old_on', 
                  'PD_MED_USE' , 
-                 'months', 'DYSKIRAT', 'con_putamen_V10')
+                 'months', 'DYSKIRAT', 
+                 'con_putamen_V10', 
+                 'change','asyn' )
 
+#sm$asyn
+
+#selected_covars
 
 if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
 }
 
-
+sm$change
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'con_putamen_V10' )
 
 sm<-samples_metadata(MOFAobject)

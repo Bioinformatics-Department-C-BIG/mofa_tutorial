@@ -92,10 +92,9 @@ sem<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Modified_Semantic_Flu
 
 curated_v1<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
 curated_v2<-read.csv(paste0('ppmi/ppmi_data/curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
-curated_total<-merge(curated_v1, curated, by='PATNO', )
 ## first bind the common columns 
 common_cols<-intersect(colnames(curated_v1), colnames(curated_v2))
-curated_total<-rbind(curated_v1[, common_cols],curated[, common_cols])
+curated_total<-rbind(curated_v1[, common_cols],curated_v2[, common_cols])
 curated_v2_unique<-curated_v2[, (!(colnames(curated_v2) %in% common_cols))| colnames(curated_v2) %in%c('PATNO', 'EVENT_ID')  ]; 
 curated_v1_unique<-curated_v1[, (!(colnames(curated_v1) %in% common_cols))| colnames(curated_v1) %in%c('PATNO', 'EVENT_ID')  ]; 
 
@@ -106,7 +105,13 @@ colnames(curated_total_new_cols)
 
 
 
+#c1_filt<-curated_v1%>%
+#  dplyr::filter(EVENT_ID=='V08')%>%
+#  dplyr::filter(PATNO %in% sm$PATNO)%>%
+#  as.data.frame()
 
+#c1_filt$mean_striatum ### missing....
+  
 ### Eventually merge both by visit and patient
 ## These measures are per patient and event id
 

@@ -253,6 +253,9 @@ table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
 dim(combined_bl_log_sel)
 
 ### GET THE WORSE MEASUREMENT 
+####  TODO: logic to be applied in 
+###
+
 combined_bl_log_sel<-combined_bl_log_sel %>%
   group_by(NP3_TOT) %>%
   summarize(across(everything(), max))%>%

@@ -160,10 +160,11 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
   
   ## turn to sumbol? 
-  rows_in_symbs<-get_symbols_vector(rownames(vsd_filt))
   
-  vsd_filt_genes <- vsd_filt[rows_in_symbs %in% sigGenes,]
+  vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
   
+  
+  dim(vsd_filt_genes)
   
   ### Add the annotations 
   meta_single<-colData(vsd_filt_genes)
@@ -180,6 +181,10 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   hm<-assay(vsd_filt_genes); dim(hm);dim(df)
 
+
+  
+  
+  
   
   new_ord<-order(df[,'EVENT_ID'], df[,'PATNO'])
   df_ord<-df[new_ord ,]
@@ -213,7 +218,12 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   if (!is.null(sel_samples)){
-    df_pats<-gsub('\\_.*', '',rownames(df_ord) )
+    # this works if patnoevent id is supplied! 
+    
+    if (!('PATNO_EVENT_ID' %in%colnames(df_ord))){
+      print('cannot filter patients, PATNO_EVENT_ID not supplied')
+    }
+    df_pats<-gsub('\\_.*', '',df_ord$PATNO_EVENT_ID )
     d_ind<-df_pats%in% sel_samples
     hm_scaled_filt<-hm_scaled[,d_ind]
     df_ord_filt<-df_ord[d_ind, ]
@@ -225,14 +235,47 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #jpeg(fname, width=10*100, height=7*100, res=300)
   
 
+  
+  
+  ######### ORDER OF COLUMNS/SAMPLES ####
+  
+  
+  V08_inds<-df_ord$EVENT_ID == 'V08'
+  hm_scaled_v08<-hm_scaled[,V08_inds]
+  dend_v08<-as.dendrogram(hclust(dist(t(hm_scaled_v08))))
+  order_V08_labels<-labels(dend_v08)
+  order_v08<-seq(1:length(order_V08_labels)); names(order_v08)<-gsub('\\_.*','', order_V08_labels)
+  
+  df_ord$pat_order<-order_v08[match(df_ord$PATNO,names(order_v08)  )]
+  
+  
+  new_ord<-order(df_ord[,'EVENT_ID'], df_ord[,'pat_order'])
+  df_ord<-df_ord[new_ord ,]
+  
+  df_ord$COHORT
+  dim(hm); dim(df_ord)
+  hm_scaled<-hm_scaled[,new_ord]
+  
+  ####
+  
+  
+  
+  
+  
   ## Put a blank row in each one 
   split_time<-as.numeric(cumsum(table(df_ord$EVENT_ID)))
   
-  df_ord<-df_ord[,!colnames(df_ord) %in% c('PATNO_EVENT_ID', 'PATNO')]
+  df_ord<-df_ord[,!colnames(df_ord) %in% c('PATNO_EVENT_ID', 'PATNO', 'pat_order')]
+  
+ 
+  
+  
+  symbs<-get_symbols_vector(rownames(hm_scaled))
+ # symbs
   
   graphics.off()
-  fname=paste0(outdir_s, '/heatmap_time.jpeg')
-  jpeg(fname, width=10*100, height=7*100, res=100)
+ 
+  
   
   my_pheatmap<-pheatmap(hm_scaled, 
                         labels_row=lab,
@@ -246,28 +289,13 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
                         
                         clustering_method = 'ward.D2'
   )
-  my_pheatmap
-  dev.off()
+
+  #dev.off()
   #my_pheatmap
 
  # ggsave(fname, width=7, height=7, dpi=300)
   
   
-  
-  ComplexHeatmap::pheatmap(hm_scaled, 
-                           labels_row=lab,
-                           cluster_rows=TRUE, 
-                           show_rownames=show_rownames,
-                           #scale='row', 
-                           cluster_cols=cluster_cols,
-                           
-                           annotation_col=df_ord, 
-                           
-                           clustering_method = 'ward.D2')
-  
-  
-
-
   return(my_pheatmap)
 }
 

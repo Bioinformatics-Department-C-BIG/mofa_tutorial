@@ -143,15 +143,19 @@ cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
 if (length(sel_coh)>1){
   sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+  sel_factors_saa<-which(cors_all[,c('CSFSAA' )]>(-log10(0.05)))
+  
   
 }else{
   sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
   
 }
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT' )]>(-log10(0.05)))
-sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT' )]>(-log10(0.05)))
+sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
 
-sel_factors_pd_np3
+sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT_LOG' )]>(-log10(0.05)))
+sel_factors_pd_saa<-which(cors_all_pd[,c('CSFSAA' )]>(-log10(0.05)))
+
 
 sel_factors_np3<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
 
@@ -366,7 +370,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                  'rigidity','months', 
                  'con_putamen', 'con_putamen_V10', 
                  'change', 
-                 'asyn')
+                 'asyn', 'CSFSAA')
                    #'DYSKIRAT')
 
 
@@ -392,7 +396,7 @@ selected_covars2<-c( 'AGE', 'SEX',
                  'PD_MED_USE' , 
                  'months', 'DYSKIRAT', 
                  'con_putamen_V10', 
-                 'change','asyn' )
+                 'change','asyn' , 'CSFSAA')
 
 #sm$asyn
 

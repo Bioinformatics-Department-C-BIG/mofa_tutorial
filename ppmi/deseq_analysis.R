@@ -7,7 +7,8 @@ source(paste0('ppmi/setup_os.R'))
 
 ### disconnect from mofa and other scripts 
 VISIT=c('BL','V04', 'V06',  'V08');
-VISIT=c('BL',  'V08');
+VISIT=c('BL', 'V06' ,'V08');
+VISIT=c('BL', 'V08');
 
 #process_mirnas=TRUE
 
@@ -359,11 +360,12 @@ if (run_heatmap){
   
   # TODO:  choose off 
   colData(vsd_filt)[, c('PDSTATE', 'PATNO_EVENT_ID')]
-  df_all$updrs3_score
   
   df<-as.data.frame(colData(vsd)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   
   df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID,pdstate = c(), pag_name_m3 = c() )
+  df_all$updrs3_score
+  
   df_all$PATNO_EVENT_ID
   vsd$PATNO_EVENT_ID
   colDataToPlot%in%colnames(df_all) 
@@ -405,15 +407,15 @@ if (run_heatmap){
     
     
     groups_kmeans3$cluster
-    cluster_id = 1
-    sel_samples=names(which(groups_kmeans3$cluster==cluster_id))
+    cluster_id = c(1,2)
+    sel_samples=names(which(groups_kmeans3$cluster%in% c(1,2)))
     
     #sel_samples
     mt<-colData(vsd_filt)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
     sigGenes<-most_sig_over_time$symbol[1:40]
-    sigGenes<-most_sig_over_time$symbol[1:60]
+    sigGenes<-most_sig_over_time$symbol[1:40]
     sigGenes
     
     df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO_EVENT_ID','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
@@ -426,14 +428,14 @@ if (run_heatmap){
     df$con_putamen<-as.numeric(df$con_putamen)
 
     ## TODO: symbols vector 
-    fname=paste0(outdir_s, '/heatmap_time', cluster_id, '.jpeg')
+    fname=paste0(outdir_s, '/heatmap_time', cluster_id, factor, '.jpeg')
     graphics.off()
     
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
     
     
-      jpeg(fname, width=10*150, height=7*100, res=100)
+      jpeg(fname, width=7*150, height=7*100, res=100)
     
       my_pheatmap
       dev.off()

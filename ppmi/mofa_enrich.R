@@ -51,6 +51,8 @@ cohort_cors[sel_factors]
 ## select by correlation? 
 sel_factors<-which(cors>-log10(0.05))
 sel_factors
+sel_factors<-sel_factors_diff
+
 vars_by_factor_all$r2_per_factor$group1[sel_factors,]
 
 ONT='BP'

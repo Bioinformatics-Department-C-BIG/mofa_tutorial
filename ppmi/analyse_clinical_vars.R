@@ -240,10 +240,14 @@ combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, co
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
 combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)
 
+
+
 patno_event_ids_BL<-paste0(combined_new$PATNO, '_', 'BL')
 combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined)[,cols_fut_visit]
 combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined)
 combined_BL_all$updrs3_score
+
+
 
 changev10<-sapply(combined_future_V10, as.numeric)-sapply(combined_BL, as.numeric)
 changev12<-sapply(combined_future_V12, as.numeric)-sapply(combined_BL, as.numeric)

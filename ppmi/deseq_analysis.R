@@ -366,14 +366,13 @@ if (run_heatmap){
                    'mean_striatum_V10', 'abeta', 
                    'hi_putamen_V10')
   
-  colDataToPlot<-c('updrs3_score','updrs3_score_V12', 'NP3_TOT_V16',  'RBD_TOT', 'updrs2_score', 
-                   'con_putamen','con_putamen_V10', 'NP3_TOT_diff_V16',
-                   'abeta', 
-                   'hi_putamen_V10')
+  colDataToPlot<-c('updrs3_score','updrs3_score_V12', 'NP3_TOT_V16',   'updrs2_score', 
+                   'con_putamen','con_putamen_V10', 'NP3_TOT_diff_V16', 'NP2_TOT_diff_V16',
+                   'abeta', 'RBD_TOT_diff_V16', 
+                   'hi_putamen_diff_V10')
   
   
 
-  
   
   # TODO:  choose off 
   colData(vsd_filt)[, c('PDSTATE', 'PATNO_EVENT_ID')]
@@ -384,14 +383,14 @@ if (run_heatmap){
   df_all$NP3_TOT_V16
   
   colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
-  t1<-'BL';  t2='V16';
+  t1<-'BL';  t2='V10';
   
   #df=df_all
   df_change= get_changes(df_all,colData_change, t1, t2 )
   colnames(df_change)
   df_all<-cbind(df_all, df_change)
   t1<-'BL';  t2='V16';
-  colData_change=c('NP3_TOT', 'NP2_TOT')
+  colData_change=c('NP3_TOT', 'NP2_TOT', 'RBD_TOT' )
   #df_all$NP3_TOT_V16
   df_change= get_changes(df_all,colData_change, t1, t2 )
   df_all<-cbind(df_all, df_change)
@@ -401,7 +400,7 @@ if (run_heatmap){
   
 
   colDataToPlot%in%colnames(df_all) 
-  df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PATNO_EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
    
   # df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   
@@ -450,6 +449,7 @@ if (run_heatmap){
                                  colDataToPlot, "COHORT")])
 
     df$cluster_m_all<-factor(groups_kmeans_all_factors$cluster[match(df$PATNO, names(groups_kmeans_all_factors$cluster))])
+    df$cluster_m_diff<-factor(groups_kmeans_diff_factors$cluster[match(df$PATNO, names(groups_kmeans_diff_factors$cluster))])
     
     graphics.off()
 
@@ -457,6 +457,8 @@ if (run_heatmap){
     df[, c(colDataToPlot)]<-sapply(df[, colDataToPlot], as.numeric)
     df[df$EVENT_ID=='V08', 'con_putamen']=df[df$EVENT_ID=='V08', 'con_putamen_V10']
     df$AGE<-as.numeric(df$AGE)
+    df$abeta<-as.numeric(df$abeta)
+    
     # todo: add the change as well
     
     ## TODO: symbols vector 

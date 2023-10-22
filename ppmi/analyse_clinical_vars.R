@@ -200,6 +200,10 @@ sub_patterns_all<-paste(sub_patterns_2, collapse='|')
 ### from now on work on new vars!! 
 
 
+
+
+
+
 ## LOG only the TOTALS !! 
 #'
 #'
@@ -212,9 +216,76 @@ combined_new<-mutate(combined, df_log)
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
 combined_new$MCA_TOT
 
-write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 
-combined_new[, c('SCAU22','SCAU23','SCAU24','SCAU25','scopa', 'scopa_tot')]
+
+#### ADD FUTURE VISIT #####
+
+
+### attach future data 
+
+
+
+# TODO: also add the outcome total: 
+#img_var='NP3_TOT'
+## here draw from the original..? 
+cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10')
+combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit]
+
+
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12')
+combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit]
+
+# choose what is available here? 
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
+combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)
+
+patno_event_ids_BL<-paste0(combined_new$PATNO, '_', 'BL')
+combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined)[,cols_fut_visit]
+combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined)
+combined_BL_all$updrs3_score
+
+changev10<-sapply(combined_future_V10, as.numeric)-sapply(combined_BL, as.numeric)
+changev12<-sapply(combined_future_V12, as.numeric)-sapply(combined_BL, as.numeric)
+changev16<-sapply(combined_future_V16, as.numeric)-sapply(combined_BL_all, as.numeric)
+
+
+# takes a while
+# rename and column_bind<
+
+# shall we scale before diff??????? 
+# scale by patient though? 
+colnames(combined_future_V10)<-paste0(colnames(combined_future_V10), '_V10') # imaging available 
+colnames(combined_future_V12)<-paste0(colnames(combined_future_V12), '_V12') # curated available
+colnames(combined_future_V16)<-paste0(colnames(combined_future_V16), '_V16')# other variables available
+colnames(combined_BL)<-paste0(colnames(combined_BL), '_BL')# other variables available
+colnames(combined_BL_all)<-paste0(colnames(combined_BL_all), '_BL')# other variables available
+
+
+colnames(changev12)<-paste0(colnames(changev12), '_diff_V12')
+colnames(changev10)<-paste0(colnames(changev10), '_diff_V10')
+colnames(changev16)<-paste0(colnames(changev16), '_diff_V16')
+
+combined_new<-cbind(combined_new,combined_future_V10 )
+combined_new<-cbind(combined_new,combined_future_V12 )
+combined_new<-cbind(combined_new,combined_future_V16 )
+combined_new<-cbind(combined_new,combined_BL_all )
+
+#combined_new$NP3_
+
+write.csv2(combined_new,metadata_output_all, row.names = FALSE)
+#combined_bl_log<-combined_new
+
+
+# TODO: make a function to add the scaling by COHORT! 
+
+
+
+
+
+
+
+
 
 
 sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
@@ -296,6 +367,16 @@ common_samples=common #### loaded from deseq2_vst_preprocessing script
 combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
 
 scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT', 'STAIAD_TOT')
+
+
+
+
+####### 
+
+
+
+
+
 
 
 #### Histograms to check the distributions of the clinical variables before and after processing 

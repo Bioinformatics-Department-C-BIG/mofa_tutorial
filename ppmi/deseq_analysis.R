@@ -10,7 +10,7 @@ VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V06' ,'V08');
 VISIT=c('BL', 'V08');
 
-#process_mirnas=TRUE
+#process_mirnas=FALSE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
@@ -264,6 +264,10 @@ graphics.off()
 run_heatmap=TRUE
 
 
+
+
+
+
 ### TODO: MAKE A FUNCTION 
 if (run_heatmap){
   vsd_filt=vsd
@@ -356,22 +360,49 @@ if (run_heatmap){
   
   colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
   colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT', 'con_putamen', 'con_putamen_V10')
-  colDataToPlot<-c('updrs3_score', 'td_pigd_old_on',  'RBD_TOT', 'updrs2_score', 'con_putamen')
+  colDataToPlot<-c('updrs3_score', 'td_pigd_old_on',  'RBD_TOT', 'updrs2_score', 'con_putamen', 
+                   'updrs3_score_diff_V10', 'moca_diff_V10',  'updrs2_score_diff_V10',  'updrs3_score_V12', 'NP3_TOT_V16', 'con_putamen_V10', 
+                   'con_putamen_diff_V10', 'PUTAMEN_R_V10', 
+                   'mean_striatum_V10', 'abeta', 
+                   'hi_putamen_V10')
+  
+  colDataToPlot<-c('updrs3_score','updrs3_score_V12', 'NP3_TOT_V16',  'RBD_TOT', 'updrs2_score', 
+                   'con_putamen','con_putamen_V10', 'NP3_TOT_diff_V16',
+                   'abeta', 
+                   'hi_putamen_V10')
+  
+  
+
+  
   
   # TODO:  choose off 
   colData(vsd_filt)[, c('PDSTATE', 'PATNO_EVENT_ID')]
   
-  df<-as.data.frame(colData(vsd)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
+  #df<-as.data.frame(colData(vsd)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   
-  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID,pdstate = c(), pag_name_m3 = c() )
-  df_all$updrs3_score
+  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
+  df_all$NP3_TOT_V16
   
-  df_all$PATNO_EVENT_ID
-  vsd$PATNO_EVENT_ID
+  colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
+  t1<-'BL';  t2='V16';
+  
+  #df=df_all
+  df_change= get_changes(df_all,colData_change, t1, t2 )
+  colnames(df_change)
+  df_all<-cbind(df_all, df_change)
+  t1<-'BL';  t2='V16';
+  colData_change=c('NP3_TOT', 'NP2_TOT')
+  #df_all$NP3_TOT_V16
+  df_change= get_changes(df_all,colData_change, t1, t2 )
+  df_all<-cbind(df_all, df_change)
+  df_all$updrs2_score_diff_V16
+  
+  
+  
+
   colDataToPlot%in%colnames(df_all) 
   df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
-  df
-  
+   
   # df<-as.data.frame(colData(vsd_filt)[,c( "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
   
   # if clusters exist 
@@ -381,9 +412,7 @@ if (run_heatmap){
 #  df$cluster_s<-factor(clusters_single$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_single$cluster ))])
   #### Add different clustering? 
  # df$cluster_m<-factor(clusters_mofa$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa$cluster ))])
-  #df$cluster_m_34<-factor(clusters_mofa_34$cluster[match(colData(vsd_filt)$PATNO_EVENT_ID, names(clusters_mofa_34$cluster ))])
-  
-  
+
   
   ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(3,4))
   ws_top_bottom<-gsub('\\..*', '',ws_top_bottom)
@@ -402,53 +431,64 @@ if (run_heatmap){
   ### Plot MOFA too
   if (length(VISIT)>1){
     remove_cn=FALSE
-    order_by_hm='COHORT'
     cluster_cols=TRUE
-    
-    
-    groups_kmeans3$cluster
     cluster_id = c(1,2)
-    sel_samples=names(which(groups_kmeans3$cluster%in% c(1,2)))
+    #sel_samples=names(which(groups_kmeans3$cluster%in% c(1,2)))
+
     
     #sel_samples
-    mt<-colData(vsd_filt)
+    mt<-colData(vsd)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
     sigGenes<-most_sig_over_time$symbol[1:40]
-    sigGenes<-most_sig_over_time$symbol[1:40]
-    sigGenes
+    sigGenes<-most_sig_over_time$symbol[1:30]
+    sigGenes_wil<-all_sig_genes2[grepl('ENS', all_sig_genes2$symbol),]
+    sigGenes=sigGenes_wil$symbol
     
-    df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO_EVENT_ID','PATNO', 'EVENT_ID','PDMEDYN', colDataToPlot, "COHORT")])
-    graphics.off()
-    
-    
-    
-    df$updrs3_score<-as.numeric(df$updrs3_score)
-    df$updrs2_score<-as.numeric(df$updrs2_score)
-    df$con_putamen<-as.numeric(df$con_putamen)
+    colDataToPlot %in% colnames(df_all)
+    df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO_EVENT_ID','PATNO', 'EVENT_ID','PDMEDYN',
+                                 colDataToPlot, "COHORT")])
 
-    ## TODO: symbols vector 
-    fname=paste0(outdir_s, '/heatmap_time', cluster_id, factor, '.jpeg')
+    df$cluster_m_all<-factor(groups_kmeans_all_factors$cluster[match(df$PATNO, names(groups_kmeans_all_factors$cluster))])
+    
     graphics.off()
+
+    colnames(df)
+    df[, c(colDataToPlot)]<-sapply(df[, colDataToPlot], as.numeric)
+    df[df$EVENT_ID=='V08', 'con_putamen']=df[df$EVENT_ID=='V08', 'con_putamen_V10']
+    df$AGE<-as.numeric(df$AGE)
+    # todo: add the change as well
     
+    ## TODO: symbols vector 
+    
+    
+    fname=paste0(outdir_s, '/heatmap_time', '_f_',factor, '.jpeg')
+    graphics.off()
+
+    
+    df$EVENT_ID
+    # filter out samples here
+    ## PROBLEM: cannot filter 
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
-                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples )
+                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=NULL )
     
     
-      jpeg(fname, width=7*150, height=7*100, res=100)
+      jpeg(fname, width=10*300, height=12*200, res=200)
     
       my_pheatmap
       dev.off()
-  }
+      
+      
     
-
+    
+    }
   
-
+}
 
   
   
   #plot(hclust(dists))
-}
+
 
 
 

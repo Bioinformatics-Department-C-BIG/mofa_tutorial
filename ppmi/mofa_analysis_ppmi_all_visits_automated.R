@@ -35,7 +35,38 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
 
+### ADD FUTURE CHANGES ####
+############################
+df_mofa<-samples_metadata(MOFAobject)
+colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
+t1<-'BL';  t2='V10';
 
+#df=df_all
+colData_change %in% colnames(df_mofa)
+
+df_change= get_changes(df=df_mofa,colData_change, t1, t2 )
+colnames(df_change)
+df_mofa<-cbind(df_mofa, df_change)
+df_mofa$hi_putamen_diff_V10
+
+
+t1<-'BL';  t2='V16';
+
+
+colData_change=c('NP3_TOT', 'NP2_TOT', 'MCA_TOT', 'SCAU_TOT')
+#df_all$NP3_TOT_V16
+df_change= get_changes(df_mofa,colData_change, t1, t2 )
+df_mofa<-cbind(df_mofa, df_change)
+
+samples_metadata(MOFAobject)<-df_mofa
+
+df_mofa$SCAU_TOT_BL
+
+samples_metadata(MOFAobject)$SCAU_TOT_diff_V16
+
+
+
+##################
 
 library(ggplot2)
 
@@ -352,7 +383,13 @@ samples_metadata(MOFAobject)$Outcome
 
 
 sm<-samples_metadata(MOFAobject)
-sm$PATNO
+sm$hvlt_immediaterecall
+### which other variables relate to np3 tot factors 
+## what other variables do np3 factors related with? 
+f1_np3<-sel_factors_pd_np3[1]
+
+cors_all[f1_np3,][cors_all[f1_np3,]>2]
+
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
@@ -376,27 +413,51 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
 
 # sPLIT DIAGNOSIS vs progression  
 selected_covars2<-c( 'AGE', 'SEX',
-                   #'NP1_TOT', 
                    'NP2_TOT','NP3_TOT',
-                   #'NP4_TOT',
                    'NHY', 
                    'NP3RIGN',
-                  # 'SCAU5',
-                   'moca',
-                 #  'scopa', 
-                  # 'stai_state', 'stai_trait', 
                    'rigidity', 
                   'NP3RTARU',
-                                      'ptau',  
                     'PDSTATE',  
-                   'RBD_TOT', 
-                  
-                   'con_putamen', 
                    'td_pigd_old_on', 
                  'PD_MED_USE' , 
-                 'months', 'DYSKIRAT', 
+                 'months', 
                  'con_putamen_V10', 
-                 'change','asyn' , 'CSFSAA')
+                  'CSFSAA', 
+                 'mean_striatum_V10', 
+                 'ab_asyn')
+
+selected_covars2_progression<-c( 'AGE', 'SEX',
+                     #'NP1_TOT', 
+                     'NP2_TOT_LOG','NP3_TOT_LOG',
+                     'updrs3_score',
+                     #'NP4_TOT',
+                     'NHY', 
+                     'NP3RIGN',
+                     # 'SCAU5',
+                     # NON-MOTOR
+                     'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
+                     'hi_putamen_V10', 
+                     # CSF BIOMARKERS 
+                     'abeta_LLOD', 'HVLTRDLY',
+                     #  'scopa', 
+                     # 'stai_state', 'stai_trait', 
+                     'rigidity', 
+                     'NP3RTARU',
+                    # not significant: 
+                      'ptau',    'ab_asyn', 
+                     'PDSTATE',  
+                     'RBD_TOT', 
+                     'td_pigd_old_on', 
+                     'PD_MED_USE' , 
+                     'months', 
+                     'con_putamen_V10', 
+                     'change','asyn' , 'CSFSAA', 
+                     'mean_striatum_V10', 
+                     'abeta', 'MCATOT', 'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
+                    'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                    'MCA_TOT_diff_V16'
+                     )
 
 #sm$asyn
 
@@ -468,22 +529,22 @@ factors=names(sel_factors)
 sel_factors
 fname<-'factors_covariates_only_nonzero_strict_PD'
 
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col=TRUE, MOFAobject=MOFAobject )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors,labels_col=TRUE, MOFAobject=MOFAobject )
 
 # Plot 1: some more non motor that we discovered
 samples_metadata(MOFAobject)$rigidity

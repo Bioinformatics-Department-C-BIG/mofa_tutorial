@@ -105,6 +105,8 @@ colnames(curated_total_new_cols)
 
 
 
+
+
 #c1_filt<-curated_v1%>%
 #  dplyr::filter(EVENT_ID=='V08')%>%
 #  dplyr::filter(PATNO %in% sm$PATNO)%>%
@@ -157,8 +159,7 @@ combined<-merge(combined, sem,by=c('PATNO','EVENT_ID'), suffixes = c("", '_sem')
 combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
 
-V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V10', c('mean_striatum', 'PATNO')]
-combined<-merge(combined, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V10'),  all=TRUE)
+
 
 #which(!is.na(combined$Outcome))
 

@@ -108,8 +108,9 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
     ## apply benjamini-holberg
     #length(which(merged_paths_fish$fish	<0.05))
     
-    merged_paths_fish$fish<-BH(merged_paths_fish$fish, alpha = 0.05)$Adjusted.pvalues	
-
+    # seems like there is a bug in this it gives back the reverse
+   # merged_paths_fish$fish<-BH(merged_paths_fish$fish, alpha = 0.05)$Adjusted.pvalues	
+    merged_paths_fish$fish<-p.adjust(merged_paths_fish$fish, method = 'BH', n = length(merged_paths_fish$fish))
   }
 
   

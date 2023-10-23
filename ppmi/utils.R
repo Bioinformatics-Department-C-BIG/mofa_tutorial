@@ -2,6 +2,8 @@
 library(DESeq2)
 library(edgeR)
 library(org.Hs.eg.db)
+library(sgof)
+
 ## Utils 
 ## Summarized experiment 
 
@@ -60,14 +62,16 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   ## 
   common_samples<-intersect(colnames(raw_counts_all),combined$PATNO_EVENT_ID)
   unique_s<-colnames(raw_counts_all)[!(colnames(raw_counts_all) %in% common_samples)]
-  metadata_filt<-combined[match(common_samples, combined$PATNO_EVENT_ID),]
+  # TODO: replace with function: fetch_metadata_by_patient_visit- test first
+  metadata_filt<-fetch_metadata_by_patient_visit(common_samples)
+  #metadata_filt<-combined[match(common_samples, combined$PATNO_EVENT_ID),]
   raw_counts_filt<-raw_counts_all[,match(common_samples, colnames(raw_counts_all))]
   dim(metadata_filt)[1] ==dim(raw_counts_filt)[2]
 
   
   #subset sample names
 
-  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt_dups)
+  se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt)
   
   metadata_filt$COHORT_DEFINITION
   
@@ -80,30 +84,33 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 #patno_event_ids
 
 #pdstate=c('OFF', '')
- fetch_metadata_by_patient_visit<-function(patno_event_ids, pdstate, pag_name_m3){
+ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log){
    #'
    #' @param PATNO_EVENT_ID
    #'
-   #' fetch one row per patient back  
+   #' fetch one row per patient back -- if multiple NP3TOT it brings the maximum! 
    #' 
    #' 
-   #pdstate='OFF'; pag_name_m3='NUPDRS3'
+   # TODO: add more criteria to filter eg. pdstate='OFF'; pag_name_m3='NUPDRS3'
    # PRIORITIZE OFF ? 
    
    #combined_bl_log_sel<-combined_bl_log_sel %>%
   #   group_by(NP3_TOT) %>%
   #   summarize(across(everything(), max))%>%
   #   as.data.frame()
-   
-    metadata_filt_dups<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% patno_event_ids ,]
+  
+  # patno_event_ids = paste0(patnos, event_ids)
+    metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
+  #  metadata_filt_dups<-metadata_filt_dups[!is.na(metadata_filt_dups$EVENT_ID),]
     #dim(metadata_filt_dups)
     #metadata_filt_dups<-metadata_filt_dups %>% 
     #                    dplyr::filter(PDSTATE %in%pdstate )# %>%
                         #dplyr::filter(PAG_NAME_M3 ==pag_name_m3 )
      
     metadata_filt_dups<-as.data.table(metadata_filt_dups)
-    max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3_TOT)], by=PATNO_EVENT_ID]$V1]
-    
+    max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3TOT)], by=PATNO_EVENT_ID]$V1]
+    #missing<-metadata_filt_dups[is.na(metadata_filt_dups$EVENT_ID)]
+    #max_np3_unique<-rbind(max_np3_unique, missing)
     #max_np3[, c('PATNO_EVENT_ID', 'NP3_TOT' )]
 
     dups<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3_TOT')]%>%
@@ -119,19 +126,24 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
      
     
     ### if we cannot find it for all then use what was given? 
+    # match to ensure same order
     max_np3_unique<-as.data.frame(max_np3_unique[match(patno_event_ids, max_np3_unique$PATNO_EVENT_ID ), ])
     
     
     max_np3_unique$PATNO_EVENT_ID = patno_event_ids
-     
-    max_np3_unique$PATNO_EVENT_ID
-     
+    missing<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
+    length(missing)
+    missing_metadata<-as.data.frame(metadata_filt_dups[match(missing, metadata_filt_dups$PATNO_EVENT_ID ), ])
+    
+    max_np3_unique[max_np3_unique$PATNO_EVENT_ID %in% missing,]<-missing_metadata
+    
+    missing2<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
+    length(missing2)  
      
   return(max_np3_unique)
 
  }
  
- metadata_filt_unique$PATNO_EVENT_ID
 
 
 ## Create the summarized experiment by selecting VISITS and cohorts 
@@ -982,6 +994,49 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
   merged_melt_orig_1<-rbind(merged_melt_orig_1,v8_melt)
   
   return(merged_melt_orig_1)
+}
+
+
+
+
+
+###### CLINVARS ####
+get_changes<-function(df,colData_change, t1, t2 ){
+  
+  #' scale and get change! 
+  #'
+  
+  df_num_1<-as.data.frame(apply(df[paste0(colData_change,'_', t1 )], 2, as.numeric))
+  df_num_2<-as.data.frame(apply(df[paste0(colData_change, '_', t2)], 2, as.numeric))
+  
+  
+  colnames(df_num_1)=colData_change
+  colnames(df_num_2)=colData_change
+  
+  df_num_bind<-rbind(df_num_1,df_num_2 )
+  
+  
+  ### Get centre and sd from both dataframes - 
+  # TODO: FUNCTION
+  scaled_attrs1 <- apply(df_num_bind, 2, function(x){
+    sx<-scale(x);cn<-attr(sx, 'scaled:center');
+    return(cn)
+  })
+  
+  scaled_attrs2 <- apply(df_num_bind, 2, function(x){
+    sx<-scale(x)
+    sd<-attr(sx, 'scaled:scale')
+    return(sd)
+  })
+  
+  df_num_1_scaled <- scale(df_num_1, center=scaled_attrs1, scale=scaled_attrs2)
+  df_num_2_scaled <- scale(df_num_2, center=scaled_attrs1, scale=scaled_attrs2)
+  df_change=data.frame(df_num_2_scaled-df_num_1_scaled)
+  
+  colnames(df_change) = paste0(colnames(df_change), '_diff_', t2)
+  
+  
+  return(df_change)
 }
 
 

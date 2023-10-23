@@ -28,6 +28,8 @@
 
 #as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #as.factor(samples_metadata(MOFAobject)$SCAU26CT)
+MOFAobject@samples_metadata=meta_merged_ord
+
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 
@@ -35,7 +37,45 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
 
+### ADD FUTURE CHANGES ####
+############################
+df_mofa<-samples_metadata(MOFAobject)
+colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
+t1<-'BL';  t2='V10';
 
+#df=df_all
+colData_change %in% colnames(df_mofa)
+
+df_change= get_changes(df=df_mofa,colData_change, t1, t2 )
+colnames(df_change)
+df_mofa<-cbind(df_mofa, df_change)
+df_mofa$hi_putamen_diff_V10
+
+
+t1<-'BL';  t2='V16';
+df_mofa$RBD_TOT_V16
+df_mofa$ess
+
+colData_change=c('NP3_TOT', 'NP2_TOT', 'MCA_TOT', 'SCAU_TOT', 'MCATOT', 'RBD_TOT')
+#df_all$NP3_TOT_V16
+df_change= get_changes(df_mofa,colData_change, t1, t2 )
+df_mofa<-cbind(df_mofa, df_change)
+
+samples_metadata(MOFAobject)<-df_mofa
+
+df_mofa$SCAU_TOT_BL
+
+samples_metadata(MOFAobject)$NP3_TOT_LOG_SCALED<-scale(samples_metadata(MOFAobject)$NP3_TOT_LOG)
+np3_diff<-df[,c('PATNO','NP3_TOT_diff_V16', 'NP2_TOT_diff_V16')]
+sm<-samples_metadata(MOFAobject)
+intersect(np3_diff$PATNO, sm$PATNO)
+sm$PATNO
+res<-np3_diff[match(sm$PATNO, np3_diff$PATNO),c('NP3_TOT_diff_V16', 'NP2_TOT_diff_V16')]
+
+samples_metadata(MOFAobject)$NP3_TOT_diff_V16<-res$NP3_TOT_diff_V16
+samples_metadata(MOFAobject)$NP2_TOT_diff_V16<-res$NP2_TOT_diff_V16
+
+##################
 
 library(ggplot2)
 
@@ -143,24 +183,42 @@ cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
 if (length(sel_coh)>1){
   sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+  sel_factors_saa<-which(cors_all[,c('CSFSAA' )]>(-log10(0.05)))
+  
   
 }else{
   sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
   
 }
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT' )]>(-log10(0.05)))
-sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT' )]>(-log10(0.05)))
+sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
 
-sel_factors_pd_np3
+sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT_LOG' )]>(-log10(0.05)))
+
+
+### DIFF
+all_diff<-colnames(sm)[grep('diff', colnames(sm))]
+sel_factors_pd_np3_diff<-which(cors_all_pd[,c('NP3_TOT_diff_V16' )]>(-log10(0.05)))
+sel_factors_pd_hi_put_diff<-which(cors_all_pd[,c('hi_putamen_diff_V10' )]>(-log10(0.05)))
+
+# HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
+
+all_fs_diff<-sapply(all_diff, function(diff_var){
+  try(
+    
+    if (diff_var %in% colnames(cors_all_pd)){
+      fs<-print(which(cors_all_pd[,c(diff_var)]>(-log10(0.05))))
+        return(fs)
+      
+    }
+  )
+})
+all_fs_diff
+sel_factors_diff=c('Factor1','Factor4','Factor6', 'Factor8', 'Factor9','Factor11' ,'Factor12'    )
 
 sel_factors_np3<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
-
 sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
 
-sel_factors_outcome
-
-
-sel_factors
 
 
 
@@ -278,15 +336,6 @@ MOFAobject@samples_metadata$DATSCAN_CAUDATE_L
 #### All associations that are not NA 
 
 
-jpeg(paste0(outdir, 'factors_covariates_all','.jpeg'), width = 2000, height=700, res=150)
-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = non_na_ids_to_plot, 
-                                  plot = "log_pval"
-                                  
-)
-dev.off()
-graphics.off()
-
 to_remove_covars<-grepl( 'DATE|REC_ID|UPDATE|ORIG_ENTR|INFO', non_na_ids_to_plot)
 non_na_ids_to_plot_cleaned<-non_na_ids_to_plot[!to_remove_covars]
 
@@ -332,10 +381,6 @@ format(cors_pearson[,c('stai_trait')], digits=2)
 #cors[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT', 'RBD_TOT' )]
 #format(cors_pearson[,c('NP1RTOT', 'NP1_TOT','NP2PTOT', 'NP2_TOT','NP3TOT'  ,'NP3_TOT','NP4TOT', 'NP4_TOT' , 'SCAU', 'SCAU_TOT','RBD_TOT' )], digits=2)
 
-
-hist(log2(MOFAobject@samples_metadata$td_pigd_on))
-MOFAobject@samples_metadata$MCACLCKH
-MOFAobject@samples_metadata$moca
 MOFAobject@samples_metadata[,c('con_putamen', 'COHORT', 'updrs3_score_on', 'td_pigd_old_on', 'td_pigd_old', 'cogstate', 'moca', 
                                'ptau', 'ess_cat')]
 
@@ -348,7 +393,13 @@ samples_metadata(MOFAobject)$Outcome
 
 
 sm<-samples_metadata(MOFAobject)
-sm$PATNO
+sm$hvlt_immediaterecall
+### which other variables relate to np3 tot factors 
+## what other variables do np3 factors related with? 
+f1_np3<-sel_factors_pd_np3[1]
+
+cors_all[f1_np3,][cors_all[f1_np3,]>2]
+
 
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                    'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
@@ -366,35 +417,69 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                  'rigidity','months', 
                  'con_putamen', 'con_putamen_V10', 
                  'change', 
-                 'asyn')
+                 'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
+                 'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
+                 'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                 'MCA_TOT_diff_V16')
                    #'DYSKIRAT')
 
 
 # sPLIT DIAGNOSIS vs progression  
 selected_covars2<-c( 'AGE', 'SEX',
-                   #'NP1_TOT', 
                    'NP2_TOT','NP3_TOT',
-                   #'NP4_TOT',
                    'NHY', 
                    'NP3RIGN',
-                  # 'SCAU5',
-                   'moca',
-                 #  'scopa', 
-                  # 'stai_state', 'stai_trait', 
                    'rigidity', 
                   'NP3RTARU',
-                                      'ptau',  
                     'PDSTATE',  
-                   'RBD_TOT', 
-                  
-                   'con_putamen', 
                    'td_pigd_old_on', 
                  'PD_MED_USE' , 
-                 'months', 'DYSKIRAT', 
+                 'months', 
                  'con_putamen_V10', 
-                 'change','asyn' )
+                  'CSFSAA', 
+                 'mean_striatum_V10', 
+                 'ab_asyn')
 
-#sm$asyn
+selected_covars2_progression<-c( 'AGE', 'SEX',
+                     #'NP1_TOT', 
+                     'NP2_TOT_LOG','NP3_TOT_LOG',
+                     'updrs3_score',
+                     #'NP4_TOT',
+                     'NHY', 
+                     'NP3RIGN',
+                     # 'SCAU5',
+                     # NON-MOTOR
+                     'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
+                     'hi_putamen_V10', 
+                     # CSF BIOMARKERS 
+                     'abeta_LLOD', 'HVLTRDLY',
+                     #  'scopa', 
+                     # 'stai_state', 'stai_trait', 
+                     'rigidity', 
+                     'NP3RTARU',
+                    # not significant: 
+                      'ptau',    'ab_asyn', 
+                     'PDSTATE',  
+                     'RBD_TOT', 
+                     'td_pigd_old_on', 
+                     'PD_MED_USE' , 
+                     'months', 
+                     'con_putamen_V10', 
+                     'change','asyn' , 'CSFSAA', 
+                     'mean_striatum_V10', 
+                    
+                    ## WHICH factors have to do with the change in the scale
+                    # And the change in the datascan binding  in the future?
+                    # THESE factors are the ones that we actually WANT 
+                     
+                     'abeta', 'MCATOT', 'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
+                    'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                    'MCA_TOT_diff_V16', 'NP3_TOT_LOG_SCALED', 
+                    'RBD_TOT_diff_V16', 'MCATOT_diff_V16'
+                     )
+
+
+
 
 #selected_covars
 
@@ -402,7 +487,7 @@ if (length(sel_coh)>1){
   selected_covars2<-c(selected_covars2, 'COHORT')
 }
 
-sm$change
+sm$NP3_TOT
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'con_putamen_V10' )
 
 sm<-samples_metadata(MOFAobject)
@@ -464,22 +549,33 @@ factors=names(sel_factors)
 sel_factors
 fname<-'factors_covariates_only_nonzero_strict_PD'
 
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+graphics.off()
+fname<-'factors_covariates_only_nonzero_strict_PD_diff'
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+
+
+
 
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=selected_covars2,fname,plot,factors,labels_col=TRUE, MOFAobject=MOFAobject )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors,labels_col=TRUE, MOFAobject=MOFAobject )
+
+
+
 
 # Plot 1: some more non motor that we discovered
 samples_metadata(MOFAobject)$rigidity
@@ -489,15 +585,14 @@ samples_metadata(MOFAobject)$NP2_TOT
 fname<-'factors_covariates_only_nonzero_broad_PD'
 plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
 
-fname<-'factors_covariates_only_nonzero_broad'
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobject  )
+fname<-'factors_covariates_only_nonzero_broad_PD'
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
+
+fname<-'factors_covariates_only_nonzero_broad_cor_PD'
+
+plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
 
 
-
-
-MOFAobjectPD
-
-selected_covars
 
 
 ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
@@ -1369,24 +1464,6 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
   
 #library(AnnotationHub)
 
-
-
-# Positive Factor 1: Hypoxia, oxygen dependent etc.
-names(which(res.positive$pval.adj[,'Factor1']<0.0005))[1:10]
-names(which(res.negative$pval.adj[,'Factor1']<0.05))
-
-# Positive factor 2: citric acid cycle, meabolism, L13a-mediated, respratory
-names(which(res.positive$pval.adj[,'Factor2']<0.00000005))[1:10]
-names(which(res.negative$pval.adj[,'Factor2']<0.05))
-
-
-# Positive factor 3: chromatin modifying enzymes, regulation of tp53
-names(which(res.positive$pval.adj[,'Factor3']<0.05))[1:10]
-names(which(res.negative$pval.adj[,'Factor3']<0.05))
-
-#  
-names(which(res.positive$pval.adj[,'Factor4']<0.05))[1:5]
-names(which(res.negative$pval.adj[,'Factor4']<0.05))[1:5]
 
 
 

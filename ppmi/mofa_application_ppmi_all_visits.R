@@ -12,9 +12,6 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 #BiocManager::install("MOFA2", version="1.8")
 
 
-#install.packages("MOFA2", version="1.8")
-#nstall.packages("MOFA2", version="1.8", repos = c("https://bioconductor.org/packages/3.16/bioc" ))
-
 library(MOFA2)
 
 
@@ -253,9 +250,6 @@ table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
 dim(combined_bl_log_sel)
 
 ### GET THE WORSE MEASUREMENT 
-####  TODO: logic to be applied in 
-###
-
 combined_bl_log_sel<-combined_bl_log_sel %>%
   group_by(NP3_TOT) %>%
   summarize(across(everything(), max))%>%

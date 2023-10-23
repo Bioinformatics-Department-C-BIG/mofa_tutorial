@@ -824,10 +824,10 @@ combined_to_plot_final$CSFSAA
 # ADD upsit, semantic fluency 
  
  # un==imaging
+
+scales=c('ptau', 'asyn', 'tau', 'abeta', 'tau', 'CSFSAA', 'nfl_csf', 'total_di_18_1_BMP', 'hemohi', 'urate')
 scales=c('DATSCAN_PUTAMEN_L', 'DATSCAN_CAUDATE_L', 'DATSCAN_CAUDATE_R', 'DATSCAN_PUTAMEN_R', 'ips_caudate', 'mean_caudate', 'mean_striatum', 
          'con_caudate', 'con_putamen', 'con_striatum', 'lowput_ratio')
-scales=c('ptau', 'asyn', 'tau', 'abeta', 'tau', 'CSFSAA', 'nfl_csf', 'total_di_18_1_BMP', 'hemohi', 'urate')
-
 combined_to_plot_final$DBSYN
 facet_var=NULL
 #facet_var='DBSYN'

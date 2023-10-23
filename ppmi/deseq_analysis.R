@@ -8,6 +8,7 @@ source(paste0('ppmi/setup_os.R'))
 ### disconnect from mofa and other scripts 
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V06' ,'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V08');
 
 #process_mirnas=FALSE
@@ -81,12 +82,13 @@ if (!process_mirnas){
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 log2fol_T<-0.25
-padj_T<-.005
+padj_T<-.0005
 
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 
-min(deseq2ResDF$padj)
+signif_genes_strict<-rownames(deseq2ResDF_strict[!is.na(deseq2ResDF_strict$significant),])
+signif_genes_strict
 
 ####### MOFA deseq2  
 
@@ -95,6 +97,7 @@ log2fol_T_hv<-0.1
 
 ### this is also done later on -- save from there? 
 deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
+
 
 #deseq2ResDF$mofa_sign
 
@@ -394,7 +397,7 @@ if (run_heatmap){
   #df_all$NP3_TOT_V16
   df_change= get_changes(df_all,colData_change, t1, t2 )
   df_all<-cbind(df_all, df_change)
-  df_all$updrs2_score_diff_V16
+  df_all$moca_diff_V10
   
   
   
@@ -439,17 +442,24 @@ if (run_heatmap){
     mt<-colData(vsd)
     table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
-    sigGenes<-most_sig_over_time$symbol[1:40]
-    sigGenes<-most_sig_over_time$symbol[1:30]
-    sigGenes_wil<-all_sig_genes2[grepl('ENS', all_sig_genes2$symbol),]
-    sigGenes=sigGenes_wil$symbol
+
+    
+    ### TODO: source from molecular trajectories 
+    #sigGenes_wil<-all_sig_genes2[grepl('ENS', all_sig_genes2$symbol),]
+    #sigGenes=sigGenes_wil$symbol
+    
+    
+    #options(warn = 1)
+    sigGenes= combined_sig_genes_strict$symbol
+    sigGenes= signif_genes_strict
+    sigGenes= combined_sig_genes_strict$symbol
     
     colDataToPlot %in% colnames(df_all)
     df<-as.data.frame(df_all[,c( "SEX", 'AGE', 'NHY','PATNO_EVENT_ID','PATNO', 'EVENT_ID','PDMEDYN',
                                  colDataToPlot, "COHORT")])
 
-    df$cluster_m_all<-factor(groups_kmeans_all_factors$cluster[match(df$PATNO, names(groups_kmeans_all_factors$cluster))])
-    df$cluster_m_diff<-factor(groups_kmeans_diff_factors$cluster[match(df$PATNO, names(groups_kmeans_diff_factors$cluster))])
+    df$cluster_m_all<-factor(groups_kmeans_diff$cluster[match(df$PATNO, names(groups_kmeans_diff$cluster))])
+    df$cluster_m_diff<-factor(groups_kmeans_diff3$cluster[match(df$PATNO, names(groups_kmeans_diff3$cluster))])
     
     graphics.off()
 
@@ -468,7 +478,6 @@ if (run_heatmap){
     graphics.off()
 
     
-    df$EVENT_ID
     # filter out samples here
     ## PROBLEM: cannot filter 
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,

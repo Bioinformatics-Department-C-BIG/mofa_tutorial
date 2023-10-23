@@ -57,7 +57,6 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
   raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
   combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
-  
   ### some samples do not exist in metadata so filter them out 
   ## 
   common_samples<-intersect(colnames(raw_counts_all),combined$PATNO_EVENT_ID)
@@ -100,6 +99,8 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #   as.data.frame()
   
   # patno_event_ids = paste0(patnos, event_ids)
+   
+   hist(combined_bl_log$NP3TOT_V16)
     metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
   #  metadata_filt_dups<-metadata_filt_dups[!is.na(metadata_filt_dups$EVENT_ID),]
     #dim(metadata_filt_dups)
@@ -107,6 +108,9 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
     #                    dplyr::filter(PDSTATE %in%pdstate )# %>%
                         #dplyr::filter(PAG_NAME_M3 ==pag_name_m3 )
      
+    
+   
+    
     metadata_filt_dups<-as.data.table(metadata_filt_dups)
     max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3TOT)], by=PATNO_EVENT_ID]$V1]
     #missing<-metadata_filt_dups[is.na(metadata_filt_dups$EVENT_ID)]
@@ -1001,6 +1005,7 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
 
 
 ###### CLINVARS ####
+#df<-df_mofa
 get_changes<-function(df,colData_change, t1, t2 ){
   
   #' scale and get change! 

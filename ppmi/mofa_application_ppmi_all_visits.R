@@ -9,7 +9,12 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
-#BiocManager::install("MOFA2", version="1.8")
+# BiocManager::install("MOFA2", version="1.8")
+detach('package:MOFA2', unload=TRUE)
+source("https://bioconductor.org/biocLite.R")
+require(devtools)
+
+install.packages("MOFA2", version="1.8", repos="https://bioconductor.org/packages/MOFA2/")
 
 
 library(MOFA2)
@@ -267,42 +272,7 @@ meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EV
 meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
 meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
 
-img_var='con_putamen'
 
-#V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V06', c(img_var, 'PATNO')]
-BL_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID=='BL', c(img_var, 'PATNO')]
-
-get_curated_data<-function(img_var, EVENT_ID){
-  V10_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID==EVENT_ID, c(img_var, 'PATNO')]
-  V10_mean_striatum[, img_var]=as.numeric(V10_mean_striatum[, img_var])
-  V10_mean_striatum=V10_mean_striatum[!is.na(V10_mean_striatum[, img_var]),]
-  V10_mean_striatum<-V10_mean_striatum[!duplicated(V10_mean_striatum$PATNO),]
-  # return one per patient -- gett the latest if multiple?? 
-  return(V10_mean_striatum)
-}
-
-V06_mean_striatum<-get_curated_data(img_var, 'V06')
-BL_mean_striatum<-get_curated_data(img_var, 'BL')
-V10_mean_striatum<-get_curated_data(img_var, 'V10')
-V08_mean_striatum<-get_curated_data(img_var, 'V08')
-
-
-meta_merged_ord_V10<-merge(meta_merged_ord, V06_mean_striatum,by=c('PATNO'), suffixes = c("", '_V06'),  all.x=TRUE)
-meta_merged_ord_V10<-merge(meta_merged_ord_V10, BL_mean_striatum,by=c('PATNO'), suffixes = c("", '_BL'),  all.x=TRUE)
-meta_merged_ord_V10<-merge(meta_merged_ord_V10, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V10'),  all.x=TRUE)
-
-meta_merged_ord_V10$change<-meta_merged_ord_V10[, paste0(img_var, '_V10')]-meta_merged_ord_V10[, paste0(img_var, '_BL')]
-
-
-#meta_merged_ord_V10[meta_merged_ord_V10$COHORT==2,]$change
-hist(meta_merged_ord_V10$change)
-meta_merged_ord_V10$change
-#View(meta_merged_ord_V10)
-
-dim(meta_merged_ord_V10)
-dim(meta_merged_ord_V10)
-
-meta_merged_ord_V10$con_putamen_V06
 
 MOFAobject@samples_metadata=meta_merged_ord
 MOFAobject@samples_metadata=meta_merged_ord_V10

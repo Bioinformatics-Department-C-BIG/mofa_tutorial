@@ -38,6 +38,7 @@ mode='diagnosis'
 #### Markers over time:
 #### 1. Obtain the markers here 
 fn_sel=4; 
+sel_factors_diff
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -46,9 +47,11 @@ if (mode=='diagnosis'){
   sel_factors_mode=sel_factors_pd_np3
   
 }
+factor
+top_view<-which.max(vars_by_factor[factor,])
+top_view
 
-
-factor=2
+factor=12
 factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
@@ -229,14 +232,16 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
 
 ### Important: create groups only for the patients.
 # cluster patients or controls? 
+factors_to_cluster = factor
+factors_to_cluster<-sel_factors_diff
+factors_to_cluster<-c(sel_factors_np3)
 
-groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor)
-groups_kmeans3<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor, centers=2)
+groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factors_to_cluster)
+groups_kmeans_diff<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=2)
+groups_kmeans_diff3<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=3)
 
-merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=factor)
-merged_melt$kmeans_grouping_all<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=sel_factors_mode)
+merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=factors_to_cluster)
 
-merged_melt$grouping<-merged_melt$kmeans_grouping
 
 
 
@@ -280,19 +285,16 @@ group_cats<-levels(factor(merged_melt$grouping))
 ### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
 
 
-merged_melt_filt$grouping<-merged_melt_filt$kmeans_grouping
 
-merged_melt_filt$group<-as.logical(merged_melt_filt$grouping)
-group_cat='grouping'
-group_cat='Z2grouping'
-group_cat='kmeans_grouping_all'
+merged_melt_filt$group<-as.logical(merged_melt_filt$kmeans_grouping)
 
 group_cat='kmeans_grouping'
+
 
 merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
 
 merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
-
+group_cats<-levels(merged_melt_filt$group)
 ## 
 # TODO: Function: take a group and 
 
@@ -327,6 +329,7 @@ get_most_sig_over_time<-function(merged_melt_filt_group){
 
 merged_melt_ct_two_vis=merged_melt_ct[merged_melt_ct$VISIT %in% c('BL', 'V08'),]
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% group_cats[1],]
+merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[2],]
 
 most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1)
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2)
@@ -351,7 +354,6 @@ most_sig_over_time<-most_sig_over_time%>%
   arrange(Wilcox, decreasing=FALSE)
  
 ####OUTPUT MOST SIG OVER TIME 
-most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% wilcox_stats_controls$symbol),]
 
 
 # 
@@ -361,7 +363,10 @@ most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% wilcox_s
 # 2. Groups should be by factor OR by multiple factors 
 # 3. for now they are by factor!!! 
 # 4. save the grouping mode 
-write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'_', view,'_',group_cat , '.csv'))
+factors_to_cluster_s<-paste0(c(factors_to_cluster), collapse='-')
+
+### We get the most significant by group for different factor top variables 
+write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv'))
 
 ####### CHOOSE 
 
@@ -369,32 +374,13 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 #most_sig_over_time_deseq<-make.names(colnames(data.filtered.only.pd))
 
 #most_sig_over_time_deseq
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq[1:10],]
 
-
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
-merged_melt_filt_g1_sig<-merged_melt_filt_g1[merged_melt_filt_g1$symbol %in%  most_sig_over_time$symbol,]
-
-merged_melt_filt_g2_sig$COHORT=factor(merged_melt_filt_g2_sig$COHORT)
-merged_melt_filt_g2_sig$VISIT=factor(merged_melt_filt_g2_sig$VISIT)
-
-
-
-
-
-ggplot(data = merged_melt_filt_g2_sig, aes(x = VISIT, y = value)) + 
-  geom_point(aes(col=VISIT), size = 2) +
-  geom_line(aes(group=PATNO),  col= 'grey') +
-  geom_boxplot(aes(fill=VISIT))
 
 
 ### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
 # TODO: ADD DISEASE CONTROL
 merged_melt_ct$kmeans_grouping='CONTROL'
-merged_melt_ct$group='CONTROL'
-merged_melt_ct$grouping='CONTROL'
-merged_melt_ct$grouping='CONTROL'
-merged_melt_ct$kmeans_grouping_all='CONTROL'
+
 
 filt_top=TRUE
 
@@ -412,7 +398,7 @@ filt_top=TRUE
 
 
 
-
+#### Check
 mean_data<-merged_melt_filt_g1 %>%
   group_by(grouping, symbol) %>%
   summarise(mean_expr = mean(value, na.rm = TRUE))
@@ -438,8 +424,6 @@ filt_top=TRUE
 
 
 if (filt_top){
-  
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq[1:10],]
   
   # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
@@ -549,7 +533,7 @@ ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
 
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_', view,  group_cat, filt_top,sel_cohort,  '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,  '.jpeg'), 
        width=7, height=height)
 
 
@@ -706,7 +690,7 @@ p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
 show(p)
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', factor,'_', view,  group_cat, filt_top,'_', sel_cohort, '.jpeg'), 
+ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', factor,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,'_', sel_cohort, '.jpeg'), 
        width=12, height=height)
 
 merged_melt_filt_most_sig 
@@ -717,13 +701,57 @@ merged_melt$kmeans_grouping
 
 
 
+## collect
+# TODO: AUTOMATE this part to collect them all in a function -- retrieve from home? 
+factors_to_cluster
+sapply(factors_to_cluster )
+factor=2
+fact2<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+
+factor=8
+fact8<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+
+factor=9
+fact9<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+
+factor=14
+fact14<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+
+
+
+fact2$id <- 2
+fact8$id <- 8
+fact9$id <- 9
+fact14$id <- 14
+
+combined_sig_genes<-rbind(fact2, fact8, fact9, fact14); dim(combined_sig_genes)
+combined_sig_genes<-combined_sig_genes[!duplicated(combined_sig_genes$symbol),]
+
+dim(combined_sig_genes)
+combined_sig_genes_strict<-combined_sig_genes[combined_sig_genes$p.adj<0.0005,]
+#combined_sig_genes_strict<-combined_sig_genes[combined_sig_genes$p.adj<0.0004,]
+
+
+combined_sig_genes_strict
+combined_sig_genes_strict[combined_sig_genes_strict$id==2,]
 
 
 
 
+######## ENRICHMENT BY GENES 
+
+pvalueCutoff<-0.05
+gse_2 <- clusterProfiler::enrichGO(fact14$symbol, 
+                                   ont=ONT, 
+                                   keyType = 'ENSEMBL', 
+                                   OrgDb = 'org.Hs.eg.db', 
+                                   pvalueCutoff  = pvalueCutoff)
 
 
 
+gse_2
+results_file_tmp<-paste0(outdir, '/trajectories/enrichment/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat)
+enrich_plots<-run_enrichment_plots(gse=gse_2,results_file=results_file_plot, N_DOT=15, N_EMAP=25, text_p=text_p )
 
 
 
@@ -841,6 +869,9 @@ ggsave(paste0(outdir, '/trajectories/change/change_', factor, '_',sel_feature,'_
        width=6, height=5)
 
 molecules_change_by_patno
+
+
+
 
 
 

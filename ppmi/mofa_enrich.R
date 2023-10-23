@@ -95,7 +95,9 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
-sel_factors_to_enrich
+sel_factors_to_enrich=1:15
+#BiocManager::install("fgsea")
+
 
 just_load=TRUE
 just_load=FALSE
@@ -138,7 +140,8 @@ if (!isRStudio){
                                                                    ont=ONT, 
                                                                    keyType = 'ENSEMBL', 
                                                                    OrgDb = 'org.Hs.eg.db', 
-                                                                   pvalueCutoff  = pvalueCutoff)
+                                                                   pvalueCutoff  = pvalueCutoff, 
+                                                                   seed=TRUE)
                                 
                               
                                 
@@ -177,7 +180,8 @@ if (!isRStudio){
                                                                      ont=ONT, 
                                                                      keyType = 'SYMBOL', 
                                                                      OrgDb = 'org.Hs.eg.db', 
-                                                                     pvalueCutoff  = pvalueCutoff)
+                                                                     pvalueCutoff  = pvalueCutoff,
+                                                                     pool =FALSE)
                           
                           list_proteins_enrich[[factor]]<-gse_protein_full_enrich
                           saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
@@ -189,7 +193,8 @@ if (!isRStudio){
                                                                      ont=ONT, 
                                                                      keyType = 'SYMBOL', 
                                                                   OrgDb = 'org.Hs.eg.db', 
-                                                                    pvalueCutoff  = pvalueCutoff)
+                                                                    pvalueCutoff  = pvalueCutoff, 
+                                                                  pool=FALSE)
                           
                           
                            list_proteins[[factor]]<-gse_protein_full

@@ -66,6 +66,8 @@ get_ranked_gene_list_mofa<-function(view, factor){
         order_ind<-order(-gene_list)
         gene_list_ord<-gene_list[order_ind,]
         names(gene_list_ord)<-rownames(gene_list)[order_ind]
+        names(gene_list_ord)<-gsub('\\..*', '', names(gene_list_ord)) 
+        
         return(gene_list_ord)
 }
 
@@ -99,8 +101,8 @@ sel_factors_to_enrich=1:15
 #BiocManager::install("fgsea")
 
 
-just_load=TRUE
 just_load=FALSE
+just_load=TRUE
 
 sel_factors_to_enrich
 if (!isRStudio){
@@ -111,9 +113,7 @@ if (!isRStudio){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-          #for (view in c( 'RNA', 'proteomics_csf')){
-            for (view in c( 'proteomics_csf')){
-              
+          for (view in c( 'proteomics_csf')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -164,7 +164,7 @@ if (!isRStudio){
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
                   if (just_load){
 
-                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
+                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
                   }else{
                         run_ORA=FALSE
                           gene_list_ord_abs=abs(gene_list_ord)
@@ -245,7 +245,9 @@ if (!isRStudio){
 
 list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
-list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
+list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_plasma'))
+
 list_proteins_enrich<-loadRDS(paste0(mofa_enrich_rds, 'prot_enrich_go'))
 
 as.logical(lapply(list1, is.null))
@@ -341,8 +343,7 @@ if (run_plots){
           ### RNAS ####
           sel_factors_to_p
           pvalueCutoff=1
-         # factor=
-          factor=1
+         # factor=4
           for (factor in sel_factors_to_p){
             #'
             #'
@@ -368,8 +369,10 @@ if (run_plots){
           
           process_mofa=TRUE
           pvalueCutoff=1
+          sel_factors_to_p=1:15
           suppressWarnings(dir.create(paste0(outdir, '/enrichment/proteins')))
           for (factor in sel_factors_to_p){
+            factor=1
               results_file_mofa = paste0(outdir, '/enrichment/proteins/gsego_',factor,'_')
               gse_mofa=list_proteins[[factor]]
           

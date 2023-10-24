@@ -5,27 +5,154 @@
 
 ### Decide on the grouping #### 
 ### TODO: update for KMEANS grouping here too!! 
+# TODO: here take the grouping
+# find all clustering types from mofa and sypply to function
 group_by_patient<-clusters_mofa$cluster
-
-
 group_by_patient<-clusters$cluster
 group_by_patient<-clusters_mofa_outcome$cluster
 
-group_by_patient<- samples_metadata(MOFAobject)$N
-
-
 
 ########### HERE IT TAKES AS input all the metadata ############################
-names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
+#names(group_by_patient)<-gsub('\\_.*', '', names(group_by_patient))
+
+
+# TODO: HERE PLOT THE SCALES THAT ARE RELEVANT TO EACH FACTOR!!!!
+## ir. check what are the corelations, and with which variables-for the PD patinets only
+
+# where to get this from? 
+all_fs_diff
+all_diff_variables
+#1. extract the diff variables and remove the diff
+
+
+
+
+scale_vars_diff
+imaging_variables_diff
+to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
+
+to_plot<-c(scale_vars_diff)
+## todo why is scau missing from baseline? how to measure total? 
+# grep('BL|V04|V06|V08|V12|V16', combined_bl_log$EVENT_ID)
+#either supply or grep 
+### use df_mofa here?? since it is already set 
+all_event_ids<-c('BL','V04','V06','V08','V12','V16')
+### obtain all patient event ids to getr one row per patient!! 
+patno_event_ids = sapply(all_event_ids, function(event_id){
+                  return(paste0(sm$PATNO,'_', event_id ))
+})
+  
+patno_event_ids=unlist(patno_event_ids)
+# select data for the requested patiennts 
+combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
+combined_bl_log_sel
+########## Now we obtained the longitudinal input for these patients ####
+
 
 # 1. Select the patients eg. by mofa groups 
-combined_bl_log_common<-combined_bl_log[combined_bl_log$PATNO %in% na_ps,]
-combined_bl_log_common$grouping<-group_by_patient[match(combined_bl_log_common$PATNO, names(group_by_patient))]
-
-
+clust_y=all_clusts[1]
+clust_y_labs_all<-sapply(all_clusts, function(clust_y){
+      if (clust_y %in% colnames(MOFAobjectPD@samples_metadata)){
+        group_by_patient<- MOFAobjectPD@samples_metadata[, clust_y]
+        names(group_by_patient)<- MOFAobjectPD@samples_metadata$PATNO
+        clust_y_labs<-group_by_patient[match(combined_bl_log_sel$PATNO, names(group_by_patient))];
+        
+        #combined_bl_log_sel[, clust_y]<-clust_y_labs
+      print('attached')
+      return(clust_y_labs)
+        }
+      
+})
+combined_bl_log_sel<-cbind(combined_bl_log_sel,clust_y_labs_all );
 
 #combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
-combined_bl_log_common$VISIT=factor(combined_bl_log_common$EVENT_ID)
+combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
+# TODO: Maybe get all time points? 
+
+  
+  
+df_plot<-combined_bl_log_sel
+## fetch grouping from MOFA 
+
+df_plot_2k<-df_plot
+df_plot_2k
+
+PDSTATE_SEL=NULL
+
+y='NP2PTOT'
+add_individual_lines=FALSE
+add_boxplots<-FALSE
+
+for (y in to_plot){
+  
+  ### TODO: check that only the variables with highest visit exist
+  ###
+  
+  ## either loop through or melt 
+  #df_plot_2k[df_plot_2k[,y]grouping]
+  lv='V16'
+  clust_name<-paste0(y , '_diff_', lv,'_clust')
+  if (clust_name %in% colnames(df_plot_2k)){
+    df_plot_2k[, 'grouping']<-df_plot_2k[, clust_name]
+    df_plot_2k$grouping<-as.factor(df_plot_2k$grouping)
+    
+  y_pl=y
+
+  
+
+  df_plot_2k=df_plot_2k[!is.na(df_plot_2k$EVENT_ID),]
+  df_plot_2k=df_plot_2k[!is.na(df_plot_2k[,clust_name]),]
+  
+  df_lv<-df_plot_2k[df_plot_2k$EVENT_ID=='V16',]
+  nums<-df_lv%>%
+    group_by(grouping) %>%
+    summarise(count = n_distinct(PATNO)) 
+  
+  
+  p<-ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
+                                       fill='grouping',group='grouping',  colour='grouping')) + 
+    stat_summary(geom = "pointrange", fun.data = median_IQR, 
+                 position=position_dodge(0), alpha=0.9)
+    
+    if (add_individual_lines){
+     p<-p+ geom_line(aes_string(x = 'VISIT', y = y, 
+                           group='PATNO', colour='grouping' ),size=0.2, alpha=0.6)
+    }
+  
+    if (add_boxplots){
+
+        p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
+        
+    }
+    
+    
+    
+    p<-p+stat_summary(fun = median, position=position_dodge(width=0), 
+                 geom = "line", size = 1, alpha=0.9) + 
+    scale_color_viridis_d(option='magma')+
+ 
+    # geom_signif(comparisons = list(c('BL', 'V08')), 
+    #            map_signif_level=TRUE, 
+    #           tip_length = 0, vjust=0)+
+    
+    labs(y=y, caption = paste0('group numbers: ', paste0(nums$count, collapse=', ')))
+
+    theme(strip.text = element_text(
+      size = 10, color = "dark green"), 
+      axis.title.y =element_text(
+        size = 13, color = "dark green"), 
+      axis.text.x = element_text(
+        size = 9 ))
+  
+  
+  p
+  warnings()
+  ggsave(paste0(outdir, '/trajectories/clinical/trajectory_', factor,'_', filt_top, y,'_',clust_name,  '.jpeg'), 
+         width=5, height=3)
+  
+  }
+}
 
 
 
@@ -53,127 +180,6 @@ is.numeric(merged_melt_cl$LAST_UPDATE_M1)
 
 to_sel
 
-# TODO: HERE PLOT THE SCALES THAT ARE RELEVANT TO EACH FACTOR!!!!
-## ir. check what are the corelations, and with which variables-for the PD patinets only
-to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT'
-)
-
-if (names(sel_factors[fn_sel]) %in% c('Factor3')){
-  to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-             'con_putamen', 'rigidity', 'td_pigd_old', 
-             'RBD_TOT', 'NP3_TOT', 'NP2_TOT' , 'moca')
-  
-}else{
-  to_plot<-c('NP2PTOT','NP3TOT' , 'NP3BRADY', 
-             'td_pigd_old_on',  'AGE')
-  to_plot<-c('NP2PTOT','NP3TOT', 'NP3GAIT' , 'NP3BRADY', 'SCAU_TOT', 'scopa_cv', 
-             'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP3_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
-  #to_plot<-selected_covars_broad
-  ## note that these are calculated for future values!!! 
-  to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
-             'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
-  
-}
-to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
-
-merged_melt_cl$MCA_TOT
-to_plot
-## todo why is scau missing from baseline? how to measure total? 
-merged_melt_cl_off<-merged_melt_cl[merged_melt_cl$PDSTATE %in% c('OFF', ''),]
-
-
-
-
-
-### Filters #### 
-# 1. 
-
-
-
-
-
-
-PDSTATE_SEL='OFF'
-df_plot<- merged_melt_cl_off
-combined_bl_log_common_off=combined_bl_log_common[combined_bl_log_common$PDSTATE %in% c(PDSTATE_SEL),]
-
-combined_bl_log_common_off$MCA_TOT
-
-combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08|V12|V16', combined_bl_log_common_off$EVENT_ID) ,]
-#combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V04|V06|V08', combined_bl_log_common_off$EVENT_ID) ,]
-
-combined_bl_log_common_off<-combined_bl_log_common_off[grep('BL|V', combined_bl_log_common_off$EVENT_ID) ,]
-
-
-df_plot<-combined_bl_log_common_off
-
-
-df_plot %>% 
-  group_by(EVENT_ID, grouping)%>% 
-  summarize(count_distinct = n_distinct(PATNO))
-time_nos<-df_plot %>% 
-  group_by(EVENT_ID)%>% 
-  summarize(count_distinct = n_distinct(PATNO))
-
-smaller_group_id<-time_nos$EVENT_ID[which.min(time_nos$count_distinct)]
-smaller_group<-df_plot[df_plot$EVENT_ID==smaller_group_id,]$PATNO
-
-df_plot<-df_plot[df_plot$PATNO %in% smaller_group,]
-
-
-df_V16<-df_plot[c(df_plot$VISIT=='V16'), ]
-df_BL<-df_plot[df_plot$VISIT=='BL', ]
-
-kruskal.test(df_V16$grouping,df_V16$NP3_TOT)
-kruskal.test(df_BL$grouping,df_BL$NP3_TOT)
-
-
-df_plot$grouping
-######### boxplots by cluster over time
-df_plot[,c('VISIT', 'grouping')][df_plot$VISIT=='V12',]
-to_plot
-df_plot$grouping<-as.factor(df_plot$grouping)
-
-df_plot_2k<-df_plot
-
-
-for (y in to_plot){
-  
-  ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
-                                       fill='grouping', group='grouping', colour='grouping')) + 
-    stat_summary(geom = "pointrange", fun.data = median_IQR, 
-                 position=position_dodge(0))+
-    stat_summary(fun = median, position=position_dodge(width=0), 
-                 geom = "line", size = 1) + 
-    scale_color_viridis_d(option='turbo')+
-    #facet_wrap(. ~ symbol, scales='free_y', 
-    #           nrow = 1) +
-    
-    #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-    theme_bw()+ 
-    # geom_signif(comparisons = list(c('BL', 'V08')), 
-    #            map_signif_level=TRUE, 
-    #           tip_length = 0, vjust=0)+
-    
-    labs(y=y)+
-    facet_wrap(~PDSTATE)+
-    
-    # legend(legend=c('Low', 'High'))+
-    theme(strip.text = element_text(
-      size = 10, color = "dark green"), 
-      axis.title.y =element_text(
-        size = 13, color = "dark green"), 
-      axis.text.x = element_text(
-        size = 9 ))
-  
-  
-  
-  warnings()
-  ggsave(paste0(outdir, '/trajectories/clinical/trajectory_', factor,'_', filt_top, y,'_', PDSTATE_SEL,  '.jpeg'), 
-         width=5, height=3)
-}
 
 
 merged_melt_cl3<-merged_melt_cl

@@ -372,6 +372,11 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCut
 #geneList =NULL  
 #title_p
 
+gse=gse_mofa_rna
+N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
+#results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
+library('clusterProfiler')
+options(warn=0, error=NULL)
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
 
@@ -398,7 +403,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   # because it does not make sense if we dont rank by logFC
   # or in the mofa case where we rank by importance in factor 
 
-  dp<-dotplot(gse, showCategory=N_DOT, 
+  dp<-clusterProfiler::dotplot(gse, showCategory=N_DOT, 
               font.size=15
   )
   dp<-dp+theme(axis.ticks=element_blank() , 
@@ -426,7 +431,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   if (!(process_mirnas) && !(run_ORA)){
 
-    dp_sign<-dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
+    dp_sign<-  clusterProfiler::dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
     ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
     
   }
@@ -436,7 +441,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   x2 <- pairwise_termsim(gse )
   #if (process_mirnas){N=15}
   p<-emapplot(x2,showCategory = N_EMAP,
-              layout = "nicely", 
+              layout.params = list(layout = "nicely"), 
               cex_label_category=0.8, 
                 )
   p_enrich <- p + theme(text=element_text(size=12))

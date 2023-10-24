@@ -111,7 +111,9 @@ if (!isRStudio){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-          for (view in c( 'RNA', 'proteomics')){
+          #for (view in c( 'RNA', 'proteomics_csf')){
+            for (view in c( 'proteomics_csf')){
+              
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -156,13 +158,13 @@ if (!isRStudio){
               
                 }
                   ### Run proteins 
-                if (view=='proteomics'){
+                if (view=='proteomics_csf'){
                   
                   
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
                   if (just_load){
 
-                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot'))
+                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
                   }else{
                         run_ORA=FALSE
                           gene_list_ord_abs=abs(gene_list_ord)
@@ -198,7 +200,7 @@ if (!isRStudio){
                           
                           
                            list_proteins[[factor]]<-gse_protein_full
-                          saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot'))
+                          saveRDS(list_proteins, paste0(mofa_enrich_rds, 'prot_csf'))
                           }
                   }
                 }
@@ -339,7 +341,8 @@ if (run_plots){
           ### RNAS ####
           sel_factors_to_p
           pvalueCutoff=1
-         # factor=4
+         # factor=
+          factor=1
           for (factor in sel_factors_to_p){
             #'
             #'

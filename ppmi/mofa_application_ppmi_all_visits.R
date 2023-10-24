@@ -51,15 +51,16 @@ source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
-metadata_output<-paste0(output_files, 'combined_log.csv')
-combined_bl_log<-read.csv2(metadata_output)
+metadata_output<-paste0(output_files, 'combined_log.csv') 
+combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 combined_bl_log$GBA_PATHVAR
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log
 
 combined_bl_log$RBD_TOT
-combined_bl_log$stai_state
+all(is.na(combined_bl_log$updrs2_score_BL))
+
 #combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 #combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 
@@ -258,58 +259,19 @@ combined_bl_log_sel<-combined_bl_log_sel %>%
 combined_bl_log_sel[combined_bl_log_sel$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT', 'EVENT_ID')]
 
 
-
-
-
-
 ### Merging and remove duplicates 
 meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
 meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
 meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
 
-img_var='con_putamen'
+#EVENT_ID='V10'
 
-#V10_mean_striatum<-curated_total_new_cols[curated_total_new_cols$EVENT_ID=='V06', c(img_var, 'PATNO')]
-BL_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID=='BL', c(img_var, 'PATNO')]
-
-get_curated_data<-function(img_var, EVENT_ID){
-  V10_mean_striatum<-combined_bl_log[combined_bl_log$EVENT_ID==EVENT_ID, c(img_var, 'PATNO')]
-  V10_mean_striatum[, img_var]=as.numeric(V10_mean_striatum[, img_var])
-  V10_mean_striatum=V10_mean_striatum[!is.na(V10_mean_striatum[, img_var]),]
-  V10_mean_striatum<-V10_mean_striatum[!duplicated(V10_mean_striatum$PATNO),]
-  # return one per patient -- gett the latest if multiple?? 
-  return(V10_mean_striatum)
-}
-
-V06_mean_striatum<-get_curated_data(img_var, 'V06')
-BL_mean_striatum<-get_curated_data(img_var, 'BL')
-V10_mean_striatum<-get_curated_data(img_var, 'V10')
-V08_mean_striatum<-get_curated_data(img_var, 'V08')
-
-
-meta_merged_ord_V10<-merge(meta_merged_ord, V06_mean_striatum,by=c('PATNO'), suffixes = c("", '_V06'),  all.x=TRUE)
-meta_merged_ord_V10<-merge(meta_merged_ord_V10, BL_mean_striatum,by=c('PATNO'), suffixes = c("", '_BL'),  all.x=TRUE)
-meta_merged_ord_V10<-merge(meta_merged_ord_V10, V10_mean_striatum,by=c('PATNO'), suffixes = c("", '_V10'),  all.x=TRUE)
-
-meta_merged_ord_V10$change<-meta_merged_ord_V10[, paste0(img_var, '_V10')]-meta_merged_ord_V10[, paste0(img_var, '_BL')]
-
-
-#meta_merged_ord_V10[meta_merged_ord_V10$COHORT==2,]$change
-hist(meta_merged_ord_V10$change)
-meta_merged_ord_V10$change
-#View(meta_merged_ord_V10)
-
-dim(meta_merged_ord_V10)
-dim(meta_merged_ord_V10)
-
-meta_merged_ord_V10$con_putamen_V06
+V16_only<-MOFAobject@samples_metadata[, grep('V16', colnames(MOFAobject@samples_metadata))]
 
 MOFAobject@samples_metadata=meta_merged_ord
-MOFAobject@samples_metadata=meta_merged_ord_V10
 
 
-
-
+meta_merged_ord$moca_BL
 
 
 

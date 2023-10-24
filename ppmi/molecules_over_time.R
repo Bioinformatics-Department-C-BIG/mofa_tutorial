@@ -37,7 +37,7 @@ mode='diagnosis'
 
 #### Markers over time:
 #### 1. Obtain the markers here 
-fn_sel=4; 
+fn_sel=1; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -46,9 +46,9 @@ if (mode=='diagnosis'){
   sel_factors_mode=sel_factors_pd_np3
   
 }
+sel_factors_diff
 
-
-factor=2
+factor=1
 factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
@@ -232,6 +232,12 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
 
 groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor)
 groups_kmeans3<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor, centers=2)
+groups_kmeans_all_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors, sel_factors_pd_np3),
+                                                    centers=3)
+
+groups_kmeans_diff_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors_diff),
+                                                    centers=3)
+
 
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=factor)
 merged_melt$kmeans_grouping_all<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=sel_factors_mode)
@@ -327,12 +333,12 @@ get_most_sig_over_time<-function(merged_melt_filt_group){
 
 merged_melt_ct_two_vis=merged_melt_ct[merged_melt_ct$VISIT %in% c('BL', 'V08'),]
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% group_cats[1],]
+merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[2],]
 
 most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1)
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2)
 most_sig_over_time_ct<-get_most_sig_over_time(merged_melt_ct)
 
-merged_melt_filt_g2$kmeans_grouping
 ## TODO: DO IT FOR MULTIPLE GROUPS 
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
@@ -341,7 +347,7 @@ most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
 
 #### CHOOSE 
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time_ct$symbol,]
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time2$symbol,]
 
 
 # they should chgange in pd but not in controls!! 
@@ -351,7 +357,7 @@ most_sig_over_time<-most_sig_over_time%>%
   arrange(Wilcox, decreasing=FALSE)
  
 ####OUTPUT MOST SIG OVER TIME 
-most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% wilcox_stats_controls$symbol),]
+most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig_over_time_ct$symbol),]
 
 
 # 
@@ -369,7 +375,7 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 #most_sig_over_time_deseq<-make.names(colnames(data.filtered.only.pd))
 
 #most_sig_over_time_deseq
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq[1:10],]
+#merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% most_sig_over_time_deseq[1:10],]
 
 
 merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time$symbol,]
@@ -439,8 +445,7 @@ filt_top=TRUE
 
 if (filt_top){
   
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time_deseq[1:10],]
-  
+
   # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   
@@ -715,6 +720,40 @@ merged_melt_filt_most_sig
 
 merged_melt$kmeans_grouping
 
+
+### collect all results 
+sig_genes_all_factors=data.frame()
+factors_to_fetch<-c(sel_factors, sel_factors_pd_np3)
+factors_to_fetch<-sel_factors_diff
+
+view='RNA'
+factors_to_fetch=c(1,4,6,8,9,11,12)
+all_files<-sapply(factors_to_fetch, function(factor){
+  ### collect all moelcules for each factor 
+  top_view<-which.max(vars_by_factor[factor,])
+  view=names(top_view)
+  
+  most_sig_file1<-paste0(outdir, '/trajectories/most_sig_over_time_',factor,'_', view,'_',group_cat , '.csv')
+  return(most_sig_file1)
+  
+})
+all_files[[3]]
+
+file.exists(all_files[[3]])
+
+all_sig_genes<-lapply(all_files, function(file){
+  if (file.exists(file)){
+    print('found_file')
+    sig_genes_f<-as.data.frame(read.csv(file))
+    return(sig_genes_f)
+  }
+})
+
+  
+
+all_sig_genes2 <- do.call("rbind", all_sig_genes)
+all_sig_genes2<-all_sig_genes2%>%
+  arrange(Wilcox, decreasing=FALSE)
 
 
 

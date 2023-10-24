@@ -9,7 +9,12 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
-#BiocManager::install("MOFA2", version="1.8")
+# BiocManager::install("MOFA2", version="1.8")
+detach('package:MOFA2', unload=TRUE)
+source("https://bioconductor.org/biocLite.R")
+require(devtools)
+
+install.packages("MOFA2", version="1.8", repos="https://bioconductor.org/packages/MOFA2/")
 
 
 library(MOFA2)
@@ -264,9 +269,7 @@ meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EV
 meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
 meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
 
-#EVENT_ID='V10'
 
-V16_only<-MOFAobject@samples_metadata[, grep('V16', colnames(MOFAobject@samples_metadata))]
 
 MOFAobject@samples_metadata=meta_merged_ord
 

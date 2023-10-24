@@ -155,7 +155,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #' 
   #' 
   #' 
-  #ARRANGE
+ #ARRANGE
   #vsd_filt=vsd
   
  
@@ -242,9 +242,15 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   ######### ORDER OF COLUMNS/SAMPLES ####
+  sel_pats_event_ids<-df_ord[(df_ord$EVENT_ID == 'BL'), 'PATNO_EVENT_ID']; 
+  resV8<-filter_heatmap(hm_scaled, df_ord, sel_pats=NULL,sel_pats_event_ids = sel_pats_event_ids )
+  hm_scaled_BL=resV8[[1]]; df_ord_BL<-resV8[[2]]
+  
+  
+  
   sel_pats_event_ids<-df_ord[(df_ord$EVENT_ID == 'V08'), 'PATNO_EVENT_ID']; 
   resV8<-filter_heatmap(hm_scaled, df_ord, sel_pats=NULL,sel_pats_event_ids = sel_pats_event_ids )
-  hm_scaled_v08=resV8[[1]]; 
+  hm_scaled_v08=resV8[[1]]; df_ord_V08<-resV8[[2]]
   
 
   dend_v08<-as.dendrogram(hclust(dist(t(hm_scaled_v08))));
@@ -305,11 +311,56 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #dev.off()
   my_pheatmap
   
+  
+  
+  # 1. SCALE
+  # 2. Split time
+  # 3. Cluster genes within groups? 
+  library(ComplexHeatmap)
+  
+  
+  f1 = colorRamp2(seq(min(hm_scaled), max(hm_scaled), length = 3), c("blue", "#EEEEEE", "red"))
+  factor_labels<-combined_sig_genes[match(rownames(hm1), combined_sig_genes$symbol), 'id']
+  
+  
+  ### NOW SPLIT TO TWO heatmaps 
+  df1<-df_ord_V08; hm1<-hm_scaled_v08
+  hm_timepoint<-function(df1, hm1){
+    #'
+    #'
+    #'
+    df1<-df1[, !colnames(df1) %in% c('PATNO_EVENT_ID', 'PATNO')]
+    ha1<-ComplexHeatmap::HeatmapAnnotation(df=df1)
+    hm_t<-ComplexHeatmap::Heatmap(hm1, 
+                                    top_annotation = ha1, 
+                                    col=f1)
+    return(hm_t)
+  }
+  ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08)
+  ht_BL<-hm_timepoint(df_ord_BL, hm_scaled_BL)
+  
+  #if (!is.null(df_ord_V06)){
+  #  ht_V06<-hm_timepoint(df_ord_V06, hm_scaled_V06)
+    
+    
+  #}
+  
   # ggsave(fname, width=7, height=7, dpi=300)
+  anno<-rowAnnotation(labels = anno_text(lab, which = "row"))
+
   
   
-  return(my_pheatmap)
+  
+  hboth<-ht_V08+ht_BL+anno
+  hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE)
+  
+  
+  #dev.off()
+  
+
+  
+  return(hm_draw)
 }
 
 
-
+#BiocManager::install('ComplexHeatmap')

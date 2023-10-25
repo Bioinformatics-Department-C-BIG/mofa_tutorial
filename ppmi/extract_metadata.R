@@ -43,7 +43,6 @@ clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/
 demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
 
 
-dim(characteristics)
 characteristics<-merge(clinical, ps, by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 dim(characteristics)
 

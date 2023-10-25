@@ -66,6 +66,8 @@ get_ranked_gene_list_mofa<-function(view, factor){
         order_ind<-order(-gene_list)
         gene_list_ord<-gene_list[order_ind,]
         names(gene_list_ord)<-rownames(gene_list)[order_ind]
+        names(gene_list_ord)<-gsub('\\..*', '', names(gene_list_ord)) 
+        
         return(gene_list_ord)
 }
 
@@ -111,7 +113,7 @@ if (!isRStudio){
                # for (view in c( 'RNA', 'miRNA')){
                   
                    
-          for (view in c( 'RNA', 'proteomics')){
+          for (view in c( 'RNA', 'proteomics_csf')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'

@@ -82,8 +82,11 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 #patno_event_ids<-colData(vsd_filt)$PATNO_EVENT_ID
 #patno_event_ids
 
-#pdstate=c('OFF', '')
- fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log){
+#pdstate=c('OFF', '')patno_event_ids
+#patno_event_ids = samples_metadata(MOFAobject)$PATNO_EVENT_ID
+#patno_event_ids = paste0(samples_metadata(MOFAobject)$PATNO, '_BL')
+
+ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
    #'
    #' @param PATNO_EVENT_ID
    #'
@@ -91,7 +94,7 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
    #' 
    #' 
    # TODO: add more criteria to filter eg. pdstate='OFF'; pag_name_m3='NUPDRS3'
-   # PRIORITIZE OFF ? 
+   # PRIORITIZE OFF ?  - KEEP ALSO ON FOR THE MISSING ONES?? SO WE CAN HAVE THE OTHER DATA? 
    
    #combined_bl_log_sel<-combined_bl_log_sel %>%
   #   group_by(NP3_TOT) %>%
@@ -99,30 +102,27 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #   as.data.frame()
   
   # patno_event_ids = paste0(patnos, event_ids)
-   
-   hist(combined_bl_log$NP3TOT_V16)
-    metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
-  #  metadata_filt_dups<-metadata_filt_dups[!is.na(metadata_filt_dups$EVENT_ID),]
-    #dim(metadata_filt_dups)
-    #metadata_filt_dups<-metadata_filt_dups %>% 
-    #                    dplyr::filter(PDSTATE %in%pdstate )# %>%
-                        #dplyr::filter(PAG_NAME_M3 ==pag_name_m3 )
-     
-    
-   
-    
+   #combined<-combined_bl_log
+
+       metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
+ 
     metadata_filt_dups<-as.data.table(metadata_filt_dups)
+    
     max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3TOT)], by=PATNO_EVENT_ID]$V1]
+    dim(max_np3_unique)
+    length(patno_event_ids)
     #missing<-metadata_filt_dups[is.na(metadata_filt_dups$EVENT_ID)]
     #max_np3_unique<-rbind(max_np3_unique, missing)
-    #max_np3[, c('PATNO_EVENT_ID', 'NP3_TOT' )]
+    # TODO: mca tot is zero.. 
+      # as.data.frame(metadata_filt_dups[, c('PATNO_EVENT_ID','MCA')])
+    
 
-    dups<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3_TOT')]%>%
-     arrange(PATNO_EVENT_ID, PDSTATE, NUPSOURC, PAG_NAME_M3, NP3_TOT))
+    dups<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3TOT')]%>%
+     arrange(PATNO_EVENT_ID, PDSTATE, NUPSOURC, PAG_NAME_M3, NP3TOT))
     
     metadata_filt_dups<-metadata_filt_dups[!dups,]
     
-    metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3_TOT')]%>%
+    metadata_filt_dups[, c('PATNO_EVENT_ID', 'PDSTATE', 'NUPSOURC', 'PAG_NAME_M3', 'PAG_NAME_M4','NP3TOT')]%>%
                        arrange(PATNO_EVENT_ID)
     
     dups_strict<-duplicated(metadata_filt_dups[, c('PATNO_EVENT_ID')])
@@ -132,23 +132,66 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
     ### if we cannot find it for all then use what was given? 
     # match to ensure same order
     max_np3_unique<-as.data.frame(max_np3_unique[match(patno_event_ids, max_np3_unique$PATNO_EVENT_ID ), ])
+    dim(max_np3_unique)
     
-    
-    max_np3_unique$PATNO_EVENT_ID = patno_event_ids
+    #max_np3_unique[,'PATNO_EVENT_ID']<-patno_event_ids
+    ### HERE IF IT DID NOT FIND THE metadata it adds back the id 
     missing<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
-    length(missing)
     missing_metadata<-as.data.frame(metadata_filt_dups[match(missing, metadata_filt_dups$PATNO_EVENT_ID ), ])
-    
     max_np3_unique[max_np3_unique$PATNO_EVENT_ID %in% missing,]<-missing_metadata
-    
     missing2<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
-    length(missing2)  
-     
+
   return(max_np3_unique)
 
  }
  
 
+ ##########
+ ######
+ imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
+ scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+ 
+ get_diff_zscores<-function(patno_event_ids,imaging_variables_diff=imaging_variables_diff,scale_vars_diff=scale_vars_diff  ){
+            #### obtains the zscore of the changes for the specific group supplied
+              ### MEAN AND sd for scaling depends on the group!
+   #' 
+   #' 
+   #' @param patno_event_ids
+   #' could also supply the specific variables to diff
+
+   
+   
+
+            df_all<-fetch_metadata_by_patient_visit(patno_event_ids , combined=combined_bl_log)
+
+             t1<-'BL';  t2='V10';
+             
+             #df=df_all
+             df_change1= get_changes(df_all,imaging_variables_diff, t1, t2 )
+             #df_all<-cbind(df_all, df_change1)
+            
+             
+              t1<-'BL';  t2='V16';
+             colnames(df_all)[grep('V16', colnames(df_all))]
+             ### hack here warning!! I added the data from the curated because it was missing 
+             df_all$MCATOT_BL <- df_all$moca_BL
+             
+             
+             # TODO: for mca tot it is not available so add moca for baseline and MCATOT for other visits 
+             
+             not_in_df<-scale_vars_diff[!scale_vars_diff %in% colnames(df_all)]
+             if (length(not_in_df)>0){
+               print(paste('ERROR: missing scales: ', not_in_df))
+             }
+             df_change2= get_changes(df_all,scale_vars_diff, t1, t2 )
+
+           
+            df_change_total<-cbind(df_change1, df_change2)
+              
+        return(df_change_total)
+        
+        
+ }
 
 ## Create the summarized experiment by selecting VISITS and cohorts 
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){

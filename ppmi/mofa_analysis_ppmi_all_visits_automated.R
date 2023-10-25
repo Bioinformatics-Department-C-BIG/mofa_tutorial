@@ -22,10 +22,6 @@
 ## TODO: load mofa object from outdir 
 
 
-
-
-## TODP
-
 #as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #as.factor(samples_metadata(MOFAobject)$SCAU26CT)
 MOFAobject@samples_metadata=meta_merged_ord

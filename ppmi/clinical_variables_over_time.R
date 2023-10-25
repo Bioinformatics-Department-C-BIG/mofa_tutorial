@@ -155,6 +155,101 @@ for (y in to_plot){
 }
 
 
+#### 
+y='NP3TOT'
+y='NP3TOT'
+
+get_clinical_clusters<-function(y, centers=4){
+  #'
+  #' @param 
+  #'
+  #'
+        combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$COHORT==1,]
+        clin_traj<-combined_bl_log_sel[,c('PATNO','EVENT_ID', y)]
+        
+        clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
+        #clin_traj$months<-unlist(EVENT_MAP[clin_traj$EVENT_ID], use.names = FALSE)
+        
+        dim(clin_traj_wide)
+        dim(na.omit(clin_traj_wide))
+        clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
+        rownames(clin_traj_wide)<-clin_traj_wide$PATNO
+        clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
+        
+        return(clinical_clusters$cluster)
+  
+}
+get_clinical_clusters(y)
+
+get_clinical_clusters_kml<-function(y, nbCluster=4){
+  
+    
+        combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$COHORT==1,]
+        clin_traj<-combined_bl_log_sel_pd[,c('PATNO','EVENT_ID', y)]
+        
+        clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
+        
+        clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
+        rownames(clin_traj_wide)<-clin_traj_wide$PATNO
+        #clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
+        
+        #return(clinical_clusters$cluster)
+        
+        #install.packages('kml')
+        library('kml')
+        ### Clinical trajectory means 
+        clin_traj_mat<-sapply((clin_traj_wide)[, -1], as.numeric)
+        
+        
+        CLD <- kml::cld(clin_traj_mat, timeInData = 1:dim(clin_traj_mat)[2], maxNA = 2)
+        length(CLD)
+        clusters<-kml::kml(CLD, nbRedrawing = 5)
+        
+        
+        # run choice
+        clust_ids<-getClusters(CLD,nbCluster=nbCluster )
+        names(clust_ids)<-clin_traj_wide$PATNO
+        
+        length(clust_ids)
+    return(clust_ids)
+}
+ 
+
+get_clinical_clusters_kml(y)   
+    ### CLINICAL trajectories 
+    
+    df_plot_2k=combined_bl_log_sel
+    max_np3_unique$NP3_TOT
+    #y='NP2PTOT'
+    
+    x='EVENT_ID'
+    df_plot_2k$PATNO=as.factor(df_plot_2k$PATNO)
+    cl_clusters<-get_clinical_clusters(y)
+    cl_clusters_kml<-clust_ids
+    cl_clusters<-cl_clusters_kml
+    
+    
+    dim(clin_traj_wide)
+    names(cl_clusters)<-clin_traj_wide$PATNO
+    df_plot_2k$cluster<-as.factor(cl_clusters[match(df_plot_2k$PATNO,names(cl_clusters) )])
+    
+    p<-ggplot(data = df_plot_2k, aes_string(x = x, y = y), group='PATNO')
+    p<-p+ geom_line(aes_string(x = x, y = y ,group='PATNO', colour='cluster' ),size=0.2, alpha=0.3)+
+      
+      geom_point(aes_string(x = x, y = y, colour='PDSTATE' ),size=0.6, alpha=0.6)
+    
+    
+    p
+    
+    
+    ggsave(paste0(outdir, '/trajectories/clinical/clusters_',y, '.jpeg'), width=5, height=3)
+
+
+
+
+
+
+
 
 
 ### for categorical 

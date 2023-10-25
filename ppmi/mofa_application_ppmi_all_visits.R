@@ -229,14 +229,16 @@ for (N_FACTORS in c(15)){
 }
 
 ## attach some extra clinical variables 
-sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
+sel_sam=MOFA2::samples_names(MOFAobject)
 length(sel_sam)
-meta_merged_ord=fetch_metadata_by_patient_visit(MOFAobject@samples_metadata$PATNO_EVENT_ID)
+meta_merged_ord=fetch_metadata_by_patient_visit(samples_metadata(MOFAobject)$PATNO_EVENT_ID)
 length(meta_merged_ord$PATNO)
 meta_merged_ord<-as.data.frame(meta_merged_ord)
 meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
-
-MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
+#meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
+dim(samples_metadata(MOFAobject))
+dim(as.data.frame(meta_merged_ord))
+#MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
 

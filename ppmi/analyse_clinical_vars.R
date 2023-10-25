@@ -214,7 +214,8 @@ df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
 colnames(df_log)<-paste0(colnames(df_log),'_LOG')
 combined_new<-mutate(combined, df_log)
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
-combined_new$MCA_TOT
+combined_new$ESS_TOT
+
 
 
 
@@ -314,6 +315,8 @@ hist(as.matrix(df_log_sel))
 
 
 
+
+
 # just for plotting
 combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 
@@ -345,19 +348,8 @@ combined_new$RBD_TOT
 
 
 
-  
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')
-
-
-# postural instability gait disorder dominant
 #### Create averages 
 ##
-
-
-
-
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
-
 
 
 
@@ -466,11 +458,43 @@ average_if_not_na<-function(df){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################################
+#### skip the above and analyse from file? #####
 ###### Now filter by relevant patients to make the plots 
-### First filter by combined_filt\
 
 
-combined_filt<-combined_new[combined_new$PATNO %in% sel_pats, ]
+### First filter by combined_filt
+
+metadata_output<-paste0(output_files, 'combined_log.csv') 
+combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
+
+
+#combined_filt<-combined_new[combined_new$PATNO %in% sel_pats, ]
+combined_filt<-combined_bl_log[combined_bl_log$PATNO %in% sel_pats, ]
 
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
@@ -777,10 +801,6 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
   # TODO: define the line group here? group by record id? 
   # for scopa tot we do not have 
   
-  # remove duplicate records
-  # 
-  
-
   
   # TODO: pagname m3 does not apply to oteher scales 
   #shape= 
@@ -797,10 +817,7 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
     dplyr::filter(!!as.symbol(y) != '.') %>%
     as.data.frame()
 
-  
-  
-  
-  colnames(combined_to_plot_final) <- make.unique(names(combined_to_plot_final))
+    colnames(combined_to_plot_final) <- make.unique(names(combined_to_plot_final))
 
   
   
@@ -808,7 +825,8 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
   combined_to_plot_final[, colour_by] = as.factor(combined_to_plot_final[, colour_by])
   combined_to_plot_final[, x]=as.factor(combined_to_plot_final[, x])
   combined_to_plot_final[, y]<-as.numeric(combined_to_plot_final[, y])
-  combined_to_plot_final[, y]<-clip_outliers(combined_to_plot_final[, y], x_times = 5, lower=FALSE)
+  #combined_to_plot_final[, y]<-clip_outliers(combined_to_plot_final[, y], x_times = 5, lower=FALSE)
+  combined_to_plot_final[, y]<-clip_outliers(as.data.frame(combined_to_plot_final[, y]))
   
   
   if (y=='urate'){
@@ -836,38 +854,22 @@ plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape
   }
  
   ggsave(paste0(outdir_orig,'metadata/lines_',SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=height)
-  
-  
-  #p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
-  #p<-ggplot(combined_to_plot_med_only, aes_string( x=x,y=y))+
 
   
   p<-ggplot(combined_to_plot_final, aes_string( x=x,y=y))+
-    
-    
-    #    geom_point(aes_string(y=y, shape=shape))+
-    #geom_line(aes_string(y=y,col=group, group=group)) +
-    # geom_violin(aes_string(x=x, y=y))+
-    #  geom_boxplot(aes_string(x=x, fill='PAG_NAME_M3'))+
-    # geom_violin(aes_string(x=x, fill='PDSTATE'))
-
     geom_boxplot(aes_string(x=x, fill=colour_by))
   
   
   p
-  #theme(legend.position="none")
-  
-  #theme(legend.position="bottom", legend.text=element_text(size=2))+
-  #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
-  
-  # p+facet_wrap(formula_1, nrow = 4)
+
   ggsave(paste0(outdir_orig,'metadata/box_', SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=HEIGHT)
   # ggsave(paste0(outdir_orig,'metadata/violin_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
 }
 
 
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY')
-scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT')
+
+scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT', 'NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'NP2_TOT_LOG', 'NP3_TOT_LOG')
+
 # , 'NHY', 'td_pigd' --> get counts for these ones at every time point eg. counts of 2, counts of 3 and plot those
 colour_by='PD_MED_USE'
 facet_var='PDSTATE'
@@ -886,7 +888,7 @@ colour_by='PDMEDYN'
 combined_to_plot_final$upsit_pctl
 facet_var='COHORT'
 combined_to_plot_final[, c('PATNO','PDMEDYN', 'MCA_TOT', 'upsit_pctl')]
-scales<-c( 'SCAU_TOT', 'scopa_tot', 'MCA_TOT', 'bjlot', 'moca', 'upsit', 'MSEADLG')
+scales<-c( 'SCAU_TOT', 'scopa_tot', 'MCA_TOT', 'bjlot', 'moca', 'upsit', 'MSEADLG', 'ESS_TOT')
 scales<-c( 'stai' , 'stai_state', 'stai_trait', 'VLTANIM', 'gds', 'hvlt_immediaterecall', 'ess')
 
 for (y in scales){

@@ -25,24 +25,29 @@
 
 #### Covariance of factors with metadata 
 source('ppmi/mofa_utils.R')
+imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
+scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
 
-
+  
 
 ## TODP
 
 #as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #as.factor(samples_metadata(MOFAobject)$SCAU26CT)
-MOFAobject@samples_metadata=meta_merged_ord
+#MOFAobject@samples_metadata=meta_merged_ord
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
-samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
+#samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
 
 ### ADD FUTURE CHANGES ####
 ############################
 sm<-samples_metadata(MOFAobject)
-res<-df_change[match(sm$PATNO, df_change$PATNO),]
-samples_metadata(MOFAobject) = cbind(sm,res )
+#res<-df_change[match(sm$PATNO, df_change$PATNO),]
+patno_event_ids=samples_metadata(MOFAobject)$PATNO_EVENT_ID
+df_change_total<-get_diff_zscores(patno_event_ids = samples_metadata(MOFAobject)$PATNO_EVENT_ID,imaging_variables_diff =imaging_variables_diff, 
+                                  scale_vars_diff=scale_vars_diff )
+samples_metadata(MOFAobject) = cbind(sm,df_change_total )
 sm<-samples_metadata(MOFAobject)
 
 # diff variables holds the vars with the future changes 
@@ -52,8 +57,76 @@ sm[,diff_variables]
 
 
 
+#### TODO: add clinical clusters as a function 
+#1. 
+sm<-samples_metadata(MOFAobject)
+y=clinical_scales[10]
+y='NP2PTOT'
 
+#sapply(clinical_scales, function(y){
+#  y
+# TODO: loop
+cl_clusters<-get_clinical_clusters(y, centers = 4)
 
+cl_clusters<-get_clinical_clusters_kml(y) 
+clust_name=paste0(y, '_clin_clust')
+cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
+
+samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
+y=clinical_scales[1]
+
+correlate_factors_categorical<-function(y){
+  ## explicitly done for categorical variables
+  #'
+  #' @param name description
+  #'
+  #'
+  #'
+  #'
+    clust_name=paste0(y, '_clin_clust')
+    
+    cl_clusters<-try(get_clinical_clusters(y, centers = 4), 
+                           silent = TRUE)
+    if (!class(cl_clusters) == "try-error"){
+      cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, names(cl_clusters))]
+      names(cl_clusters_MOFA)<-samples_metadata(MOFAobject)$PATNO
+      samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
+      
+      
+      
+      cl_clusters_MOFA
+      
+      #samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
+      #correlate_factors_with_covariates 
+      sm<-samples_metadata(MOFAobject)
+      if (clust_name %in% colnames(sm)){
+        covariates=samples_metadata(MOFAobject)[,clust_name ]
+        Z <- get_factors(MOFAobject, factors = 1:15, 
+                         as.data.frame = FALSE)
+        
+        Z <- do.call(rbind, Z)
+        
+        #psych::corr.test(Z, covariates, method = "pearson", 
+        #                  adjust = "BH")
+        
+        y_pvals<-apply(Z, 2, function(z) {
+          kruskal.test(z,covariates)$p.value })
+        y_pvals<-p.adjust(y_pvals, method = 'BH')
+        return(y_pvals)
+      
+    }
+    
+  }
+}
+# TODO: padjust
+cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
+
+cors_kruskal[!is.na(cors_kruskal)]
+  
+  
+  #}
+
+#)
 
 
 
@@ -61,21 +134,23 @@ sm[,diff_variables]
 ############ SUBSET PATIENTS ONLY ########################################
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
-MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
+#MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
 PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
 
 # CORS PATIENTS ONLY #### 
 stats<-apply(MOFAobjectPD@samples_metadata, 2,table )
 non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+
+####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
 cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1]]
 
 # CORS ALL SAMPLES 
-stats<-apply(MOFAobject@samples_metadata, 2,table )
-non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
-cors_both<-get_correlations(MOFAobject, names(non_na_vars))
-cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+#stats<-apply(MOFAobject@samples_metadata, 2,table )
+#non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+#cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+#cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
@@ -106,8 +181,10 @@ all_diff<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-
+all_diff_variables
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
+
+
 
 all_fs_diff<-sapply(all_diff, function(diff_var){
   try(
@@ -125,7 +202,7 @@ all_fs_diff<-sapply(all_diff, function(diff_var){
 sel_factors_np3<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
 sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
 
-
+sm[sm$COHORT==1,'Outcome']
 
 
 
@@ -137,6 +214,7 @@ library(DescTools)
 
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
 all_fs_diff
+k_centers_m=3
 for (i in 1:length(all_fs_diff)){
   #'
   #' @param i
@@ -192,8 +270,6 @@ if (cluster_samples_mofa){
   
   ########### Add some metadata ####
   samples_metadata(MOFAobject)$PATNO_EVENT_ID
-  samples_metadata(MOFAobject)$cluster<-factor(clusters_mofa$cluster)
-  samples_metadata(MOFAobject)$cluster<-factor(clusters_mofa$cluster)
   
   
 }
@@ -202,43 +278,62 @@ if (cluster_samples_mofa){
 
 ####
 ###DO THE CLUSTERS HAVE DIFFERENT NP3? ####
+
+
+
+boxplot_by_cluster<-function(met, clust_name, y){
+  #'
+  #' @param 
+  #' 
+  
+  met[, clust_name]=as.factor(met[, clust_name])
+  met[, y]=as.numeric(met[, y])
+  p<-ggplot(met ,aes_string(x=clust_name , y=y))+
+    geom_boxplot(aes_string( x=clust_name, fill=clust_name))+
+    #geom_pwc(
+    #  aes(group = clust_name), tip.length = 0,
+    #  method = "wilcox_test", label = "p.format"
+    #)
+    #p
+    geom_signif(comparisons=list(combn(3,2)),
+                aes_string(y=y))
+  
+  
+  
+  ggsave(paste0(outdir,'/clustering/', y, '_',clust_name, '.png'))
+  graphics.off()
+  ## TODO: WILCOX TEST BY GROUP
+  
+  
+}
+
 met<-samples_metadata(MOFAobjectPD)
 
 diff_variables
-all_fs_diff$NP3TOT_diff_V16
-
+all_fs_diff$NP2PTOT_diff_V16
+all_fs_diff
 all_clusts
 y='NP3_TOT'
 y='NP3TOT_diff_V16_clust'
 met$NP3TOT_diff_V16
 clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
-clust_name='RBD_TOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
-
-mutua
-
-
 
 clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
-clust_name='NP3TOT_diff_V16_clust'; y='NP3TOT_diff_V16';  y='NP3TOT'; 
 
-met[, clust_name]=as.factor(met[, clust_name])
-met[, y]=as.numeric(met[, y])
-
-met%>%
-  group_by() %>%
-  summarize(across(everything(), mean))
-dev.off()
-p<-ggplot(met ,aes_string(x=clust_name , fill=clust_name))+
-  geom_boxplot(aes_string(y=y, x=clust_name))+
-  geom_signif(comparisons=list(c("1", "2")),
-                               aes_string(y=y))
+boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
 
 
-p
-ggsave(paste0(outdir,'/clustering/', y, '_',clust_name, '.png'))
-## TODO: WILCOX TEST BY GROUP
+sapply(diff_variables, function(y){
+  clust_name = paste0(y, '_clust')
+  ## check if there are clusters for this variable
+  if (clust_name %in% colnames(met)){
+    boxplot_by_cluster(met, y=y, clust_name=clust_name )
+    
+  }
+})
 
 
+#dev.off()
 #### After adding clusters redo calculcations of metadata..? ####
 
 
@@ -300,9 +395,9 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
 
 #selected_covars
 
-if (length(sel_coh)>1){
-  selected_covars2<-c(selected_covars2, 'COHORT')
-}
+#if (length(sel_coh)>1){
+#  selected_covars2<-c(selected_covars2, 'COHORT')
+#}
 
 sm$NP3_TOT
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'con_putamen_V10' )
@@ -310,7 +405,6 @@ selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putame
 sm<-samples_metadata(MOFAobject)
 sm$asyn
 MOFAobjectPD
-selected_covars=selected_covars2
 MOFAobject_to_plot=MOFAobjectPD
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, MOFAobject_to_plot=MOFAobject){
   
@@ -362,18 +456,33 @@ plot="log_pval"
 # conference poster 
 
 
+get_factors_for_scales<-function(vars_to_plot){
+  #''
+  #' @param
+  #'
+  #'
+  vars_to_plot<-vars_to_plot[vars_to_plot %in% colnames(cors_all_pd)]
+  
+   all_cors_diff<-cors_all_pd[, vars_to_plot]
+  sel_factors<-which(rowSums(all_cors_diff)>0)
+  return(sel_factors)
+  
+}
+
+clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
+vars_to_plot=clinical_scales; sel_factors<-get_factors_for_scales(clinical_scales)
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
+
+
+cors_all_pd[, 'PD_MED_USE']
 factors=names(sel_factors)
 sel_factors
 fname<-'factors_covariates_only_nonzero_strict_PD'
-
-plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
-
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
-
-
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
-plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 graphics.off()
 
 
@@ -387,24 +496,38 @@ graphics.off()
 
 
 ########################## NEW LOGIC GET ONLY FACTORS WITH DIFF IN V16 ##############
-############# AFTER WE ADDE THIS TO MOFA
+############# AFTER WE ADDED THIS TO MOFA
+# 1. diff vars
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
-all_cors_diff<-cors_all_pd[, all_diff]
+all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )]
 
-sel_factors_diff<-which(rowSums(all_cors_diff)>0)
-all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
+# 2. scales + 3. imaging 
+
+vars_to_plot=all_diff; sel_factors_diff<-get_factors_for_scales(vars_to_plot)
+all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts)
+
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
-
-
-
-
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
 plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+
+
+### ALSO PLOT DIFF VARS for the controls 
+all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all)]
+all_cors_diff<-cors_all[, all_diff]
+sel_factors_diff<-which(rowSums(all_cors_diff)>0)
+all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
+
+
+#### Factors related to the longterm change in scale #####
+fname<-'factors_covariates_only_nonzero_strict_diff'
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject )
+fname<-'factors_covariates_only_nonzero_strict_cor_diff'
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject )
 
 
 fname<-'factors_covariates_only_nonzero_strict'
@@ -431,20 +554,7 @@ plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, h
 
 
 
-ind_re<-which(non_na_ids_to_plot %in% c('DYSKIRAT'))
-## this is the othet
-# = non_na_ids_to_plot[-ind_re]
 
-##jpeg(paste0(outdir, 'factors_covariates_only_nonzero_cor_logpval','.jpeg'), 
-#     width = 700+length(selected_covars)*20, height=1100, res=100)
-
-##correlate_factors_with_covariates(MOFAobject,covariates = selected_covars, 
-#                                  plot = "log_pval",
-                                 # alpha=0.000000001,
-#                                  col.lim=c(-0.4, 0.4))
-#dev.off()
-
-cors_pearson[,c('DYSKIRAT')]
 
 MOFAobject_nams<-MOFAobject
 vars_by_factor/rowSums(vars_by_factor)*100
@@ -501,7 +611,7 @@ views<-names(MOFAobject@dimensions$D)
 
 
 ### Actually get only factors with higher variance in RNA
-dir.create(paste0(outdir, 'top_weights/'))
+dir.create(paste0(outdir, '/top_weights/'))
 
 T=0.3
 
@@ -556,7 +666,7 @@ for (i in seq(1,vps)){
     ### get the top highly weighted variables - absolute value
     top<-all_weights[order(abs(all_weights$value), decreasing = TRUE),]
     if (high_vars_by_factor[factor, view]){
-      write.table(top,paste0(outdir, 'top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
+      write.table(top,paste0(outdir, '/top_weights/top_weights_vals',factor,'_', view,'.txt'), sep = '\t')
       
     }
     

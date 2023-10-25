@@ -10,11 +10,8 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
 # BiocManager::install("MOFA2", version="1.8")
-detach('package:MOFA2', unload=TRUE)
-source("https://bioconductor.org/biocLite.R")
-require(devtools)
-
-install.packages("MOFA2", version="1.8", repos="https://bioconductor.org/packages/MOFA2/")
+#etach('package:MOFA2', unload=TRUE)
+#source("https://bioconductor.org/biocLite.R")
 
 
 library(MOFA2)
@@ -56,15 +53,16 @@ source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
-metadata_output<-paste0(output_files, 'combined_log.csv')
-combined_bl_log<-read.csv2(metadata_output)
+metadata_output<-paste0(output_files, 'combined_log.csv') 
+combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 combined_bl_log$GBA_PATHVAR
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log
 
 combined_bl_log$RBD_TOT
-combined_bl_log$stai_state
+all(is.na(combined_bl_log$updrs2_score_BL))
+
 #combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 #combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 
@@ -232,53 +230,14 @@ for (N_FACTORS in c(15)){
 
 ## attach some extra clinical variables 
 sel_sam=MOFAobject@samples_metadata$PATNO_EVENT_ID
-combined_bl_log_sel<-combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam,]
-table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$COHORT )
+length(sel_sam)
+meta_merged_ord=fetch_metadata_by_patient_visit(MOFAobject@samples_metadata$PATNO_EVENT_ID)
+length(meta_merged_ord$PATNO)
+meta_merged_ord<-as.data.frame(meta_merged_ord)
+meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
 
-combined_bl_log_sel_OFF<- combined_bl_log_sel[combined_bl_log_sel$PDSTATE %in% c('OFF', 'NA', ''),]
-
-combined_bl_log[combined_bl_log$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT', 'EVENT_ID')]
-combined_bl_log[combined_bl_log$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT')]
-
-
-length(unique(combined_bl_log_sel_OFF$PATNO)); length(sel_sam)
-
-
-table(combined_bl_log_sel$PDSTATE, combined_bl_log_sel$PATNO )
-
-## Filters for duplicate motor symptom exam - prioritize OFF state if both available. 
-### Filter by PDSTATE
-
-
-### or filter by 
-#lapply(combined_bl_log_sel)        
-dim(combined_bl_log_sel)
-
-### GET THE WORSE MEASUREMENT 
-combined_bl_log_sel<-combined_bl_log_sel %>%
-  group_by(NP3_TOT) %>%
-  summarize(across(everything(), max))%>%
-  as.data.frame()
-
-combined_bl_log_sel[combined_bl_log_sel$EVENT_ID=='V08', c('PATNO', 'NTEXAMDT', 'PDSTATE', 'NP3_TOT', 'EVENT_ID')]
-
-
-
-
-
-
-### Merging and remove duplicates 
-meta_merged<-merge(MOFAobject@samples_metadata,combined_bl_log_sel, by='PATNO_EVENT_ID',all.x=TRUE, suffix=c('', '_todelete') )
-meta_merged=meta_merged[!grepl('todelete', colnames(meta_merged))]
-meta_merged_ord<-meta_merged[match(MOFAobject@samples_metadata$PATNO_EVENT_ID,meta_merged$PATNO_EVENT_ID),]
-
-
-
-MOFAobject@samples_metadata=meta_merged_ord
-MOFAobject@samples_metadata=meta_merged_ord_V10
-
-
-
+MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
+samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
 
 

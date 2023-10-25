@@ -11,7 +11,6 @@ source(paste0(script_dir, 'ppmi/time_utils.R'))
 
 
 # load this only once..? 
-### TODO: ADD PROTEINS TOO!!!! 
 process_mirnas=TRUE;
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -37,6 +36,7 @@ mode='diagnosis'
 
 #### Markers over time:
 #### 1. Obtain the markers here 
+
 fn_sel=4; 
 sel_factors_diff
 if (mode=='diagnosis'){
@@ -47,11 +47,9 @@ if (mode=='diagnosis'){
   sel_factors_mode=sel_factors_pd_np3
   
 }
-factor
-top_view<-which.max(vars_by_factor[factor,])
-top_view
 
-factor=12
+sel_factors_diff
+
 factor
 top_view<-which.max(vars_by_factor[factor,])
 top_view
@@ -236,6 +234,15 @@ factors_to_cluster = factor
 factors_to_cluster<-sel_factors_diff
 factors_to_cluster<-c(sel_factors_np3)
 
+
+groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor)
+groups_kmeans3<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor, centers=2)
+groups_kmeans_all_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors, sel_factors_pd_np3),
+                                                    centers=3)
+
+groups_kmeans_diff_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors_diff),
+                                                    centers=3)
+
 groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factors_to_cluster)
 groups_kmeans_diff<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=2)
 groups_kmeans_diff3<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=3)
@@ -335,7 +342,6 @@ most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1)
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2)
 most_sig_over_time_ct<-get_most_sig_over_time(merged_melt_ct)
 
-merged_melt_filt_g2$kmeans_grouping
 ## TODO: DO IT FOR MULTIPLE GROUPS 
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
@@ -344,7 +350,7 @@ most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 
 
 #### CHOOSE 
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time_ct$symbol,]
+merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time2$symbol,]
 
 
 # they should chgange in pd but not in controls!! 
@@ -354,6 +360,7 @@ most_sig_over_time<-most_sig_over_time%>%
   arrange(Wilcox, decreasing=FALSE)
  
 ####OUTPUT MOST SIG OVER TIME 
+most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig_over_time_ct$symbol),]
 
 
 # 
@@ -374,7 +381,6 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 #most_sig_over_time_deseq<-make.names(colnames(data.filtered.only.pd))
 
 #most_sig_over_time_deseq
-
 
 
 ### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
@@ -424,7 +430,7 @@ filt_top=TRUE
 
 
 if (filt_top){
-  
+
   # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   
@@ -555,15 +561,7 @@ graphics.off()
 #                                                   fill='group', group='group', colour='group')) + 
 
 merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$kmeans_grouping
-#p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-#                                                   fill='TOP', group='TOP', colour='TOP')) + 
 #
-#  geom_point(aes_string(x = 'VISIT', y = 'value', 
-#             fill='group', group='group', colour='group' ),size=0.1, alpha=0.5)+
-#  geom_line(aes_string(x = 'VISIT', y = 'value', 
-#                         group='PATNO', colour='group' ),size=0.1, alpha=0.5)+
-#  stat_summary(fun = median, position=position_dodge(width=0), 
-#               geom = "line", size = 1) + 
 p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
                                                        fill='TOP', group='TOP', colour='TOP')) + 
   
@@ -699,6 +697,40 @@ merged_melt_filt_most_sig
 
 merged_melt$kmeans_grouping
 
+
+### collect all results 
+sig_genes_all_factors=data.frame()
+factors_to_fetch<-c(sel_factors, sel_factors_pd_np3)
+factors_to_fetch<-sel_factors_diff
+
+view='RNA'
+factors_to_fetch=c(1,4,6,8,9,11,12)
+all_files<-sapply(factors_to_fetch, function(factor){
+  ### collect all moelcules for each factor 
+  top_view<-which.max(vars_by_factor[factor,])
+  view=names(top_view)
+  
+  most_sig_file1<-paste0(outdir, '/trajectories/most_sig_over_time_',factor,'_', view,'_',group_cat , '.csv')
+  return(most_sig_file1)
+  
+})
+all_files[[3]]
+
+file.exists(all_files[[3]])
+
+all_sig_genes<-lapply(all_files, function(file){
+  if (file.exists(file)){
+    print('found_file')
+    sig_genes_f<-as.data.frame(read.csv(file))
+    return(sig_genes_f)
+  }
+})
+
+  
+
+all_sig_genes2 <- do.call("rbind", all_sig_genes)
+all_sig_genes2<-all_sig_genes2%>%
+  arrange(Wilcox, decreasing=FALSE)
 
 
 ## collect
@@ -869,19 +901,6 @@ ggsave(paste0(outdir, '/trajectories/change/change_', factor, '_',sel_feature,'_
        width=6, height=5)
 
 molecules_change_by_patno
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

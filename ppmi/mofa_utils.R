@@ -72,7 +72,9 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
 select_top_bottom_perc<-function(view, factors, top_fr=.01 ){
   #'select top bottom features 
   #'#'
-  #'
+  #'factors
+  #'factors
+#  factors=1;view='RNA'
   ws<-get_weights(MOFAobject, views = view, factors=factors)[[1]]
   print(factors)
   cut_high<-0.99; cut_low=0.01

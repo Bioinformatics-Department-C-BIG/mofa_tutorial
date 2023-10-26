@@ -230,12 +230,18 @@ combined_new$ESS_TOT
 #img_var='NP3_TOT'
 ## here draw from the original..? 
 cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
-patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10')
-combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit]
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
+combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
 
 
-patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12')
-combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit]
+#imaging_variables_diff
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
+combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
+
+
+selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V14');
+combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
 
 # choose what is available here? 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
@@ -250,11 +256,6 @@ combined_BL_all$updrs3_score
 
 
 
-changev10<-sapply(combined_future_V10, as.numeric)-sapply(combined_BL, as.numeric)
-changev12<-sapply(combined_future_V12, as.numeric)-sapply(combined_BL, as.numeric)
-changev16<-sapply(combined_future_V16, as.numeric)-sapply(combined_BL_all, as.numeric)
-
-
 # takes a while
 # rename and column_bind<
 
@@ -263,17 +264,18 @@ changev16<-sapply(combined_future_V16, as.numeric)-sapply(combined_BL_all, as.nu
 colnames(combined_future_V10)<-paste0(colnames(combined_future_V10), '_V10') # imaging available 
 colnames(combined_future_V12)<-paste0(colnames(combined_future_V12), '_V12') # curated available
 colnames(combined_future_V16)<-paste0(colnames(combined_future_V16), '_V16')# other variables available
+colnames(combined_future_V14)<-paste0(colnames(combined_future_V14), '_V14')# other variables available
+
 colnames(combined_BL)<-paste0(colnames(combined_BL), '_BL')# other variables available
 colnames(combined_BL_all)<-paste0(colnames(combined_BL_all), '_BL')# other variables available
 
 
-colnames(changev12)<-paste0(colnames(changev12), '_diff_V12')
-colnames(changev10)<-paste0(colnames(changev10), '_diff_V10')
-colnames(changev16)<-paste0(colnames(changev16), '_diff_V16')
 
 combined_new<-cbind(combined_new,combined_future_V10 )
 combined_new<-cbind(combined_new,combined_future_V12 )
 combined_new<-cbind(combined_new,combined_future_V16 )
+combined_new<-cbind(combined_new,combined_future_V14 )
+
 combined_new<-cbind(combined_new,combined_BL_all )
 
 #combined_new$NP3_

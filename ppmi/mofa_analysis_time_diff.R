@@ -27,7 +27,7 @@
 source('ppmi/mofa_utils.R')
 imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
 scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
-
+clinical_scales<-scale_vars_diff
   
 
 ## TODP
@@ -68,25 +68,32 @@ y='NP2PTOT'
 # TODO: loop
 cl_clusters<-get_clinical_clusters(y, centers = 4)
 
-cl_clusters<-get_clinical_clusters_kml(y) 
+cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel,y) 
 clust_name=paste0(y, '_clin_clust')
 cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
 
 samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
 y=clinical_scales[1]
 
+
+
+
 correlate_factors_categorical<-function(y){
-  ## explicitly done for categorical variables
-  #'
-  #' @param name description
+  ##  obtain correlations of factors with the clinical clusters 
+  #' explicitly done for categorical variables
+  #' @param name 
   #'
   #'
   #'
   #'
     clust_name=paste0(y, '_clin_clust')
     
-    cl_clusters<-try(get_clinical_clusters(y, centers = 4), 
-                           silent = TRUE)
+    to_clust<-combined_bl_log_sel_pd_to_clust
+    to_clust<-combined_bl_log_sel_pd
+    
+    cl_clusters<-try(get_clinical_clusters_kml(to_clust,y, nbCluster = 5), 
+                     silent = TRUE)
+    
     if (!class(cl_clusters) == "try-error"){
       cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, names(cl_clusters))]
       names(cl_clusters_MOFA)<-samples_metadata(MOFAobject)$PATNO
@@ -95,6 +102,7 @@ correlate_factors_categorical<-function(y){
       
       
       cl_clusters_MOFA
+      samples_metadata(MOFAobject)[,clust_name ]
       
       #samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
       #correlate_factors_with_covariates 
@@ -111,24 +119,32 @@ correlate_factors_categorical<-function(y){
         
         y_pvals<-apply(Z, 2, function(z) {
           kruskal.test(z,covariates)$p.value })
-        y_pvals<-p.adjust(y_pvals, method = 'BH')
+        y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
+        #y_pvals<-y_pvals<0.05
+        # do Kruskal Wallis test to see whether or not there is statistically significant difference between three or more groups
+
         return(y_pvals)
       
-    }
+      }else{
+        print('could not calculate clusters')
+      }
+      
     
   }
 }
 # TODO: padjust
+clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT')
 cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
-
-cors_kruskal[!is.na(cors_kruskal)]
-  
-  
+rownames(cors_kruskal)<-1:N_FACTORS
+kw_cors<-format(cors_kruskal, digits=1)<0.05
+factors_cor_with_clusters<-kw_cors
+#library(pheatmap)
+  pheatmap(-log10(cors_kruskal))
   #}
 
 #)
 
-
+  
 
 
 ############ SUBSET PATIENTS ONLY ########################################
@@ -166,11 +182,7 @@ if (length(sel_coh)>1){
   sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
   
 }
-sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT' )]>(-log10(0.05)))
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
-
-sel_factors_pd_np2<-which(cors_all_pd[,c('NP2_TOT_LOG' )]>(-log10(0.05)))
-
 
 
 
@@ -185,17 +197,9 @@ all_diff_variables
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 
-
-all_fs_diff<-sapply(all_diff, function(diff_var){
-  try(
-    
-    if (diff_var %in% colnames(cors_all_pd)){
-      fs<-print(which(cors_all_pd[,c(diff_var)]>(-log10(0.05))))
-        return(fs)
-      
-    }
-  )
-})
+all_diff_in_cors<-all_diff[all_diff %in% colnames(cors_all_pd)]
+all_fs_diff<-cors_all_pd[,all_diff_in_cors]>(-log10(0.05))
+all_fs_diff_cor<-cors_all_pd[,all_diff_in_cors]
 
 #sel_factors_diff=c('Factor1','Factor4','Factor6', 'Factor8', 'Factor9','Factor11' ,'Factor12'    )
 
@@ -213,27 +217,47 @@ library(DescTools)
 
 
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
-all_fs_diff
-k_centers_m=3
-for (i in 1:length(all_fs_diff)){
-  #'
-  #' @param i
-  #'
-  #'
-  fact=all_fs_diff[[i]];fact
-  xname=paste0(names(all_fs_diff[i]), '_clust')
-  print(length(fact))
-  if (length(fact)>0){
-    print(fact)
-    print(paste(i, xname))
-    
-    clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
-    
-    MOFAobjectPD@samples_metadata[ xname]=clusters_x$cluster
+all_fs_diff=cbind(all_fs_diff, kw_cors)
+cors_kruskal_log<-(-log10(cors_kruskal))
+th<-(-log10(0.05))
+cors_kruskal_log[cors_kruskal_log < th ] <-0
 
-  }
- 
+pheatmap(cors_kruskal)
+k_centers_m=3
+diff_var=y
+## does not work as a loop 
+all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
+ # diff_var='NP2PTOT_diff_V16'
+        fact=which(all_fs_diff[,diff_var])
+        xname=paste0(diff_var, '_clust')
+        print(xname)
+        print(length(fact))
+      if (length(fact)>0){
+       # print(fact)
+        #print(paste(i, xname))
+        clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
+        MOFAobjectPD@samples_metadata[xname]=clusters_x$cluster
+        return(clusters_x$cluster)
+  
+      }else{
+      return(NULL)
+    }
+
+  
 }
+)
+all_clusts_mofa
+all_clusts_mofa[['NP2PTOT_diff_V16' ]]
+
+######### Cluster patients with clinical trajectory factors ####
+clinical_scales
+y='NP2PTOT'
+factors_to_clust<-which(factors_cor_with_clusters[ ,y])
+cluster_samples(MOFAobjectPD, factors = factors_to_clust)
+
+
+
+
 
 
 

@@ -37,21 +37,28 @@ to_plot<-c(scale_vars_diff)
 # grep('BL|V04|V06|V08|V12|V16', combined_bl_log$EVENT_ID)
 #either supply or grep 
 ### use df_mofa here?? since it is already set 
-all_event_ids<-c('BL','V04','V06','V08','V12','V16')
+all_event_ids<-c('BL','V02','V04','V06','V08','V10','V12','V14','V16', 'V18')
+all_event_ids<-unique(combined_bl_log$EVENT_ID)
+all_event_ids_p<-c('BL',all_event_ids[grep('V', all_event_ids)] )
+all_event_ids_p<-c('BL','V02','V04','V06','V08','V10','V12','V14','V16', 'V18')
+
+sm=MOFAobject@samples_metadata
 ### obtain all patient event ids to getr one row per patient!! 
-patno_event_ids = sapply(all_event_ids, function(event_id){
+patno_event_ids = sapply(all_event_ids_p, function(event_id){
                   return(paste0(sm$PATNO,'_', event_id ))
 })
   
 patno_event_ids=unlist(patno_event_ids)
 # select data for the requested patiennts 
+#combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
-combined_bl_log_sel
+unique(combined_bl_log_sel$EVENT_ID)
+combined_bl_log_sel$PDMEDYN_V14
 ########## Now we obtained the longitudinal input for these patients ####
 
 
 # 1. Select the patients eg. by mofa groups 
-clust_y=all_clusts[1]
+clust_y=all_clusts[1];
 clust_y_labs_all<-sapply(all_clusts, function(clust_y){
       if (clust_y %in% colnames(MOFAobjectPD@samples_metadata)){
         group_by_patient<- MOFAobjectPD@samples_metadata[, clust_y]
@@ -155,9 +162,11 @@ for (y in to_plot){
 }
 
 
-#### 
-y='NP3TOT'
-y='NP3TOT'
+#### ###################
+
+
+## CLUSTER TRAJECTORIES ####
+
 
 get_clinical_clusters<-function(y, centers=4){
   #'
@@ -170,8 +179,6 @@ get_clinical_clusters<-function(y, centers=4){
         clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
         #clin_traj$months<-unlist(EVENT_MAP[clin_traj$EVENT_ID], use.names = FALSE)
         
-        dim(clin_traj_wide)
-        dim(na.omit(clin_traj_wide))
         clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
         rownames(clin_traj_wide)<-clin_traj_wide$PATNO
         clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
@@ -181,71 +188,126 @@ get_clinical_clusters<-function(y, centers=4){
 }
 get_clinical_clusters(y)
 
-get_clinical_clusters_kml<-function(y, nbCluster=4){
-  
-    
-        combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$COHORT==1,]
-        clin_traj<-combined_bl_log_sel_pd[,c('PATNO','EVENT_ID', y)]
-        
-        clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
-        
-        clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
-        rownames(clin_traj_wide)<-clin_traj_wide$PATNO
-        #clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
-        
-        #return(clinical_clusters$cluster)
-        
-        #install.packages('kml')
-        library('kml')
-        ### Clinical trajectory means 
-        clin_traj_mat<-sapply((clin_traj_wide)[, -1], as.numeric)
-        
-        
-        CLD <- kml::cld(clin_traj_mat, timeInData = 1:dim(clin_traj_mat)[2], maxNA = 2)
-        length(CLD)
-        clusters<-kml::kml(CLD, nbRedrawing = 5)
-        
-        
-        # run choice
-        clust_ids<-getClusters(CLD,nbCluster=nbCluster )
-        names(clust_ids)<-clin_traj_wide$PATNO
-        
-        length(clust_ids)
-    return(clust_ids)
-}
- 
 
-get_clinical_clusters_kml(y)   
-    ### CLINICAL trajectories 
+
+get_clinical_clusters_kml<-function(combined_bl_log_sel_pd,y, nbCluster=4, scale_mat=FALSE){
+  
+  #combined_bl_log_sel_pd=combined_bl_log_sel_pd_to_clust
+  #combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel[,'INEXPAGE']=='INEXPD',]
+  unique(combined_bl_log_sel_pd$EVENT_ID)
+  
+  clin_traj<-combined_bl_log_sel_pd[,c('PATNO','EVENT_ID', y)]
+  
+  clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
+  
+  unique(clin_traj$EVENT_ID)
+  
+  
+  clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
+  rownames(clin_traj_wide)<-clin_traj_wide$PATNO
+  #clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
+  
+  #return(clinical_clusters$cluster)
+  
+  #install.packages('kml')
+  
+  ### Clinical trajectory means 
+  # REMOVE columns full of NA
+  clin_traj_mat<-as.data.frame(sapply((clin_traj_wide)[, -1], as.numeric))
+  # ALSO SCALE
+  #clin_traj_mat<-clin_traj_mat[!is.na(clin_traj_mat$EVENT_ID),]
+  df<-clin_traj_mat
+  clin_traj_mat <- as.matrix(df[,colSums(is.na(df))<nrow(df)])
+  if (scale_mat){
+    clin_traj_mat<-scale(clin_traj_mat)
     
-    df_plot_2k=combined_bl_log_sel
-    max_np3_unique$NP3_TOT
+  }
+  #devtools::install_github("JimMcL/trajr")
+  #library('trajr')
+  #trj <- TrajGenerate(200, random = TRUE, angularErrorSd = .25)
+  
+  #smoothed<-TrajSmoothSG(clin_traj_mat[1,],3,31)
+  
+  
+  
+  CLD <- kml::cld(clin_traj_mat, timeInData = 1:dim(clin_traj_mat)[2], maxNA = 2)
+  #length(CLD)
+  clusters<-kml::kml(CLD, nbRedrawing = 5)
+  
+  #nbCluster=4
+  
+  # run choice
+  clust_ids<-getClusters(CLD,nbCluster=nbCluster )
+  names(clust_ids)<-clin_traj_wide$PATNO
+  
+  length(clust_ids)
+  return(clust_ids)
+}
+
+
+library('kml')
+library('dplyr')
+
+combined_bl_log_sel
+scale_mat=FALSE
+y='NP3TOT'
+y='NP3TOT'
+
+y='SCAU_TOT'
+y='stai_state'
+y='stai_trait'
+y='NP3TOT';
+y='NP2PTOT'; nbCluster=3 #(last cluster is too small)
+
+
+combined_bl_log_sel_pd$stai_state
+    ### CLINICAcombined_bl_log_sel_pdL trajectories 
+combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
+combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
+
+combined_bl_log_sel_pd<-combined_bl_log_sel_pd[!is.na(combined_bl_log_sel_pd$EVENT_ID),]
+combined_bl_log_sel_pd[, y]=as.numeric(combined_bl_log_sel_pd[, y])
+combined_bl_log_sel_pd<-combined_bl_log_sel_pd[!is.na(combined_bl_log_sel_pd$EVENT_ID),]
+
+
+    df_plot_2k=combined_bl_log_sel_pd
     #y='NP2PTOT'
     
     x='EVENT_ID'
     df_plot_2k$PATNO=as.factor(df_plot_2k$PATNO)
-    cl_clusters<-get_clinical_clusters(y)
-    cl_clusters_kml<-clust_ids
+    unique(combined_bl_log_sel_pd$PDMEDYN_V16)
+    
+    combined_bl_log_sel_pd_to_clust<-combined_bl_log_sel_pd[!(combined_bl_log_sel_pd$PDMEDYN_V14==0) ,]
+    #combined_bl_log_sel_pd_to_clust<-combined_bl_log_sel_pd[combined_bl_log_sel_pd$PD_MED_USE_V12==1,]
+    
+    unique(combined_bl_log_sel_pd_to_clust$PATNO)
+    cl_clusters_kml<-get_clinical_clusters_kml(combined_bl_log_sel_pd_to_clust,y, scale_mat = scale_mat, nbCluster=nbCluster )   
     cl_clusters<-cl_clusters_kml
     
     
-    dim(clin_traj_wide)
-    names(cl_clusters)<-clin_traj_wide$PATNO
     df_plot_2k$cluster<-as.factor(cl_clusters[match(df_plot_2k$PATNO,names(cl_clusters) )])
     
-    p<-ggplot(data = df_plot_2k, aes_string(x = x, y = y), group='PATNO')
-    p<-p+ geom_line(aes_string(x = x, y = y ,group='PATNO', colour='cluster' ),size=0.2, alpha=0.3)+
-      
-      geom_point(aes_string(x = x, y = y, colour='PDSTATE' ),size=0.6, alpha=0.6)
+    df_plot_2k_non_na<-df_plot_2k[!is.na(df_plot_2k[,y]), ]
     
+    if (scale_mat){
+      df_plot_2k_non_na[, y]<-scale(df_plot_2k_non_na[,y])
+      
+    }
+    p<-ggplot(data = df_plot_2k_non_na, aes_string(x = x, y = y, colour='cluster', group='cluster'))
+    p<-p+ 
+      geom_line(aes_string(x = x, y = y ,group='PATNO', colour='cluster' ),size=0.2, alpha=0.3)+
+      #geom_point(aes_string(x = x, y = y, colour='PDSTATE' ),size=0.6, alpha=0.6)+ 
+      geom_point()+ 
+      geom_smooth()
+      #facet_wrap(~cluster)
     
     p
     
     
-    ggsave(paste0(outdir, '/trajectories/clinical/clusters_',y, '.jpeg'), width=5, height=3)
+    ggsave(paste0(outdir, '/trajectories/clinical/clusters_',y, 'scale_',scale_mat, '.jpeg'), width=5, height=3)
 
 
-
+    
 
 
 

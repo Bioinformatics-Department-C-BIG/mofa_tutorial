@@ -437,7 +437,8 @@ diff_variables= c('NP2PTOT')
 diff_variables= c('NP3TOT')
 diff_variables= c('NP2PTOT')
 
-diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'NP2PTOT_diff_V16', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14')
+diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'NP2PTOT_diff_V16', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
+                      'NP2PTOT_BL', 'NP3TOT_BL')
 
 
 sapply(diff_variables, function(y_clust){

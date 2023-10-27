@@ -185,31 +185,17 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   hm<-assay(vsd_filt_genes); dim(hm);dim(df)
   
-  
-  
-  
-  
-  
-  new_ord<-order(df[,'EVENT_ID'], df[,'PATNO'])
-  df_ord<-df[new_ord ,]
-  
-  df_ord$COHORT
-  dim(hm); dim(df_ord)
-  hm_ord<-hm[,new_ord];
+  df_ord=df
+  hm_ord=hm
   
   ### SCALE!! 
   hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
-  dim(hm_ord);
-  cluster_cols=cluster_cols;
-  hm_scaled;
   #jpeg(fname, width=2000, height=1500, res=200)
   library(ggplot2)
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
-  cluster_cols
-  hm_scaled
-  
+
   
   
   filter_heatmap<-function(hm_scaled, df_ord,sel_pats=NULL, sel_pats_event_ids=NULL){
@@ -295,6 +281,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
  
   
   df_ord[(df_ord$COHORT ==1),]
+  rownames(df_ord)<-colnames(hm_scaled)
   
   my_pheatmap<-pheatmap(hm_scaled, 
                         labels_row=lab,
@@ -317,13 +304,20 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   # 2. Split time
   # 3. Cluster genes within groups? 
   library(ComplexHeatmap)
+  library(circlize)
   
+  # if only 1 timepoint
   
-  f1 = colorRamp2(seq(min(hm_scaled), max(hm_scaled), length = 3), c("blue", "#EEEEEE", "red"))
-  factor_labels<-combined_sig_genes[match(rownames(hm1), combined_sig_genes$symbol), 'id']
+  hm_scaled_col = clip_outliers_times(hm_scaled_v08, x_times = 1.7)
+ # hm_scaled_col=hm_scaled
+  f1 = colorRamp2(seq(min(hm_scaled_col), max(hm_scaled_col), length = 3), c("blue", "#EEEEEE", "red"))
+  
+
+  #factor_labels<-combined_sig_genes[match(rownames(hm1), combined_sig_genes$symbol), 'id']
   
   
   ### NOW SPLIT TO TWO heatmaps 
+  
   df1<-df_ord_V08; hm1<-hm_scaled_v08
   hm_timepoint<-function(df1, hm1){
     #'
@@ -336,6 +330,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
                                     col=f1)
     return(hm_t)
   }
+  
   ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08)
   ht_BL<-hm_timepoint(df_ord_BL, hm_scaled_BL)
   
@@ -352,7 +347,16 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   hboth<-ht_V08+ht_BL+anno
-  hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE)
+  hboth<-ht_V08+anno
+  
+  factor_labels=NULL
+  if (!is.null(factor_labels)){
+    hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE)
+    
+  }else{
+    hm_draw<-draw(hboth, row_km = 1,cluster_rows = TRUE)
+    
+  }
   
   
   #dev.off()

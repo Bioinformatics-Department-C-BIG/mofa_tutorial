@@ -108,7 +108,7 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
   X2_cl=df_to_calc[,paste0(cl_var,'_',sel_visit)]
   X1_cl=df_to_calc[,paste0(cl_var,'_','BL')]
   
-  clip_outliers<-function(X, x_times=1.5, upper=TRUE, lower=TRUE){
+  clip_outliers_times<-function(X, x_times=1.5, upper=TRUE, lower=TRUE){
     #'
     #'
     #' outliers more than x-mes the IQR to be cliped 

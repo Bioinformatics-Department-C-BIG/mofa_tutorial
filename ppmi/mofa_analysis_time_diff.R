@@ -25,10 +25,19 @@
 
 #### Covariance of factors with metadata 
 source('ppmi/mofa_utils.R')
-imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
+library('pheatmap')
+
+library('kml')
+library('dplyr')
+library('factoextra')
+
+
+imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca', 'pigd')
+# nfl serum
 scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
 clinical_scales<-scale_vars_diff
   
+combined_bl_log$SCAU_TOT_V16
 
 ## TODP
 
@@ -66,9 +75,22 @@ y='NP2PTOT'
 #sapply(clinical_scales, function(y){
 #  y
 # TODO: loop
+all_event_ids_p<-c('BL','V02','V04','V06','V08','V10','V12','V14','V16', 'V18')
+sm=MOFAobject@samples_metadata
+### obtain all patient event ids to getr one row per patient!! 
+patno_event_ids = sapply(all_event_ids_p, function(event_id){
+  return(paste0(sm$PATNO,'_', event_id ))
+})
+
+patno_event_ids=unlist(patno_event_ids)
+# select data for the requested patiennts 
+#combined_bl_log<-combined_new
+combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
+combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
+y='NP2PTOT'
+cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel_pd,y, nbCluster = 1) 
 cl_clusters<-get_clinical_clusters(y, centers = 4)
 
-cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel,y) 
 clust_name=paste0(y, '_clin_clust')
 cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
 
@@ -133,7 +155,7 @@ correlate_factors_categorical<-function(y){
   }
 }
 # TODO: padjust
-clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT')
+clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT')
 cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
 rownames(cors_kruskal)<-1:N_FACTORS
 kw_cors<-format(cors_kruskal, digits=1)<0.05
@@ -173,16 +195,16 @@ cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1
 
 
 
-if (length(sel_coh)>1){
-  sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
-  sel_factors_saa<-which(cors_all[,c('CSFSAA' )]>(-log10(0.05)))
+#if (length(sel_coh)>1){
+#  sel_factors<-which(cors_all[,'COHORT' ]>-log10(0.05))
+#  sel_factors_saa<-which(cors_all[,c('CSFSAA' )]>(-log10(0.05)))
   
   
-}else{
-  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
+#}else{
+#  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
   
-}
-sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
+##}
+#sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
 
 
 
@@ -192,21 +214,17 @@ sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
 all_diff<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
+all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables
+all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 
-all_diff_in_cors<-all_diff[all_diff %in% colnames(cors_all_pd)]
+all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_fs_diff<-cors_all_pd[,all_diff_in_cors]>(-log10(0.05))
 all_fs_diff_cor<-cors_all_pd[,all_diff_in_cors]
 
-#sel_factors_diff=c('Factor1','Factor4','Factor6', 'Factor8', 'Factor9','Factor11' ,'Factor12'    )
 
-sel_factors_np3<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
-sel_factors_outcome<-which(cors_all[,'Outcome' ]>-log10(0.05))
-
-sm[sm$COHORT==1,'Outcome']
 
 
 
@@ -217,7 +235,9 @@ library(DescTools)
 
 
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
-all_fs_diff=cbind(all_fs_diff, kw_cors)
+  all_fs_diff=cbind(all_fs_diff, kw_cors)
+  
+
 cors_kruskal_log<-(-log10(cors_kruskal))
 th<-(-log10(0.05))
 cors_kruskal_log[cors_kruskal_log < th ] <-0
@@ -226,6 +246,8 @@ pheatmap(cors_kruskal)
 k_centers_m=3
 diff_var=y
 ## does not work as a loop 
+
+
 all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
  # diff_var='NP2PTOT_diff_V16'
         fact=which(all_fs_diff[,diff_var])
@@ -235,8 +257,11 @@ all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
       if (length(fact)>0){
        # print(fact)
         #print(paste(i, xname))
+        set.seed(42)
         clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
-        MOFAobjectPD@samples_metadata[xname]=clusters_x$cluster
+        MOFAobjectPD@samples_metadata[,xname]=as.factor(clusters_x$cluster)
+        
+        
         return(clusters_x$cluster)
   
       }else{
@@ -246,14 +271,24 @@ all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
   
 }
 )
+
+library('factoextra')
+# aTTACH clusters 
+diff_var='NP2PTOT_diff_V16'
+for (diff_var in names(all_clusts_mofa)){
+  MOFAobjectPD@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]]
+  
+}
+
 all_clusts_mofa
+
 all_clusts_mofa[['NP2PTOT_diff_V16' ]]
 
 ######### Cluster patients with clinical trajectory factors ####
 clinical_scales
 y='NP2PTOT'
 factors_to_clust<-which(factors_cor_with_clusters[ ,y])
-cluster_samples(MOFAobjectPD, factors = factors_to_clust)
+#cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
 
 
 
@@ -263,15 +298,35 @@ cluster_samples(MOFAobjectPD, factors = factors_to_clust)
 
 sm<-samples_metadata(MOFAobjectPD)
 all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
-
+#BiocManager::install('factoextra')
+#library('factoextra')
 
 cluster_samples_mofa=TRUE
+
+
+Z <- get_factors(MOFAobjectPD, factors = c(1,2,12))[[1]]
+
+
+
+fviz_nbclust(Z, kmeans, method = "wss")# +
+  #geom_vline(xintercept = 3, linetype = 2)
+fviz_nbclust(Z, kmeans, method = "silhouette")
+### Gap statistic
+library(cluster)
+set.seed(123)
+# Compute gap statistic for kmeans
+# we used B = 10 for demo. Recommended value is ~500
+
+
+
+
+
 if (cluster_samples_mofa){
   if (length(sel_coh)>1){
     #for (k_centers_m in c(6)){
     for (k_centers_m in c(3,2)){
       
-      clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=sel_factors)
+      clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(1:15))
 
       
     }
@@ -281,8 +336,14 @@ if (cluster_samples_mofa){
   MOFAobject@samples_metadata$clusters=clusters$cluster
   
   ss_scores<-c()
+  
+  Z <- get_factors(MOFAobjectPD, factors = c(1,2))
+  
+  
+  
+  
   for (k in 3:15){
-    clusters_test <- cluster_samples(MOFAobject, k=k, factors=c( 2:14))
+    clusters_test <- cluster_samples(MOFAobjectPD, k=k, factors=c( 1,12))
     cluster_bt<-clusters_test$betweenss/clusters_test$totss
     print(cluster_bt)
     ss_scores<-append(  ss_scores,cluster_bt)
@@ -307,29 +368,50 @@ if (cluster_samples_mofa){
 
 boxplot_by_cluster<-function(met, clust_name, y){
   #'
-  #' @param 
+  #' Create boxplot by cluster 
+  #' 
+  #' @param met
+  #'  
   #' 
   
   met[, clust_name]=as.factor(met[, clust_name])
   met[, y]=as.numeric(met[, y])
+  
+  ## Add kruskal wallis to the total plot and separately to each one 
+  ## 
+  
+  kw=NULL
+  try(if (!all(is.na(met[, y]))){
+    kw<-kruskal.test(x=met[, y], met[, clust_name])
+    
+  })
+  my_comparisons=combn(levels(met[,clust_name]),2)
+  a=max(met[, y], na.rm = TRUE)
   p<-ggplot(met ,aes_string(x=clust_name , y=y))+
-    geom_boxplot(aes_string( x=clust_name, fill=clust_name))+
+    geom_boxplot(aes_string( x=clust_name, color=clust_name))+
+    #stat_compare_means(comparisons = my_comparisons)+
     #geom_pwc(
     #  aes(group = clust_name), tip.length = 0,
     #  method = "wilcox_test", label = "p.format"
     #)
     #p
-    geom_signif(comparisons=list(combn(3,2)),
-                aes_string(y=y))
+   geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
+               aes_string(y=y), 
+               y_position=c(a, a+0.5,a+1))+
+    labs(title = paste(y),  caption = paste('Kruskal.wallis p.val', format(kw$p.value, digits=2)))+
+    theme(text =element_text(size=20))
+    
   
   
-  
-  ggsave(paste0(outdir,'/clustering/', y, '_',clust_name, '.png'))
+  p
+  ggsave(paste0(outdir,'/clustering/', y, '_',clust_name, '.png'), dpi=300)
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   
   
 }
+
+all_clusts_mofa
 
 met<-samples_metadata(MOFAobjectPD)
 
@@ -345,17 +427,32 @@ clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16';
 clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
 
 boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
+diff_variables_to_p<-all_diff_variables
 
 
-sapply(diff_variables, function(y){
-  clust_name = paste0(y, '_clust')
+
+### ONLY PLOT FOR NP2TOT!
+diff_variables= c('NP2PTOT_diff_V16')
+diff_variables= c('NP2PTOT')
+diff_variables= c('NP3TOT')
+diff_variables= c('NP2PTOT')
+
+diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'NP2PTOT_diff_V16', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14')
+
+
+sapply(diff_variables, function(y_clust){
+  clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
   if (clust_name %in% colnames(met)){
-    boxplot_by_cluster(met, y=y, clust_name=clust_name )
     
-  }
-})
+    
+    sapply(diff_variables_to_p, boxplot_by_cluster, met=met, clust_name=clust_name)
+      
+    }
+    
+  })
 
+#boxplot_by_cluster(met, y=y, clust_name=clust_name ) )
 
 #dev.off()
 #### After adding clusters redo calculcations of metadata..? ####
@@ -529,11 +626,14 @@ all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )
 
 vars_to_plot=all_diff; sel_factors_diff<-get_factors_for_scales(vars_to_plot)
 all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts)
-
-
+all_diff_variables_prog
+sm=MOFAobjectPD@samples_metadata
+all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD@samples_metadata)]
+sm[vars_to_plot]
+vars_to_plot=unique(vars_to_plot)
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=vars_to_plot,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
@@ -1086,7 +1186,24 @@ p_ws<-plot_top_weights2(MOFAobject_gs,
 )
 p_ws
 # known genes 
-for (i in seq(1,vps)){
+
+tail(MOFAobject_gs@features_metadata$fea)
+
+tail(features_metadata(MOFAobject_gs))
+
+
+#### 
+
+rownames(MOFAobject_gs@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject_gs@expectations$W$proteomics_csf))
+rownames(MOFAobject_gs@expectations$W$proteomics_csf)<-gsub('_c', '', rownames(MOFAobject_gs@expectations$W$proteomics_csf))
+rownames(MOFAobject_gs@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', '_p', rownames(MOFAobject_gs@expectations$W$proteomics_plasma))
+
+
+
+W <- get_weights(MOFAobject_gs, factors = 1, views = 4, 
+                 as.data.frame = TRUE)
+vps
+  for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
    
     nFeatures=12
@@ -1102,8 +1219,11 @@ for (i in seq(1,vps)){
                            scale = F
           )
           graphics.off()
+          
+
+          
           if (views[i]=='RNA'){
-            p_ws<-plot_top_weights2(MOFAobject_gs,
+            p_ws<-plot_top_weights2(MOFAobject,
                                     view = 'RNA',
                                     factor = ii,
                                     nfeatures = nFeatures,     # Top number of features to highlight
@@ -1125,6 +1245,8 @@ for (i in seq(1,vps)){
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
                  plot=p_ws, 
                  width = 3, height=nFeatures/4, dpi=300)
+          
+          
           
           plot_weights(MOFAobject_gs, 
                        view = views[i], 

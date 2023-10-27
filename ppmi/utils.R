@@ -3,7 +3,9 @@ library(DESeq2)
 library(edgeR)
 library(org.Hs.eg.db)
 library(sgof)
-
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/factoextra")
+library('factoextra')
 ## Utils 
 ## Summarized experiment 
 
@@ -104,13 +106,18 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   # patno_event_ids = paste0(patnos, event_ids)
    #combined<-combined_bl_log
 
-       metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
+   
+   
+    metadata_filt_dups<-combined[combined$PATNO_EVENT_ID %in% patno_event_ids ,]
  
     metadata_filt_dups<-as.data.table(metadata_filt_dups)
     
     max_np3_unique<-metadata_filt_dups[metadata_filt_dups[, .I[which.max(NP3TOT)], by=PATNO_EVENT_ID]$V1]
+    
+    
     dim(max_np3_unique)
     length(patno_event_ids)
+
     #missing<-metadata_filt_dups[is.na(metadata_filt_dups$EVENT_ID)]
     #max_np3_unique<-rbind(max_np3_unique, missing)
     # TODO: mca tot is zero.. 
@@ -136,11 +143,15 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
     
     #max_np3_unique[,'PATNO_EVENT_ID']<-patno_event_ids
     ### HERE IF IT DID NOT FIND THE metadata it adds back the id 
-    missing<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
-    missing_metadata<-as.data.frame(metadata_filt_dups[match(missing, metadata_filt_dups$PATNO_EVENT_ID ), ])
-    max_np3_unique[max_np3_unique$PATNO_EVENT_ID %in% missing,]<-missing_metadata
-    missing2<-max_np3_unique[is.na(max_np3_unique$EVENT_ID) , ]$PATNO_EVENT_ID
+    ### replace the ones with missing NP3TOT
+    # TODO: fix here what to do for the ones without np3 total--> sum to obtain it? 
+    missing<-patno_event_ids[is.na(max_np3_unique$EVENT_ID) ]
+    missing_metadata<-as.data.frame(combined[match(missing, combined$PATNO_EVENT_ID ), ])
+    max_np3_unique[is.na(max_np3_unique$EVENT_ID),]<-missing_metadata
 
+    missing2<-patno_event_ids[is.na(max_np3_unique$EVENT_ID) ]
+
+    
   return(max_np3_unique)
 
  }
@@ -151,7 +162,7 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
  imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
  scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
  
- get_diff_zscores<-function(patno_event_ids,imaging_variables_diff=imaging_variables_diff,scale_vars_diff=scale_vars_diff  ){
+ get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){
             #### obtains the zscore of the changes for the specific group supplied
               ### MEAN AND sd for scaling depends on the group!
    #' 
@@ -160,12 +171,12 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
    #' could also supply the specific variables to diff
 
    
-   
+   # 
 
             df_all<-fetch_metadata_by_patient_visit(patno_event_ids , combined=combined_bl_log)
 
              t1<-'BL';  t2='V10';
-             
+             df_all$moca_V10
              #df=df_all
              df_change1= get_changes(df_all,imaging_variables_diff, t1, t2 )
              #df_all<-cbind(df_all, df_change1)
@@ -184,9 +195,18 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
                print(paste('ERROR: missing scales: ', not_in_df))
              }
              df_change2= get_changes(df_all,scale_vars_diff, t1, t2 )
-
-           
-            df_change_total<-cbind(df_change1, df_change2)
+             
+             df_all[,paste0(scale_vars_diff, '_V14')]
+             paste0(scale_vars_diff, '_V14') %in% colnames(df_all)
+             df_change_V14= get_changes(df_all,scale_vars_diff, t1='BL', t2='V14' )
+             
+             scale_vars_diff
+             
+             df_change_av=get_av_change(df_all,scale_vars_diff,'BL','V13', 'V14' )
+             
+             
+             
+            df_change_total<-cbind(df_change1, df_change2,df_change_V14, df_change_av)
               
         return(df_change_total)
         
@@ -905,6 +925,7 @@ clip_outliers<-function(df1){
   #'
   #'
   df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  
   for (i in 1:dim(df1)[1]){
     df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
   }
@@ -1056,6 +1077,10 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
 
 ###### CLINVARS ####
 #df<-df_mofa
+
+
+
+
 get_changes<-function(df,colData_change, t1, t2 ){
   
   #' scale and get change! 
@@ -1067,6 +1092,62 @@ get_changes<-function(df,colData_change, t1, t2 ){
   
   colnames(df_num_1)=colData_change
   colnames(df_num_2)=colData_change
+  
+  df_change<-calc_zscore_change(df_num_1, df_num_2, t2)
+ 
+  
+  return(df_change)
+}
+
+tBL='BL'
+tF1='V13'
+tF2='V14'
+#t1='BL'
+#t2='V13'
+#t3='V14'
+
+#colData_change<-scale_vars_diff
+#df_all<-fetch_metadata_by_patient_visit(patno_event_ids , combined=combined_bl_log)
+#df<-df_all
+
+
+get_av_change<-function(df,colData_change, tBL,tF1,tF2 ){
+  #'
+  #' @param  
+  #' get average endpoint
+  #'
+  df_num_BL<-as.data.frame(apply(df[paste0(colData_change,'_', tBL )], 2, as.numeric))
+  
+  df_num_13<-as.data.frame(apply(df[paste0(colData_change, '_',tF1 )], 2, as.numeric))
+  df_num_14<-as.data.frame(apply(df[paste0(colData_change, '_', tF2)], 2, as.numeric))
+  
+  
+  X=list(df_num_13, df_num_14)
+  Y <- apply(do.call(cbind, X), 2, as.numeric)
+  Y[,c('NP2PTOT_V13','NP2PTOT_V14' ) ]
+  
+  Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
+  av_TF1_TF2=as.data.frame(apply(Y, c(1, 2), mean, na.rm = TRUE))
+  colnames(av_TF1_TF2)<-colData_change
+  colnames(df_num_BL)<-colData_change
+  
+  
+  
+  df_change<-calc_zscore_change(df_num_BL, av_TF1_TF2, paste0(tF1,'_', tF2))
+  
+  return(df_change)
+  
+}
+
+
+
+calc_zscore_change<-function(df_num_1, df_num_2, t2){
+  #'
+  #' @param df_change
+  #'
+  #'
+  
+  
   
   df_num_bind<-rbind(df_num_1,df_num_2 )
   
@@ -1090,7 +1171,6 @@ get_changes<-function(df,colData_change, t1, t2 ){
   
   colnames(df_change) = paste0(colnames(df_change), '_diff_', t2)
   
-  
   return(df_change)
 }
 
@@ -1099,3 +1179,88 @@ get_changes<-function(df,colData_change, t1, t2 ){
 
 
 
+
+
+
+
+############## CLUSTERS 
+
+
+library('kml')
+library('dplyr')
+
+get_clinical_clusters_kml<-function(combined_bl_log_sel_pd,y, nbCluster=4, scale_mat=FALSE){
+  
+  #combined_bl_log_sel_pd=combined_bl_log_sel_pd_to_clust
+  #combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel[,'INEXPAGE']=='INEXPD',]
+  unique(combined_bl_log_sel_pd$EVENT_ID)
+  
+  clin_traj<-combined_bl_log_sel_pd[,c('PATNO','EVENT_ID', y)]
+  
+  clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
+  
+  unique(clin_traj$EVENT_ID)
+  
+  
+  clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
+  rownames(clin_traj_wide)<-clin_traj_wide$PATNO
+  #clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
+  
+  #return(clinical_clusters$cluster)
+  
+  #install.packages('kml')
+  
+  ### Clinical trajectory means 
+  # REMOVE columns full of NA
+  clin_traj_mat<-as.data.frame(sapply((clin_traj_wide)[, -1], as.numeric))
+  # ALSO SCALE
+  #clin_traj_mat<-clin_traj_mat[!is.na(clin_traj_mat$EVENT_ID),]
+  df<-clin_traj_mat
+  clin_traj_mat <- as.matrix(df[,colSums(is.na(df))<nrow(df)])
+  if (scale_mat){
+    clin_traj_mat<-scale(clin_traj_mat)
+    
+  }
+  #devtools::install_github("JimMcL/trajr")
+  #library('trajr')
+  #trj <- TrajGenerate(200, random = TRUE, angularErrorSd = .25)
+  
+  #smoothed<-TrajSmoothSG(clin_traj_mat[1,],3,31)
+  
+  
+  
+  CLD = kml::cld(clin_traj_mat, timeInData = 1:dim(clin_traj_mat)[2], maxNA = 2)
+  #length(CLD)
+  #clusters<-kml::kml(CLD, nbRedrawing = 5)
+  
+  #nbCluster=4
+  
+  # run choice
+  clust_ids<-getClusters(CLD,nbCluster=nbCluster )
+  names(clust_ids)<-clin_traj_wide$PATNO
+  
+  return(clust_ids)
+}
+
+
+
+
+
+get_clinical_clusters<-function(y, centers=4){
+  #'
+  #' @param 
+  #'
+  #'
+  combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$COHORT==1,]
+  clin_traj<-combined_bl_log_sel[,c('PATNO','EVENT_ID', y)]
+  
+  clin_traj<-clin_traj[!is.na(clin_traj$EVENT_ID),]
+  #clin_traj$months<-unlist(EVENT_MAP[clin_traj$EVENT_ID], use.names = FALSE)
+  
+  clin_traj_wide<-reshape(clin_traj, idvar='PATNO', timevar='EVENT_ID', direction='wide')
+  rownames(clin_traj_wide)<-clin_traj_wide$PATNO
+  clinical_clusters<-kmeans((na.omit(clin_traj_wide)[, -1]), centers=centers)
+  
+  return(clinical_clusters$cluster)
+  
+}

@@ -113,6 +113,9 @@ get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
       
       
     } 
+    
+    
+    
 
     
     # Sum for each patient 
@@ -148,8 +151,63 @@ log_totals<-function(combined, sub_patterns_all){
 ### Up to here is the function to log specific patterns ####
 
 
+ ppmi_pigd<-function(combined){
+   
+   tremor<-c('NP2TRMR', 'NP3PTRMR', 'NP3PTRML', 'NP3KTRMR', 'NP3KTRML', 'NP3RTARU', 'NP3RTALU', 'NP3RTARL', 'NP3RTALL', 'NP3RTALJ', 'NP3RTCON')
+   pigd<-c('NP2WALK', 'NP2FREZ', 'NP3GAIT', 'NP3FRZGT', 'NP3PSTBL')
+   
+   tremor_sums=rowMeans(combined[,tremor], na.rm=TRUE)
+   pigd_sums<-rowMeans(combined[,pigd], na.rm=TRUE)
+   
+   TD_PIGD<-tremor_sums/pigd_sums
+   TD_PIGD[pigd_sums==0]<-0
+   
+   length(TD_PIGD)
+   combined$TD<-tremor_sums
+   combined$PIGD<-pigd_sums
+   
+   combined$td_pigd_old_on
+   
+   combined$TD_PIGD_ratio<-TD_PIGD
+   if (TD_PIGD>1.15 | TD){
+     combined$TD_PIGD<-'TD'
+   }
+   
+   combined$TD_PIGD[combined$TD_PIGD_ratio> 1.15 | (combined$TD>0 & combined$PIGD==0)]<-'TD'
+   combined$TD_PIGD[combined$TD_PIGD_ratio<=0.9]<-'PIGD'
+   combined$TD_PIGD[combined$TD_PIGD_ratio>0.9 & combined$TD_PIGD_ratio<1.3 ]<-'In'
+   
+     
+     
+   combined$TD_PIGD
+   table(combined[combined$EVENT_ID=='V06', c('td_pigd_old','TD_PIGD')])
+   
+  
+}
+
+ppmi_rbdsq<-function(combined){
+ add1<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
+  'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
+  'DRMFIGHT', 'DRMUMV','DRMOBJFL',
+  'MVAWAKEN', 'DRMREMEM', 'SLPDSTRB', 
+  'STROKE', 'HETRA', 'PARKISM', 'RLS',
+  'NARCLPSY', 'DEPRS', 'EPILEPSY',
+  'CNSOTH')
+ add1=paste0(add1, '_rbd')
+ add1 %in% colnames(combined)
+  
+  rbdsq<-rowSums(combined[,add1])
+  combined$rbdsq<-rbdsq
+  curated_total$rem
+  combined$rbd
+  #combined[, c('RBD_TOT', 'rbdsq', 'rem')]
+  
+  return(rbdsq)
+  
+}
 
 
+combined$rbdsq<-ppmi_rbdsq(combined)
 ##### Get clinvar changes over time ####
 
 
@@ -163,9 +221,17 @@ library(stringr)
 
 
 # REM SLEEP BEHAVIOR 
-#
+## FIXED 
 add_rbd=c('PTCGBOTH',	'DRMVIVID',	'DRMAGRAC',	'DRMNOCTB',	'SLPLMBMV',	'SLPINJUR',	'DRMVERBL',	'DRMFIGHT',	'DRMUMV'	,
           'DRMOBJFL','MVAWAKEN',	'DRMREMEM',	'SLPDSTRB',	'STROKE',	'HETRA'	,'PARKISM',	'RLS'	,'NARCLPSY',	'DEPRS',	'EPILEPSY',	'BRNINFM'	,'CNSOTH')
+
+add_rbd<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
+         'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
+         'DRMFIGHT', 'DRMUMV','DRMOBJFL',
+         'MVAWAKEN', 'DRMREMEM', 'SLPDSTRB', 
+         'STROKE', 'HETRA', 'PARKISM', 'RLS',
+         'NARCLPSY', 'DEPRS', 'EPILEPSY',
+         'CNSOTH')
 sub_pattern_detect=add_rbd
 sub_patterns_rbd<-paste(add_rbd, collapse='|')
 rbd_tot<-get_totals(combined=combined, sub_pattern = 'null', sub_pattern_detect = sub_patterns_rbd)
@@ -238,14 +304,21 @@ combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, co
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
 combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
 
-
+clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT" )
 selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
+clinical_scales %in% colnames(combined)
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V14');
 combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V13');
+combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+
+
+
 
 # choose what is available here? 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
 combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)
+combined_future_V16$SCAU_TOT
 
 
 
@@ -265,6 +338,9 @@ colnames(combined_future_V10)<-paste0(colnames(combined_future_V10), '_V10') # i
 colnames(combined_future_V12)<-paste0(colnames(combined_future_V12), '_V12') # curated available
 colnames(combined_future_V16)<-paste0(colnames(combined_future_V16), '_V16')# other variables available
 colnames(combined_future_V14)<-paste0(colnames(combined_future_V14), '_V14')# other variables available
+colnames(combined_future_V13)<-paste0(colnames(combined_future_V13), '_V13')# other variables available
+
+
 
 colnames(combined_BL)<-paste0(colnames(combined_BL), '_BL')# other variables available
 colnames(combined_BL_all)<-paste0(colnames(combined_BL_all), '_BL')# other variables available
@@ -275,6 +351,7 @@ combined_new<-cbind(combined_new,combined_future_V10 )
 combined_new<-cbind(combined_new,combined_future_V12 )
 combined_new<-cbind(combined_new,combined_future_V16 )
 combined_new<-cbind(combined_new,combined_future_V14 )
+combined_new<-cbind(combined_new,combined_future_V13 )
 
 combined_new<-cbind(combined_new,combined_BL_all )
 

@@ -1,6 +1,6 @@
 
 #install.packages('psych')
-
+#BiocManager::install('kml')
 
 #install.packages("remotes")
 #remotes::install_github("bioFAM/MOFAdata")
@@ -27,14 +27,14 @@
 source('ppmi/mofa_utils.R')
 library('pheatmap')
 
-library('kml')
+#library('kml')
 library('dplyr')
 library('factoextra')
 
 
 imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca', 'pigd')
 # nfl serum
-scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
 clinical_scales<-scale_vars_diff
   
 combined_bl_log$SCAU_TOT_V16
@@ -184,11 +184,21 @@ non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
 cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1]]
 
+
+### Cors separately for off and on? 
+
+MOFAobjectPD@samples_metadata$PDSTATE
+
+
 # CORS ALL SAMPLES 
-#stats<-apply(MOFAobject@samples_metadata, 2,table )
-#non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
-#cors_both<-get_correlations(MOFAobject, names(non_na_vars))
-#cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+run_cors_all_samples=TRUE
+if (run_cors_all_samples){
+  stats<-apply(MOFAobject@samples_metadata, 2,table )
+  non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+  cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+  
+}
 
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
@@ -208,7 +218,9 @@ cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1
 
 
 
-
+#vltanim
+#vltfruit
+#vltveg
 
 ### DIFF ####
 all_diff<-colnames(sm)[grep('diff', colnames(sm))]
@@ -216,7 +228,8 @@ all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT')
+all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score', 'scopa', 'rem', 'upsit'
+                      )
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 
@@ -235,7 +248,7 @@ library(DescTools)
 
 
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
-  all_fs_diff=cbind(all_fs_diff, kw_cors)
+all_fs_diff=cbind(all_fs_diff, kw_cors)
   
 
 cors_kruskal_log<-(-log10(cors_kruskal))
@@ -275,6 +288,7 @@ all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
 library('factoextra')
 # aTTACH clusters 
 diff_var='NP2PTOT_diff_V16'
+### Add all clusterings to mofa object 
 for (diff_var in names(all_clusts_mofa)){
   MOFAobjectPD@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]]
   
@@ -283,18 +297,16 @@ for (diff_var in names(all_clusts_mofa)){
 all_clusts_mofa
 
 all_clusts_mofa[['NP2PTOT_diff_V16' ]]
+all_clusts_mofa[['NP3TOT' ]]
+
 
 ######### Cluster patients with clinical trajectory factors ####
+### test how many clusters
+
 clinical_scales
-y='NP2PTOT'
-factors_to_clust<-which(factors_cor_with_clusters[ ,y])
+y='NP3TOT'
+factors_to_clust<-which(all_fs_diff[ ,y])
 #cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
-
-
-
-
-
-
 
 sm<-samples_metadata(MOFAobjectPD)
 all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
@@ -302,15 +314,18 @@ all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
 #library('factoextra')
 
 cluster_samples_mofa=TRUE
-
-
-Z <- get_factors(MOFAobjectPD, factors = c(1,2,12))[[1]]
-
-
-
+Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]]
 fviz_nbclust(Z, kmeans, method = "wss")# +
   #geom_vline(xintercept = 3, linetype = 2)
 fviz_nbclust(Z, kmeans, method = "silhouette")
+
+gap_stat <- clusGap(Z , FUN = kmeans, nstart = 25,
+                    K.max = 10, B = 10)
+print(gap_stat, method = "firstmax")
+fviz_gap_stat(gap_stat)
+
+
+
 ### Gap statistic
 library(cluster)
 set.seed(123)
@@ -373,6 +388,20 @@ boxplot_by_cluster<-function(met, clust_name, y){
   #' @param met
   #'  
   #' 
+  clust_metric<-gsub('_clust', '', clust_name)
+  
+  met[,clust_metric ]<-as.numeric(met[,clust_metric])
+  met<-met[!is.na(met[, clust_metric]),]
+  print(paste('Using subset of  ', dim(met)[1], ' patients'))
+  
+  
+  #### PROPORTIONS OF BINARY VARS
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
+  tot_med<-as.matrix(table(met[,c(clust_name, "SEX")])); paste_sex<-paste('SEX:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDSTATE")])); paste_state<-paste('PD state:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "td_pigd")])); paste_tdpigd<-paste('td/pigd:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "NHY")])); paste_nhy<-paste('H&Y:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  
   
   met[, clust_name]=as.factor(met[, clust_name])
   met[, y]=as.numeric(met[, y])
@@ -385,8 +414,14 @@ boxplot_by_cluster<-function(met, clust_name, y){
     kw<-kruskal.test(x=met[, y], met[, clust_name])
     
   })
+  
+  factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
+  
   my_comparisons=combn(levels(met[,clust_name]),2)
   a=max(met[, y], na.rm = TRUE)
+  
+  
+  
   p<-ggplot(met ,aes_string(x=clust_name , y=y))+
     geom_boxplot(aes_string( x=clust_name, color=clust_name))+
     #stat_compare_means(comparisons = my_comparisons)+
@@ -395,16 +430,26 @@ boxplot_by_cluster<-function(met, clust_name, y){
     #  method = "wilcox_test", label = "p.format"
     #)
     #p
-   geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
+
+    geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
                aes_string(y=y), 
                y_position=c(a, a+0.5,a+1))+
-    labs(title = paste(y),  caption = paste('Kruskal.wallis p.val', format(kw$p.value, digits=2)))+
+    labs(title = paste(y),  
+         subtitle=paste('Kruskal.wallis p.val', format(kw$p.value, digits=2)),
+         caption = paste0('\n',
+                          'factors: ',factors, '\n',
+                          paste_med,  '\n',
+                          paste_sex, '\n',
+                          paste_state,  '\n',
+                          paste_tdpigd, '\n', 
+                          paste_nhy) )+
     theme(text =element_text(size=20))
+  #plot.title = element_text(size = 30, color = "green")
     
   
   
   p
-  ggsave(paste0(outdir,'/clustering/', y, '_',clust_name, '.png'), dpi=300)
+  ggsave(paste0(outdir,'/clustering/',clust_name ,'/', y,  '.png'), dpi=300)
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   
@@ -425,6 +470,7 @@ met$NP3TOT_diff_V16
 clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
 
 clust_name='NP2PTOT_diff_V16_clust'; y='NP2PTOT_diff_V16'; 
+clust_name='NP3TOT_diff_V13_V14_clust'; y='NP2PTOT_diff_V16'; 
 
 boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
 diff_variables_to_p<-all_diff_variables
@@ -435,15 +481,34 @@ diff_variables_to_p<-all_diff_variables
 diff_variables= c('NP2PTOT_diff_V16')
 diff_variables= c('NP2PTOT')
 diff_variables= c('NP3TOT')
-diff_variables= c('NP2PTOT')
-
+diff_variables= c('NP3TOT_LOG_diff_V13_V14')
 diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'NP2PTOT_diff_V16', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
+                      'NP3TOT_diff_V13_V14', 'MCATOT',
+                      'NP2PTOT_BL', 'NP3TOT_BL')
+
+diff_variables= c('NP2PTOT_LOG_diff_V16')
+diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
+                      'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
+                      'NP3TOT_diff_V13_V14', 'MCATOT',
                       'NP2PTOT_BL', 'NP3TOT_BL')
 
 
+diff_variables= c('NP2PTOT')
+
+
+diff_variables_to_p=c('updrs3_score','updrs2_score','NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
+                      'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
+                      'NP3TOT_diff_V13_V14', 'MCATOT', 'AGE', 'SEX', 
+                      'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL',
+                      )
+met
+
+met<-samples_metadata(MOFAobjectPD)
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
+  print(table(samples_metadata(MOFAobjectPD)[, clust_name]))
+  
   if (clust_name %in% colnames(met)){
     
     
@@ -461,9 +526,6 @@ sapply(diff_variables, function(y_clust){
 
 
 
-mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
-mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
-mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
 
@@ -473,49 +535,6 @@ mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
 
-
-
-selected_covars2_progression<-c( 'AGE', 'SEX',
-                     #'NP1_TOT', 
-                     'NP2_TOT_LOG','NP3_TOT_LOG',
-                     'updrs3_score',
-                     #'NP4_TOT',
-                     'NHY', 
-                     # 'SCAU5',
-                     # NON-MOTOR
-                     'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
-                     # CSF BIOMARKERS 
-                     'abeta_LLOD', 'HVLTRDLY',
-                     #  'scopa', 
-                     # 'stai_state', 'stai_trait', 
-                     'rigidity', 
-                     'NP3RTARU',
-                    # not significant: 
-                    #  'ptau',    'ab_asyn', 
-                     'PDSTATE',  
-                     'RBD_TOT', 
-                     'td_pigd_old_on', 
-                     'PD_MED_USE' , 
-                     'months', 
-                     'con_putamen_V10', 
-                     'change','asyn' , 'CSFSAA', 
-                     'mean_striatum_V10', 
-                    
-                    ## WHICH factors have to do with the change in the scale
-                    # And the change in the datascan binding  in the future?
-                    # THESE factors are the ones that we actually WANT 
-                      'MCATOT', diff_variables, 
-                    'con_putamen_diff_V10', 'hi_putamen_diff_V10'
-                    
-                    
-                    #'MCA_TOT_diff_V16', 
-                    
-                    #'NP3_TOT_LOG_SCALED', 
-                    #'RBD_TOT_diff_V16', 'MCATOT_diff_V16'
-                     )
-
-
-#selected_covars
 
 #if (length(sel_coh)>1){
 #  selected_covars2<-c(selected_covars2, 'COHORT')
@@ -590,11 +609,12 @@ get_factors_for_scales<-function(vars_to_plot){
   return(sel_factors)
   
 }
-
+progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum' )
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
-vars_to_plot=clinical_scales; sel_factors<-get_factors_for_scales(clinical_scales)
+vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
-
+# nfl serum,. lowput ratio etc.  
+sm$tau
 
 cors_all_pd[, 'PD_MED_USE']
 factors=names(sel_factors)
@@ -611,6 +631,14 @@ graphics.off()
 
 
 
+########### 
+all_fs_diff<-as.data.frame(all_fs_diff)
+plot_factors(MOFAobjectPD, 
+             factors=which(all_fs_diff[,'NP2PTOT']),
+             color_by ='NP2PTOT' , 
+             shape_by = 'NP2PTOT_clust')
+
+
 
 
 
@@ -619,22 +647,28 @@ graphics.off()
 
 ########################## NEW LOGIC GET ONLY FACTORS WITH DIFF IN V16 ##############
 ############# AFTER WE ADDED THIS TO MOFA
-# 1. diff vars
+
+
+
+
+
+
+
+
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )]
 
 # 2. scales + 3. imaging 
-
-vars_to_plot=all_diff; sel_factors_diff<-get_factors_for_scales(vars_to_plot)
+vars_to_plot=all_diff_variables; 
 all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts)
-all_diff_variables_prog
 sm=MOFAobjectPD@samples_metadata
+sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
 all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD@samples_metadata)]
 sm[vars_to_plot]
-vars_to_plot=unique(vars_to_plot)
+all_diff_variables_prog=unique(all_diff_variables_prog)
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
-plot_covars_mofa(selected_covars=vars_to_plot,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'

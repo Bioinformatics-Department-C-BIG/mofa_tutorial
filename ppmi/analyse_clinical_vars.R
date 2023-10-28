@@ -141,6 +141,8 @@ log_totals<-function(combined, sub_patterns_all){
   
   df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
                 & grepl('_TOT',  colnames( combined ) ) ]
+  
+  
   df=data.frame(df)
   df=df[sapply(df, is.numeric)]
   df_log=data.frame(sapply(df, function(x) log2(x+1)))
@@ -222,8 +224,6 @@ library(stringr)
 
 # REM SLEEP BEHAVIOR 
 ## FIXED 
-add_rbd=c('PTCGBOTH',	'DRMVIVID',	'DRMAGRAC',	'DRMNOCTB',	'SLPLMBMV',	'SLPINJUR',	'DRMVERBL',	'DRMFIGHT',	'DRMUMV'	,
-          'DRMOBJFL','MVAWAKEN',	'DRMREMEM',	'SLPDSTRB',	'STROKE',	'HETRA'	,'PARKISM',	'RLS'	,'NARCLPSY',	'DEPRS',	'EPILEPSY',	'BRNINFM'	,'CNSOTH')
 
 add_rbd<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
          'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
@@ -270,15 +270,27 @@ sub_patterns_all<-paste(sub_patterns_2, collapse='|')
 
 
 
+log_df<-function(df){
+  df=data.frame(df)
+  df=df[sapply(df, is.numeric)]
+  df_log=data.frame(sapply(df, function(x) log2(x+1)))
+  return(df_log)
+}
+
 ## LOG only the TOTALS !! 
 #'
 #'
-
-
+log_vars<-c('NP3TOT', 'NP2PTOT', 'MCATOT')
+df_log2=log_df(combined[, log_vars])
+colnames(df_log2)<-paste0(colnames(df_log2),'_LOG')
 
 df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
+
+
 colnames(df_log)<-paste0(colnames(df_log),'_LOG')
 combined_new<-mutate(combined, df_log)
+combined_new<-mutate(combined_new, df_log2)
+
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
 combined_new$ESS_TOT
 
@@ -297,34 +309,34 @@ combined_new$ESS_TOT
 ## here draw from the original..? 
 cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
-combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
+combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,cols_fut_visit];
 
 
 #imaging_variables_diff
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
-combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
+combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,cols_fut_visit];
 
-clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT" )
+clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT", 'NP3TOT_LOG', 'NP2PTOT_LOG')
 selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
-clinical_scales %in% colnames(combined)
+clinical_scales %in% colnames(combined_new)
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V14');
-combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V13');
-combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
 
 
 
 
 # choose what is available here? 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
-combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)
+combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars]
 combined_future_V16$SCAU_TOT
 
 
 
 patno_event_ids_BL<-paste0(combined_new$PATNO, '_', 'BL')
-combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined)[,cols_fut_visit]
-combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined)
+combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined_new)[,cols_fut_visit]
+combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)]
 combined_BL_all$updrs3_score
 
 

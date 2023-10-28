@@ -1,6 +1,7 @@
 
 
 #script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
@@ -190,7 +191,6 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
         df_mofa <- as.data.frame(get_factors(MOFAobject, factors=1:N_final)[[1]])
         df_mofa$y<- as.factor(MOFAobject@samples_metadata$COHORT)
         df_mofa_age <- cbind(df_mofa,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
-        
         if (run_validation){
           res_age_mofa<-run_train_validation( df=df_mofa_age)
           acc_mean<-mean(res_age_mofa[ 'Balanced Accuracy', na.rm=TRUE])

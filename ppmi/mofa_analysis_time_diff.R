@@ -88,8 +88,8 @@ patno_event_ids=unlist(patno_event_ids)
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
 combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
 y='NP2PTOT'
-cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel_pd,y, nbCluster = 1) 
-cl_clusters<-get_clinical_clusters(y, centers = 4)
+#cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel_pd,y, nbCluster = 1) 
+#cl_clusters<-get_clinical_clusters(y, centers = 4)
 
 clust_name=paste0(y, '_clin_clust')
 cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
@@ -156,15 +156,20 @@ correlate_factors_categorical<-function(y){
 }
 # TODO: padjust
 clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT', 'updrs3_score', 'updrs2_score')
-cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
-rownames(cors_kruskal)<-1:N_FACTORS
-kw_cors<-format(cors_kruskal, digits=1)<0.05
-factors_cor_with_clusters<-kw_cors
-#library(pheatmap)
+add_clinical_clusters=FALSE
+if (add_clinical_clusters){
+  cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
+  rownames(cors_kruskal)<-1:N_FACTORS
+  kw_cors<-format(cors_kruskal, digits=1)<0.05
+  factors_cor_with_clusters<-kw_cors
+  #library(pheatmap)
   pheatmap(-log10(cors_kruskal))
   #}
+  
+  #)
+}
 
-#)
+
 
   
 
@@ -248,7 +253,7 @@ library(DescTools)
 
 
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
-all_fs_diff=cbind(all_fs_diff, kw_cors)
+#all_fs_diff=cbind(all_fs_diff, kw_cors)
   
 
 cors_kruskal_log<-(-log10(cors_kruskal))

@@ -91,14 +91,17 @@ select_top_bottom_perc<-function(view, factors, top_fr=.01 ){
   return(ws_union)
 }
 
-factors=heatmap_factors
-concatenate_top_features<-function(factors){
+#factors=heatmap_factors
+concatenate_top_features<-function(factors, view, top_fr){
   
   f_all<-sapply(factors,function(f){
-    select_top_bottom_perc(view='RNA', factors=f, top_fr=.009 )
-  }
+    select_top_bottom_perc(view=view, factors=f, top_fr=top_fr )
+    }
     )
-  return(melt(f_all)
+  f_features<-melt(f_all)[,2:3]
+  colnames(f_features)<-c('Factor', 'feature')
+  
+  return(f_features)
   
   
 }

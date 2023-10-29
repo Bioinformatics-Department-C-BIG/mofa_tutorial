@@ -309,6 +309,8 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   # if only 1 timepoint
   
   hm_scaled_col = clip_outliers_times(hm_scaled_v08, x_times = 1.7)
+  #hm_scaled_col = clip_outliers(hm_scaled_v08)
+  
  # hm_scaled_col=hm_scaled
   f1 = colorRamp2(seq(min(hm_scaled_col), max(hm_scaled_col), length = 3), c("blue", "#EEEEEE", "red"))
   

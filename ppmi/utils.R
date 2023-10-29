@@ -20,8 +20,89 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
 
 
 
+selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
+                         'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
+                         'NHY', 'NP3BRADY',
+                         'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
+                         'MCAVFNUM', 'MCACLCKH', 'cogstate','sft' , 'VLTFRUIT', 
+                         'ptau', 'asyn', 'tau_ab', 'tau_asyn', 'abeta', 'ess_cat', 
+                         'HVLTRDLY',
+                         'PDSTATE', 'NP3RTCON', 
+                         'stai_state', 'stai_trait'  ,'STAIAD26', 'NP1ANXS', 'NP3GAIT', 
+                         'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
+                         'NP3RTARU', 'RBD_TOT', 
+                         'con_putamen', 
+                         'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
+                         'rigidity','months', 
+                         'con_putamen', 'con_putamen_V10', 
+                         'change', 
+                         'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
+                         'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
+                         'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                         'MCA_TOT_diff_V16')
+#'DYSKIRAT')
 
 
+# sPLIT DIAGNOSIS vs progression  
+selected_covars2<-c( 'AGE', 'SEX',
+                     'NP2_TOT','NP3_TOT',
+                     'NHY', 
+                     'NP3RIGN',
+                     'rigidity', 
+                     'NP3RTARU',
+                     'PDSTATE',  
+                     'td_pigd_old_on', 
+                     'PD_MED_USE' , 
+                     'months', 
+                     'con_putamen_V10', 
+                     'CSFSAA', 
+                     'mean_striatum_V10', 
+                     'ab_asyn')
+
+selected_covars2_progression<-c( 'AGE', 'SEX',
+                                 #'NP1_TOT', 
+                                 'NP2_TOT_LOG','NP3_TOT_LOG',
+                                 'updrs3_score',
+                                 #'NP4_TOT',
+                                 'NHY', 
+                                 # 'SCAU5',
+                                 # NON-MOTOR
+                                 'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
+                                 # CSF BIOMARKERS 
+                                 'abeta_LLOD', 'HVLTRDLY',
+                                 #  'scopa', 
+                                 # 'stai_state', 'stai_trait', 
+                                 'rigidity', 
+                                 'NP3RTARU',
+                                 # not significant: 
+                                 #  'ptau',    'ab_asyn', 
+                                 'PDSTATE',  
+                                 'RBD_TOT', 
+                                 'td_pigd_old_on', 
+                                 'PD_MED_USE' , 
+                                 'months', 
+                                 'con_putamen_V10', 
+                                 'change','asyn' , 'CSFSAA', 
+                                 'mean_striatum_V10', 
+                                 
+                                 ## WHICH factors have to do with the change in the scale
+                                 # And the change in the datascan binding  in the future?
+                                 # THESE factors are the ones that we actually WANT 
+                                 'MCATOT', 
+                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10'
+                                 
+                                 
+                                 #'MCA_TOT_diff_V16', 
+                                 
+                                 #'NP3_TOT_LOG_SCALED', 
+                                 #'RBD_TOT_diff_V16', 'MCATOT_diff_V16'
+)
+
+
+
+mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
+mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
+mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
 
@@ -159,8 +240,10 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 
  ##########
  ######
- imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
+ imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
+                           'updrs2_score', 'updrs2_score_LOG', 'moca' )
  scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+ 
  
  get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){
             #### obtains the zscore of the changes for the specific group supplied
@@ -178,9 +261,16 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
              t1<-'BL';  t2='V10';
              df_all$moca_V10
              #df=df_all
+             paste0(imaging_variables_diff, '_BL')%in% colnames(df_all)
              df_change1= get_changes(df_all,imaging_variables_diff, t1, t2 )
              #df_all<-cbind(df_all, df_change1)
             
+             t1<-'BL';  t2='V12';
+             df_all$moca_V10
+             #df=df_all
+             df_change_V12= get_changes(df_all,imaging_variables_diff, t1, t2 )
+             
+             
              
               t1<-'BL';  t2='V16';
              colnames(df_all)[grep('V16', colnames(df_all))]
@@ -206,7 +296,7 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
              
              
              
-            df_change_total<-cbind(df_change1, df_change2,df_change_V14, df_change_av)
+            df_change_total<-cbind(df_change1, df_change2,df_change_V12,df_change_V14, df_change_av)
               
         return(df_change_total)
         
@@ -1186,7 +1276,7 @@ calc_zscore_change<-function(df_num_1, df_num_2, t2){
 ############## CLUSTERS 
 
 
-library('kml')
+#library('kml')
 library('dplyr')
 
 get_clinical_clusters_kml<-function(combined_bl_log_sel_pd,y, nbCluster=4, scale_mat=FALSE){
@@ -1264,3 +1354,12 @@ get_clinical_clusters<-function(y, centers=4){
   return(clinical_clusters$cluster)
   
 }
+
+
+
+
+
+
+
+
+

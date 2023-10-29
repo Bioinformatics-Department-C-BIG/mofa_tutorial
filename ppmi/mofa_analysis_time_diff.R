@@ -32,9 +32,9 @@ library('dplyr')
 library('factoextra')
 
 
-imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca', 'pigd')
+#imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca', 'pigd')
 # nfl serum
-scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
+#scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
 clinical_scales<-scale_vars_diff
   
 combined_bl_log$SCAU_TOT_V16
@@ -155,7 +155,7 @@ correlate_factors_categorical<-function(y){
   }
 }
 # TODO: padjust
-clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT')
+clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT', 'updrs3_score', 'updrs2_score')
 cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
 rownames(cors_kruskal)<-1:N_FACTORS
 kw_cors<-format(cors_kruskal, digits=1)<0.05
@@ -191,7 +191,7 @@ MOFAobjectPD@samples_metadata$PDSTATE
 
 
 # CORS ALL SAMPLES 
-run_cors_all_samples=TRUE
+run_cors_all_samples=FALSE
 if (run_cors_all_samples){
   stats<-apply(MOFAobject@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
@@ -496,10 +496,12 @@ diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff
 diff_variables= c('NP2PTOT')
 
 
-diff_variables_to_p=c('updrs3_score','updrs2_score','NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
+diff_variables_to_p=c('updrs3_score','updrs2_score', 'updrs3_score_on',
+                      'updrs3_score_diff_V12','updrs2_score_diff_V12', 'updrs3_score_on_diff_V12', 
+                      'NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
                       'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
                       'NP3TOT_diff_V13_V14', 'MCATOT', 'AGE', 'SEX', 
-                      'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL',
+                      'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL'
                       )
 met
 

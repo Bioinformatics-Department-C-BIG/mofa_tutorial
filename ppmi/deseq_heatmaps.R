@@ -15,6 +15,7 @@ VISIT=c('BL', 'V08');
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
+source(paste0(script_dir,'ppmi/time_utils.R'))
 
 
 
@@ -111,11 +112,10 @@ deseq2ResDF
 deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 
-run_heatmap=TRUE
 
 
-### TODO: MAKE A FUNCTION 
-if (run_heatmap){
+
+######## HEATMAP #######
   vsd_filt=vsd
   ### INPUT FOR HEATMAP IS VSD
   deseq2VST <- as.data.frame( assay(vsd_filt))
@@ -130,12 +130,7 @@ if (run_heatmap){
   deseq2ResDF$abslog2FC<-abs(deseq2ResDF$log2FoldChange)
   sigGenes <- rownames(deseq2ResDF[deseq2ResDF$padj <= padj_T_hm & abs(deseq2ResDF$log2FoldChange) > log2fol_T_hm,])
   deseq2ResDF$Gene<-rownames(deseq2ResDF)
-  order_by_metric<-'abslog2pval'
-  order_by_metric<-'log2pval'
-  # bring the low padj to the top!!
-  order_by_metric<-'abslog2pval'
-  order_by_metric<-'abslog2'
-  order_by_metric<-'abslog2FC'
+
   order_by_metric<-'padj_reverse'
   
   quant=0.9
@@ -196,7 +191,10 @@ if (run_heatmap){
   # Make a heatmap ## using the vst
   ## TODO add annotation
   
+
   
+  
+    
   library('pheatmap')
   
   
@@ -221,16 +219,15 @@ if (run_heatmap){
 
   
   # TODO:  choose off 
-  colData(vsd_filt)[, c('PDSTATE', 'PATNO_EVENT_ID')]
+  # DEFINE 
+  # 1. SETTINGS 
+  # 2. Clusters 
+  # 3. factors and features 
   
-
+  
+  # 1. Annotation 
   df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
-
   colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
-
-  # fetch diff vars from mofa 
-  diff_variables
-  cluster_cols
   sm<-MOFAobject@samples_metadata
   df_all<-cbind(df_all,sm[match(df_all$PATNO_EVENT_ID, sm$PATNO_EVENT_ID ),c(diff_variables, 'INEXPAGE') ])
   y='NP2PTOT'
@@ -240,6 +237,9 @@ if (run_heatmap){
   df<-as.data.frame(df_all[,choose])
 
 
+  
+  # 2. 
+  heatmap_factors=which(all_fs_diff[,y])
   
 
   ### Plot MOFA too
@@ -261,12 +261,12 @@ if (run_heatmap){
     #sigGenes=sigGenes_wil$symbol
     
     
-    #options(warn = 1)
+    # 2. FACTORS   
     sigGenes= combined_sig_genes_strict$symbol
     sigGenes= signif_genes_strict
     sigGenes= combined_sig_genes_strict$symbol
     
-    ws_top_bottom=select_top_bottom_perc(view='RNA', factors=c(2,12), top_fr=.009 )
+    ws_top_bottom=select_top_bottom_perc(view='RNA', factors=heatmap_factors, top_fr=.009 )
    
     ### TODO: tomorrow get the most variable or the most 
     
@@ -278,11 +278,11 @@ if (run_heatmap){
     sigGenes=ws_top_bottom
     sigGenes
 
-
-    clust_name<-paste0(y, '_diff_V16')
+    #### Which clusters? add to config
+    clust_name<-paste0(y)
     clust_for_metric<-all_clusts_mofa[[clust_name]]
-    df$cluster_m_diff<-clust_for_metric[match(df$PATNO_EVENT_ID, names(clust_for_metric))] 
-    df$cluster_m_diff
+    df$cluster_m<-as.factor(clust_for_metric[match(df$PATNO_EVENT_ID, names(clust_for_metric))] )
+    df$cluster_m
     graphics.off()
 
     colnames(df)
@@ -291,7 +291,7 @@ if (run_heatmap){
     df
     df[df$EVENT_ID=='V08', 'con_putamen']=df[df$EVENT_ID=='V08', 'con_putamen_V10']
     df$AGE<-as.numeric(df$AGE)
-    df$abeta<-as.numeric(df$abeta)
+
     
     # todo: add the change as well
     
@@ -304,6 +304,7 @@ if (run_heatmap){
     
     # filter out samples here
     ## PROBLEM: cannot filter 
+    sel_samples=sm$PATNO_EVENT_ID
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=NULL )
     
@@ -317,8 +318,7 @@ if (run_heatmap){
     
     
     }
-  
-}
+
 
   
   

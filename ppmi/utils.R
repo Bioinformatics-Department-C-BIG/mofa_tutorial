@@ -1278,9 +1278,12 @@ calc_zscore_change<-function(df_num_1, df_num_2, t2){
   df_num_1_scaled <- scale(df_num_1, center=scaled_attrs1, scale=scaled_attrs2)
   df_num_2_scaled <- scale(df_num_2, center=scaled_attrs1, scale=scaled_attrs2)
   df_change=data.frame(df_num_2_scaled-df_num_1_scaled)
+  df_change_perc=data.frame(df_num_2_scaled-df_num_1_scaled)/data.frame(df_num_1_scaled+df_num_1_scaled)
+  
   
   colnames(df_change) = paste0(colnames(df_change), '_diff_', t2)
-  
+  colnames(df_change_perc)=paste0(colnames(df_change_perc), '_diff_', t2, '_perc')
+  df_change=cbind(df_change, df_change_perc)
   return(df_change)
 }
 

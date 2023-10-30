@@ -110,9 +110,9 @@ concatenate_top_features<-function(factors, view, top_fr){
 
 
 
-object=MOFAobjectPD
-factors=c(6)
-cluster_samples_mofa_obj(MOFAobjectPD, k=2, factors=c(6))
+#object=MOFAobjectPD
+#factors=c(6)
+#cluster_samples_mofa_obj(MOFAobjectPD, k=2, factors=c(6))
 
 cluster_samples_mofa_obj<-function(object, k, factors = "all", ...) 
 {

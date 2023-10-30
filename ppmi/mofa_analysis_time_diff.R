@@ -280,15 +280,15 @@ all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
         set.seed(60)
         
        # clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
-        tryCatch(  
-          clusters_x<-cluster_samples_mofa_obj(object=MOFAobjectPD,k=k_centers_m, factors=fact )
-            MOFAobjectPD@samples_metadata[,xname]=as.factor(clusters_x$cluster)
-              
-             return(clusters_x$cluster))
-      
         
         
-       
+        clusters_x<-cluster_samples_mofa_obj(MOFAobjectPD,k=k_centers_m, factors=fact )
+        clust_ps<-clusters_x$cluster
+        names(clust_ps)=MOFAobjectPD@samples_metadata$PATNO_EVENT_ID
+        MOFAobjectPD@samples_metadata[,xname]=as.factor(clust_ps)
+        
+        
+        return(clust_ps)
   
       }else{
       return(NULL)
@@ -317,7 +317,7 @@ all_clusts_mofa[['NP3TOT' ]]
 ### test how many clusters
 
 clinical_scales
-y='NP2PTOT_log'
+y='NP2PTOT'
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
 #cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
@@ -328,13 +328,18 @@ all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
 #library('factoextra')
 
 cluster_samples_mofa=TRUE
-Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]]
-fviz_nbclust(Z, kmeans, method = "wss")# +
+Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
+Z_scaled<-apply(as.data.frame(Z), 2, scale);
+colMedians(Z_scaled);
+
+set.seed(50)
+
+fviz_nbclust(Z_scaled, kmeans, method = "wss")# +
   #geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
-fviz_nbclust(Z, kmeans, method = "silhouette")
+fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
 
-gap_stat <- clusGap(Z , FUN = kmeans, nstart = 25,
+gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
                     K.max = 10, B = 10, )
 print(gap_stat, method = "globalmax")
 fviz_gap_stat(gap_stat)
@@ -549,6 +554,15 @@ sapply(diff_variables, function(y_clust){
 
 
 
+########### 
+all_fs_diff<-as.data.frame(all_fs_diff)
+
+# Plot clustering for scales 
+plot_factors(MOFAobjectPD, 
+             factors=which(all_fs_diff[,'NP2PTOT']),
+             color_by ='NP2PTOT_clust' , 
+             shape_by = 'NP2PTOT_clust')
+
 
 
 
@@ -652,15 +666,6 @@ graphics.off()
 
 
 
-
-########### 
-all_fs_diff<-as.data.frame(all_fs_diff)
-
-# Plot clustering for scales 
-plot_factors(MOFAobjectPD, 
-             factors=which(all_fs_diff[,'NP2PTOT']),
-             color_by ='NP2PTOT_clust' , 
-             shape_by = 'NP2PTOT_clust')
 
 
 

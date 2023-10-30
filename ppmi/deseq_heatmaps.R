@@ -200,7 +200,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     
     # 2. FACTORS   
-    if (sel_view=='RNA'){top_fr=0.009}else{top_fr=0.05}
+    if (sel_view=='RNA'){top_fr=0.00955}else{top_fr=0.05}
     f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=top_fr)
     f_features$feature<-gsub('\\..*', '',f_features$feature)
     f_features=f_features[!duplicated(f_features$feature),]
@@ -236,14 +236,14 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     # filter out samples here
     ## PROBLEM: cannot filter 
-    draw_all_times=FALSE; wf<-150
+    draw_all_times=TRUE; wf<-150
     sm_pd=MOFAobjectPD@samples_metadata
-    sel_cluster_ids=c(1,2)
     sel_cluster_ids=c(1,2,3)
+    sel_cluster_ids=c(1,3)
     
     sel_cluster_ids_s=paste0(sel_cluster_ids, collapse='_')
     
-    fname=paste0(outdir_s, '/heatmap_time', '_f_',paste(heatmap_factors, collapse='_'),'clust_', sel_cluster_ids_s, '.jpeg')
+    fname=paste0(outdir_s, '/heatmap_time', '_f_',paste(heatmap_factors, collapse='_'),'clust_', sel_cluster_ids_s,draw_all_times, '.jpeg')
     #  fname=paste0(outdir_s, '/heatmap/heatmap_time', '_f_',factor, '.jpeg')
     
     graphics.off()

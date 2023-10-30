@@ -159,7 +159,7 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 
  ##########
  ######
- imaging_variables_diff<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca' )
+ imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen','updrs2_score_on', 'updrs2_score', 'moca' )
  scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
  
  get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){
@@ -917,6 +917,25 @@ standardize_go_names<-function(descriptions){
 ### PREDICTIONS ON SUMMARIZED EXPERIMENT 
 ## predict on each or on multi assay?
 
+clipping_values<-function(x){
+  #'
+  #'
+  #' @param 
+  #'
+  higher_val<-quantile(x, 0.99, na.rm=TRUE)
+  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
+  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
+  
+  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
+  lower_val
+  higher_val
+  x[which(x<lower_val)]=as.numeric(lower_val)
+  
+  x[which(x>higher_val)]=as.numeric(higher_val)
+  return(x)
+  
+}
+
 
 
 clip_outliers<-function(df1){
@@ -1186,7 +1205,7 @@ calc_zscore_change<-function(df_num_1, df_num_2, t2){
 ############## CLUSTERS 
 
 
-library('kml')
+#library('kml')
 library('dplyr')
 
 get_clinical_clusters_kml<-function(combined_bl_log_sel_pd,y, nbCluster=4, scale_mat=FALSE){
@@ -1264,3 +1283,6 @@ get_clinical_clusters<-function(y, centers=4){
   return(clinical_clusters$cluster)
   
 }
+
+
+

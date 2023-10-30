@@ -193,7 +193,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     # 2. FACTORS   
     
-    f_features=concatenate_top_features(view='RNA', heatmap_factors,top_fr=.0095 )
+    f_features=concatenate_top_features(view='RNA', heatmap_factors,top_fr=.0099 )
     f_features$feature<-gsub('\\..*', '',f_features$feature)
     f_features=f_features[!duplicated(f_features$feature),]
     
@@ -230,13 +230,20 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     # filter out samples here
     ## PROBLEM: cannot filter 
-    sel_samples=sm$PATNO_EVENT_ID
+    sm_pd<-MOFAobjectPD@samples_metadata
+    sm_pd$NP2PTOT_clust
+    sel_clusts<-c(1,3)
+    sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
+    draw_all_times=TRUE; wf=250
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
-                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=NULL, 
+                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
                                    factor_labels=factor_labels,draw_all_times = draw_all_times)
     
     
-      jpeg(fname, width=10*150, height=12*200, res=200)
+    
+    # TODO: filter the variables that do not have a temporal change !!!! 
+    # 
+      jpeg(fname, width=10*wf, height=12*200, res=200)
     
       my_pheatmap
       dev.off()

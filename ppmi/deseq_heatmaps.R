@@ -11,7 +11,7 @@ VISIT=c('BL', 'V06' ,'V08');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V08');
 
-#process_mirnas=FALSE
+process_mirnas=FALSE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
@@ -28,6 +28,14 @@ min(deseq2ResDF$padj)
 write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
+
+
+if (process_mirnas){
+  sel_view='miRNA'
+  
+}else{
+  sel_view='RNA'
+}
 ### Up to here output can be used for other reasons
 ##
 
@@ -192,11 +200,12 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     
     # 2. FACTORS   
-    
-    f_features=concatenate_top_features(view='RNA', heatmap_factors,top_fr=.0099 )
+
+    if (sel_view=='RNA'){top_fr=0.00955}else{top_fr=0.05}
+    f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=top_fr)
     f_features$feature<-gsub('\\..*', '',f_features$feature)
     f_features=f_features[!duplicated(f_features$feature),]
-    
+    f_features
     
     factor_labels<-f_features$Factor; names(factor_labels)<-f_features$feature
     
@@ -223,30 +232,41 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     ## TODO: symbols vector 
     
-    
-    fname=paste0(outdir_s, '/heatmap_time', '_f_',factor, '.jpeg')
-    graphics.off()
+ 
 
     
     # filter out samples here
     ## PROBLEM: cannot filter 
+
     sm_pd<-MOFAobjectPD@samples_metadata
     sm_pd$NP2PTOT_clust
     sel_clusts<-c(1,3)
     sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
-    draw_all_times=TRUE; wf=250
+
+    draw_all_times=TRUE; wf<-150
+    sm_pd=MOFAobjectPD@samples_metadata
+    sel_cluster_ids=c(1,2,3)
+    sel_cluster_ids=c(1,3)
+    
+    sel_cluster_ids_s=paste0(sel_cluster_ids, collapse='_')
+    
+    fname=paste0(outdir_s, '/heatmap_time', '_f_',paste(heatmap_factors, collapse='_'),'clust_', sel_cluster_ids_s,draw_all_times, '.jpeg')
+    #  fname=paste0(outdir_s, '/heatmap/heatmap_time', '_f_',factor, '.jpeg')
+    
+    graphics.off()
+    
+    
+    sel_samples=sm_pd[sm_pd[, y_clust] %in% sel_cluster_ids,'PATNO' ]
     my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
                                    factor_labels=factor_labels,draw_all_times = draw_all_times)
     
     
+
+    jpeg(fname, width=10*wf, height=12*200, res=200)
     
-    # TODO: filter the variables that do not have a temporal change !!!! 
-    # 
-      jpeg(fname, width=10*wf, height=12*200, res=200)
-    
-      my_pheatmap
-      dev.off()
+    my_pheatmap
+    dev.off()
       
       
 
@@ -256,6 +276,13 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
 
 
 
+    
+    
+    #### DESEQ stages?? 
+    
+    # 1. match the clusters 
+    # 2. deseq the clusters
+    colData(se_filt)
 
 
 

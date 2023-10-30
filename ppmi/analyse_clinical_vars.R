@@ -3,14 +3,12 @@
 
 
 library(dplyr)
+source(paste0(script_dir, '/ppmi/extract_metadata.R'))
 # deseq2 vst 
 #source(paste0(script_dir, 'ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
 library(data.table)
 options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX
-
-metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
-combined_bl<-read.csv2(metadata_output)
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 combined<-read.csv2(metadata_output_all)
@@ -26,24 +24,7 @@ combined[which(combined$NHY==101),]$NHY<-NA
 
 
 combined$gn
-clipping_values<-function(x){
-  #'
-  #'
-  #' @param 
-  #'
-  higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
-  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
-  
-  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
-  lower_val
-  higher_val
-  x[which(x<lower_val)]=as.numeric(lower_val)
-  
-  x[which(x>higher_val)]=as.numeric(higher_val)
-  return(x)
-  
-}
+
 #### 
 library(ggplot2)
 combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
@@ -141,6 +122,8 @@ log_totals<-function(combined, sub_patterns_all){
   
   df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
                 & grepl('_TOT',  colnames( combined ) ) ]
+  
+  
   df=data.frame(df)
   df=df[sapply(df, is.numeric)]
   df_log=data.frame(sapply(df, function(x) log2(x+1)))
@@ -222,8 +205,6 @@ library(stringr)
 
 # REM SLEEP BEHAVIOR 
 ## FIXED 
-add_rbd=c('PTCGBOTH',	'DRMVIVID',	'DRMAGRAC',	'DRMNOCTB',	'SLPLMBMV',	'SLPINJUR',	'DRMVERBL',	'DRMFIGHT',	'DRMUMV'	,
-          'DRMOBJFL','MVAWAKEN',	'DRMREMEM',	'SLPDSTRB',	'STROKE',	'HETRA'	,'PARKISM',	'RLS'	,'NARCLPSY',	'DEPRS',	'EPILEPSY',	'BRNINFM'	,'CNSOTH')
 
 add_rbd<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
          'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
@@ -269,18 +250,35 @@ sub_patterns_all<-paste(sub_patterns_2, collapse='|')
 
 
 
+#df<-combined[, log_vars]
+log_df<-function(df){
+  
+  df=data.frame(df)
+  df=data.frame(apply(df,2, as.numeric))
+  df_log=data.frame(sapply(df, function(x) log2(x+1)))
+  
+  return(df_log)
+}
 
 ## LOG only the TOTALS !! 
 #'
 #'
-
+combined$updrs2_score
+log_vars<-c('NP3TOT', 'NP2PTOT', 'MCATOT', 'updrs2_score', 'updrs_totscore', 'updrs_totscore_on','updrs2_score', 'updrs3_score', 
+            'updrs3_score_on','scopa', 'moca')
+df_log2=log_df(combined[, log_vars])
+colnames(df_log2)<-paste0(colnames(df_log2),'_LOG')
 
 
 df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
+
+
 colnames(df_log)<-paste0(colnames(df_log),'_LOG')
 combined_new<-mutate(combined, df_log)
+combined_new<-mutate(combined_new, df_log2)
+
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
-combined_new$ESS_TOT
+combined_new$updrs2_score_LOG
 
 
 
@@ -295,36 +293,42 @@ combined_new$ESS_TOT
 # TODO: also add the outcome total: 
 #img_var='NP3_TOT'
 ## here draw from the original..? 
+
+clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT", 'NP3TOT_LOG', 'NP2PTOT_LOG', 'updrs3_score', 'updrs2_score', 
+                   'updrs3_score_on', 'updrs2_score_LOG',
+                   'updrs3_score_LOG', 'updrs3_score_on_LOG' )
+selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
+
+
 cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
-combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
+combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
 
 
 #imaging_variables_diff
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
-combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,cols_fut_visit];
+combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
 
-clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT" )
-selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
-clinical_scales %in% colnames(combined)
+
+clinical_scales %in% colnames(combined_new)
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V14');
-combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V13');
-combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)[,selected_future_vars];
+combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
 
 
 
 
 # choose what is available here? 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
-combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined)
+combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars]
 combined_future_V16$SCAU_TOT
 
 
 
 patno_event_ids_BL<-paste0(combined_new$PATNO, '_', 'BL')
-combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined)[,cols_fut_visit]
-combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined)
+combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined_new)[,cols_fut_visit]
+combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)]
 combined_BL_all$updrs3_score
 
 

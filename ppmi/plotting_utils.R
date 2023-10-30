@@ -143,7 +143,8 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
-                            cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
+                            cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
+                            factor_labels=NULL, draw_all_times=FALSE){
   
   
   
@@ -151,6 +152,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
   #' @param hm: heatmap data nfeats X nsamples 
   #' @param sigGenes: select genes to plot description
+  #' @param factor_labels if not NULL it splits the heatmap into rows of factors  description
   #' 
   #' 
   #' 
@@ -158,7 +160,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
  #ARRANGE
   #vsd_filt=vsd
   
- 
+  #@draw_all_times=TRUE
   sigGenes = make.names(sigGenes)
   rownames(vsd_filt) = make.names(rownames(vsd_filt))
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
@@ -216,10 +218,14 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   sel_pats<-df_ord[(df_ord$COHORT ==1), 'PATNO']; 
+  if (!is.null(sel_samples)){
+    sel_pats<-sel_pats[sel_pats%in%sel_samples]
+  }
   res<-filter_heatmap(hm_scaled, df_ord, sel_pats)
   hm_scaled=res[[1]]; df_ord=res[[2]];
   dim(hm_scaled); dim(df_ord)
   
+
   
   show_rownames=TRUE
   #jpeg(fname, width=10*100, height=7*100, res=300)
@@ -308,22 +314,27 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   # if only 1 timepoint
   
-  hm_scaled_col = clip_outliers_times(hm_scaled_v08, x_times = 1.7)
+  if (draw_all_times){
+    hm_scaled_col = clip_outliers_times(hm_scaled, x_times = 1.7)
+    
+  }else{
+    hm_scaled_col = clip_outliers_times(hm_scaled_v08, x_times = 1.7)
+    
+  }
+  #hm_scaled_col = clip_outliers(hm_scaled_v08)
+  
  # hm_scaled_col=hm_scaled
   f1 = colorRamp2(seq(min(hm_scaled_col), max(hm_scaled_col), length = 3), c("blue", "#EEEEEE", "red"))
-  
-
-  #factor_labels<-combined_sig_genes[match(rownames(hm1), combined_sig_genes$symbol), 'id']
-  
   
   ### NOW SPLIT TO TWO heatmaps 
   
   df1<-df_ord_V08; hm1<-hm_scaled_v08
+  remove_from_hm<-c('PATNO_EVENT_ID', 'PATNO', 'COHORT')
   hm_timepoint<-function(df1, hm1){
     #'
     #'
     #'
-    df1<-df1[, !colnames(df1) %in% c('PATNO_EVENT_ID', 'PATNO')]
+    df1<-df1[, !colnames(df1) %in% remove_from_hm]
     ha1<-ComplexHeatmap::HeatmapAnnotation(df=df1)
     hm_t<-ComplexHeatmap::Heatmap(hm1, 
                                     top_annotation = ha1, 
@@ -346,10 +357,16 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   
-  hboth<-ht_V08+ht_BL+anno
-  hboth<-ht_V08+anno
   
-  factor_labels=NULL
+  if (draw_all_times){
+    hboth<-ht_BL+ht_V08+anno
+    
+  }else{
+    hboth<-ht_V08+anno
+    
+  }
+  
+  
   if (!is.null(factor_labels)){
     hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE)
     

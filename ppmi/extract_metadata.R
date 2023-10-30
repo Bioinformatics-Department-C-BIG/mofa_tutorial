@@ -43,8 +43,6 @@ clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/
 demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
 
 
-characteristics<-merge(clinical, ps, by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
-dim(characteristics)
 
 
 othfeatpd<-read.csv(paste0(input_data, 'characteristics/Medical/Other_Clinical_Features.csv'))
@@ -205,21 +203,6 @@ metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 ### TODO: after this run the logs in analyse clinical vars 
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
-combined$COHORT_DEFINITION
-#View(combined[combined$PATNO=='4125',])
-combined$NHY
-
-
-# females would be NA
-
-MOFAobject@samples_metadata$PATNO
-
-demographics[which(demographics$PATNO==3386),]
-
-demographics$PATNO
-common
-
-combined$GBA_POS
 
 ## add genetics
 

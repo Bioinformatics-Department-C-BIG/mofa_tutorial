@@ -92,9 +92,9 @@ y='NP2PTOT'
 #cl_clusters<-get_clinical_clusters(y, centers = 4)
 
 clust_name=paste0(y, '_clin_clust')
-cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
+#cl_clusters_MOFA<-cl_clusters[match( samples_metadata(MOFAobject)$PATNO, cl_clusters)]
 
-samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
+#samples_metadata(MOFAobject)[,clust_name ]=cl_clusters_MOFA
 y=clinical_scales[1]
 
 
@@ -233,8 +233,7 @@ all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score', 'scopa', 'rem', 'upsit'
-                      )
+all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score', 'scopa', 'rem', 'upsit')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 
@@ -255,12 +254,14 @@ library(DescTools)
 #all_diffs_clusters<-sapply(seq(1:length(all_fs_diff)), function(i){
 #all_fs_diff=cbind(all_fs_diff, kw_cors)
   
+if (add_clinical_clusters){
+  cors_kruskal_log<-(-log10(cors_kruskal))
+  th<-(-log10(0.05))
+  cors_kruskal_log[cors_kruskal_log < th ] <-0
+  
+  pheatmap(cors_kruskal)
+}
 
-cors_kruskal_log<-(-log10(cors_kruskal))
-th<-(-log10(0.05))
-cors_kruskal_log[cors_kruskal_log < th ] <-0
-
-pheatmap(cors_kruskal)
 k_centers_m=3
 diff_var=y
 ## does not work as a loop 
@@ -276,11 +277,18 @@ all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
        # print(fact)
         #print(paste(i, xname))
         set.seed(42)
-        clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
-        MOFAobjectPD@samples_metadata[,xname]=as.factor(clusters_x$cluster)
+        set.seed(60)
+        
+       # clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
+        tryCatch(  
+          clusters_x<-cluster_samples_mofa_obj(object=MOFAobjectPD,k=k_centers_m, factors=fact )
+            MOFAobjectPD@samples_metadata[,xname]=as.factor(clusters_x$cluster)
+              
+             return(clusters_x$cluster))
+      
         
         
-        return(clusters_x$cluster)
+       
   
       }else{
       return(NULL)
@@ -309,8 +317,9 @@ all_clusts_mofa[['NP3TOT' ]]
 ### test how many clusters
 
 clinical_scales
-y='NP3TOT'
+y='NP2PTOT_log'
 factors_to_clust<-which(all_fs_diff[ ,y])
+factors_to_clust
 #cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
 
 sm<-samples_metadata(MOFAobjectPD)
@@ -322,18 +331,20 @@ cluster_samples_mofa=TRUE
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]]
 fviz_nbclust(Z, kmeans, method = "wss")# +
   #geom_vline(xintercept = 3, linetype = 2)
+library('cluster')
 fviz_nbclust(Z, kmeans, method = "silhouette")
 
 gap_stat <- clusGap(Z , FUN = kmeans, nstart = 25,
-                    K.max = 10, B = 10)
-print(gap_stat, method = "firstmax")
+                    K.max = 10, B = 10, )
+print(gap_stat, method = "globalmax")
 fviz_gap_stat(gap_stat)
+
 
 
 
 ### Gap statistic
 library(cluster)
-set.seed(123)
+#set.seed(123)
 # Compute gap statistic for kmeans
 # we used B = 10 for demo. Recommended value is ~500
 
@@ -398,7 +409,7 @@ boxplot_by_cluster<-function(met, clust_name, y){
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
   print(paste('Using subset of  ', dim(met)[1], ' patients'))
-  
+
   
   #### PROPORTIONS OF BINARY VARS
   tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
@@ -410,6 +421,9 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
   met[, clust_name]=as.factor(met[, clust_name])
   met[, y]=as.numeric(met[, y])
+  
+  
+  k_centers<-max(unique(levels(met[, clust_name])), na.rm = TRUE)
   
   ## Add kruskal wallis to the total plot and separately to each one 
   ## 
@@ -454,7 +468,7 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
   
   p
-  ggsave(paste0(outdir,'/clustering/',clust_name ,'/', y,  '.png'), dpi=300)
+  ggsave(paste0(outdir,'/clustering/',clust_name ,'/', k_centers, '/' , y,  '.png'), dpi=300)
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   
@@ -506,7 +520,8 @@ diff_variables_to_p=c('updrs3_score','updrs2_score', 'updrs3_score_on',
                       'NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
                       'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
                       'NP3TOT_diff_V13_V14', 'MCATOT', 'AGE', 'SEX', 
-                      'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL'
+                      'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL',
+                      'sft', 'td_pigd', 'HVLTRDLY' ## RELATED TO 2,12
                       )
 met
 
@@ -616,7 +631,7 @@ get_factors_for_scales<-function(vars_to_plot){
   return(sel_factors)
   
 }
-progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum' )
+progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
@@ -640,9 +655,11 @@ graphics.off()
 
 ########### 
 all_fs_diff<-as.data.frame(all_fs_diff)
+
+# Plot clustering for scales 
 plot_factors(MOFAobjectPD, 
              factors=which(all_fs_diff[,'NP2PTOT']),
-             color_by ='NP2PTOT' , 
+             color_by ='NP2PTOT_clust' , 
              shape_by = 'NP2PTOT_clust')
 
 

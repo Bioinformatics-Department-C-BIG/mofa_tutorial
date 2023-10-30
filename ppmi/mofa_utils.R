@@ -77,7 +77,7 @@ select_top_bottom_perc<-function(view, factors, top_fr=.01 ){
 #  factors=1;view='RNA'
   ws<-get_weights(MOFAobject, views = view, factors=factors)[[1]]
   print(factors)
-  cut_high<-0.99; cut_low=0.01
+  cut_high<-top_fr; cut_low=1-top_fr
   high<-apply(ws,2, function(x){ ll<-as.data.frame(x) %>%
     top_frac(top_fr)
   return(rownames(ll))})
@@ -105,5 +105,40 @@ concatenate_top_features<-function(factors, view, top_fr){
   
   
 }
+
+
+
+
+
+object=MOFAobjectPD
+factors=c(6)
+cluster_samples_mofa_obj(MOFAobjectPD, k=2, factors=c(6))
+
+cluster_samples_mofa_obj<-function(object, k, factors = "all", ...) 
+{
+       
+        Z <- get_factors(object, factors = factors);
+        if (is(Z, "list")) 
+          Z <- do.call(rbind, Z)
+        N <- nrow(Z)
+        haveAllZ <- apply(Z, 1, function(x) all(!is.na(x)))
+        if (!all(haveAllZ)) 
+          warning(paste("Removing", sum(!haveAllZ), "samples with missing values on at least one factor"))
+        Z <- Z[haveAllZ, ]
+        
+        Z_scaled <-apply(as.data.frame(Z), 2, scale )
+        Z_scaled <-apply(as.data.frame(Z), 2, scale )
+        
+       # hist(Z_scaled[,1])
+        #hist(Z_scaled[,2])
+        
+        kmeans.out <- kmeans(Z_scaled, centers = k, ...)
+        return(kmeans.out)
+      }
+
+
+
+
+
 
 

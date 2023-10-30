@@ -40,8 +40,8 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   cluster_cols=cluster_cols;   
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-                filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
+  #fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+  #              filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
   
   hm<-assay(vsd_filt_genes)
   
@@ -182,8 +182,8 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   cluster_cols=cluster_cols;   
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
-  fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
-                filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
+  #fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
+  #              filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols,remove_cn ,'.jpeg')
   
   hm<-assay(vsd_filt_genes); dim(hm);dim(df)
   
@@ -233,7 +233,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   
-  ######### ORDER OF COLUMNS/SAMPLES ####
+#### FILTER THE TWO TIME POINTS
   sel_pats_event_ids<-df_ord[(df_ord$EVENT_ID == 'BL'), 'PATNO_EVENT_ID']; 
   resV8<-filter_heatmap(hm_scaled, df_ord, sel_pats=NULL,sel_pats_event_ids = sel_pats_event_ids )
   hm_scaled_BL=resV8[[1]]; df_ord_BL<-resV8[[2]]
@@ -244,20 +244,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   resV8<-filter_heatmap(hm_scaled, df_ord, sel_pats=NULL,sel_pats_event_ids = sel_pats_event_ids )
   hm_scaled_v08=resV8[[1]]; df_ord_V08<-resV8[[2]]
   
-
-  dend_v08<-as.dendrogram(hclust(dist(t(hm_scaled_v08))));
-  order_V08_labels<-labels(dend_v08)
-  order_v08<-seq(1:length(order_V08_labels)); names(order_v08)<-gsub('\\_.*','', order_V08_labels)
-  
-  df_ord$pat_order<-order_v08[match(df_ord$PATNO,names(order_v08)  )]
-  
-  
-  new_ord<-order(df_ord[,'EVENT_ID'], df_ord[,'pat_order'])
-  df_ord<-df_ord[new_ord ,]
-  
-  df_ord$COHORT
-  dim(hm); dim(df_ord)
-  hm_scaled<-hm_scaled[,new_ord]
   
   ####
   
@@ -289,21 +275,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   df_ord[(df_ord$COHORT ==1),]
   rownames(df_ord)<-colnames(hm_scaled)
   
-  my_pheatmap<-pheatmap(hm_scaled, 
-                        labels_row=lab,
-                        cluster_rows=TRUE, 
-                        show_rownames=show_rownames,
-                        gaps_col =  split_time,
-                        cluster_cols=FALSE,
-                        
-                        annotation_col=df_ord, 
-                        
-                        clustering_method = 'ward.D2'
-  )
-  
-  #dev.off()
-  my_pheatmap
-  
+
   
   
   # 1. SCALE
@@ -330,7 +302,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   df1<-df_ord_V08; hm1<-hm_scaled_v08
   remove_from_hm<-c('PATNO_EVENT_ID', 'PATNO', 'COHORT')
-  hm_timepoint<-function(df1, hm1){
+  hm_timepoint<-function(df1, hm1, tp_name, cluster_columns=TRUE){
     #'
     #'
     #'
@@ -338,12 +310,25 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
     ha1<-ComplexHeatmap::HeatmapAnnotation(df=df1)
     hm_t<-ComplexHeatmap::Heatmap(hm1, 
                                     top_annotation = ha1, 
-                                    col=f1)
+                                    col=f1, 
+                                  cluster_columns=cluster_columns,
+                                  
+                                  name=tp_name)
     return(hm_t)
   }
   
-  ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08)
-  ht_BL<-hm_timepoint(df_ord_BL, hm_scaled_BL)
+  ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08, tp_name='V08')
+  ### padd V08 order to BL
+
+  order_v08<-colnames(ht_V08@matrix)[column_order(ht_V08)]
+  order_v08<-gsub('\\_.*','', order_v08)
+  
+  df_ord_BL_match<-df_ord_BL[match(order_v08,df_ord_BL$PATNO ),]
+  bl_names<-gsub('\\_.*','',colnames(hm_scaled_BL))
+  hm_scaled_BL_match<-hm_scaled_BL[,match(order_v08,bl_names )]
+  
+  
+  ht_BL<-hm_timepoint(df_ord_BL_match, hm_scaled_BL_match,tp_name='BL', cluster_columns=FALSE)
   
   #if (!is.null(df_ord_V06)){
   #  ht_V06<-hm_timepoint(df_ord_V06, hm_scaled_V06)
@@ -368,10 +353,10 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   if (!is.null(factor_labels)){
-    hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE)
+    hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE, main_heatmap='V08')
     
   }else{
-    hm_draw<-draw(hboth, row_km = 1,cluster_rows = TRUE)
+    hm_draw<-draw(hboth, row_km = 1,cluster_rows = TRUE,  main_heatmap='ht_V08')
     
   }
   

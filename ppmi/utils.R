@@ -1162,10 +1162,10 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
   
   ######### PLOT molecular markers 
   ### MELT and MERGE 
-  v8_melt<-reshape2::melt(v8_ens)
-  v6_melt<-reshape2::melt(v6_ens)
-  v4_melt<-reshape2::melt(v4_ens)
-  bl_melt<-reshape2::melt(bl_ens)
+  v8_melt<-reshape2::melt(v8_ens,id.vars=c(clinvars_to_add) )
+  v6_melt<-reshape2::melt(v6_ens,id.vars=c(clinvars_to_add))
+  v4_melt<-reshape2::melt(v4_ens,id.vars=c(clinvars_to_add))
+  bl_melt<-reshape2::melt(bl_ens,id.vars=c(clinvars_to_add))
   
   
   bl_melt$VISIT<-'BL'

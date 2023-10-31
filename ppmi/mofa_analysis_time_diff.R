@@ -234,7 +234,7 @@ all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
 all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score',
-                     'scopa', 'rem', 'upsit', 
+                     'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
@@ -430,7 +430,8 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
   kw=NULL
   try(if (!all(is.na(met[, y]))){
-    kw<-kruskal.test(x=met[, y], met[, clust_name])
+    met_pd<-met[met$INEXPAGE%in% 'INEXPD',]
+    kw<-kruskal.test(x=met_pd[, y], met_pd[, clust_name])
     
   })
   
@@ -453,6 +454,7 @@ boxplot_by_cluster<-function(met, clust_name, y){
     geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
                aes_string(y=y), 
                y_position=c(a, a+0.5,a+1))+
+            
     labs(title = paste(y),  
          subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
          caption = paste0('\n',
@@ -501,10 +503,9 @@ diff_variables_to_p<-all_diff_variables
 diff_variables= c('NP2PTOT_diff_V13_V14_perc')
 diff_variables= c('abeta')
 diff_variables= c('updrs3_score')
-diff_variables= c('NP2PTOT')
 
 
-diff_variables_to_p=c('NP2PTOT_diff_V13_V14_perc', 'updrs3_score','updrs2_score', 'updrs3_score_on',
+diff_variables_to_p_all=c('NP2PTOT_diff_V13_V14_perc', 'updrs3_score','updrs2_score', 'updrs3_score_on',
                       'updrs3_score_diff_V12','updrs2_score_diff_V12', 'updrs3_score_on_diff_V12', 
                       'NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
                       'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
@@ -512,7 +513,16 @@ diff_variables_to_p=c('NP2PTOT_diff_V13_V14_perc', 'updrs3_score','updrs2_score'
                       'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL',
                       'sft', 'td_pigd', 'HVLTRDLY' ## RELATED TO 2,12
                       )
-met
+
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE')
+diff_variables= c('moca')
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
+                      'updrs3_score')
+
+diff_variables= c('moca')
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'AGE', 
+                      'updrs3_score', 'moca')
+
 
 met<-samples_metadata(MOFAobject)
 sapply(diff_variables, function(y_clust){
@@ -522,9 +532,9 @@ sapply(diff_variables, function(y_clust){
   
   if (clust_name %in% colnames(met)){
     
-    
-    sapply(diff_variables_to_p, boxplot_by_cluster, met=met, clust_name=clust_name)
-      
+#    
+ #   sapply(diff_variables_to_p_all, boxplot_by_cluster, met=met, clust_name=clust_name)
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,diff_variables_to_p)
     }
     
   })

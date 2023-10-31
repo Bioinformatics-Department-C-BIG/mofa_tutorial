@@ -167,11 +167,6 @@ merged_melt_filt_group = merged_melt_filt_g1_ct
 var_to_diff='kmeans_grouping'
 
 
-library(rstatix)
-wilcox_stats_group<-merged_melt_filt_group %>%
-  group_by(symbol) %>%
-  do(w=wilcox_effsize(value~(!!sym(var_to_diff)), data=.) )
-
 
 
 

@@ -71,8 +71,8 @@ se_mirs
 #### 2. top deseq molecules 
 #### 3. top timeOmics selected molecules 
 mode_mols='MOFA'
-keep_all_feats=FALSE
 keep_all_feats=TRUE
+keep_all_feats=FALSE
 
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
@@ -100,7 +100,7 @@ if ((mode_mols)=='MOFA'){
 length(feat_names)
 
 ### add clinvars to the requested features too! 
-clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT', 'NP3_TOT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
+clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP3TOT', 'COHORT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
                    'con_putamen')
 
 
@@ -118,7 +118,7 @@ if (view=='RNA'){
 merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names)
 levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 
-
+merged_melt_orig_1$NP2PTOT
 
 
 
@@ -241,6 +241,7 @@ merged_melt_filt_g3_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats
 library(stringr)
 
 de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>%  dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
+de_group_vs_control2=NULL
 de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
 de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
 
@@ -258,7 +259,7 @@ de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y
 de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
 
 de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol )
-
+de_merged_to_remove
 
 
 
@@ -396,7 +397,7 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 
 
 
-
+de_group_vs_control_and_time2
 
 filt_top=TRUE
 de_group_vs_control_and_time
@@ -409,7 +410,7 @@ if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
   
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[25:50],]
   
   nrow=NULL; height=7
 }else{
@@ -427,7 +428,32 @@ if (view=='RNA'){
 }
 
 
+#merged_melt_filt_most_sig_g1<-
 
+print(merged_melt_filt_most_sig$NP2PTOT )
+merged_melt_filt_most_sig$value=as.numeric(merged_melt_filt_most_sig$value)
+merged_melt_filt_most_sig$NP2PTOT=as.numeric(merged_melt_filt_most_sig$NP2PTOT)
+
+merged_melt_filt_most_sig_g1<-merged_melt_filt_most_sig[merged_melt_filt_most_sig$kmeans_grouping==1,]
+
+
+merged_melt_filt_most_sig_g1$NP2PTOT
+crtest<-cor.test(merged_melt_filt_most_sig_g1$value, merged_melt_filt_most_sig_g1$NP2PTOT)
+var1<-merged_melt_filt_most_sig_g1 %>%
+  dplyr::filter(variable == 'ENSG00000149527')
+
+all_cors_with_scale<-merged_melt_filt_most_sig_g1%>%
+  group_by(variable) %>%
+  mutate(value=as.numeric(value))%>%
+  mutate(NP2PTOT=as.numeric(NP2PTOT))%>%
+  dplyr::summarize(cor= cor.test(value, NP2PTOT, use = "complete.obs")$estimate)%>%
+  arrange(desc(cor))
+
+all_cors_with_scale
+
+var1$NP2PTOT_cut<-cut(var1$NP2PTOT,breaks=4)
+ggplot(var1,aes( x=NP2PTOT_cut, y=value))+
+  geom_boxplot()
 #### in the boxplots add the groups 
 ### first controls-- all markers need to be different in controls
 ### and second in the two groups of disease 
@@ -435,10 +461,6 @@ if (view=='RNA'){
 # TODO: SEPARATE BY PD STATE
 
 plot_molecular_trajectories(merged_melt_filt_most_sig)
-
-
-
-
 
 
 
@@ -491,6 +513,14 @@ ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_',
 
 
 graphics.off()
+
+
+
+
+
+
+
+
 
 
 

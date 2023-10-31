@@ -484,7 +484,6 @@ all_clusts_mofa
 met<-samples_metadata(MOFAobjectPD)
 
 diff_variables
-all_fs_diff$NP2PTOT_diff_V16
 all_fs_diff
 all_clusts
 y='NP3_TOT'

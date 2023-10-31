@@ -4,6 +4,8 @@ library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/time_utils.R'))
+source(paste0(script_dir, 'ppmi/plotting_utils.R'))
+
 library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
@@ -50,9 +52,12 @@ if (mode=='diagnosis'){
 
 sel_factors_diff
 
-factor=2
+factor=3
 top_view<-which.max(vars_by_factor[factor,])
-top_view
+top_view='miRNA'
+
+
+names(top_view)<-'miRNA'
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
   
@@ -62,7 +67,6 @@ if (names(top_view)=='miRNA'){
 }
 
 view
-#view='miRNA'
 se_mirs
 
 #### mofa preprocess
@@ -72,7 +76,7 @@ se_mirs
 #### 3. top timeOmics selected molecules 
 mode_mols='MOFA'
 keep_all_feats=TRUE
-keep_all_feats=FALSE
+keep_all_feats=TRUE
 
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
@@ -118,7 +122,6 @@ if (view=='RNA'){
 merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names)
 levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 
-merged_melt_orig_1$NP2PTOT
 
 
 
@@ -138,7 +141,7 @@ merged_melt_orig<-merged_melt_orig_1
 merged_melt_orig$PATNO
 unique(merged_melt_orig$variable)
 ens<-gsub('\\..*', '',merged_melt_orig$variable)
-  merged_melt_orig$symbol<-merged_melt_orig$variable
+merged_melt_orig$symbol<-merged_melt_orig$variable
 
 
 
@@ -240,10 +243,11 @@ merged_melt_filt_g3_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats
 
 library(stringr)
 
-de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>%  dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
+
+de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>%  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 de_group_vs_control2=NULL
-de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
-de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^LmiR"))
+de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 
 dim(de_merged)
 dim(de_merged_to_remove)
@@ -410,7 +414,7 @@ if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
   
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[25:50],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
   nrow=NULL; height=7
 }else{
@@ -431,29 +435,8 @@ if (view=='RNA'){
 #merged_melt_filt_most_sig_g1<-
 
 print(merged_melt_filt_most_sig$NP2PTOT )
-merged_melt_filt_most_sig$value=as.numeric(merged_melt_filt_most_sig$value)
-merged_melt_filt_most_sig$NP2PTOT=as.numeric(merged_melt_filt_most_sig$NP2PTOT)
-
-merged_melt_filt_most_sig_g1<-merged_melt_filt_most_sig[merged_melt_filt_most_sig$kmeans_grouping==1,]
 
 
-merged_melt_filt_most_sig_g1$NP2PTOT
-crtest<-cor.test(merged_melt_filt_most_sig_g1$value, merged_melt_filt_most_sig_g1$NP2PTOT)
-var1<-merged_melt_filt_most_sig_g1 %>%
-  dplyr::filter(variable == 'ENSG00000149527')
-
-all_cors_with_scale<-merged_melt_filt_most_sig_g1%>%
-  group_by(variable) %>%
-  mutate(value=as.numeric(value))%>%
-  mutate(NP2PTOT=as.numeric(NP2PTOT))%>%
-  dplyr::summarize(cor= cor.test(value, NP2PTOT, use = "complete.obs")$estimate)%>%
-  arrange(desc(cor))
-
-all_cors_with_scale
-
-var1$NP2PTOT_cut<-cut(var1$NP2PTOT,breaks=4)
-ggplot(var1,aes( x=NP2PTOT_cut, y=value))+
-  geom_boxplot()
 #### in the boxplots add the groups 
 ### first controls-- all markers need to be different in controls
 ### and second in the two groups of disease 
@@ -474,21 +457,21 @@ plot_molecular_trajectories(merged_melt_filt_most_sig)
 add_patient_lines=FALSE
 merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
 p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-                                                    fill='group', group='group', colour='group')) 
-  if (add_patient_lines){
-   p<- p+geom_line(aes_string(x = 'VISIT', y = 'value', 
-                         group='PATNO', colour='group' ),size=0.1, alpha=0.5)
-  }
-  
-  
- p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR, 
-               position=position_dodge(0))+
+                                                       fill='group', group='group', colour='group')) 
+if (add_patient_lines){
+  p<- p+geom_line(aes_string(x = 'VISIT', y = 'value', 
+                             group='PATNO', colour='group' ),size=0.1, alpha=0.5)
+}
+
+
+p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR, 
+                  position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
                geom = "line", size = 1, alpha=0.7) + 
   scale_color_viridis_d(option='magma')+
   facet_wrap(. ~ symbol, scales='free_y', 
              nrow = nrow) +
-
+  
   #geom_signif(comparisons = list(c('BL', 'V08')), 
   #            map_signif_level=TRUE, 
   #            tip_length = 0, vjust=0.3)+
@@ -513,6 +496,46 @@ ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_',
 
 
 graphics.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+merged_melt_filt_most_sig$value=as.numeric(merged_melt_filt_most_sig$value)
+merged_melt_filt_most_sig$NP2PTOT=as.numeric(merged_melt_filt_most_sig$NP2PTOT)
+
+merged_melt_filt_most_sig_g1<-merged_melt_filt_most_sig[merged_melt_filt_most_sig$kmeans_grouping==1,]
+
+
+merged_melt_filt_most_sig_g1$NP2PTOT
+crtest<-cor.test(merged_melt_filt_most_sig_g1$value, merged_melt_filt_most_sig_g1$NP2PTOT)
+var1<-merged_melt_filt_most_sig_g1 %>%
+  dplyr::filter(variable == 'ENSG00000149527')
+
+all_cors_with_scale<-merged_melt_filt_most_sig_g1%>%
+  group_by(variable) %>%
+  mutate(value=as.numeric(value))%>%
+  mutate(NP2PTOT=as.numeric(NP2PTOT))%>%
+  dplyr::summarize(cor= cor.test(value, NP2PTOT, use = "complete.obs")$estimate)%>%
+  arrange(desc(cor))
+
+all_cors_with_scale
+
+var1$NP2PTOT_cut<-cut(var1$NP2PTOT,breaks=4)
+ggplot(var1,aes( x=NP2PTOT_cut, y=value))+
+  geom_boxplot()
 
 
 

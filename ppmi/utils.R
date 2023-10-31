@@ -9,6 +9,7 @@ library('factoextra')
 ## Utils 
 ## Summarized experiment 
 
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 
 
@@ -1380,3 +1381,20 @@ get_clinical_clusters<-function(y, centers=4){
 
 
 
+
+library('RColorBrewer')
+create_venn<-function(venn_list, fname_venn, main){
+  
+  #######
+  #' @param 
+  #'
+  #'
+  myCol2 <- brewer.pal(length(venn_list), "Pastel2")[1:length(venn_list)]
+  venn.diagram(venn_list,
+               # Circles
+               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
+               filename =fname_venn, 
+               main=main,
+               
+               output=FALSE)
+}

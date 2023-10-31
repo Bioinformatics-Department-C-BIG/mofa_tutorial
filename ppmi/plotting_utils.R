@@ -370,3 +370,39 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
 
 
 #BiocManager::install('ComplexHeatmap')
+
+
+
+plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
+  #####
+  #####
+  #''
+  
+  
+  ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
+    #geom_point(aes(col=VISIT), size = 2) +
+    #geom_line(aes(group=PATNO),  col= 'grey') +
+    # subgroup should be in the fill parameter!!! 
+    geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
+    scale_color_viridis_d(option='mako')+
+    scale_fill_viridis_d(option='mako')+
+    
+    #geom_line(aes(group=patno), palette='jco') +
+    #facet_wrap(. ~ symbol) +
+    
+    geom_signif(comparisons = list(c('BL', 'V08')),  
+                map_signif_level=TRUE, 
+                tip_length = 0, vjust=0.4)+
+    
+    facet_wrap(. ~ symbol, scales='free_y') +
+    
+    theme_bw() 
+  ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_',  keep_all_feats,'_cl_fs_',factors_to_cluster_s, view,'_',group_cat,sel_cohort , '.jpeg'), 
+         width=20, height=12)
+  
+ 
+  
+}
+
+
+

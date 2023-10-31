@@ -243,7 +243,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     sel_clusts<-c(1,3)
     sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
 
-    draw_all_times=TRUE; wf<-150
+    draw_all_times=TRUE; wf<-200
     sm_pd=MOFAobjectPD@samples_metadata
     sel_cluster_ids=c(1,2,3)
     sel_cluster_ids=c(1,3)

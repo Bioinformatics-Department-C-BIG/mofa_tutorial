@@ -499,26 +499,6 @@ library('enrichplot')
 
 
 
-write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff, pvalueCutoff_sig=0.05  ){
-  
-  ### Takes the full gse results, ie. without threshold significance, 
-  # saves it, 
-  # filters it by pvalueCutoff_sig
-  # and saves the filter 
-  #' @param gse_full full gse results objects 
-  #' @param results_file the file name to write results  (without .csv)
-  #' @param pvalueCutoff the pvalue used to obtain the gse results 
-  pval_to_use='p.adjust'
-  write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
-  gse_sig_result<-gse_full@result[gse_full@result[,pval_to_use]<pvalueCutoff_sig,]
-  write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
-  
-  # rewrite
-  dim(gse_full); dim(gse_sig_result)
-  ## filter gse result to significant only 
-  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
-  return(gse)
-}
 
 
 #gse=gse_mofa_rna

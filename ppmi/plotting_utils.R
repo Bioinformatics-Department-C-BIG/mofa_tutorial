@@ -371,6 +371,14 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
 
 #BiocManager::install('ComplexHeatmap')
 
+median_IQR <- function(x) {
+  data.frame(y = median(x), # Median
+             ymin = quantile(x)[2], # 1st quartile
+             ymax = quantile(x)[4])  # 3rd quartile
+}
+
+
+
 
 
 plot_molecular_trajectories<-function(merged_melt_filt_most_sig){

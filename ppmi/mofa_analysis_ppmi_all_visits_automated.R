@@ -92,6 +92,8 @@ get_top_cors<-function(MOFAobject, COHORT_NAME='CONCOHORT'){
 ######### VARIANCE EXPLAINED ###########
 
 group=1
+
+
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[group]]
 

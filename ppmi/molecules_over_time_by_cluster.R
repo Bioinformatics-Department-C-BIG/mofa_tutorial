@@ -40,7 +40,6 @@ mode='diagnosis'
 #### 1. Obtain the markers here 
 
 fn_sel=4; 
-sel_factors_diff
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -50,14 +49,13 @@ if (mode=='diagnosis'){
   
 }
 
-sel_factors_diff
 
-factor=3
+factor=12
 top_view<-which.max(vars_by_factor[factor,])
-top_view='miRNA'
+#top_view='miRNA'
 
 
-names(top_view)<-'miRNA'
+#names(top_view)<-'RNA'
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
   
@@ -76,7 +74,7 @@ se_mirs
 #### 3. top timeOmics selected molecules 
 mode_mols='MOFA'
 keep_all_feats=TRUE
-keep_all_feats=TRUE
+keep_all_feats=FALSE
 
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
@@ -176,7 +174,7 @@ clust_name= paste0(y_clust, '_clust')
 names(all_clusts_mofa)
 MOFAobject@samples_metadata
 MOFAobject_clusts=MOFAobjectPD
-groups_from_mofa_factors<-function(merged_melt, MOFAobject_clusts, y_clust ){
+groups_from_mofa_factors<-function(patnos, MOFAobject_clusts, y_clust ){
   
   #' Obtain the molecular clusters from the mofa object 
   #' 
@@ -188,7 +186,7 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject_clusts, y_clust ){
   sm_pd<-MOFAobject_clusts@samples_metadata;
   groups_kmeans<-sm_pd[, clust_name]
   pats<-sm_pd$PATNO
-  kmeans_matched<-groups_kmeans[match(merged_melt$PATNO, pats )]
+  kmeans_matched<-groups_kmeans[match(patnos, pats )]
   kmeans_grouping<-factor(kmeans_matched)
   kmeans_grouping
   return(kmeans_grouping)
@@ -196,9 +194,9 @@ groups_from_mofa_factors<-function(merged_melt, MOFAobject_clusts, y_clust ){
 }
 
 
-merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject_clusts= MOFAobjectPD, y_clust)
+merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
 merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
-merged_melt[merged_melt$COHORT==2, 'kmeans_grouping']<-'HC'
+merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
 
 # ADD LABELS FOR controls
 merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
@@ -229,15 +227,20 @@ group_cats<-levels(merged_melt_filt$group)
 
 
 
-merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% group_cats[1],]
-merged_melt_filt_g1_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[1], 'HC'),]
-g2_ind=2
-merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[g2_ind],]
-merged_melt_filt_g2_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[g2_ind], 'HC'),]
 
-g3_ind=3
-merged_melt_filt_g3=merged_melt_filt[merged_melt_filt$group %in% group_cats[g3_ind],]
-merged_melt_filt_g3_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[g3_ind], 'HC'),]
+### List of merged per group
+
+merged_melt_groups<-merged_melt_filt %>% 
+  split(~group)
+  
+
+
+merged_melt_filt_g1=merged_melt_groups[[1]]
+merged_melt_filt_g1_ct<-rbind(merged_melt_groups[[1]], merged_melt_groups[['HC']])
+merged_melt_filt_g2=merged_melt_groups[[2]]
+merged_melt_filt_g2_ct=rbind(merged_melt_groups[[2]], merged_melt_groups[['HC']])
+merged_melt_filt_g3=merged_melt_groups[[3]]
+merged_melt_filt_g3_ct=rbind(merged_melt_groups[[3]], merged_melt_groups[['HC']])
 
 
 
@@ -249,9 +252,6 @@ de_group_vs_control2=NULL
 de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 
-dim(de_merged)
-dim(de_merged_to_remove)
-dim(de_group_vs_control1)
 
 ### CHECK MONOTONICITY FOR common de genes
 # idea: if there is a change: 
@@ -261,6 +261,10 @@ de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
 de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
 de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y), ]; 
 de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
+
+dim(de_merged)
+dim(de_merged_to_remove)
+dim(de_group_vs_control1)
 
 de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol )
 de_merged_to_remove
@@ -284,8 +288,11 @@ length(unique(de_group_vs_control1$symbol))
 length(unique(de_group_vs_control2$symbol))
 length(unique(de_group_vs_control3$symbol))
 
+
 most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,] %>% 
                                             dplyr::filter(!(symbol %in% de_merged_to_remove) ))
+most_sig_over_time2=NULL
+most_sig_over_time2$symbol=NULL
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] %>% 
                                               dplyr::filter(!(symbol %in% de_merged_to_remove) ) )
 most_sig_over_time3<-get_most_sig_over_time(merged_melt_filt_g3[merged_melt_filt_g3$symbol %in% de_group_vs_control3$symbol,]%>% 
@@ -447,8 +454,11 @@ plot_molecular_trajectories(merged_melt_filt_most_sig)
 
 
 
-
-
+median_IQR <- function(x) {
+  data.frame(y = median(x), # Median
+             ymin = quantile(x)[2], # 1st quartile
+             ymax = quantile(x)[4])  # 3rd quartile
+}
 
 
 

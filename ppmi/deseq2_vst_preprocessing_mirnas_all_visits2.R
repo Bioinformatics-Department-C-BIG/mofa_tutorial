@@ -33,7 +33,7 @@ metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
 
 
-process_mirnas=TRUE
+#process_mirnas=FALSE
 #combined_bl_log$np2
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
@@ -104,32 +104,37 @@ VISIT=c('BL',  'V08');
         
        
         
-        se_filt<-filter_se_byExpr(se_filt)
         
         ### TODO: ADD FILTER COMMON AS PARAM TO SAVE IN THE DIRECTORY IN CONFIG!!! 
         
         
-        
-        ### OUTPUT THE FILTERED se_filt 
-        ind<-which(is.na(se_filt$AGE_AT_VISIT))
-        se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
-        
-        ## Turn to factors for deseq
-        se_filt$SEX<-as.factor(se_filt$SEX)
-        se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
-        
-        ## these are almost the same so it is okay to scale AGE earlier 
-        hist(se_filt$AGE_AT_VISIT)
-        hist(se_filt$AGE_SCALED)
-        
-        # impute: 
-        # which()
-        se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
-        se_filt<-se_filt[,!(is.na(se_filt$SEX))]
-        
-        table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
-
-        colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
+        preprocess_se_deseq2<-function(se_filt){
+          
+          se_filt<-filter_se_byExpr(se_filt)
+          
+          ### OUTPUT THE FILTERED se_filt 
+          ind<-which(is.na(se_filt$AGE_AT_VISIT))
+          se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
+          
+          ## Turn to factors for deseq
+          se_filt$SEX<-as.factor(se_filt$SEX)
+          se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
+          
+          ## these are almost the same so it is okay to scale AGE earlier 
+          hist(se_filt$AGE_AT_VISIT)
+          hist(se_filt$AGE_SCALED)
+          
+          # impute: 
+          # which()
+          se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
+          se_filt<-se_filt[,!(is.na(se_filt$SEX))]
+          
+          table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
+          
+          colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
+          return(se_filt)
+        }
+        se_filt<-preprocess_se_deseq2(se_filt)
         
         ### Perform the appropriate test depending on what you want as prediction variable
         if (length(sel_coh)>1){

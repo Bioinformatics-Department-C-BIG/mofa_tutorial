@@ -25,6 +25,8 @@
 
 #### Covariance of factors with metadata 
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
+source(paste0(script_dir,'ppmi/plotting_utils.R'))
+
 library('pheatmap')
 
 #library('kml')
@@ -47,6 +49,11 @@ combined_bl_log$SCAU_TOT_V16
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
+
+
+vars_by_factor_all<-calculate_variance_explained(MOFAobject)
+vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
+
 
 
 ### ADD FUTURE CHANGES ####

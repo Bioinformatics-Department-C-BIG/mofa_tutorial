@@ -370,3 +370,107 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
 
 
 #BiocManager::install('ComplexHeatmap')
+
+
+
+plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
+  #####
+  #####
+  #''
+  
+  
+  ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
+    #geom_point(aes(col=VISIT), size = 2) +
+    #geom_line(aes(group=PATNO),  col= 'grey') +
+    # subgroup should be in the fill parameter!!! 
+    geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
+    scale_color_viridis_d(option='mako')+
+    scale_fill_viridis_d(option='mako')+
+    
+    #geom_line(aes(group=patno), palette='jco') +
+    #facet_wrap(. ~ symbol) +
+    
+    geom_signif(comparisons = list(c('BL', 'V08')),  
+                map_signif_level=TRUE, 
+                tip_length = 0, vjust=0.4)+
+    
+    facet_wrap(. ~ symbol, scales='free_y') +
+    
+    theme_bw() 
+  ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_',  keep_all_feats,'_cl_fs_',factors_to_cluster_s, view,'_',group_cat,sel_cohort , '.jpeg'), 
+         width=20, height=12)
+  
+ 
+  
+}
+
+
+
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
+  #'
+  #' Create boxplot by cluster 
+  #' 
+  #' @param met
+  #'  
+  #' 
+  clust_metric<-gsub('_clust', '', clust_name)
+  
+  met[,clust_metric ]<-as.numeric(met[,clust_metric])
+  met<-met[!is.na(met[, clust_metric]),]
+  print(paste('Using subset of  ', dim(met)[1], ' patients'))
+  freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
+  
+  
+  #### PROPORTIONS OF BINARY VARS
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
+  tot_med<-as.matrix(table(met[,c(clust_name, "SEX")])); paste_sex<-paste('SEX:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDSTATE")])); paste_state<-paste('PD state:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "td_pigd")])); paste_tdpigd<-paste('td/pigd:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "NHY")])); paste_nhy<-paste('H&Y:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  
+  k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+  k_centers
+  ## Add kruskal wallis to the total plot and separately to each one 
+  ## 
+
+  factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
+
+  
+  met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
+  met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
+  met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
+  met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
+  
+  p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
+    geom_boxplot(aes_string( x=clust_name, color=clust_name, y='value'))+
+
+  
+    facet_wrap(~variable, scales='free')+
+    geom_pwc( tip.length = 0.1,
+      method = "wilcox_test", label = "p.adj.signif"
+    )+    scale_color_viridis_d(option="magma")+
+    
+    
+  labs(#title = paste(y),  
+         #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
+         caption = paste0('\n',
+                          'factors: ',factors, '\n',
+                          paste_med, ',\t',
+                          paste_sex, ',\t',
+                          paste_state,  ',\n',
+                          paste_tdpigd, ',\t',
+                          paste_nhy) )+
+    theme(text =element_text(size=20))
+  #plot.title = element_text(size = 30, color = "green")
+  p
+
+  bn<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option ,'/all_vars' ,  '.png')
+  print(bn)
+  ggsave(bn, dpi=300, width=10, height = 10, units='in')
+  graphics.off()
+  ## TODO: WILCOX TEST BY GROUP
+  
+  
+}
+
+

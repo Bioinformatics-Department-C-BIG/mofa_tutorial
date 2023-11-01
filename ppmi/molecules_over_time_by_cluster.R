@@ -4,7 +4,9 @@ library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/time_utils.R'))
+source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 
+library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
 
@@ -50,9 +52,12 @@ if (mode=='diagnosis'){
 
 sel_factors_diff
 
-factor=12
+factor=3
 top_view<-which.max(vars_by_factor[factor,])
-top_view
+top_view='miRNA'
+
+
+names(top_view)<-'miRNA'
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
   
@@ -61,7 +66,7 @@ if (names(top_view)=='miRNA'){
   
 }
 
-#view='miRNA'
+view
 se_mirs
 
 #### mofa preprocess
@@ -70,6 +75,9 @@ se_mirs
 #### 2. top deseq molecules 
 #### 3. top timeOmics selected molecules 
 mode_mols='MOFA'
+keep_all_feats=TRUE
+keep_all_feats=TRUE
+
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
   f_v<-get_factors(MOFAobject, factors =factor )[[1]]
@@ -80,18 +88,23 @@ if ((mode_mols)=='MOFA'){
   ws_union<-c(ws_high, ws_low)
   length(ws_union)
   feat_names=names(ws_union)
+  if (keep_all_feats){
+    feat_names=rownames(ws)
+    
+  }
+  
 }else{
   feat_names= sigLRT_genes$gene
   
 }
 
+### if use all 
+#feat_names=rownames(se)
 
-
-
-
+length(feat_names)
 
 ### add clinvars to the requested features too! 
-clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY', 'NP3_TOT', 'COHORT', 'NP3_TOT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
+clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP3TOT', 'COHORT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
                    'con_putamen')
 
 
@@ -112,7 +125,6 @@ levels(merged_melt_orig_1$variable) # check that the requested variables exist?
 
 
 
-
 #}
 
 feat_names_ens<-gsub('\\..*', '',feat_names)
@@ -129,14 +141,8 @@ merged_melt_orig<-merged_melt_orig_1
 merged_melt_orig$PATNO
 unique(merged_melt_orig$variable)
 ens<-gsub('\\..*', '',merged_melt_orig$variable)
+merged_melt_orig$symbol<-merged_melt_orig$variable
 
-#if (view=='RNA'){
-#  symb<-get_symbols_vector(ens)
-#  merged_melt_orig$symbol<-symb
-#  feat_names_ens_ids<-unique(symb)
-#}else{
-  merged_melt_orig$symbol<-merged_melt_orig$variable
-#}
 
 
 #
@@ -145,10 +151,10 @@ ens<-gsub('\\..*', '',merged_melt_orig$variable)
 ############################################
 
 
-sel_cohort=FALSE
+
 # IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
 sel_cohort<-c(1)
-
+  sel_cohort=FALSE
 
 if (sel_cohort){
   #'
@@ -164,80 +170,42 @@ merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
 
 
 merged_melt_pd<-merged_melt
+y_clust='NP2PTOT'
+clust_name= paste0(y_clust, '_clust')
 
-groups_from_mofa_factors<-function(merged_melt, MOFAobject, factors ){
+names(all_clusts_mofa)
+MOFAobject@samples_metadata
+MOFAobject_clusts=MOFAobjectPD
+groups_from_mofa_factors<-function(merged_melt, MOFAobject_clusts, y_clust ){
   
-  #'
+  #' Obtain the molecular clusters from the mofa object 
+  #' 
   #' @param MOFAobject description
-  #'
+  #' @param
 
   ### cluster by one factor 
-  
-  groups_kmeans<-cluster_by_mofa_factors(MOFAobject, factors=factors, centers=2, rescale=FALSE)
-  high_label<-which.max(groups_kmeans$centers)
-  #groups_kmeans$cluster<-ifelse(groups_kmeans$cluster==high_label, 'HighFactor', 'LowFactor')
-  pats<-names(groups_kmeans$cluster)
-  kmeans_matched<-groups_kmeans$cluster[match(merged_melt$PATNO, pats )]
+  clust_name= paste0(y_clust, '_clust')
+  sm_pd<-MOFAobject_clusts@samples_metadata;
+  groups_kmeans<-sm_pd[, clust_name]
+  pats<-sm_pd$PATNO
+  kmeans_matched<-groups_kmeans[match(merged_melt$PATNO, pats )]
   kmeans_grouping<-factor(kmeans_matched)
-  
-  groups_from_mofa_factors
+  kmeans_grouping
   return(kmeans_grouping)
   
 }
 
 
-### Important: create groups only for the patients.
-# cluster patients or controls? 
-factors_to_cluster = factor
-factors_to_cluster<-sel_factors_diff
-factors_to_cluster<-c(sel_factors_np3)
+merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobject_clusts= MOFAobjectPD, y_clust)
+merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
+merged_melt[merged_melt$COHORT==2, 'kmeans_grouping']<-'HC'
 
-
-groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor)
-groups_kmeans3<-cluster_by_mofa_factors( MOFAobjectPD, factors=factor, centers=2)
-groups_kmeans_all_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors, sel_factors_pd_np3),
-                                                    centers=3)
-
-groups_kmeans_diff_factors<-cluster_by_mofa_factors( MOFAobjectPD, factors=c(sel_factors_diff),
-                                                    centers=3)
-
-groups_kmeans<-cluster_by_mofa_factors( MOFAobjectPD, factors=factors_to_cluster)
-groups_kmeans_diff<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=2)
-groups_kmeans_diff3<-cluster_by_mofa_factors( MOFAobjectPD, factors=sel_factors_diff, centers=3)
-
-merged_melt$kmeans_grouping<-groups_from_mofa_factors(merged_melt, MOFAobjectPD, factors=factors_to_cluster)
-
-
-
-
-
+# ADD LABELS FOR controls
+merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
 
 na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
 merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
-
-### EDIT GROUP TO BE PATNO and GROUP!!
-# OR JUST GROUP  
-merged_melt_filt$VISIT
-
-
-
-### Did they change scales???
-### Breaks down into two groups based on grouping 
-
-
-
-## TODO: plot here ALL the clinical variables by grouping!! 
-
-#### 
-
 merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
-
-group_cats<-levels(factor(merged_melt$grouping))
-
-
-
-
-
 
 
 
@@ -251,57 +219,98 @@ group_cats<-levels(factor(merged_melt$grouping))
 
 
 
-merged_melt_filt$group<-as.logical(merged_melt_filt$kmeans_grouping)
+merged_melt_filt$group<-merged_melt_filt$kmeans_grouping
 
 group_cat='kmeans_grouping'
-
-
-merged_melt_filt$group<-as.logical(merged_melt_filt[, group_cat])
-
 merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
 group_cats<-levels(merged_melt_filt$group)
 ## 
-# TODO: Function: take a group and 
+# TODO: Function: take a group and DE it with controls 
 
 
-get_most_sig_over_time<-function(merged_melt_filt_group){
-  #''
-  #'
-  #' @param description
-  #'
 
-  merged_melt_filt_group=merged_melt_filt_group[merged_melt_filt_group$VISIT %in% c('BL', 'V08'),]
-  merged_melt_filt_group$VISIT<-as.factor(merged_melt_filt_group$VISIT)
-  
-  
-  
-  wilcox_stats_group<-merged_melt_filt_group %>%
-    group_by(symbol) %>%
-    do(w=wilcox.test(value~VISIT, data=.) ) %>%
-    summarize(symbol, Wilcox=w$p.value) %>% 
-    mutate(p.adj=p.adjust(Wilcox)) %>%
-    dplyr::filter(p.adj<0.05) %>%
-    arrange(Wilcox, decreasing=FALSE) %>%
-    as.data.frame() 
-  
-  
-  most_sig_over_time_group<-wilcox_stats_group[order(wilcox_stats_group$Wilcox),]
-  
-  
-  return(most_sig_over_time_group)
-}
-
-
-merged_melt_ct_two_vis=merged_melt_ct[merged_melt_ct$VISIT %in% c('BL', 'V08'),]
 merged_melt_filt_g1=merged_melt_filt[merged_melt_filt$group %in% group_cats[1],]
-merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[2],]
+merged_melt_filt_g1_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[1], 'HC'),]
+g2_ind=2
+merged_melt_filt_g2=merged_melt_filt[merged_melt_filt$group %in% group_cats[g2_ind],]
+merged_melt_filt_g2_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[g2_ind], 'HC'),]
 
-most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1)
-most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2)
+g3_ind=3
+merged_melt_filt_g3=merged_melt_filt[merged_melt_filt$group %in% group_cats[g3_ind],]
+merged_melt_filt_g3_ct=merged_melt_filt[merged_melt_filt$group %in% c(group_cats[g3_ind], 'HC'),]
+
+
+
+library(stringr)
+
+
+de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>%  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+de_group_vs_control2=NULL
+de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+
+dim(de_merged)
+dim(de_merged_to_remove)
+dim(de_group_vs_control1)
+
+### CHECK MONOTONICITY FOR common de genes
+# idea: if there is a change: 
+# then check that the change is  in the same direction 
+
+de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
+de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
+de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y), ]; 
+de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
+
+de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol )
+de_merged_to_remove
+
+
+
+
+inter_de<-intersect(de_group_vs_control1$symbol,de_group_vs_control2$symbol )
+union_de<-list(group1=de_group_vs_control1$symbol, group2=de_group_vs_control2$symbol, group3=de_group_vs_control3$symbol)
+de_group_vs_control<-rbind(de_group_vs_control1, de_group_vs_control2, de_group_vs_control3 )
+de_group_vs_control_inter<-intersect(de_group_vs_control1$symbol, de_group_vs_control2$symbol)
+
+#### Venn diagram 
+nclusts<-max(unique(group_cats[group_cats!='HC']))
+fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_',keep_all_feats,'.png')
+create_venn(venn_list = union_de, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
+
+
+#### GET DE over time from the de features 
+length(unique(de_group_vs_control1$symbol))
+length(unique(de_group_vs_control2$symbol))
+length(unique(de_group_vs_control3$symbol))
+
+most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,] %>% 
+                                            dplyr::filter(!(symbol %in% de_merged_to_remove) ))
+most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] %>% 
+                                              dplyr::filter(!(symbol %in% de_merged_to_remove) ) )
+most_sig_over_time3<-get_most_sig_over_time(merged_melt_filt_g3[merged_melt_filt_g3$symbol %in% de_group_vs_control3$symbol,]%>% 
+                                              dplyr::filter(!(symbol %in% de_merged_to_remove) )
+                                            )
+
+most_sig_over_time1
+
+length(most_sig_over_time1$symbol); length(most_sig_over_time2$symbol); length(most_sig_over_time3$symbol)
+
+union_de_time<-list(group1=most_sig_over_time1$symbol, group2=most_sig_over_time2$symbol, group3=most_sig_over_time3$symbol)
+fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_time', keep_all_feats,'.png')
+create_venn(venn_list = union_de_time, fname_venn =fname_venn,main =paste0( ' DE molecules with temporal and monotonic change
+                                                                            between the clusters and controls' ))
+
+
+
+
+intersect(most_sig_over_time1$symbol, de_group_vs_control1$symbol)
+
 most_sig_over_time_ct<-get_most_sig_over_time(merged_melt_ct)
 
 ## TODO: DO IT FOR MULTIPLE GROUPS 
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
+
 
 
 ######## First find out which of the molecules significantly change over time ####
@@ -316,9 +325,50 @@ merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  mo
 most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
 most_sig_over_time<-most_sig_over_time%>%
   arrange(Wilcox, decreasing=FALSE)
- 
+
+## ECHECK DIRECTORIIONS
+geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= c('CSAD'), keytype = c("SYMBOL"), columns=c('SYMBOL', 'GENEID'))
+
+de_group_vs_control3[de_group_vs_control3$symbol==geneIDs1$GENEID,]
+de_group_vs_control2[de_group_vs_control2$symbol==geneIDs1$GENEID,]
+
+de_group_vs_control1[de_group_vs_control1$symbol==geneIDs1$GENEID,]
+
+
+
+
+
+## CHOOSE MOLECULES HERE ####
 ####OUTPUT MOST SIG OVER TIME 
 most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig_over_time_ct$symbol),]
+
+de_group_vs_control_and_time<-intersect(most_sig_over_time$symbol, de_group_vs_control$symbol)
+
+#### Choose molecules DE in group 1, but most sig over time in all? 
+
+most_sig_over_time1
+
+choose_group<-1
+if (choose_group==1){
+  de_group_vs_control_and_time<-intersect(most_sig_over_time1$symbol, de_group_vs_control1$symbol)
+  
+  
+}else if(choose_group==2){
+  de_group_vs_control_and_time<-intersect(most_sig_over_time2$symbol, de_group_vs_control2$symbol)
+  
+}else if(choose_group==3){
+  de_group_vs_control_and_time<-intersect(most_sig_over_time3$symbol, de_group_vs_control3$symbol)
+  
+}
+
+'ENSG00000205683' %in% de_group_vs_control_and_time
+##### CHECK MONOTONICITY AND REMOVE ####
+
+#### WHATEVER SET WE CHOOSE WE REMOVE the non monotonic genes 
+de_group_vs_control_and_time2<-de_group_vs_control_and_time[!(de_group_vs_control_and_time%in% de_merged_to_remove)]
+
+
+length(de_group_vs_control_and_time2)
 
 
 # 
@@ -328,25 +378,14 @@ most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig
 # 2. Groups should be by factor OR by multiple factors 
 # 3. for now they are by factor!!! 
 # 4. save the grouping mode 
-factors_to_cluster_s<-paste0(c(factors_to_cluster), collapse='-')
-
+factors_to_cluster_s<-paste0(c(which(all_fs_diff[,y_clust])), collapse='-')
+factors_to_cluster_s
 ### We get the most significant by group for different factor top variables 
-write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv'))
+write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', 
+                                     view,'_',group_cat ,
+                                    'de_group_',  choose_group, 
+                                     '.csv'))
 
-####### CHOOSE 
-
-#most_sig_over_time_deseq = make.names(sigLRT_genes$gene)
-#most_sig_over_time_deseq<-make.names(colnames(data.filtered.only.pd))
-
-#most_sig_over_time_deseq
-
-
-### First answer : CAN THEY DIFFERENTIATE DISEASE CONTROL? 
-# TODO: ADD DISEASE CONTROL
-merged_melt_ct$kmeans_grouping='CONTROL'
-
-
-filt_top=TRUE
 
 
 ### PUT THEM ALL TOGETHER IN THE BOXPLOTS 
@@ -362,36 +401,20 @@ filt_top=TRUE
 
 
 
-#### Check
-mean_data<-merged_melt_filt_g1 %>%
-  group_by(grouping, symbol) %>%
-  summarise(mean_expr = mean(value, na.rm = TRUE))
-mean_data
-most_sig_over_time
-
-median_IQR <- function(x) {
-  data.frame(y = median(x), # Median
-             ymin = quantile(x)[2], # 1st quartile
-             ymax = quantile(x)[4])  # 3rd quartile
-}
-
-
-
-merged_melt_ct$kmeans_grouping='CONTROL'
-merged_melt_ct$group='CONTROL'
-merged_melt_ct$grouping='CONTROL'
-
-
-merged_melt_filt=rbind(merged_melt_filt,merged_melt_ct )
+de_group_vs_control_and_time2
 
 filt_top=TRUE
+de_group_vs_control_and_time
 
+unique(de_group_vs_control_and_time2)
 
 if (filt_top){
 
   # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
   
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
   nrow=NULL; height=7
 }else{
@@ -400,7 +423,7 @@ if (filt_top){
   
 }
 
-
+de_group_vs_control_and_time2
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt_most_sig$symbol)
   symb<-get_symbols_vector(ens)
@@ -409,9 +432,9 @@ if (view=='RNA'){
 }
 
 
+#merged_melt_filt_most_sig_g1<-
 
-
-
+print(merged_melt_filt_most_sig$NP2PTOT )
 
 
 #### in the boxplots add the groups 
@@ -420,28 +443,7 @@ if (view=='RNA'){
 # Boxplots of the grouping too !! 
 # TODO: SEPARATE BY PD STATE
 
-
-
-ggplot(data = merged_melt_filt_most_sig, aes(x = VISIT, y = value, fill=kmeans_grouping)) + 
-  #geom_point(aes(col=VISIT), size = 2) +
-  #geom_line(aes(group=PATNO),  col= 'grey') +
-  # subgroup should be in the fill parameter!!! 
-  geom_boxplot(aes(x=VISIT, fill=kmeans_grouping ))+
-  scale_color_viridis_d(option='mako')+
-  scale_fill_viridis_d(option='mako')+
-  
-  #geom_line(aes(group=patno), palette='jco') +
-  #facet_wrap(. ~ symbol) +
-  
-  geom_signif(comparisons = list(c('BL', 'V08')),  
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.4)+
-  
-  facet_wrap(. ~ symbol, scales='free_y') +
-  
-  theme_bw() 
-ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_', view,'_',group_cat,sel_cohort , '.jpeg'), 
-       width=12, height=12)
+plot_molecular_trajectories(merged_melt_filt_most_sig)
 
 
 
@@ -450,40 +452,29 @@ ggsave(paste0(outdir, '/trajectories/boxplots_',factor,'_', view,'_',group_cat,s
 
 
 
-
-
-
-
-
-
-
-
-
-
-### BY GROUP ####
 
 # TODO: choose 3 colours grey as control
+add_patient_lines=FALSE
+merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
+p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+                                                       fill='group', group='group', colour='group')) 
+if (add_patient_lines){
+  p<- p+geom_line(aes_string(x = 'VISIT', y = 'value', 
+                             group='PATNO', colour='group' ),size=0.1, alpha=0.5)
+}
 
-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-                                                    fill='group', group='group', colour='group')) + 
-  stat_summary(geom = "pointrange", fun.data = median_IQR, 
-               position=position_dodge(0))+
+
+p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR, 
+                  position=position_dodge(0))+
   stat_summary(fun = median, position=position_dodge(width=0), 
                geom = "line", size = 1, alpha=0.7) + 
   scale_color_viridis_d(option='magma')+
   facet_wrap(. ~ symbol, scales='free_y', 
              nrow = nrow) +
- # theme_gray()+
   
-  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-  #
-  #geom_signif(comparisons = split(t(combn(levels(merged_melt_filt_most_sig$group), 2)), 
-   #                               seq(nrow(t(combn(levels(merged_melt_filt_most_sig$VISIT), 2))))), 
-  #            map_signif_level = TRUE, 
-  #             tip_length = 0, vjust=0.4)+
-  geom_signif(comparisons = list(c('BL', 'V08')), 
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.3)+
+  #geom_signif(comparisons = list(c('BL', 'V08')), 
+  #            map_signif_level=TRUE, 
+  #            tip_length = 0, vjust=0.3)+
   
   labs(y='logCPM')+
   # legend(legend=c('Low', 'High'))+
@@ -497,163 +488,63 @@ ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value',
 
 
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,  '.jpeg'), 
-       width=7, height=height)
+ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,
+              'cluster_',choose_group,'.jpeg'), 
+       width=20, height=height)
 
 
 
 
 graphics.off()
 
-## color the ones with the highest changes 
-# TOP PATIENTS WITH LARGER CHANGES
-
-
-#top_change<-molecules_change_by_patno[order(molecules_change_by_patno$diff, decreasing = TRUE)[1:20],'PATNO']
-#merged_melt_filt_most_sig$TOP=FALSE
-#merged_melt_filt_most_sig[merged_melt_filt_most_sig$PATNO %in% top_change,]$TOP<-TRUE
-#any(merged_melt_filt_most_sig$TOP)
-
-#### BY PATIENT #####
-#p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-#                                                   fill='group', group='group', colour='group')) + 
-
-merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$kmeans_grouping
-#
-p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-                                                       fill='TOP', group='TOP', colour='TOP')) + 
-  
-  geom_point(aes_string(x = 'VISIT', y = 'value', 
-                        fill='TOP', group='TOP', colour='TOP' ),size=0.1, alpha=0.5)+
-  geom_line(aes_string(x = 'VISIT', y = 'value', 
-                       group='PATNO', colour='TOP' ),size=0.2, alpha=0.5)+
-  stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 1) 
-### CHANGE OF MOLECULE VS CHANGE OF NP3
-
-
-add_molecules_changes=FALSE
-merged_melt_filt_most_sig$TOP=FALSE
-
-if (add_molecules_changes){
-  
-  
-  levels(merged_melt_filt$symbol)
-  
-  merged_melt_filt_1  
-  ### split by visit 
-  molecules_by_visit<-split(merged_melt_filt_1, merged_melt_filt_1$VISIT )
-  
-  molecules_by_visit2 <- molecules_by_visit %>% 
-    imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
-    reduce(full_join, by = "PATNO")
-  
-  
-  molecules_by_visit2
-  
-  X2=molecules_by_visit2[,paste0('value','_','V08')]
-  X1=molecules_by_visit2[,paste0('value','_','BL')]
-  
-  length(X2)
-  length(X1)
-  
-  
-  molecules_by_visit2$log_FC<-(X2-X1)/(X2+X1)
-  molecules_by_visit2$diff<-(X2-X1)
-  
-  #molecules_by_visit2$log_FC<-log2(log(X2)/log(X1))
-  
-  molecules_by_visit2$log_FC
-  
-  
-  
-  molecules_by_visit2
-  
-  
-  
-  
-  # TOP NEGATIVE CHANGE!
-  merged_melt_filt$value
-  ### 1. LARGE DIFFERENCES
-  # 2. Large changes 
-  # 3. large end points 
-  top_change<-molecules_change_by_patno[order(molecules_change_by_patno$diff, decreasing = FALSE)[1:20],'PATNO']
-  top_change2<-molecules_change_by_patno[order(molecules_change_by_patno$log_FC, decreasing = FALSE)[1:20],'PATNO']
-  just_molecules<-merged_melt[merged_melt$variable %in%  c(most_sig_over_time_deseq), ][, c('value', 'PATNO')]
-  top_change3<-just_molecules[just_molecules$value< (-0),]$PATNO
-  
-  
-  top_change3
-  merged_melt_filt_most_sig$TOP=FALSE
-  merged_melt_filt_most_sig[merged_melt_filt_most_sig$PATNO %in% c( top_change2,top_change,top_change3) ,]$TOP<-TRUE
-  any(merged_melt_filt_most_sig$TOP)
-  
-  
-  top_molecular_patients<-c( top_change2,top_change,top_change3)
-  top_molecular_patients
-  
-  
-}
 
 
 
 
-#### BY PATIENT #####
-
-merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$TOP
-merged_melt_filt_most_sig$group=merged_melt_filt_most_sig$kmeans_grouping
-merged_melt_filt_most_sig
 
 
 
-p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
-                                                   fill='group', group='group', colour='group')) + 
 
 
-  geom_point(aes_string(x = 'VISIT', y = 'value', 
-             fill='group', group='group', colour='group' ),size=0.1, alpha=0.5)+
-  geom_line(aes_string(x = 'VISIT', y = 'value', 
-                         group='PATNO', colour='group' ),size=0.1, alpha=0.5)+
-  stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 1) + 
 
-  
-  theme(legend.position = "none")+
-  
-  
-  
-  #scale_color_viridis_d(option='turbo')+
-  scale_color_viridis_d(option='magma')+
-  
-  facet_wrap(. ~ symbol, scales='free_y', 
-             nrow = 4) +
-  
-  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-  theme_bw()+ 
-  geom_signif(comparisons = list(c('BL', 'V08')), 
-              map_signif_level=TRUE, 
-              tip_length = 0, vjust=0.4)+
-  
-  labs(y='logCPM')+
-  # legend(legend=c('Low', 'High'))+
-  theme(strip.text = element_text(
-    size = 13, color = "dark green", face="bold"), 
-    axis.title.y =element_text(
-      size = 13, color = "dark green", face="bold",), 
-    axis.text.x = element_text(
-      size = 12 ))
 
-show(p)
 
-#warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory_by_pat_', factor,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,'_', sel_cohort, '.jpeg'), 
-       width=12, height=height)
 
-merged_melt_filt_most_sig 
 
-#df2$change
 
-merged_melt$kmeans_grouping
+
+merged_melt_filt_most_sig$value=as.numeric(merged_melt_filt_most_sig$value)
+merged_melt_filt_most_sig$NP2PTOT=as.numeric(merged_melt_filt_most_sig$NP2PTOT)
+
+merged_melt_filt_most_sig_g1<-merged_melt_filt_most_sig[merged_melt_filt_most_sig$kmeans_grouping==1,]
+
+
+merged_melt_filt_most_sig_g1$NP2PTOT
+crtest<-cor.test(merged_melt_filt_most_sig_g1$value, merged_melt_filt_most_sig_g1$NP2PTOT)
+var1<-merged_melt_filt_most_sig_g1 %>%
+  dplyr::filter(variable == 'ENSG00000149527')
+
+all_cors_with_scale<-merged_melt_filt_most_sig_g1%>%
+  group_by(variable) %>%
+  mutate(value=as.numeric(value))%>%
+  mutate(NP2PTOT=as.numeric(NP2PTOT))%>%
+  dplyr::summarize(cor= cor.test(value, NP2PTOT, use = "complete.obs")$estimate)%>%
+  arrange(desc(cor))
+
+all_cors_with_scale
+
+var1$NP2PTOT_cut<-cut(var1$NP2PTOT,breaks=4)
+ggplot(var1,aes( x=NP2PTOT_cut, y=value))+
+  geom_boxplot()
+
+
+
+
+
+
+
+
+
 
 
 ### collect all results 

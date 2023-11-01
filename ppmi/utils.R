@@ -9,6 +9,7 @@ library('factoextra')
 ## Utils 
 ## Summarized experiment 
 
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 
 
@@ -1161,10 +1162,10 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
   
   ######### PLOT molecular markers 
   ### MELT and MERGE 
-  v8_melt<-reshape2::melt(v8_ens)
-  v6_melt<-reshape2::melt(v6_ens)
-  v4_melt<-reshape2::melt(v4_ens)
-  bl_melt<-reshape2::melt(bl_ens)
+  v8_melt<-reshape2::melt(v8_ens,id.vars=c(clinvars_to_add) )
+  v6_melt<-reshape2::melt(v6_ens,id.vars=c(clinvars_to_add))
+  v4_melt<-reshape2::melt(v4_ens,id.vars=c(clinvars_to_add))
+  bl_melt<-reshape2::melt(bl_ens,id.vars=c(clinvars_to_add))
   
   
   bl_melt$VISIT<-'BL'
@@ -1278,9 +1279,12 @@ calc_zscore_change<-function(df_num_1, df_num_2, t2){
   df_num_1_scaled <- scale(df_num_1, center=scaled_attrs1, scale=scaled_attrs2)
   df_num_2_scaled <- scale(df_num_2, center=scaled_attrs1, scale=scaled_attrs2)
   df_change=data.frame(df_num_2_scaled-df_num_1_scaled)
+  df_change_perc=data.frame(df_num_2_scaled-df_num_1_scaled)/data.frame(df_num_1_scaled+df_num_1_scaled)
+  
   
   colnames(df_change) = paste0(colnames(df_change), '_diff_', t2)
-  
+  colnames(df_change_perc)=paste0(colnames(df_change_perc), '_diff_', t2, '_perc')
+  df_change=cbind(df_change, df_change_perc)
   return(df_change)
 }
 
@@ -1377,3 +1381,20 @@ get_clinical_clusters<-function(y, centers=4){
 
 
 
+
+library('RColorBrewer')
+create_venn<-function(venn_list, fname_venn, main){
+  
+  #######
+  #' @param 
+  #'
+  #'
+  myCol2 <- brewer.pal(length(venn_list), "Pastel2")[1:length(venn_list)]
+  venn.diagram(venn_list,
+               # Circles
+               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
+               filename =fname_venn, 
+               main=main,
+               
+               output=FALSE)
+}

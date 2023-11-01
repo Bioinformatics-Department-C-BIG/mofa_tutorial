@@ -161,3 +161,89 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
 
 
 
+
+#####
+merged_melt_filt_group = merged_melt_filt_g1_ct
+var_to_diff='kmeans_grouping'
+
+
+
+
+
+wilcox_all_vars<-function(merged_melt_filt_group, var_to_diff){
+  
+  wilcox_stats_group<-merged_melt_filt_group %>%
+    group_by(symbol) %>%
+    do(w=wilcox.test(value~(!!sym(var_to_diff)), data=.) )%>%
+    #do(w=wilcox.test(value~kmeans_grouping, data=.) ) %>%
+    
+    summarize(symbol, Wilcox=w$p.value) %>% 
+    mutate(p.adj=p.adjust(Wilcox)) %>%
+    dplyr::filter(p.adj<0.05) %>%
+    arrange(Wilcox, decreasing=FALSE) %>%
+    as.data.frame() 
+  
+  sum_meds<-merged_melt_filt_group%>% 
+    dplyr::filter(symbol %in% wilcox_stats_group$symbol)%>%
+    group_by(symbol, kmeans_grouping) %>%
+    get_summary_stats(., type = "median") 
+  
+  print(sum_meds$kmeans_grouping[1])
+  sum_meds_dirs<-sum_meds %>% group_by(symbol) %>%
+    summarize(direction=.data$median[1]>.data$median[2])%>%
+    as.data.frame()
+  
+  
+  de_all_vars<-wilcox_stats_group[order(wilcox_stats_group$Wilcox),]
+  de_all_vars$direction<-sum_meds_dirs[match( de_all_vars$symbol,sum_meds_dirs$symbol ),'direction' ]
+  
+  return(de_all_vars)
+}
+
+
+get_de_features_by_group<-function(merged_melt_filt_group, var_to_diff){
+  #'
+  #'
+  #merged_melt_filt_group=merged_melt_filt_g1_ct
+  var='kmeans_grouping'
+  merged_melt_filt_group_V08<-merged_melt_filt_group%>%dplyr::filter(VISIT=='V08')
+  g1_vs_control=wilcox_all_vars(merged_melt_filt_group_V08, var_to_diff = var_to_diff)
+  return(g1_vs_control)
+  
+}
+
+
+
+
+
+get_most_sig_over_time<-function(merged_melt_filt_group){
+  #''
+  #'
+  #' @param description
+  #'
+  
+  merged_melt_filt_group=merged_melt_filt_group[merged_melt_filt_group$VISIT %in% c('BL', 'V08'),]
+  merged_melt_filt_group$VISIT<-as.factor(merged_melt_filt_group$VISIT)
+  
+  
+  
+  wilcox_stats_group<-merged_melt_filt_group %>%
+    group_by(symbol) %>%
+    do(w=wilcox.test(value~VISIT, data=.) ) %>%
+    summarize(symbol, Wilcox=w$p.value) %>% 
+    mutate(p.adj=p.adjust(Wilcox)) %>%
+    dplyr::filter(p.adj<0.05) %>%
+    arrange(Wilcox, decreasing=FALSE) %>%
+    as.data.frame() 
+  
+  
+  most_sig_over_time_group<-wilcox_stats_group[order(wilcox_stats_group$Wilcox),]
+  
+  
+  return(most_sig_over_time_group)
+}
+
+
+
+
+

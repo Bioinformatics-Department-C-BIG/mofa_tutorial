@@ -141,4 +141,26 @@ cluster_samples_mofa_obj<-function(object, k, factors = "all", ...)
 
 
 
+###### CLUSTERS #### 
+cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE ){
+  ###
+  #' Cluster patients in a mofa object using the specified factors
+  #' @param factors which factors to use for the clustering  
+  #' @return clusters_by_patno
+  #' @
+  #' 
+  #' 
+  
+  Z <- get_factors(MOFAobject)[[1]]
+  Z1<-Z[,factors]
+  if (rescale){
+    Z1=scale(Z1)
+  }
+  groups_kmeans<-kmeans(Z1, centers=centers)
+  names(groups_kmeans$cluster)<-gsub('\\_.*', '', names(groups_kmeans$cluster))
+  
+  return(groups_kmeans)  
+}
+
+
 

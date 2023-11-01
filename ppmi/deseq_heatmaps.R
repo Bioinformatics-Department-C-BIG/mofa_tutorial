@@ -200,6 +200,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     
     # 2. FACTORS   
+
     if (sel_view=='RNA'){top_fr=0.00955}else{top_fr=0.05}
     f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=top_fr)
     f_features$feature<-gsub('\\..*', '',f_features$feature)
@@ -236,7 +237,13 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     # filter out samples here
     ## PROBLEM: cannot filter 
-    draw_all_times=TRUE; wf<-150
+
+    sm_pd<-MOFAobjectPD@samples_metadata
+    sm_pd$NP2PTOT_clust
+    sel_clusts<-c(1,3)
+    sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
+
+    draw_all_times=TRUE; wf<-200
     sm_pd=MOFAobjectPD@samples_metadata
     sel_cluster_ids=c(1,2,3)
     sel_cluster_ids=c(1,3)
@@ -255,7 +262,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
                                    factor_labels=factor_labels,draw_all_times = draw_all_times)
     
     
-    
+
     jpeg(fname, width=10*wf, height=12*200, res=200)
     
     my_pheatmap

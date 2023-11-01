@@ -24,7 +24,7 @@
 
 
 #### Covariance of factors with metadata 
-source('ppmi/mofa_utils.R')
+source(paste0(script_dir,'ppmi/mofa_utils.R'))
 library('pheatmap')
 
 #library('kml')
@@ -233,7 +233,9 @@ all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score', 'scopa', 'rem', 'upsit')
+all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+                     'scopa', 'rem', 'upsit', 'moca', 'sft',
+                     'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 
@@ -266,36 +268,25 @@ k_centers_m=3
 diff_var=y
 ## does not work as a loop 
 
-
+rescale_option=FALSE
 all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
  # diff_var='NP2PTOT_diff_V16'
         fact=which(all_fs_diff[,diff_var])
         xname=paste0(diff_var, '_clust')
-        print(xname)
-        print(length(fact))
       if (length(fact)>0){
-       # print(fact)
-        #print(paste(i, xname))
         set.seed(42)
         set.seed(60)
-        
-       # clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, factors=fact)
-        
-        
-        clusters_x<-cluster_samples_mofa_obj(MOFAobjectPD,k=k_centers_m, factors=fact )
-        clust_ps<-clusters_x$cluster
-        names(clust_ps)=MOFAobjectPD@samples_metadata$PATNO_EVENT_ID
-        MOFAobjectPD@samples_metadata[,xname]=as.factor(clust_ps)
-        
-        
-        return(clust_ps)
-  
-      }else{
-      return(NULL)
-    }
 
-  
-}
+        clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD, centers=k_centers_m, factors=fact, rescale=rescale_option)
+       # clusters_x <- cluster_samples(MOFAobjectPD, k=k_centers_m, )
+       # clusters_x<-cluster_samples_mofa_obj(MOFAobjectPD,k=k_centers_m, factors=fact )
+        clust_ps<-clusters_x$cluster
+        #names(clust_ps)=MOFAobjectPD@samples_metadata$PATNO_EVENT_ID
+        MOFAobjectPD@samples_metadata[,xname]=as.factor(clust_ps)
+
+        return(clust_ps)
+
+}}
 )
 
 library('factoextra')
@@ -304,7 +295,10 @@ diff_var='NP2PTOT_diff_V16'
 ### Add all clusterings to mofa object 
 for (diff_var in names(all_clusts_mofa)){
   MOFAobjectPD@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]]
-  
+  sm<-MOFAobject@samples_metadata
+  clusters_ids<-all_clusts_mofa[[diff_var]]
+  MOFAobject@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO,names(clusters_ids ) )]
+  MOFAobject@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
 }
 
 all_clusts_mofa
@@ -317,7 +311,7 @@ all_clusts_mofa[['NP3TOT' ]]
 ### test how many clusters
 
 clinical_scales
-y='NP2PTOT'
+y='abeta'
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
 #cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
@@ -360,9 +354,9 @@ library(cluster)
 if (cluster_samples_mofa){
   if (length(sel_coh)>1){
     #for (k_centers_m in c(6)){
-    for (k_centers_m in c(3,2)){
+    for (k_centers_m_try in c(3,2)){
       
-      clusters <- cluster_samples(MOFAobject, k=k_centers_m, factors=c(1:15))
+      clusters <- cluster_samples(MOFAobject, k=k_centers_m_try, factors=c(1:15))
 
       
     }
@@ -414,7 +408,8 @@ boxplot_by_cluster<-function(met, clust_name, y){
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
   print(paste('Using subset of  ', dim(met)[1], ' patients'))
-
+  freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
+  
   
   #### PROPORTIONS OF BINARY VARS
   tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
@@ -428,14 +423,15 @@ boxplot_by_cluster<-function(met, clust_name, y){
   met[, y]=as.numeric(met[, y])
   
   
-  k_centers<-max(unique(levels(met[, clust_name])), na.rm = TRUE)
-  
+  k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+  k_centers
   ## Add kruskal wallis to the total plot and separately to each one 
   ## 
   
   kw=NULL
   try(if (!all(is.na(met[, y]))){
-    kw<-kruskal.test(x=met[, y], met[, clust_name])
+    met_pd<-met[met$INEXPAGE%in% 'INEXPD',]
+    kw<-kruskal.test(x=met_pd[, y], met_pd[, clust_name])
     
   })
   
@@ -458,8 +454,9 @@ boxplot_by_cluster<-function(met, clust_name, y){
     geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
                aes_string(y=y), 
                y_position=c(a, a+0.5,a+1))+
+            
     labs(title = paste(y),  
-         subtitle=paste('Kruskal.wallis p.val', format(kw$p.value, digits=2)),
+         subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
          caption = paste0('\n',
                           'factors: ',factors, '\n',
                           paste_med,  '\n',
@@ -473,7 +470,9 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
   
   p
-  ggsave(paste0(outdir,'/clustering/',clust_name ,'/', k_centers, '/' , y,  '.png'), dpi=300)
+  bn<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option ,'/' , y,  '.png')
+  print(bn)
+  ggsave(bn, dpi=300)
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   
@@ -485,7 +484,6 @@ all_clusts_mofa
 met<-samples_metadata(MOFAobjectPD)
 
 diff_variables
-all_fs_diff$NP2PTOT_diff_V16
 all_fs_diff
 all_clusts
 y='NP3_TOT'
@@ -501,26 +499,12 @@ diff_variables_to_p<-all_diff_variables
 
 
 
-### ONLY PLOT FOR NP2TOT!
-diff_variables= c('NP2PTOT_diff_V16')
-diff_variables= c('NP2PTOT')
-diff_variables= c('NP3TOT')
-diff_variables= c('NP3TOT_LOG_diff_V13_V14')
-diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'NP2PTOT_diff_V16', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
-                      'NP3TOT_diff_V13_V14', 'MCATOT',
-                      'NP2PTOT_BL', 'NP3TOT_BL')
-
-diff_variables= c('NP2PTOT_LOG_diff_V16')
-diff_variables_to_p=c('NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
-                      'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
-                      'NP3TOT_diff_V13_V14', 'MCATOT',
-                      'NP2PTOT_BL', 'NP3TOT_BL')
+diff_variables= c('NP2PTOT_diff_V13_V14_perc')
+diff_variables= c('abeta')
+diff_variables= c('updrs3_score')
 
 
-diff_variables= c('NP2PTOT')
-
-
-diff_variables_to_p=c('updrs3_score','updrs2_score', 'updrs3_score_on',
+diff_variables_to_p_all=c('NP2PTOT_diff_V13_V14_perc', 'updrs3_score','updrs2_score', 'updrs3_score_on',
                       'updrs3_score_diff_V12','updrs2_score_diff_V12', 'updrs3_score_on_diff_V12', 
                       'NP3TOT', 'NP2PTOT', 'SCAU_TOT', 'RBD_TOT', 'SCAU_TOT_diff_V13_V14','NP2PTOT_diff_V16', 
                       'NP2PTOT_diff_V14', 'NP2PTOT_diff_V13_V14', 
@@ -528,19 +512,28 @@ diff_variables_to_p=c('updrs3_score','updrs2_score', 'updrs3_score_on',
                       'scopa', 'sft', 'rem', 'tremor', 'NP2PTOT_BL', 'NP3TOT_BL','updrs3_score_BL','updrs2_score_BL',
                       'sft', 'td_pigd', 'HVLTRDLY' ## RELATED TO 2,12
                       )
-met
 
-met<-samples_metadata(MOFAobjectPD)
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE')
+diff_variables= c('moca')
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
+                      'updrs3_score')
+
+diff_variables= c('moca')
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'AGE', 
+                      'updrs3_score', 'moca')
+
+
+met<-samples_metadata(MOFAobject)
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
-  print(table(samples_metadata(MOFAobjectPD)[, clust_name]))
+  print(table(samples_metadata(MOFAobject)[, clust_name]))
   
   if (clust_name %in% colnames(met)){
     
-    
-    sapply(diff_variables_to_p, boxplot_by_cluster, met=met, clust_name=clust_name)
-      
+#    
+ #   sapply(diff_variables_to_p_all, boxplot_by_cluster, met=met, clust_name=clust_name)
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,diff_variables_to_p)
     }
     
   })
@@ -557,11 +550,13 @@ sapply(diff_variables, function(y_clust){
 ########### 
 all_fs_diff<-as.data.frame(all_fs_diff)
 
+y='abeta'
+color_by=paste0(y, '_clust')
 # Plot clustering for scales 
 plot_factors(MOFAobjectPD, 
-             factors=which(all_fs_diff[,'NP2PTOT']),
-             color_by ='NP2PTOT_clust' , 
-             shape_by = 'NP2PTOT_clust')
+             factors=which(all_fs_diff[,y]),
+             color_by ='NP2PTOT' , 
+             shape_by = color_by)
 
 
 

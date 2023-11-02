@@ -139,6 +139,7 @@ cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
 se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
 
 se_filt<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
+se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
 
 
 cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )

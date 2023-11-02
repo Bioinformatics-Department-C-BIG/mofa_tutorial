@@ -147,36 +147,6 @@ gse_compare<-compareCluster(geneClusters = list(G1=gene_list1,G3=gene_list3 ),
 ### RUN SCRUPTI compare
 
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file_cluster,N_DOT=15, N_EMAP=25){
-  #'
-  #'
-  #'
-  #'
-  #'
-  gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-  names(gene_list)<-gsub('\\..*', '',names(gene_list))
-  
-  gene_list
-  gse_full <- clusterProfiler::gseGO(gene_list, 
-                                     ont=ONT, 
-                                     keyType = 'ENSEMBL', 
-                                     OrgDb = 'org.Hs.eg.db', 
-                                     pvalueCutoff  = pvalueCutoff)
-  
-  pvalueCutoff
-  gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
-  
-  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
-  gse@result$Description
-  
-  gse@result$p.adjust
-  
-  enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_cluster, N_DOT=N_DOT, N_EMAP=N_EMAP)
-  
-  return(gse)
-}
-
-
 
 
 

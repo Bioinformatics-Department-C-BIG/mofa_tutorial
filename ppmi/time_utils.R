@@ -163,12 +163,12 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
 
 
 #####
-merged_melt_filt_group = merged_melt_filt_g1_ct
-var_to_diff='kmeans_grouping'
+#merged_melt_filt_group = merged_melt_filt_g1_ct
+#var_to_diff='kmeans_grouping'
 
 
 
-
+#merged_melt_filt_group=merged_melt_filt_g1_ct
 
 wilcox_all_vars<-function(merged_melt_filt_group, var_to_diff){
   
@@ -179,19 +179,24 @@ wilcox_all_vars<-function(merged_melt_filt_group, var_to_diff){
     
     summarize(symbol, Wilcox=w$p.value) %>% 
     mutate(p.adj=p.adjust(Wilcox)) %>%
+    dplyr::filter(Wilcox<0.05) %>%
     dplyr::filter(p.adj<0.05) %>%
+    
     arrange(Wilcox, decreasing=FALSE) %>%
     as.data.frame() 
   
-  sum_meds<-merged_melt_filt_group%>% 
-    dplyr::filter(symbol %in% wilcox_stats_group$symbol)%>%
-    group_by(symbol, kmeans_grouping) %>%
-    get_summary_stats(., type = "median") 
   
-  print(sum_meds$kmeans_grouping[1])
-  sum_meds_dirs<-sum_meds %>% group_by(symbol) %>%
-    summarize(direction=.data$median[1]>.data$median[2])%>%
-    as.data.frame()
+  sum_meds<-merged_melt_filt_group %>%
+    dplyr::filter(symbol %in% wilcox_stats_group$symbol)%>%
+   group_by(symbol, kmeans_grouping) %>%
+    summarise(median=median(value)) 
+    
+  
+
+  
+  sum_meds_dirs<-reshape2::dcast(sum_meds  ,symbol ~ kmeans_grouping, value.var = 'median') 
+  sum_meds_dirs$direction=as.logical(sum_meds_dirs[2]> sum_meds_dirs[3])
+   
   
   
   de_all_vars<-wilcox_stats_group[order(wilcox_stats_group$Wilcox),]

@@ -22,6 +22,13 @@ process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 
 
+# TODO: load proteins 
+process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+se_filt_proteins
+
+
+
+
 
 
 #### Markers over time:
@@ -50,19 +57,26 @@ if (mode=='diagnosis'){
 }
 
 
-factor=12
+factor=2
 top_view<-which.max(vars_by_factor[factor,])
-#top_view='miRNA'
 
 
-#names(top_view)<-'RNA'
+names(top_view)<-'miRNA'
+names(top_view)<-'proteomics_plasma'
+top_view='miRNA'
+
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
   
-}else{
+}else if (names(top_view)=='RNA') {
   view='RNA'; process_mirnas=FALSE; se=se_rnas 
   
-}
+}else if (names(top_view)=='proteomics_plasma') {
+  view='proteomics_plasma';se=se_filt_proteins
+  
+  }
+
+
 
 view
 se_mirs
@@ -74,13 +88,13 @@ se_mirs
 #### 3. top timeOmics selected molecules 
 mode_mols='MOFA'
 keep_all_feats=TRUE
-keep_all_feats=FALSE
+keep_all_feats=TRUE
 
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
   f_v<-get_factors(MOFAobject, factors =factor )[[1]]
   ws<-get_weights(MOFAobject, views = view, factors=factor)[[1]]
-  cut_high<-0.9; cut_low=1-cut_high
+  cut_high<-0.8; cut_low=1-cut_high
   ws_high<-ws[ws>quantile(ws, cut_high),]
   ws_low<-ws[ws<quantile(ws, cut_low),]
   ws_union<-c(ws_high, ws_low)
@@ -116,8 +130,10 @@ if (view=='RNA'){
   rownames(se)<-gsub('\\..*', '',rownames(se))
   feat_names<-gsub('\\..*', '',feat_names)
   
+}else if (view=='proteomics_plasma' || view=='proteomics_csf' ){
+  feat_names<-gsub('_proteomics.*', '',feat_names)
 }
-merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names)
+merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
 levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 
 
@@ -245,36 +261,49 @@ merged_melt_filt_g3_ct=rbind(merged_melt_groups[[3]], merged_melt_groups[['HC']]
 
 
 library(stringr)
+#wilcox_all_vars
+
+de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>% 
+  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+#de_group_vs_control2=NULL
+de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% 
+  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
+de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% 
+  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 
 
-de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>%  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-de_group_vs_control2=NULL
-de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-
-
+de_group_vs_control3$gene_symb<-get_symbols_vector(as.character(de_group_vs_control3$symbol))
+dim(de_group_vs_control3)
+merged_melt_filt_g3_ct
+de_group_vs_control3$gene_symb%in%'BCL9L'
 ### CHECK MONOTONICITY FOR common de genes
 # idea: if there is a change: 
 # then check that the change is  in the same direction 
 
+which(de_group_vs_control3$gene_symb %in% 'BCL9L')
+
 de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
 de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
+de_merged3<-merge(de_group_vs_control2,de_group_vs_control3, by='symbol' )
+
 de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y), ]; 
 de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
+de_merged_to_remove3<-de_merged3[!(de_merged3$direction.x ==de_merged3$direction.y), ]
 
 dim(de_merged)
-dim(de_merged_to_remove)
-dim(de_group_vs_control1)
+dim(de_merged_to_remove3)
 
-de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol )
+de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol,de_merged_to_remove3$symbol )
 de_merged_to_remove
 
 
 
 
-inter_de<-intersect(de_group_vs_control1$symbol,de_group_vs_control2$symbol )
+inter_de<-Reduce(intersect,list(de_group_vs_control1$symbol,de_group_vs_control2$symbol, de_group_vs_control3$symbol ) )
+
+
 union_de<-list(group1=de_group_vs_control1$symbol, group2=de_group_vs_control2$symbol, group3=de_group_vs_control3$symbol)
-de_group_vs_control<-rbind(de_group_vs_control1, de_group_vs_control2, de_group_vs_control3 )
+de_group_vs_control<-bind_rows(de_group_vs_control1, de_group_vs_control2, de_group_vs_control3 )
 de_group_vs_control_inter<-intersect(de_group_vs_control1$symbol, de_group_vs_control2$symbol)
 
 #### Venn diagram 
@@ -376,7 +405,8 @@ de_group_vs_control_and_time2<-de_group_vs_control_and_time[!(de_group_vs_contro
 
 
 length(de_group_vs_control_and_time2)
-
+length(de_group_vs_control_and_time)
+de_group_vs_control_and_time2
 
 # 
 #### 
@@ -410,10 +440,10 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 
 de_group_vs_control_and_time2
 
-filt_top=TRUE
 de_group_vs_control_and_time
 
 unique(de_group_vs_control_and_time2)
+filt_top=FALSE
 
 if (filt_top){
 
@@ -421,12 +451,16 @@ if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
   
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% inter_de,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
+  
   
   nrow=NULL; height=7
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
-  nrow=NULL; height=7
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
+  
+  nrow=NULL; height=12
   
 }
 
@@ -465,7 +499,7 @@ median_IQR <- function(x) {
 
 # TODO: choose 3 colours grey as control
 add_patient_lines=FALSE
-merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
+#merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
 p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
                                                        fill='group', group='group', colour='group')) 
 if (add_patient_lines){
@@ -500,7 +534,7 @@ p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR,
 #warnings()
 ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,
               'cluster_',choose_group,'.jpeg'), 
-       width=20, height=height)
+       width=30, height=height)
 
 
 

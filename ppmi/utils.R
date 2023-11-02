@@ -500,6 +500,113 @@ library('enrichplot')
 
 
 
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
+  #'
+  #'
+  #'
+  #'
+  #'
+  gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
+  names(gene_list)<-gsub('\\..*', '',names(gene_list))
+  gse=run_enrich_gene_list(gene_list, results_file)
+ 
+  return(gse)
+}
+
+
+
+run_enrich_gene_list<-function(gene_list, results_file){
+  #'
+  #' Run enrichment and write the results 
+  #' @param gene_list
+  #' ordered gene list to run gse 
+  #'
+  #' 
+  #'
+  gse_full <- clusterProfiler::gseGO(gene_list, 
+                                     ont=ONT, 
+                                     keyType = 'ENSEMBL', 
+                                     OrgDb = 'org.Hs.eg.db', 
+                                     pvalueCutoff  = pvalueCutoff)
+  
+  pvalueCutoff
+  gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
+  
+  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
+  gse@result$Description
+  
+  gse@result$p.adjust
+  
+  enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_cluster, N_DOT=N_DOT, N_EMAP=N_EMAP)
+  
+  return(gse)
+}
+
+
+
+
+
+run_ora_gene_list<-function(gene_list_ord, results_file){
+  #'
+  #' Run enrichment and write the results 
+  #' @param gene_list
+  #' ordered gene list to run gse 
+  #'
+  #' 
+  #'
+ 
+  gene_list_ord_abs=abs(gene_list_ord)
+  
+  
+  gene_list_ord_abs_ora=gene_list_ord_abs[order(gene_list_ord_abs, decreasing = TRUE)]
+  hist(gene_list_ord_abs_ora)
+  high_quant<-quantile(gene_list_ord_abs_ora, 0)
+  high_quant_no<-length(gene_list_ord_abs_ora[gene_list_ord_abs_ora>high_quant])
+  
+  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:30]), 
+                                                       ont=ONT, 
+                                                       keyType = 'SYMBOL', 
+                                                       OrgDb = 'org.Hs.eg.db', 
+                                                       pvalueCutoff  = pvalueCutoff,
+                                                       pool =FALSE)
+  
+  
+  
+  
+  ### to run mofa results
+  
+  process_mirnas=FALSE
+  process_mofa=TRUE
+  run_ORA=TRUE
+  
+  gse_full=gse_protein_full_enrich
+  pvalueCutoff_sig = 0.1
+  gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff=0.1)
+  write.csv(as.data.frame(gse_mofa@result), paste0(results_file, '.csv'))
+  
+  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
+  gse@result$Description
+  
+  gse@result$p.adjust
+  
+  N_DOT=15
+  N_EMAP=15
+  if  (dim(gse)[1]>2 ){
+    
+    
+       print(paste(factor,'sig'))
+         which(gse_mofa@result$p.adjust<0.05)
+        gse_mofa
+  
+        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP)
+  }
+  return(gse_full)
+}
+
+
+
+
+
 
 #gse=gse_mofa_rna
 #results_file = results_file_mofa
@@ -537,10 +644,11 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   ### print a signed and unsigned dotplot 
   # because it does not make sense if we dont rank by logFC
   # or in the mofa case where we rank by importance in factor 
-
+   # N_DOT=100
   dp<-clusterProfiler::dotplot(gse, showCategory=N_DOT, 
               font.size=15
   )
+  dp
   dp<-dp+theme(axis.ticks=element_blank() , 
                axis.text.x = element_blank(),
                plot.caption= element_text(hjust = 0, face = "italic", size=20), 
@@ -1120,7 +1228,7 @@ preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts, clinvars_to_
 
 
 
-create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
+create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_common=TRUE){
   #' create a merged dataframe that includes all visits together 
   #' use a function to help with memory limit 
   #' @param se 
@@ -1131,7 +1239,12 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names){
   se_filt_V04<-filter_se(se, VISIT='V04', sel_coh,sel_ps)
   
   #Reduce(intersect, list(a,b,c))
-  common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+  if (filter_common){
+    common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+    
+  }else{
+    common=unique(c(se_filt_V08$PATNO, se_filt_BL$PATNO))
+  }
   
   
   ## DO NOT FILTER THE FEAT NAMES HERE 

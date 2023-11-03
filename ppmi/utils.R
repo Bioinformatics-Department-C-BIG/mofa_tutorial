@@ -47,6 +47,10 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
 # sPLIT DIAGNOSIS vs progression  
 selected_covars2<-c( 'AGE', 'SEX',
                      'NP2_TOT','NP3_TOT',
+                     'updrs2_score','updrs3_score',
+                     
+                     'NP2PTOT','NP3TOT',
+                     
                      'NHY', 
                      'NP3RIGN',
                      'rigidity', 

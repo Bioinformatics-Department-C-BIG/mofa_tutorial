@@ -32,6 +32,8 @@ plots/barplot_byGroupobjective_method.png
 review/output/*
 output/*
 
+ppmi/.tmp.driveupload/*
+
 
 bladder_cancer/Enrichment/*
 */plots/*
@@ -413,3 +415,13 @@ ppmi/.tmp.driveupload/59621
 ppmi/plotting_utils_2.R
 *.gml
 *.gz
+*.bmp
+ppmi/.tmp.driveupload/76004
+ppmi/.tmp.driveupload/76004
+ppmi/.tmp.driveupload/62253
+ppmi/.tmp.driveupload/59643
+ppmi/.tmp.driveupload/59633
+ppmi/.tmp.driveupload/59629
+ppmi/.tmp.driveupload/59621
+ppmi/.tmp.driveupload/104402
+ppmi/.tmp.driveupload/104400

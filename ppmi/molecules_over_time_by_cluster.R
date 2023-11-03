@@ -489,7 +489,7 @@ plot_molecular_trajectories(merged_melt_filt_most_sig)
 
 
 median_IQR <- function(x) {
-  data.frame(y = median(x), # Median
+  data.frame(y = median(x, na.rm = TRUE), # Median
              ymin = quantile(x)[2], # 1st quartile
              ymax = quantile(x)[4])  # 3rd quartile
 }

@@ -65,6 +65,7 @@ group=1
 ### create a new object with rna names 
 MOFAobject_gs<-MOFAobject
 
+
 ens_ids_full<- features_names(MOFAobject)$RNA
 ens_ids<-gsub('\\..*', '', ens_ids_full)
 
@@ -432,18 +433,22 @@ graphics.off()
 plot="log_pval"
 # Plot 1: strict ones we are interested in
 # conference poster 
+factors=names(sel_factors)
+sel_factors
+fname<-'factors_covariates_only_nonzero_strict'
+plot_covars_mofa(selected_covars=c(selected_covars2, 'COHORT'),fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobject )
+fname<-'factors_covariates_only_nonzero_strict_cor'
+plot_covars_mofa(selected_covars=c(selected_covars2, 'COHORT'),fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobject )
+graphics.off()
+
 
 
 factors=names(sel_factors)
 sel_factors
 fname<-'factors_covariates_only_nonzero_strict_PD'
-
 plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
-
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
 plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot,factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
-
-
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors = sel_factors_pd_np3,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 graphics.off()

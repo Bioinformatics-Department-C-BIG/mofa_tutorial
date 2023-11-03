@@ -29,8 +29,6 @@ all_diff_variables
 
 scale_vars_diff
 imaging_variables_diff
-to_plot<-c('NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
-           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' )
 
 to_plot<-c(scale_vars_diff)
 ## todo why is scau missing from baseline? how to measure total? 
@@ -40,6 +38,7 @@ to_plot<-c(scale_vars_diff)
 
 
 all_event_ids_p<-c('BL','V02','V04','V06','V08','V10','V12','V14','V16', 'V18')
+
 sm=MOFAobject@samples_metadata
 ### obtain all patient event ids to getr one row per patient!! 
 patno_event_ids = sapply(all_event_ids_p, function(event_id){
@@ -51,27 +50,36 @@ patno_event_ids=unlist(patno_event_ids)
 #combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
 
+require(plyr)
+combined_bl_log_sel$months <-as.numeric( mapvalues(combined_bl_log_sel$EVENT_ID, 
+                               from= names(EVENT_MAP), 
+                               to=unlist(EVENT_MAP, use.names=FALSE)))
 
-unique(combined_bl_log_sel$EVENT_ID)
+lv_to_plot='V12'
 combined_bl_log_sel$PDMEDYN_V14
 ########## Now we obtained the longitudinal input for these patients ####
 
 
 # 1. Select the patients eg. by mofa groups 
-clust_y=all_clusts[1];
-clust_y_labs_all<-sapply(all_clusts, function(clust_y){
-      if (clust_y %in% colnames(MOFAobjectPD@samples_metadata)){
-        group_by_patient<- MOFAobjectPD@samples_metadata[, clust_y]
-        names(group_by_patient)<- MOFAobjectPD@samples_metadata$PATNO
-        clust_y_labs<-group_by_patient[match(combined_bl_log_sel$PATNO, names(group_by_patient))];
+df_to_attach<-combined_bl_log_sel
+for (diff_var in names(all_clusts_mofa)){
+  # 
+  #   
+        if (!is.null(all_clusts_mofa[[diff_var]])){
+          
+   
+        clust_name = paste0(diff_var, '_clust')
+         #print(clust_name)
+         
+        clusters_ids<-all_clusts_mofa[[diff_var]]
+        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names(clusters_ids ) )]
         
-        #combined_bl_log_sel[, clust_y]<-clust_y_labs
-      print('attached')
-      return(clust_y_labs)
+        df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
+        print(df_to_attach[,clust_name])
         }
-      
-})
-combined_bl_log_sel<-cbind(combined_bl_log_sel,clust_y_labs_all );
+}
+
+combined_bl_log_sel<-df_to_attach
 
 #combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
 combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
@@ -87,9 +95,14 @@ df_plot_2k
 
 PDSTATE_SEL=NULL
 
-y='NP2PTOT'
+y='updrs2_score'
 add_individual_lines=FALSE
-add_boxplots<-FALSE
+add_boxplots<-TRUE
+
+to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
+           'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' , 'scopa')
+
+
 
 for (y in to_plot){
   
@@ -98,29 +111,53 @@ for (y in to_plot){
   
   ## either loop through or melt 
   #df_plot_2k[df_plot_2k[,y]grouping]
-  lv='V16'
+  lv='V13_V14';   
+  lv='V12';  
+  
+  #clust_name<-paste0(y , '_diff_', lv,'_clust')
   clust_name<-paste0(y , '_diff_', lv,'_clust')
+  clust_name<-paste0('NP2PTOT' , '_clust')
+  
+  
+  
+  df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP[lv_to_plot],]
+  clust_name %in% colnames(df_plot_2k)
+  
   if (clust_name %in% colnames(df_plot_2k)){
+    
+    print(clust_name)
+
     df_plot_2k[, 'grouping']<-df_plot_2k[, clust_name]
     df_plot_2k$grouping<-as.factor(df_plot_2k$grouping)
     
-  y_pl=y
+    y_pl=y
 
   
 
-  df_plot_2k=df_plot_2k[!is.na(df_plot_2k$EVENT_ID),]
-  df_plot_2k=df_plot_2k[!is.na(df_plot_2k[,clust_name]),]
+    df_plot_2k=df_plot_2k[!is.na(df_plot_2k$EVENT_ID),]
+    df_plot_2k=df_plot_2k[!is.na(df_plot_2k[,clust_name]),]
+    df_plot_2k[,y]=as.numeric( df_plot_2k[,y])
+    
+    df_lv<-df_plot_2k[df_plot_2k$EVENT_ID==lv_to_plot,]
   
-  df_lv<-df_plot_2k[df_plot_2k$EVENT_ID=='V16',]
-  nums<-df_lv%>%
+    nums<-df_lv%>%
     group_by(grouping) %>%
-    summarise(count = n_distinct(PATNO)) 
+    summarise(count = n_distinct(PATNO, grouping)) 
   
+    nums<-paste0('n=', paste0(table(unique(df_plot_2k[, c('grouping', 'PATNO')])[,'grouping'] ), collapse = ', '))
+
+    p<-ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
+                                       fill='grouping',group='grouping',colour='grouping')) + 
+    #stat_summary(geom = "pointrange", fun.data = median_IQR, 
+    #             position=position_dodge(0), alpha=0.9)+
+    stat_summary(fun = median, position=position_dodge(width=0), 
+                 geom = "line", size = 1, alpha=0.7, lty='dashed', aes_string(colour='grouping')) 
   
-  p<-ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
-                                       fill='grouping',group='grouping',  colour='grouping')) + 
-    stat_summary(geom = "pointrange", fun.data = median_IQR, 
-                 position=position_dodge(0), alpha=0.9)
+    p
+#  geom_point(position='jitter', size=0.2)  
+ # p
+#  stat_summary(fun = median_IQR, position=position_dodge(width=0), 
+ #                   geom = "pointrange", size = 1, alpha=0.9) 
     
     if (add_individual_lines){
      p<-p+ geom_line(aes_string(x = 'VISIT', y = y, 
@@ -129,22 +166,27 @@ for (y in to_plot){
   
     if (add_boxplots){
 
-        p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
-        
+       # p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
+      p<-p+geom_boxplot(aes_string(x='VISIT', fill='grouping', group=NULL ),lwd=0.5, alpha=0.7)
+      p
     }
     
     
+
     
-    p<-p+stat_summary(fun = median, position=position_dodge(width=0), 
-                 geom = "line", size = 1, alpha=0.9) + 
-    scale_color_viridis_d(option='magma')+
+    y_name=ifelse( (y %in% mt_kv[,1]), mt_kv[mt_kv[,1]==y,2], y)
+    
+    p<-p+scale_color_viridis_d(option='turbo')+
+    scale_fill_viridis_d(option='turbo')+
+
  
     # geom_signif(comparisons = list(c('BL', 'V08')), 
     #            map_signif_level=TRUE, 
     #           tip_length = 0, vjust=0)+
     
-    labs(y=y, caption = paste0('group numbers: ', paste0(nums$count, collapse=', ')))
+    labs(y=y_name, caption = paste0('group numbers: ', paste0(nums)))
 
+    p
     theme(strip.text = element_text(
       size = 10, color = "dark green"), 
       axis.title.y =element_text(
@@ -155,8 +197,8 @@ for (y in to_plot){
   
   p
   warnings()
-  ggsave(paste0(outdir, '/trajectories/clinical/trajectory_', factor,'_', filt_top, y,'_',clust_name,  '.jpeg'), 
-         width=5, height=3)
+  ggsave(paste0(outdir, '/trajectories/clinical/trajectory_','_', y,'_',clust_name,'_lv_' , lv_to_plot, '.jpeg'), 
+         width=5, height=3, dpi=300)
   
   }
 }

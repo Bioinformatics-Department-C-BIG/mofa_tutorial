@@ -414,6 +414,18 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 
 
 
+labeller_clin<-function(variable, value){
+  
+  labeller_clinical=mt_kv[,2]
+  names(labeller_clinical) = mt_kv[,1]
+  
+  labeller_clinical=setNames(as.list(mt_kv[,2]),as.list(mt_kv[,1]) )
+  labeller_clinical=labeller_clinical[diff_variables_to_p]
+  
+  return(labeller_clinical[value])
+  
+}
+
 boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   #'
   #' Create boxplot by cluster 
@@ -422,6 +434,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   #'  
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
+  
+  labeller_clinical2=labeller_clinical[diff_variables_to_p]
   
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
@@ -450,13 +464,15 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
   
   p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
-    geom_boxplot(aes_string( x=clust_name, color=clust_name, y='value'))+
+    geom_boxplot(aes_string( x=clust_name, color=clust_name, fill=clust_name, y='value'), alpha=0.9)+
 
   
-    facet_wrap(~variable, scales='free')+
+    facet_wrap(~variable, scales='free', labeller=labeller_clin)+
     geom_pwc( tip.length = 0.1,
-      method = "wilcox_test", label = "p.adj.signif"
-    )+    scale_color_viridis_d(option="magma")+
+      method = "wilcox_test", label = "p.adj.signif")+   
+    scale_color_viridis_d(option="turbo")+
+       scale_fill_viridis_d(option="turbo")+
+  
     
     
   labs(#title = paste(y),  
@@ -468,7 +484,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
                           paste_state,  ',\n',
                           paste_tdpigd, ',\t',
                           paste_nhy) )+
-    theme(text =element_text(size=20))
+    theme(text =element_text(size=20),)+
+    theme(strip.text = element_text(face = "bold"))
   #plot.title = element_text(size = 30, color = "green")
   p
 

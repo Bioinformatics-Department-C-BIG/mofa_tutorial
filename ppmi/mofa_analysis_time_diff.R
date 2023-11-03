@@ -240,7 +240,7 @@ all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables, 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score',
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
@@ -275,6 +275,7 @@ k_centers_m=3
 diff_var=y
 ## does not work as a loop 
 
+all_fs_diff[, 'NP1RTOT']
 rescale_option=FALSE
 all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
  # diff_var='NP2PTOT_diff_V16'
@@ -319,6 +320,8 @@ all_clusts_mofa[['NP3TOT' ]]
 
 clinical_scales
 y='abeta'
+y='NP2PTOT'
+
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
 #cluster_samples(MOFAobjectPD, factors = factors_to_clust, centre)
@@ -329,13 +332,14 @@ all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
 #library('factoextra')
 
 cluster_samples_mofa=TRUE
+set.seed(123)
+
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 Z_scaled<-apply(as.data.frame(Z), 2, scale);
 colMedians(Z_scaled);
 
-set.seed(50)
 
-fviz_nbclust(Z_scaled, kmeans, method = "wss")# +
+fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )# +
   #geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
 fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
@@ -486,7 +490,8 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
 }
 
-all_clusts_mofa
+names(all_clusts_mofa)
+
 
 met<-samples_metadata(MOFAobjectPD)
 
@@ -525,7 +530,7 @@ diff_variables= c('moca')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
                       'updrs3_score')
 
-diff_variables= c('moca')
+diff_variables= c('NP2PTOT')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'AGE', 
                       'updrs3_score', 'moca')
 
@@ -625,6 +630,16 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
 
            #  'DYSKIRAT')
 # 'STAID:ANXIETY_TOT'
+
+MOFAobject_gs<-MOFAobject
+
+
+ens_ids_full<- features_names(MOFAobject)$RNA
+ens_ids<-gsub('\\..*', '', ens_ids_full)
+
+symbols_ids<-get_symbols_vector(ens_ids)
+features_names(MOFAobject_gs)$RNA<-symbols_ids
+features_names(MOFAobject_gs)$RNA
 
 MOFAobject_gs2<-MOFAobject
 
@@ -982,6 +997,7 @@ factor_cors<-paste0(format(x_cors[factors_to_plot], digits=2), collapse=',')
 factor_cors
   
 MOFAobject@samples_metadata$td_pigd
+
 factors_to_plot<-c(3,4)
 color_by='td_pigd'
 color_by='NP3GAIT'
@@ -1060,11 +1076,6 @@ mirdata_sel_t<-data.frame(mirdata_sel_t,
 
 MOFAobject@samples_metadata$COHORT_DEFINITION
 colnames(mirdata_sel_t$hsa.miR.193b.3p)
-mirdata_sel_t$hsa.miR.193b.3p
-mirdata_sel_t$PATNO<-rownames(mirdata_sel_t)
-mirdata_sel_t<-mirdata_sel_t[mirdata_sel_t$COHORT==1,]
-mirdata_sel_t$PDSTATE
-mirdata_sel_t<-mirdata_sel_t[!mirdata_sel_t$PDSTATE %in% c('ON')  ,]
 
 
 
@@ -1268,14 +1279,18 @@ rownames(MOFAobject_gs@expectations$W$proteomics_plasma)<-gsub('proteomics_plasm
 
 W <- get_weights(MOFAobject_gs, factors = 1, views = 4, 
                  as.data.frame = TRUE)
-vps
-  for (i in seq(1,vps)){
-  for (ii in seq(1,fps)){
+
+MOFAobject@dimensions$K
+views=names(MOFAobject@data)
+#views=
+
+  for (i in seq(1,MOFAobject@dimensions$M)){
+  for (ii in seq(1,MOFAobject@dimensions$K)){
    
-    nFeatures=12
+    nFeatures=15
     
     ### oNLY SAVE THE ones with high variance
-    if (high_vars_by_factor[ii, i]){
+   # if (high_vars_by_factor[ii, i]){
       print(c(i,ii))
       cols <- c( "red", 'red')
           p_ws<-plot_top_weights(MOFAobject_gs,
@@ -1289,7 +1304,7 @@ vps
 
           
           if (views[i]=='RNA'){
-            p_ws<-plot_top_weights2(MOFAobject,
+            p_ws<-plot_top_weights2(MOFAobject_gs,
                                     view = 'RNA',
                                     factor = ii,
                                     nfeatures = nFeatures,     # Top number of features to highlight
@@ -1307,11 +1322,11 @@ vps
           
           #scale_colour_(values=cols) 
        
-            
-          ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'.png'), 
+          try(  
+          ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
                  plot=p_ws, 
                  width = 3, height=nFeatures/4, dpi=300)
-          
+          )
           
           
           plot_weights(MOFAobject_gs, 
@@ -1321,13 +1336,13 @@ vps
           )
          
             
-          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'.png'),
+          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'_',nFeatures, '.png'),
                  width = 3, height=nFeatures/4, dpi=300)
       
           
 
          
-          }
+          
   }
 }
 

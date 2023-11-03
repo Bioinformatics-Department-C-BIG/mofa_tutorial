@@ -78,6 +78,8 @@ list_proteins= vector("list", length = nfactors)
 list_proteins_enrich= vector("list", length = nfactors)
 
 list_mirs= vector("list", length = nfactors)
+list_mirs_targets= vector("list", length = nfactors)
+
 list1_genes= vector("list", length = nfactors)
 list_proteins_weights=vector("list", length = nfactors)
 
@@ -107,13 +109,7 @@ sel_factors_to_enrich
 if (!isRStudio){
   
       for (factor in sel_factors_to_enrich){
-           # for (view in c( 'proteomics')){
-                 #for (view in c( 'proteomics')){
-               # for (view in c( 'RNA', 'miRNA')){
-                  
-                   
-
-          for (view in c( 'proteomics_plasma')){
+          for (view in c('miRNA')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -122,11 +118,7 @@ if (!isRStudio){
                      
                       ### Run RNA 
                       if (just_load){
-                        
-                         # if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
-                    #      if (file.exists(paste0(mofa_enrich_rds, 'gene'))){
-                            ## to RERUN WITH NEW FACTORS YOU need to force it
-                        
+                  
                             list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
                             list1_genes[[factor]]<-gene_list_ord
                             
@@ -149,12 +141,15 @@ if (!isRStudio){
                   ### Run proteins 
                 if (view=='proteomics_csf' & just_load){
                   
-                  
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
+                    tissue = 'proteins_csf'
+                    
                 }
                   else if  (view=='proteomics_plasma' & just_load){
                     list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_plasma'))
+                    tissue = 'proteins_plasma'
+                    
                   }
                     
                     
@@ -162,8 +157,12 @@ if (!isRStudio){
        
                     if (view=='proteomics_csf' ){
                       fname<-paste0(mofa_enrich_rds, 'prot_csf')
+                      tissue = 'proteins_csf'
+                      
                     }else if(view=='proteomics_plasma'){
                       fname<-paste0(mofa_enrich_rds, 'prot_plasma')
+                      tissue = 'proteins_plasma'
+                      
                                           }
                     
                     
@@ -206,7 +205,18 @@ if (!isRStudio){
                   }
                   }
                     
-                    
+      }
+  
+  
+  
+  
+  ######## MIRNAS ON THEIR OWN
+        for (factor in sel_factors_to_enrich){
+          for (view in c('miRNA')){
+            #view='RNA'; factor=3
+            print(paste0(view,' ', factor ))
+            #factor=4;view='proteomics'
+            gene_list_ord<-get_ranked_gene_list_mofa(view, factor)                   
                     
               if (view=='miRNA'){
                 
@@ -220,39 +230,49 @@ if (!isRStudio){
                 
                         #gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
                         #gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
-                         mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
-                                                            mirna_type = "mature",
-                                                            test_type = "GSEA",
-                                                            species = 'Homo sapiens'                      ,
-                                                            categories = c('miRPathDB_GO_Biological_process_mature'),
-                                                            sig_level=pvalueCutoff
+                        # mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
+                        #                                    mirna_type = "mature",
+                        #                                    test_type = "GSEA",
+                        #                                    species = 'Homo sapiens'                      ,
+                        #                                    categories = c('miRPathDB_GO_Biological_process_mature'),
+                        #                                    sig_level=pvalueCutoff
+                        # )
+                         sel_categories = c('Target genes (miRTarBase)')
+                         mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = names(gene_list_ord)[1:20],
+                                                                 mirna_type = "mature",
+                                                                 test_type = "ORA",
+                                                                 species = 'Homo sapiens'                      ,
+                                                               categories = c('Target genes (miRTarBase)'),
+                                                                 sig_level=pvalueCutoff
                          )
+                         
+                         
         
                          list_mirs[[factor]]<-mieaa_all_gsea_mofa
+                         list_mirs_target[[factor]]<-mieaa_all_gsea_mofa
+                         
                          saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
+                         saveRDS(list_mirs_target, paste0(mofa_enrich_rds, 'mirs_targets'))
+                         
                 }
                }
              
-          
+          }
             
           
 
       
               
       }
-}     
+}
 #      saveRDS(list(list1,list_proteins, list_mirs),mofa_enrich_rds )
 
       
 #}
 ### now load already executed analysis on the server
 
-list1<-loadRDS(paste0(mofa_enrich_rds, 'gene'))
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
-list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
-list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_plasma'))
 
-list_proteins_enrich_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_enrich_go'))
 
 as.logical(lapply(list1, is.null))
 as.logical(lapply(list_mirs, is.null))
@@ -379,7 +399,6 @@ if (run_plots){
           suppressWarnings(dir.create(paste0(outdir, '/enrichment/proteins')))
           
           
-          tissue = 'proteins_plasma'
           if (tissue == 'proteins_plasma'){
             list_proteins=list_proteins_plasma
           }

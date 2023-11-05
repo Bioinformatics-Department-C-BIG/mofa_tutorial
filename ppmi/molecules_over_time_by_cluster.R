@@ -24,7 +24,6 @@ se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 
 # TODO: load proteins 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-se_filt_proteins
 
 
 
@@ -190,24 +189,6 @@ clust_name= paste0(y_clust, '_clust')
 names(all_clusts_mofa)
 MOFAobject@samples_metadata
 MOFAobject_clusts=MOFAobjectPD
-groups_from_mofa_factors<-function(patnos, MOFAobject_clusts, y_clust ){
-  
-  #' Obtain the molecular clusters from the mofa object 
-  #' 
-  #' @param MOFAobject description
-  #' @param
-
-  ### cluster by one factor 
-  clust_name= paste0(y_clust, '_clust')
-  sm_pd<-MOFAobject_clusts@samples_metadata;
-  groups_kmeans<-sm_pd[, clust_name]
-  pats<-sm_pd$PATNO
-  kmeans_matched<-groups_kmeans[match(patnos, pats )]
-  kmeans_grouping<-factor(kmeans_matched)
-  kmeans_grouping
-  return(kmeans_grouping)
-  
-}
 
 
 merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
@@ -272,15 +253,15 @@ de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_di
   dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
 
 
-de_group_vs_control3$gene_symb<-get_symbols_vector(as.character(de_group_vs_control3$symbol))
-dim(de_group_vs_control3)
-merged_melt_filt_g3_ct
-de_group_vs_control3$gene_symb%in%'BCL9L'
+#de_group_vs_control3$gene_symb<-get_symbols_vector(as.character(de_group_vs_control3$symbol))
+#dim(de_group_vs_control3)
+#merged_melt_filt_g3_ct
+#de_group_vs_control3$gene_symb%in%'BCL9L'
 ### CHECK MONOTONICITY FOR common de genes
 # idea: if there is a change: 
 # then check that the change is  in the same direction 
 
-which(de_group_vs_control3$gene_symb %in% 'BCL9L')
+#which(de_group_vs_control3$gene_symb %in% 'BCL9L')
 
 de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
 de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
@@ -397,7 +378,7 @@ if (choose_group==1){
   
 }
 
-'ENSG00000205683' %in% de_group_vs_control_and_time
+#'ENSG00000205683' %in% de_group_vs_control_and_time
 ##### CHECK MONOTONICITY AND REMOVE ####
 
 #### WHATEVER SET WE CHOOSE WE REMOVE the non monotonic genes 
@@ -443,9 +424,13 @@ de_group_vs_control_and_time2
 de_group_vs_control_and_time
 
 unique(de_group_vs_control_and_time2)
-filt_top=FALSE
-
-if (filt_top){
+filt_top='top'; filt_top='selected'; filt_top='all' 
+filt_top='selected'; 
+selected_mirs<-c('hsa.miR.101.3p', 'hsa.miR.486.3p', 'hsa.miR.340.5p')
+if (view=='miRNA'){
+  selected_feats<-selected_mirs
+}
+if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
@@ -455,16 +440,22 @@ if (filt_top){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
   
-  nrow=NULL; height=7
+  nrow=NULL; height=7; width=30
+}else if (filt_top=='selected'){
+  ## keep specific mirs for presentation 
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% selected_feats,]
+  nrow=NULL; height=3; width=9;
+  
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
-  nrow=NULL; height=12
-  
+  nrow=NULL; height=12; 
 }
 
 de_group_vs_control_and_time2
+
+
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt_most_sig$symbol)
   symb<-get_symbols_vector(ens)
@@ -508,11 +499,12 @@ if (add_patient_lines){
 }
 
 
-p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR, 
-                  position=position_dodge(0))+
+p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR, 
+                  position=position_dodge(0), alpha=0.9, width=0.3)+
+  # horizontal lines 
   stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 1, alpha=0.7) + 
-  scale_color_viridis_d(option='magma')+
+               geom = "line", size = 0.9, alpha=0.9 ) + # , linetype='longdash' 
+  scale_color_viridis_d(option='turbo')+
   facet_wrap(. ~ symbol, scales='free_y', 
              nrow = nrow) +
   
@@ -523,22 +515,23 @@ p=p+ stat_summary(geom = "pointrange", fun.data = median_IQR,
   labs(y='logCPM')+
   # legend(legend=c('Low', 'High'))+
   theme(strip.text = element_text(
-    size = 10, color = "dark green", face="bold"), 
+    size = 12, color = "dark green", face="bold"), 
     axis.title.y =element_text(
-      size = 10, color = "dark green", face="bold",), 
+      size = 12, color = "dark green", face="bold",), 
     axis.text.x = element_text(
-      size = 10 ))
+      size = 12 ))
 
 
-
+p
 #warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view,  group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,
+ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
+              group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,
               'cluster_',choose_group,'.jpeg'), 
-       width=30, height=height)
+       width=width, height=height, dpi = 300)
 
 
 
-
+p
 graphics.off()
 
 

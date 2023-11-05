@@ -510,7 +510,9 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
   #'
   #'
   #'
+  #deseq2ResDF=deseq2ResDF1
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
+  gene_list_ord=gene_list
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
   gse=run_enrich_gene_list(gene_list, results_file)
  
@@ -518,8 +520,10 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
 }
 
 
-
-run_enrich_gene_list<-function(gene_list, results_file){
+# default 
+N_DOT=15
+N_EMAP=30
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_sig=0.05){
   #'
   #' Run enrichment and write the results 
   #' @param gene_list
@@ -541,16 +545,16 @@ run_enrich_gene_list<-function(gene_list, results_file){
   
   gse@result$p.adjust
   
-  enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_cluster, N_DOT=N_DOT, N_EMAP=N_EMAP)
+  enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP)
   
   return(gse)
 }
 
 
 
+#results_file_ora = paste0(results_file_cluster,'_ora' )
 
-
-run_ora_gene_list<-function(gene_list_ord, results_file){
+run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL'){
   #'
   #' Run enrichment and write the results 
   #' @param gene_list
@@ -558,7 +562,8 @@ run_ora_gene_list<-function(gene_list_ord, results_file){
   #'
   #' 
   #'
- 
+  #gene_list_ord=gene_list
+  #keyType='ENSEMBL'
   gene_list_ord_abs=abs(gene_list_ord)
   
   
@@ -567,9 +572,9 @@ run_ora_gene_list<-function(gene_list_ord, results_file){
   high_quant<-quantile(gene_list_ord_abs_ora, 0)
   high_quant_no<-length(gene_list_ord_abs_ora[gene_list_ord_abs_ora>high_quant])
   
-  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:30]), 
+  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:80]), 
                                                        ont=ONT, 
-                                                       keyType = 'SYMBOL', 
+                                                       keyType = keyType, 
                                                        OrgDb = 'org.Hs.eg.db', 
                                                        pvalueCutoff  = pvalueCutoff,
                                                        pool =FALSE)
@@ -585,16 +590,16 @@ run_ora_gene_list<-function(gene_list_ord, results_file){
   
   gse_full=gse_protein_full_enrich
   pvalueCutoff_sig = 0.1
-  gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff=0.1)
-  write.csv(as.data.frame(gse_mofa@result), paste0(results_file, '.csv'))
+  gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1)
+  write.csv(as.data.frame(gse_mofa@result), paste0(results_file_ora, '.csv'))
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
   gse@result$Description
   
   gse@result$p.adjust
   
-  N_DOT=15
-  N_EMAP=15
+  #N_DOT=15
+  #N_EMAP=30
   if  (dim(gse)[1]>2 ){
     
     
@@ -602,7 +607,7 @@ run_ora_gene_list<-function(gene_list_ord, results_file){
          which(gse_mofa@result$p.adjust<0.05)
         gse_mofa
   
-        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP)
+        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP)
   }
   return(gse_full)
 }
@@ -611,6 +616,26 @@ run_ora_gene_list<-function(gene_list_ord, results_file){
 
 
 
+plot_enrich_compare<-function(gse_compare,enrich_compare_path){
+  ### GSE COMPARE ANALYSIS 
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=20, split=".sign") + facet_grid(.~.sign)
+  dot_comp
+  ggsave(paste0(enrich_compare_path, 'dot_compare.jpeg' ), plot=dot_comp,
+         dpi=300
+  )
+  
+  
+  gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
+  N_EMAP=20
+  emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
+                      cex.params = list(category_label = 1.1) ) 
+  emap_comp
+  ggsave(paste0(enrich_compare_path, 'emap_compare.jpeg' ), plot=emap_comp,
+         dpi=300)
+  
+  
+  cnetplot(gse_compare, showCategory = 10)
+}
 
 #gse=gse_mofa_rna
 #results_file = results_file_mofa

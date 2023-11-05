@@ -61,8 +61,8 @@ top_view<-which.max(vars_by_factor[factor,])
 
 
 names(top_view)<-'miRNA'
-names(top_view)<-'proteomics_plasma'
-top_view='miRNA'
+names(top_view)<-'RNA'
+
 
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
@@ -398,6 +398,20 @@ de_group_vs_control_and_time2
 # 4. save the grouping mode 
 factors_to_cluster_s<-paste0(c(which(all_fs_diff[,y_clust])), collapse='-')
 factors_to_cluster_s
+
+
+
+if (view=='RNA'){
+  ens<-as.character(most_sig_over_time$symbol)
+  symb<-get_symbols_vector(ens)
+  most_sig_over_time$GENE_SYMBOL<-symb
+  #feat_names_ens_ids<-unique(symb)
+  
+  
+  
+}
+
+
 ### We get the most significant by group for different factor top variables 
 write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', 
                                      view,'_',group_cat ,
@@ -427,9 +441,28 @@ unique(de_group_vs_control_and_time2)
 filt_top='top'; filt_top='selected'; filt_top='all' 
 filt_top='selected'; 
 selected_mirs<-c('hsa.miR.101.3p', 'hsa.miR.486.3p', 'hsa.miR.340.5p')
+selected_rnas<-c("SREBF2",   "SKI"  ,    "ZFHX3" ,   "NACC1" ,   "KDM6B"  ,  "CDC42EP4", "CDKN1A" )
+
+see
 if (view=='miRNA'){
   selected_feats<-selected_mirs
+}else if ((view=='RNA')){
+  selected_feats<-selected_rnas
 }
+
+
+if (view=='RNA'){
+  ens<-as.character(merged_melt_filt$symbol)
+  symb<-get_symbols_vector(ens)
+  merged_melt_filt$GENE_SYMBOL<-symb
+}else{
+  merged_melt_filt$GENE_SYMBOL<-merged_melt_filt$symbol
+  
+}
+
+
+
+
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
@@ -444,24 +477,31 @@ if (filt_top=='top'){
 }else if (filt_top=='selected'){
   ## keep specific mirs for presentation 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% selected_feats,]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% selected_feats,]
+  
   nrow=NULL; height=3; width=9;
   
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
+  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
   nrow=NULL; height=12; 
 }
 
-de_group_vs_control_and_time2
-
+unique(merged_melt_filt_most_sig$GENE_SYMBOL)
 
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt_most_sig$symbol)
   symb<-get_symbols_vector(ens)
   merged_melt_filt_most_sig$symbol<-symb
-  feat_names_ens_ids<-unique(symb)
+  #feat_names_ens_ids<-unique(symb)
+  
+  
+  
 }
+
+
 
 
 #merged_melt_filt_most_sig_g1<-
@@ -525,7 +565,7 @@ p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR,
 p
 #warnings()
 ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
-              group_cat,'_',  factors_to_cluster_s, '_', filt_top,sel_cohort,
+              group_cat,'_',  factors_to_cluster_s, '_top_', filt_top,sel_cohort,
               'cluster_',choose_group,'.jpeg'), 
        width=width, height=height, dpi = 300)
 
@@ -541,6 +581,8 @@ graphics.off()
 
 
 
+
+##### MIRS-RNAS ENRICH
 
 
 

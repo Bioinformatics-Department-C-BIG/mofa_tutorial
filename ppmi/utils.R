@@ -941,6 +941,35 @@ get_pval_text<-function(gse, pvalueCutoff_sig){
 
 
 
+
+
+###########
+get_long_mir_targets<-function(mieaa_targets){
+  #' function for mirs 
+  #' @param name description
+  #'
+  #'
+  
+  dt<-data.table(mieaa_targets)
+  
+  all_targets_wide<-dcast(dt[, {x1 <- strsplit(miRNAs.precursors, "\\; "); c(list(unlist(x1)), 
+                                                                             .SD[rep(seq_len(.N), lengths(x1))])}], Subcategory + miRNAs.precursors ~ V1, length)
+  
+  all_targets_wide$miRNAs.precursors<-NULL
+  all_targets_long<-melt(all_targets_wide)
+  all_targets_long_true<-all_targets_long[all_targets_long$value==1, ]
+  return(all_targets_long_true)
+  
+  
+}
+
+
+
+
+
+
+
+
 ################ MOFA ####
 
 get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_subcoh_s, TOP_N ){

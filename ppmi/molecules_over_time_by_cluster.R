@@ -5,7 +5,9 @@ library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/time_utils.R'))
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
+source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
+#get_de_features_by_group
 library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
@@ -39,7 +41,7 @@ mode='prognosis'
 ## Where to get the molecules from? 
 mode_mols='single_time'
 model_subtyping<-'MOFA'
-mode='diagnosis'
+#mode='diagnosis'
 # IN THE DIAGNOSIS MODE we select factors related
 
 #### Markers over time:
@@ -60,8 +62,8 @@ factor=2
 top_view<-which.max(vars_by_factor[factor,])
 
 
-names(top_view)<-'miRNA'
-names(top_view)<-'RNA'
+names(top_view)<-'RNA'; keep_all_feats=TRUE 
+names(top_view)<-'miRNA'; keep_all_feats=TRUE
 
 
 if (names(top_view)=='miRNA'){
@@ -77,28 +79,22 @@ if (names(top_view)=='miRNA'){
 
 
 
-view
-se_mirs
-
 #### mofa preprocess
 ##### Collect molecules that we want to plot over time #### 
 #### 1. top MOFA factor molecules
 #### 2. top deseq molecules 
 #### 3. top timeOmics selected molecules 
-mode_mols='MOFA'
-keep_all_feats=TRUE
-keep_all_feats=TRUE
 
+length(ws_all)
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
-  f_v<-get_factors(MOFAobject, factors =factor )[[1]]
+  
   ws<-get_weights(MOFAobject, views = view, factors=factor)[[1]]
-  cut_high<-0.8; cut_low=1-cut_high
-  ws_high<-ws[ws>quantile(ws, cut_high),]
-  ws_low<-ws[ws<quantile(ws, cut_low),]
-  ws_union<-c(ws_high, ws_low)
-  length(ws_union)
+
   feat_names=names(ws_union)
+  top_factor_feats<-select_top_bottom_perc(view, factor, top_fr = 0.1)
+  feat_names<-top_factor_feats
+  
   if (keep_all_feats){
     feat_names=rownames(ws)
     
@@ -125,9 +121,13 @@ clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP
 # TODO: which variables are used as id? check when melting feat_names
 ## only if rna
 
+top_factor_feats<-gsub('\\..*', '',top_factor_feats)
+
 if (view=='RNA'){
   rownames(se)<-gsub('\\..*', '',rownames(se))
   feat_names<-gsub('\\..*', '',feat_names)
+  top_factor_feats_rna<-top_factor_feats
+  
   
 }else if (view=='proteomics_plasma' || view=='proteomics_csf' ){
   feat_names<-gsub('_proteomics.*', '',feat_names)
@@ -141,7 +141,6 @@ levels(merged_melt_orig_1$variable) # check that the requested variables exist?
 #}
 
 feat_names_ens<-gsub('\\..*', '',feat_names)
-feat_names_ens
 
 
 
@@ -299,8 +298,12 @@ length(unique(de_group_vs_control2$symbol))
 length(unique(de_group_vs_control3$symbol))
 
 
+## significant and varying with time 
 most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,] %>% 
                                             dplyr::filter(!(symbol %in% de_merged_to_remove) ))
+
+most_sig_over_time1_all<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,])
+
 most_sig_over_time2=NULL
 most_sig_over_time2$symbol=NULL
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] %>% 
@@ -344,12 +347,8 @@ most_sig_over_time<-most_sig_over_time%>%
   arrange(Wilcox, decreasing=FALSE)
 
 ## ECHECK DIRECTORIIONS
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= c('CSAD'), keytype = c("SYMBOL"), columns=c('SYMBOL', 'GENEID'))
+#geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= c('CSAD'), keytype = c("SYMBOL"), columns=c('SYMBOL', 'GENEID'))
 
-de_group_vs_control3[de_group_vs_control3$symbol==geneIDs1$GENEID,]
-de_group_vs_control2[de_group_vs_control2$symbol==geneIDs1$GENEID,]
-
-de_group_vs_control1[de_group_vs_control1$symbol==geneIDs1$GENEID,]
 
 
 
@@ -368,8 +367,6 @@ most_sig_over_time1
 choose_group<-1
 if (choose_group==1){
   de_group_vs_control_and_time<-intersect(most_sig_over_time1$symbol, de_group_vs_control1$symbol)
-  
-  
 }else if(choose_group==2){
   de_group_vs_control_and_time<-intersect(most_sig_over_time2$symbol, de_group_vs_control2$symbol)
   
@@ -412,11 +409,18 @@ if (view=='RNA'){
 }
 
 
+choose_group=1
 ### We get the most significant by group for different factor top variables 
-write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', 
+write.csv(most_sig_over_time1, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
                                      view,'_',group_cat ,
                                     'de_group_',  choose_group, 
                                      '.csv'))
+
+dim(de_group_vs_control1)
+write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_control_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
+                                      view,'_',group_cat ,
+                                      'de_group_',  choose_group, 
+                                      '.csv'))
 
 
 
@@ -433,7 +437,7 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
 
 
 
-de_group_vs_control_and_time2
+de_group_vs_control %in% top_factor_feats
 
 de_group_vs_control_and_time
 
@@ -441,15 +445,24 @@ unique(de_group_vs_control_and_time2)
 filt_top='top'; filt_top='selected'; filt_top='all' 
 filt_top='selected'; 
 selected_mirs<-c('hsa.miR.101.3p', 'hsa.miR.486.3p', 'hsa.miR.340.5p')
-selected_rnas<-c("SREBF2",   "SKI"  ,    "ZFHX3" ,   "NACC1" ,   "KDM6B"  ,  "CDC42EP4", "CDKN1A" )
 
-see
+### select top 
+
+selected_rnas<-c("SREBF2",   "SKI"  ,    "ZFHX3" ,   "NACC1" ,   "KDM6B"  ,  "CDC42EP4", "CDKN1A" )
+selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
+
+selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
+selected_rnas<-c("CASZ1" , "CAPN15" ,"ZFHX3" , "ULK1"  , "SDK2"  ) # top10 factor 2
+
+selected_mirs<-make.names(mirna_targets_edgel$variable)
+selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
+
 if (view=='miRNA'){
   selected_feats<-selected_mirs
 }else if ((view=='RNA')){
   selected_feats<-selected_rnas
 }
-
+selected_feats<-make.names(nodes_to_plot)
 
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt$symbol)
@@ -479,7 +492,7 @@ if (filt_top=='top'){
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% selected_feats,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% selected_feats,]
   
-  nrow=NULL; height=3; width=9;
+  nrow=1; height=3; width=9;
   
 }else{
   merged_melt_filt_most_sig<-merged_melt_filt
@@ -665,17 +678,17 @@ all_sig_genes2<-all_sig_genes2%>%
 # TODO: AUTOMATE this part to collect them all in a function -- retrieve from home? 
 factors_to_cluster
 sapply(factors_to_cluster )
-factor=2
-fact2<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+fact=2
+fact2<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
 
-factor=8
-fact8<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+fact=8
+fact8<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
 
-factor=9
-fact9<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+fact=9
+fact9<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
 
-factor=14
-fact14<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
+fact=14
+fact14<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
 
 
 

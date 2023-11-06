@@ -226,7 +226,7 @@ if (run_cors_all_samples){
 #  sel_factors<-which(cors_all[,c('NP3_TOT' )]>-log10(0.05))
   
 ##}
-#sel_factors_pd_np3<-which(cors_all_pd[,c('NP3_TOT_LOG' )]>(-log10(0.05)))
+sel_factors_pd_np3<-which(cors_all_pd[,c('NP3TOT_LOG' )]>(-log10(0.05)))
 
 
 

@@ -443,3 +443,9 @@ if (run_plots){
 
 }
 
+
+
+
+all_target_scan<-mget(names(mirs), revmap(targetscan.Hs.egTARGETS))
+tars<-all_target_scan[[1]]
+

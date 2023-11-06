@@ -26,31 +26,10 @@ gse_compare<-compareCluster(geneClusters = list(BL=gene_list_BL,V08=gene_list_V0
                ont=ONT, 
                keyType = 'ENSEMBL') 
 
-gse_compare
 enrich_compare_path=paste0(enrich_compare,prefix)
 
 
-
-plot_enrich_compare<-function(gse_compare,enrich_compare_path){
-  ### GSE COMPARE ANALYSIS 
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=20, split=".sign") + facet_grid(.~.sign)
-  dot_comp
-  ggsave(paste0(enrich_compare_path, 'dot_compare.jpeg' ), plot=dot_comp,
-         dpi=300
-  )
-  
-  
-  gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
-  N_EMAP=20
-  emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
-                      cex.params = list(category_label = 1.1) ) 
-  emap_comp
-  ggsave(paste0(enrich_compare_path, 'emap_compare.jpeg' ), plot=emap_comp,
-         dpi=300)
-  
-  
-  cnetplot(gse_compare, showCategory = 10)
-}
+plot_enrich_compare(gse_compare,enrich_compare_path)
 
 
 #### to

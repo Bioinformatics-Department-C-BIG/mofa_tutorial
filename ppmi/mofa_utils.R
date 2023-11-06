@@ -137,6 +137,24 @@ cluster_samples_mofa_obj<-function(object, k, factors = "all", ...)
       }
 
 
+groups_from_mofa_factors<-function(patnos, MOFAobject_clusts, y_clust ){
+  
+  #' Obtain the molecular clusters from the mofa object 
+  #' 
+  #' @param MOFAobject description
+  #' @param
+  
+  ### cluster by one factor 
+  clust_name= paste0(y_clust, '_clust')
+  sm_pd<-MOFAobject_clusts@samples_metadata;
+  groups_kmeans<-sm_pd[, clust_name]
+  pats<-sm_pd$PATNO
+  kmeans_matched<-groups_kmeans[match(patnos, pats )]
+  kmeans_grouping<-factor(kmeans_matched)
+  kmeans_grouping
+  return(kmeans_grouping)
+  
+}
 
 
 

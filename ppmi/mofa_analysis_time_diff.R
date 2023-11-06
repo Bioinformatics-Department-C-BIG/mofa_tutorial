@@ -531,8 +531,7 @@ diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE',
                       'updrs3_score')
 
 diff_variables= c('NP2PTOT')
-diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'AGE', 
-                      'updrs3_score', 'moca')
+diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 
 
 met<-samples_metadata(MOFAobject)
@@ -590,7 +589,8 @@ sm<-samples_metadata(MOFAobject)
 sm$asyn
 MOFAobjectPD
 MOFAobject_to_plot=MOFAobjectPD
-plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, MOFAobject_to_plot=MOFAobject){
+plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
+                           MOFAobject_to_plot=MOFAobject, res=200){
   
   # filter if some do not exist in the colnames of metadata
   #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
@@ -615,8 +615,8 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   
   
   
-  jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=
-         200)
+  jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
+         )
   P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , plot = plot,
                                         labels_col=labels_col, 
@@ -663,9 +663,14 @@ get_factors_for_scales<-function(vars_to_plot){
   
 }
 progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
+progression_markers_conf<-c( 'abeta', 'sft' )
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN')
+all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX' )
+ sel_factors_conf<-get_factors_for_scales(clinical_scales_conf)
+
 # nfl serum,. lowput ratio etc.  
 sm$tau
 
@@ -676,6 +681,11 @@ fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+
+fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
+plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
+                 factors = sel_factors_conf,labels_col=TRUE, MOFAobject=MOFAobjectPD, res=300 )
+
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 graphics.off()

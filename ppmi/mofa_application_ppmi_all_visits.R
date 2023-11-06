@@ -1,6 +1,6 @@
 
 
-#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))

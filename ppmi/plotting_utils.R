@@ -435,7 +435,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
   
-  labeller_clinical2=labeller_clinical[diff_variables_to_p]
+ # labeller_clinical2=labeller_clinical[diff_variables_to_p]
   
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
@@ -464,11 +464,12 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
   
   p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
-    geom_boxplot(aes_string( x=clust_name, color=clust_name, fill=clust_name, y='value'), alpha=0.9)+
+    geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
+                             fill=clust_name, y='value'), alpha=0.9)+
 
   
-    facet_wrap(~variable, scales='free', labeller=labeller_clin)+
-    geom_pwc( tip.length = 0.1,
+    facet_wrap(~variable, scales='free', labeller=labeller_clin, nrow=1)+
+    geom_pwc( tip.length = 0,
       method = "wilcox_test", label = "p.adj.signif")+   
     scale_color_viridis_d(option="turbo")+
        scale_fill_viridis_d(option="turbo")+
@@ -477,21 +478,23 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
     
   labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
-         caption = paste0('\n',
-                          'factors: ',factors, '\n',
-                          paste_med, ',\t',
+         caption = paste0( '\n', 'factors: ',factors, freqs,
+                          #paste_med, ',\t',
                           paste_sex, ',\t',
-                          paste_state,  ',\n',
+                          #paste_state,  ',\n',
                           paste_tdpigd, ',\t',
-                          paste_nhy) )+
-    theme(text =element_text(size=20),)+
+                          paste_nhy), 
+         x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
+    guides(fill=guide_legend(title='Cluster' ), color=guide_legend(title='Cluster' ))+
+    theme(text =element_text(size=20), axis.title.y=element_blank())+
+
     theme(strip.text = element_text(face = "bold"))
   #plot.title = element_text(size = 30, color = "green")
   p
 
   bn<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option ,'/all_vars' ,  '.png')
   print(bn)
-  ggsave(bn, dpi=300, width=10, height = 10, units='in')
+  ggsave(bn, dpi=300, width=10, height = 10/1.5, units='in')
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   

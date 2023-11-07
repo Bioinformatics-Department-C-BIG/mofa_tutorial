@@ -163,33 +163,31 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
 
 
 #####
-#merged_melt_filt_group = merged_melt_filt_g1_ct
-#var_to_diff='kmeans_grouping'
+merged_melt_filt_group = merged_melt_filt_group_V08
+var_to_diff='kmeans_grouping'
 
 
 
-#merged_melt_filt_group=merged_melt_filt_g1_ct
+library(dplyr)
 
 wilcox_all_vars<-function(merged_melt_filt_group, var_to_diff){
   
   wilcox_stats_group<-merged_melt_filt_group %>%
     group_by(symbol) %>%
     do(w=wilcox.test(value~(!!sym(var_to_diff)), data=.) )%>%
-    #do(w=wilcox.test(value~kmeans_grouping, data=.) ) %>%
-    
-    summarize(symbol, Wilcox=w$p.value) %>% 
+    dplyr::summarize(symbol, Wilcox=w$p.value) %>% 
     mutate(p.adj=p.adjust(Wilcox)) %>%
     dplyr::filter(Wilcox<0.05) %>%
     dplyr::filter(p.adj<0.05) %>%
-    
     arrange(Wilcox, decreasing=FALSE) %>%
     as.data.frame() 
   
   
   sum_meds<-merged_melt_filt_group %>%
+   # group_by(symbol, kmeans_grouping) %>%
     dplyr::filter(symbol %in% wilcox_stats_group$symbol)%>%
    group_by(symbol, kmeans_grouping) %>%
-    summarise(median=median(value)) 
+    dplyr::summarise(median=median(value)) 
     
   
 
@@ -235,7 +233,7 @@ get_most_sig_over_time<-function(merged_melt_filt_group){
   wilcox_stats_group<-merged_melt_filt_group %>%
     group_by(symbol) %>%
     do(w=wilcox.test(value~VISIT, data=.) ) %>%
-    summarize(symbol, Wilcox=w$p.value) %>% 
+    dplyr::summarize(symbol, Wilcox=w$p.value) %>% 
     mutate(p.adj=p.adjust(Wilcox)) %>%
     dplyr::filter(p.adj<0.05) %>%
     arrange(Wilcox, decreasing=FALSE) %>%

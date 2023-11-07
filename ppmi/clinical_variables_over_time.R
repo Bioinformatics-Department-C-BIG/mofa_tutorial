@@ -183,12 +183,9 @@ for (y in to_plot){
     
     p<-p+scale_color_viridis_d(option='turbo')+
     scale_fill_viridis_d(option='turbo')+
+      guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
+      
 
- 
-    # geom_signif(comparisons = list(c('BL', 'V08')), 
-    #            map_signif_level=TRUE, 
-    #           tip_length = 0, vjust=0)+
-    
     labs(y=y_name, caption = paste0('group numbers: ', paste0(nums)))
 
     p<-p+ theme(axis.title.y =element_text(face='bold'))

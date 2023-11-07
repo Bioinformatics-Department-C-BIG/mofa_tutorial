@@ -85,7 +85,7 @@ if (names(top_view)=='miRNA'){
 #### 2. top deseq molecules 
 #### 3. top timeOmics selected molecules 
 
-length(ws_all)
+mode_mols='MOFA'
 if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
   
@@ -299,18 +299,18 @@ length(unique(de_group_vs_control3$symbol))
 
 
 ## significant and varying with time 
-most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,] %>% 
-                                            dplyr::filter(!(symbol %in% de_merged_to_remove) ))
+most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,]) #%>% 
+                                            #dplyr::filter(!(symbol %in% de_merged_to_remove) ))
 
 most_sig_over_time1_all<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,])
 
 most_sig_over_time2=NULL
 most_sig_over_time2$symbol=NULL
-most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] %>% 
-                                              dplyr::filter(!(symbol %in% de_merged_to_remove) ) )
-most_sig_over_time3<-get_most_sig_over_time(merged_melt_filt_g3[merged_melt_filt_g3$symbol %in% de_group_vs_control3$symbol,]%>% 
-                                              dplyr::filter(!(symbol %in% de_merged_to_remove) )
-                                            )
+most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] )#%>% 
+                                            #  dplyr::filter(!(symbol %in% de_merged_to_remove) ) )
+most_sig_over_time3<-get_most_sig_over_time(merged_melt_filt_g3[merged_melt_filt_g3$symbol %in% de_group_vs_control3$symbol,])
+                                              #dplyr::filter(!(symbol %in% de_merged_to_remove) )
+                                            #)
 
 most_sig_over_time1
 
@@ -454,7 +454,11 @@ selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
 selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
 selected_rnas<-c("CASZ1" , "CAPN15" ,"ZFHX3" , "ULK1"  , "SDK2"  ) # top10 factor 2
 
+
+
 selected_mirs<-make.names(mirna_targets_edgel$variable)
+selected_mirs<-c('hsa.miR.142.5p', 'hsa.miR.486.3p', 'hsa.miR.574.5p', 'hsa.miR.7.5p')
+
 selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
 
 if (view=='miRNA'){
@@ -538,16 +542,19 @@ median_IQR <- function(x) {
              ymax = quantile(x)[4])  # 3rd quartile
 }
 
+merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(merged_melt_filt_most_sig$VISIT), 
+                                                   from= names(EVENT_MAP), 
+                                                   to=unlist(EVENT_MAP, use.names=FALSE))))
 
-
-
+merged_melt_filt_most_sig$month
 # TODO: choose 3 colours grey as control
 add_patient_lines=FALSE
+x='month'
 #merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
-p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = 'VISIT', y = 'value', 
+p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = x, y = 'value', 
                                                        fill='group', group='group', colour='group')) 
 if (add_patient_lines){
-  p<- p+geom_line(aes_string(x = 'VISIT', y = 'value', 
+  p<- p+geom_line(aes_string(x = x, y = 'value', 
                              group='PATNO', colour='group' ),size=0.1, alpha=0.5)
 }
 
@@ -572,7 +579,9 @@ p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR,
     axis.title.y =element_text(
       size = 12, color = "dark green", face="bold",), 
     axis.text.x = element_text(
-      size = 12 ))
+      size = 12 ))+
+  guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))
+  
 
 
 p

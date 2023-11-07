@@ -57,6 +57,9 @@ combined_bl_log_sel$months <-as.numeric( mapvalues(combined_bl_log_sel$EVENT_ID,
 
 lv_to_plot='V12'
 combined_bl_log_sel$PDMEDYN_V14
+
+
+
 ########## Now we obtained the longitudinal input for these patients ####
 
 
@@ -83,6 +86,8 @@ combined_bl_log_sel<-df_to_attach
 
 #combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
 combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
+combined_bl_log_sel$month=factor(combined_bl_log_sel$months)
+
 # TODO: Maybe get all time points? 
 
   
@@ -146,7 +151,7 @@ for (y in to_plot){
   
     nums<-paste0('n=', paste0(table(unique(df_plot_2k[, c('grouping', 'PATNO')])[,'grouping'] ), collapse = ', '))
 
-    p<-ggplot(data = df_plot_2k, aes_string(x = 'VISIT', y = y, 
+    p<-ggplot(data = df_plot_2k, aes_string(x = 'month', y = y, 
                                        fill='grouping',group='grouping',colour='grouping')) + 
     #stat_summary(geom = "pointrange", fun.data = median_IQR, 
     #             position=position_dodge(0), alpha=0.9)+
@@ -160,14 +165,14 @@ for (y in to_plot){
  #                   geom = "pointrange", size = 1, alpha=0.9) 
     
     if (add_individual_lines){
-     p<-p+ geom_line(aes_string(x = 'VISIT', y = y, 
+     p<-p+ geom_line(aes_string(x = 'month', y = y, 
                            group='PATNO', colour='grouping' ),size=0.2, alpha=0.6)
     }
   
     if (add_boxplots){
 
        # p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
-      p<-p+geom_boxplot(aes_string(x='VISIT', fill='grouping', group=NULL ),lwd=0.5, alpha=0.7)
+      p<-p+geom_boxplot(aes_string(x='month', fill='grouping', group=NULL ),lwd=0.5, alpha=0.7)
       p
     }
     
@@ -186,13 +191,8 @@ for (y in to_plot){
     
     labs(y=y_name, caption = paste0('group numbers: ', paste0(nums)))
 
-    p
-    theme(strip.text = element_text(
-      size = 10, color = "dark green"), 
-      axis.title.y =element_text(
-        size = 13, color = "dark green"), 
-      axis.text.x = element_text(
-        size = 9 ))
+    p<-p+ theme(axis.title.y =element_text(face='bold'))
+    
   
   
   p

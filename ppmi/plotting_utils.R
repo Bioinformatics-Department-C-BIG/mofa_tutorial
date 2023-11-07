@@ -485,7 +485,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
                           paste_tdpigd, ',\t',
                           paste_nhy), 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
-    guides(fill=guide_legend(title='Cluster' ), color=guide_legend(title='Cluster' ))+
+    guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
     theme(text =element_text(size=20), axis.title.y=element_blank())+
 
     theme(strip.text = element_text(face = "bold"))

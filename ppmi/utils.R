@@ -615,6 +615,30 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL'){
 
 
 
+write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
+  
+  ### Takes the full gse results, ie. without threshold significance, 
+  # saves it, 
+  # filters it by pvalueCutoff_sig
+  # and saves the filter 
+  #' @param gse_full full gse results objects 
+  #' @param results_file the file name to write results  (without .csv)
+  #' @param pvalueCutoff the pvalue used to obtain the gse results 
+  
+  write.csv(as.data.frame(gse_full@result), paste0(results_file, pvalueCutoff, '.csv'))
+  pvalueCutoff_sig<-0.05
+  gse_sig_result<-gse_full@result[gse_full@result$pvalue<pvalueCutoff_sig,]
+  write.csv(as.data.frame(gse_sig_result), paste0(results_file, pvalueCutoff_sig, '.csv'))
+  
+  # rewrite
+  dim(gse_full); dim(gse_sig_result)
+  ## filter gse result to significant only 
+  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
+  return(gse)
+}
+
+
+
 
 plot_enrich_compare<-function(gse_compare,enrich_compare_path){
   ### GSE COMPARE ANALYSIS 
@@ -913,6 +937,35 @@ get_pval_text<-function(gse, pvalueCutoff_sig){
                   '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
   text_p=paste0(text_p1, text_p2)
 }
+
+
+
+
+
+
+###########
+get_long_mir_targets<-function(mieaa_targets){
+  #' function for mirs 
+  #' @param name description
+  #'
+  #'
+  
+  dt<-data.table(mieaa_targets)
+  
+  all_targets_wide<-dcast(dt[, {x1 <- strsplit(miRNAs.precursors, "\\; "); c(list(unlist(x1)), 
+                                                                             .SD[rep(seq_len(.N), lengths(x1))])}], Subcategory + miRNAs.precursors ~ V1, length)
+  
+  all_targets_wide$miRNAs.precursors<-NULL
+  all_targets_long<-melt(all_targets_wide)
+  all_targets_long_true<-all_targets_long[all_targets_long$value==1, ]
+  return(all_targets_long_true)
+  
+  
+}
+
+
+
+
 
 
 

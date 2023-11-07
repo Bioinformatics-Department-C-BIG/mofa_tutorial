@@ -41,8 +41,10 @@ colnames(all_targets_long_true)<-c('symbol', 'mature_mirna_id', 'int')
 
 ##############
 #### Targets 2: TARGET SCAN ############
-
+#mirs2<-names(gene_list_ord)[1:20]
 all_target_scan<-mget(names(mirs), revmap(targetscan.Hs.egTARGETS))
+all_target_scan<-mget(mirs2, revmap(targetscan.Hs.egTARGETS))
+
 tars<-all_target_scan[[1]]
 
 length(all_target_scan)

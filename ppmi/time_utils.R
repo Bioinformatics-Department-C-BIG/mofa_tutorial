@@ -162,9 +162,9 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
 
 
 
-#####
-merged_melt_filt_group = merged_melt_filt_group_V08
-var_to_diff='kmeans_grouping'
+######
+#merged_melt_filt_group = merged_melt_filt_group_V08
+#var_to_diff='kmeans_grouping'
 
 
 

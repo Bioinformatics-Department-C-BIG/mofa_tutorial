@@ -91,7 +91,6 @@ if ((mode_mols)=='MOFA'){
   
   ws<-get_weights(MOFAobject, views = view, factors=factor)[[1]]
 
-  feat_names=names(ws_union)
   top_factor_feats<-select_top_bottom_perc(view, factor, top_fr = 0.1)
   feat_names<-top_factor_feats
   

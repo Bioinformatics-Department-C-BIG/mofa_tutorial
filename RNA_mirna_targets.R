@@ -2,6 +2,10 @@
 
 # 2. List of mirs ####
 #gsea_results_fname<-paste0(mir_results_file,'_mieaa_res.csv' )
+library('igraph')
+
+source(paste0(script_dir, '/ppmi/emap_utils.R'))
+
 pvalueCutoff=1
 
 mirs_de<-read.csv(paste0(outdir, '/trajectories/most_sig_over_time_2feats_TRUE_cl_fs_2-12_miRNA_kmeans_groupingde_group_1.csv'))
@@ -22,11 +26,11 @@ mirs
 
 mieaa_results_fname = paste0(outdir, '/trajectories/enrichment/', clust_name, clust_index)
 
-dir.create(gsea_results_fname)
+dir.create(mieaa_results_fname)
 test_type='ORA'
-if (file.exists(gsea_results_fname)){
+if (file.exists(mieaa_results_fname)){
   ### Load enrichment results if available
-  mieaa_all_gsea<-read.csv(gsea_results_fname, header=TRUE)
+  mieaa_all_gsea<-read.csv(mieaa_results_fname, header=TRUE)
   ### TODO: Rerun with updated pvalue cutoff 
 }else{
   ## otherwise run GSEA analysis 
@@ -40,11 +44,14 @@ if (file.exists(gsea_results_fname)){
   )
   
   
-  write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
+  write.csv(mieaa_all_gsea, mieaa_results_fname, row.names = FALSE)
   
 }
 
+
+#### 
 colnames(mieaa_all_gsea)<-make.names(  colnames(mieaa_all_gsea))
+
 mieaa_all_gsea_sig<-mieaa_all_gsea %>%
   dplyr::filter(Category %in%c('GO Biological process (miRPathDB)')) %>%
   dplyr::filter(P.adjusted<0.05)
@@ -61,6 +68,16 @@ mieaa_targets<-mieaa_all_gsea %>%
 #head(mieaa_targets)
 mieaa_targets
 to_load<-paste0(outdir,'/trajectories/enrichment/NP2PTOT_clust1mir_targets.csv')
+
+
+
+
+
+################# 
+BiocManager::install('miRTarBase')
+
+
+
 
 mieaa_targets_load<-read.csv(to_load)
 mieaa_targets_load
@@ -107,16 +124,23 @@ p<-plot.igraph(g )
 bc <- betweenness(g,v = V(g), directed = FALSE )
 bc[order(bc)]
 
-bc_remove_mirs<-bc[bc<80]
+deg<-degree(g)
+deg[deg>5]
+
+bc_remove_mirs<-deg[deg<5]
 bc_remove_mirs<-bc_remove_mirs[startsWith(names(bc_remove_mirs), 'hsa')]
 #genes_to_keep<-V(g)$name[!startsWith(V(g)$name, 'hsa')]
-
+deg
 g_filt<-delete_vertices(g, V(g)$name %in% c(names(bc_remove_mirs)))
+g_filt<-remove_subcomponents(g_filt, subcomp_min_edge = 1)[[1]]
 bc <- betweenness(g_filt,v = V(g_filt), directed = FALSE )
 
 #nodes_to_plot<-V(g_filt)
-nodes_to_plot<-names(bc[bc>10])
+nodes_to_plot<-names(bc[bc>80])
 nodes_to_plot<-c('FOXO3','SREBF2', 'ZFHX3', 'CC2D2A') 
+
+
+
 
 
 library(visNetwork)
@@ -134,9 +158,14 @@ V(mst)$color <-  mst.communities$membership + 1
 visnet$nodes$clusters<-mst.communities$membership
 
 visnet$nodes$font.size=60
+visnet$ed
+
 visnet$nodes$size=log2(bc+1)*3
 
 visnet$nodes$font.color='black'
+visnet$edges$color='darkgray'
+visnet$edges$width=3
+
 visnet$nodes$type<-visnet$nodes$label
 visnet$nodes$type<-ifelse(startsWith(visnet$nodes$label, 'hsa'), 'mir', 'rna')
 visnet$nodes$color<-ifelse(startsWith(visnet$nodes$label, 'hsa'),'orange', 'lightblue')

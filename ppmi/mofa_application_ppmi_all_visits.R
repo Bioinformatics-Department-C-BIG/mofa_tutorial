@@ -28,7 +28,7 @@ source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
-
+output_files
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
@@ -50,13 +50,18 @@ run_mofa_complete<-FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
-
+output_files
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv') 
 combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
-combined_bl_log$GBA_PATHVAR
+
+curated_mofa<-combined_bl_log %>%
+  dplyr::filter(EVENT_ID=='V14') %>%
+  dplyr::filter(PATNO %in% sm$PATNO)
+
+curated_mofa
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log

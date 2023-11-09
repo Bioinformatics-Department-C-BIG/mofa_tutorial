@@ -4,7 +4,7 @@
 # 1. Subject characteristics 
 library(data.table)
 
-input_data<-('ppmi/ppmi_data/')
+input_data<-paste0(data_dir,'/ppmi/ppmi_data/')
 output_files<-'ppmi/output/'
 source('ppmi/utils.R')
 #all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
@@ -64,39 +64,39 @@ motor_assess_III$ONEXAMDT
 
 ## cognition####
 
-non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
-non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
-non_motor_stait<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
-pr_outcome<-read.csv(paste0('ppmi/ppmi_data/patient_outcomes_predictions.csv'))
+non_motor<-read.csv(paste0(input_data,'SCOPA-AUT.csv'))
+non_motor_moca<-read.csv(paste0(input_data,'Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
+non_motor_stait<-read.csv(paste0(input_data,'Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
+pr_outcome<-read.csv(paste0(input_data,'patient_outcomes_predictions.csv'))
 
 
 
 ### Sleepiness scale 
 
-olfactory<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/University_of_Pennsylvania_Smell_Identification_Test__UPSIT_.csv'))
-epworth<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Epworth_Sleepiness_Scale.csv'))
+olfactory<-read.csv(paste0(input_data,'Non-motor_Assessments/University_of_Pennsylvania_Smell_Identification_Test__UPSIT_.csv'))
+epworth<-read.csv(paste0(input_data,'Non-motor_Assessments/Epworth_Sleepiness_Scale.csv'))
 
-rbd<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
-dat<-read.csv(paste0('ppmi/ppmi_data/imaging/DaTSCAN/DaTScan_Analysis_23Jun2023.csv'))
-bent<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Benton_Judgement_of_Line_Orientation.csv'))
-ger<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Geriatric_Depression_Scale__Short_Version_.csv'))
-sem<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Modified_Semantic_Fluency.csv'))
+rbd<-read.csv(paste0(input_data,'Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
+dat<-read.csv(paste0(input_data,'imaging/DaTSCAN/DaTScan_Analysis_23Jun2023.csv'))
+bent<-read.csv(paste0(input_data,'Non-motor_Assessments/Benton_Judgement_of_Line_Orientation.csv'))
+ger<-read.csv(paste0(input_data,'Non-motor_Assessments/Geriatric_Depression_Scale__Short_Version_.csv'))
+sem<-read.csv(paste0(input_data,'Non-motor_Assessments/Modified_Semantic_Fluency.csv'))
 
 
 ### add biospecimen 
 
 
 
-curated_v1<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
-curated_v2<-read.csv(paste0('ppmi/ppmi_data/curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
+curated_v1<-read.csv(paste0(input_data,'curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+curated_v2<-read.csv(paste0(input_data,'curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
 ## first bind the common columns 
 common_cols<-intersect(colnames(curated_v1), colnames(curated_v2))
 curated_total<-rbind(curated_v1[, common_cols],curated_v2[, common_cols])
 curated_v2_unique<-curated_v2[, (!(colnames(curated_v2) %in% common_cols))| colnames(curated_v2) %in%c('PATNO', 'EVENT_ID')  ]; 
 curated_v1_unique<-curated_v1[, (!(colnames(curated_v1) %in% common_cols))| colnames(curated_v1) %in%c('PATNO', 'EVENT_ID')  ]; 
 
-curated_total_new_cols<-merge(curated_total, curated_v2_unique, by=c('PATNO', 'EVENT_ID'))
-curated_total_new_cols<-merge(curated_total_new_cols, curated_v1_unique, by=c('PATNO', 'EVENT_ID'))
+curated_total_new_cols<-merge(curated_total, curated_v2_unique, by=c('PATNO', 'EVENT_ID'), all=TRUE)
+curated_total_new_cols<-merge(curated_total_new_cols, curated_v1_unique, by=c('PATNO', 'EVENT_ID'), all=TRUE)
 
 colnames(curated_total_new_cols)
 

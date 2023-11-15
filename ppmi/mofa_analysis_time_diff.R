@@ -254,7 +254,7 @@ all_fs_diff<-cors_all_pd[,all_diff_in_cors]>(-log10(0.05))
 all_fs_diff_cor<-cors_all_pd[,all_diff_in_cors]
 
 
-
+all_fs_diff_cor[, 'updrs2_score']
 
 
 ### RUN CLUSTERING 
@@ -324,6 +324,7 @@ all_clusts_mofa[['NP3TOT' ]]
 clinical_scales
 y='abeta'
 y='NP2PTOT'
+y='updrs2_score'
 
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
@@ -533,8 +534,9 @@ diff_variables= c('moca')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
                       'updrs3_score')
 
-diff_variables= c('NP2PTOT')
+diff_variables= c('updrs2_score')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
+diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
 
 
 met<-samples_metadata(MOFAobject)
@@ -558,7 +560,19 @@ sapply(diff_variables, function(y_clust){
 #### After adding clusters redo calculcations of metadata..? ####
 
 
+### DISTRIBUTION OF CLINICAL VARIABLES BY CLUSTER 
+tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
 
+met$PD_MED_USE
+table(met[,c(clust_name, "PDMEDYN")])
+
+
+met%>%
+  dplyr::group_by(NP2PTOT_clust,PD_MED_USE)%>%
+  dplyr::summarise(count =n_distinct(PATNO, NP2PTOT_clust,PD_MED_USE))
+
+
+table(met[,c(clust_name, "PD_MED_USE")])
 
 
 ########### 

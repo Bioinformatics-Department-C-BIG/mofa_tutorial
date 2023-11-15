@@ -22,9 +22,6 @@ combined[which(combined$NHY==101),]$NHY<-NA
 
 
 
-
-combined$gn
-
 #### 
 library(ggplot2)
 combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
@@ -268,20 +265,21 @@ log_vars<-c('NP3TOT', 'NP2PTOT', 'MCATOT', 'updrs2_score', 'updrs_totscore', 'up
             'updrs3_score_on','scopa', 'moca')
 df_log2=log_df(combined[, log_vars])
 colnames(df_log2)<-paste0(colnames(df_log2),'_LOG')
+df_log2$updrs2_score_LOG
 
 
 df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
 
-
 colnames(df_log)<-paste0(colnames(df_log),'_LOG')
-combined_new<-mutate(combined, df_log)
-combined_new<-mutate(combined_new, df_log2)
+df_log<-cbind(df_log, df_log2)
+
+combined_new<-cbind(combined, df_log)
 
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
 combined_new$updrs2_score_LOG
 
 
-
+combined_new
 
 #### ADD FUTURE VISIT #####
 
@@ -302,6 +300,7 @@ selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
 
 cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
+c(cols_fut_visit, selected_future_vars) %in% colnames(combined_new)
 combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
 
 
@@ -365,6 +364,10 @@ write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 #combined_bl_log<-combined_new
 
 
+curated_mofa<-combined_new %>%
+  dplyr::filter(EVENT_ID%in%'V18')# %>%
+ #dplyr::filter(PATNO %in% sm$PATNO)
+curated_mofa
 # TODO: make a function to add the scaling by COHORT! 
 
 

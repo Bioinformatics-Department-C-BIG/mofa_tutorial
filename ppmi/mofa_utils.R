@@ -67,29 +67,32 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
 #pre_trained<-load_model(paste0(outdir,'mofa_ppmi.hdf5'))
 
 
+factors=1
 
-
-select_top_bottom_perc<-function(view, factors, top_fr=.01 ){
+select_top_bottom_perc<-function(MOFAobject=MOFAobject, view, factors, top_fr=.01 ){
   #'select top bottom features 
   #'#'
   #'factors
   #'factors
 #  factors=1;view='RNA'
   ws<-get_weights(MOFAobject, views = view, factors=factors)[[1]]
-  print(factors)
+  ws[order(ws)]
   cut_high<-top_fr; cut_low=1-top_fr
   high<-apply(ws,2, function(x){ ll<-as.data.frame(x) %>%
     top_frac(top_fr)
   return(rownames(ll))})
-  low<-apply(ws,2, function(x){ ll<--as.data.frame(x) %>%
+  low<-apply(ws,2, function(x){ ll<- -as.data.frame(x) %>%
     top_frac(top_fr)
   return(rownames(ll))})
   
-  high_names<-melt(high)$value
-  low_names<-melt(low)$value
+  high_names<-reshape::melt(high)$value
+  low_names<-reshape::melt(low)$value
   ws_union<-unique(c(high_names, low_names))
   return(ws_union)
 }
+
+
+
 
 #factors=heatmap_factors
 concatenate_top_features<-function(factors, view, top_fr){

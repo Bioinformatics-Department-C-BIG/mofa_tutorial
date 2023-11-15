@@ -502,3 +502,63 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
 }
 
 
+
+
+plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',add_patient_lines=FALSE ){
+  #'
+  #' @param merged_melt_filt_most_sig
+  #' @param x axis
+  #' @param add_patient_lines
+  #'
+  #'
+  
+  
+  p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = x, y = 'value', 
+                                                         fill='group', group='group', colour='group')) 
+  if (add_patient_lines){
+    p<- p+geom_line(aes_string(x = x, y = 'value', 
+                               group='PATNO', colour='group' ),size=0.1, alpha=0.5)
+  }
+  
+  
+  p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR, 
+                    position=position_dodge(0), alpha=0.9, width=0.3)+
+    # horizontal lines 
+    stat_summary(fun = median, position=position_dodge(width=0), 
+                 geom = "line", size = 0.9, alpha=0.9 ) + # , linetype='longdash' 
+    scale_color_viridis_d(option='turbo')+
+    facet_wrap(. ~ symbol, scales='free_y', 
+               nrow = nrow) +
+    
+    #geom_signif(comparisons = list(c('BL', 'V08')), 
+    #            map_signif_level=TRUE, 
+    #            tip_length = 0, vjust=0.3)+
+    
+    labs(y='logCPM')+
+    # legend(legend=c('Low', 'High'))+
+    theme(strip.text = element_text(
+      size = 12, color = "dark green", face="bold"), 
+      axis.title.y =element_text(
+        size = 12, color = "dark green", face="bold",), 
+      axis.text.x = element_text(
+        size = 12 ))+
+    guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))
+  
+  
+  
+  p
+  #warnings()
+  ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
+                group_cat,'_',  factors_to_cluster_s, '_top_', filt_top,sel_cohort,
+                'cluster_',choose_group,'.jpeg'), 
+         width=width, height=height, dpi = 300)
+  
+  graphics.off()
+  
+  
+  return(p)
+  
+}
+
+
+

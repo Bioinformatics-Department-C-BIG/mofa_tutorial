@@ -6,6 +6,9 @@ library(sgof)
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/factoextra")
 library('factoextra')
+library(plyr)
+library(dplyr)
+
 ## Utils 
 ## Summarized experiment 
 
@@ -40,7 +43,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                         'MCA_TOT_diff_V16')
+                         'MCA_TOT_diff_V16', 'SITE')
 #'DYSKIRAT')
 
 

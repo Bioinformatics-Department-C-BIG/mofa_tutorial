@@ -8,9 +8,11 @@ source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R')
 ## 1. get se
 ## 2. deseq 
 ## 3. enrichment 
+
+# TODO: make function to load for rnas and mirnas separately
 se_clusters<-se_filt_V08
 deseq_all_groups <- vector("list", length = 3)
-
+se_filt_all<- vector("list", length = 3)
 
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust )
 
@@ -29,7 +31,7 @@ se$LEDD
 
 add_med='LEDD_scaled'
 add_med='PDMEDYN'
-
+add_med=FALSE
 if (add_med=='PDMEDYN'){
   formula_deseq = '~AGE_SCALED+SEX+PDMEDYN+kmeans_grouping'
   
@@ -37,12 +39,19 @@ if (add_med=='PDMEDYN'){
   formula_deseq = '~AGE_SCALED+SEX+LEDD_scaled+kmeans_grouping'
   
 }else{
-  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
   
 }
+
 formula_deseq
 
 deseq_by_group<-function(se_filt, formula_deseq){
+  
+  
+  
+        # TODO: add plate and/OR site 
+        # se_filt1 neutrophil counts, and usable bases
+        se_filt$SITE<-as.factor(se_filt$SITE)
   
         se_filt$kmeans_grouping
         se_filt<-preprocess_se_deseq2(se_filt)
@@ -77,36 +86,70 @@ deseq_by_group<-function(se_filt, formula_deseq){
         return(deseq2ResDF)
 }
 
-cluster_id=1
-se_filt=se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
-deseq_all_groups[[cluster_id]]=deseq_by_group(se_filt, formula_deseq)
-
-cluster_id=3
-se_filt=se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
-deseq_all_groups[[cluster_id]]=deseq_by_group(se_filt, formula_deseq)
 
 
 
+deseq_all<- vector("list", length = 3)
+
+### se_filt_all: list to hold the se
+### deseq_all_groups: list to hold the deseq results 
+### deseq_significant_all_groups: list to hold significant 
 
 
-deseq2ResDF3<-deseq_all_groups[[3]]
-deseq2ResDF1<-deseq_all_groups[[1]]
-dim(deseq2ResDF3)
-dim(deseq2ResDF1)
+for (cluster_id in 1:3){
+  
 
-deseq_sig3<-deseq2ResDF3[deseq2ResDF3$mofa_sign %in% 'Significant',]
-deseq_sig1<-deseq2ResDF1[deseq2ResDF1$mofa_sign %in% 'Significant',]
+  ### 1. for each cluster, create se filt with controls, 
+  ### 2. run deseq 
+  ### 3. get significant per cluster 
+  se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
+  deseq_all_groups[[cluster_id]]=deseq_by_group(se_filt_all[[cluster_id]], formula_deseq)
+  deseq2ResDF<-deseq_all_groups[[cluster_id]]
+
+  
+  deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
+
+} 
+rds_data=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/clusters_data')
+saveRDS(deseq_all_groups, rds_data)
+
+for (cluster_id in 1:3){
+  deseq2ResDF=deseq_all_groups[[cluster_id]]
+  
+  deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
+  deseq_all_groups[[cluster_id]]<-deseq2ResDF
+  
+  }
 
 
-dim(deseq_sig1)
-dim(deseq_sig3)
-
-
-#union_de<-list(group1=de_group_vs_control1$symbol, group2=de_group_vs_control2$symbol, group3=de_group_vs_control3$symbol)
-#fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_',keep_all_feats,'.png')
+deseq_all_names<-lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 
 
 
+names(deseq_all_names)<-paste0('SG', 1:length(deseq_all_names))
+
+#### 1. Venn from significant 
+fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq.png')
+create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
+graphics.off()
+# TODO: 
+deseq_all_names 
+
+#### 2. Venn from significant in top of factor
+
+## 1. get top of factor 
+## 2. intersect with DE 
+sel_factor=2
+top10<- gsub('\\..*', '',select_top_bottom_perc(MOFAobject=MOFAobject, view=2, factors = sel_factor, top_fr = 0.1))
+# intersect with the top factors 
+deseq_all_top<-lapply(deseq_all_names, function(x) intersect(x,top10 ) )
+
+
+deseq_all_top
+
+
+fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
+create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
 
 
 

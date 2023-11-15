@@ -93,6 +93,9 @@ patno_event_ids=unlist(patno_event_ids)
 # select data for the requested patiennts 
 #combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
+
+
+
 combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
 y='NP2PTOT'
 #cl_clusters<-get_clinical_clusters_kml(combined_bl_log_sel = combined_bl_log_sel_pd,y, nbCluster = 1) 

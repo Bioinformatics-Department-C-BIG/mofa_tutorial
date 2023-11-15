@@ -510,6 +510,25 @@ if (run_heatmap){
 
 deseq2ResDF$SYMBOL
 
+
+# TODO: function,take se filt and deseqresdf
+plate
+se_filt2=se_filt_all[[2]]
+
+se_filt1=se_filt_all[[1]]
+se_filt1=se_filt_all[[1]]
+
+
+table(se_filt1$SITE)
+
+table(se_filt2$SITE)
+cluster_id = 2
+
+se_filt=se_filt_all[[cluster_id]]
+deseq2ResDF=deseq_all_groups[[cluster_id]]
+
+
+
 library('EnhancedVolcano')
 if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
 
@@ -523,8 +542,10 @@ ylim = c(0,pmax-0.5)
 ns_full<-table(se_filt$COHORT_DEFINITION)
 ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
 ns
+
+deseq2ResDF
 pvol<-EnhancedVolcano(deseq2ResDF,
-                lab = lab,
+               lab = deseq2ResDF$GENE_SYMBOL,
                 pCutoff = 10e-2,
                 FCcutoff = 0.1,
                 x = 'log2FoldChange',
@@ -555,7 +576,10 @@ pvol<-EnhancedVolcano(deseq2ResDF,
 pvol
 
 fname
+VISIT=''
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
+
 ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
 

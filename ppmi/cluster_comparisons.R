@@ -5,15 +5,26 @@
 
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+
 ## 1. get se
 ## 2. deseq 
 ## 3. enrichment 
 
+
+MOFAobject_clusts=MOFAobjectPD
+
+
 # TODO: make function to load for rnas and mirnas separately
-se_clusters<-se_filt_V08
+se_clusters<-filter_se(se_filt_corrected, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+
+formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+assay(se_clusters)
+
+
+
 deseq_all_groups <- vector("list", length = 3)
 se_filt_all<- vector("list", length = 3)
-
+y_clust='NP2PTOT'
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust )
 
 se_clusters$kmeans_grouping
@@ -40,6 +51,9 @@ if (add_med=='PDMEDYN'){
   
 }else{
   formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
+  
+  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
   
 }
 
@@ -53,7 +67,6 @@ deseq_by_group<-function(se_filt, formula_deseq){
         # se_filt1 neutrophil counts, and usable bases
         se_filt$SITE<-as.factor(se_filt$SITE)
   
-        se_filt$kmeans_grouping
         se_filt<-preprocess_se_deseq2(se_filt)
         se_filt$kmeans_grouping
         se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
@@ -69,7 +82,7 @@ deseq_by_group<-function(se_filt, formula_deseq){
                               design = as.formula(formula_deseq))
         ddsSE<-estimateSizeFactors(ddsSE)
         
-        vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+        #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
         
         
         deseq2Data <- DESeq(ddsSE)
@@ -110,8 +123,8 @@ for (cluster_id in 1:3){
   deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
 
 } 
-rds_data=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/clusters_data')
-saveRDS(deseq_all_groups, rds_data)
+#rds_data=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/clusters_data')
+#saveRDS(deseq_all_groups, rds_data)
 
 for (cluster_id in 1:3){
   deseq2ResDF=deseq_all_groups[[cluster_id]]

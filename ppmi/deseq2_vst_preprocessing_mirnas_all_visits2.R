@@ -31,7 +31,7 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
-
+#combined_bl_log$Plate
 
 #process_mirnas=FALSE
 #combined_bl_log$np2
@@ -108,32 +108,7 @@ VISIT=c('BL',  'V08');
         ### TODO: ADD FILTER COMMON AS PARAM TO SAVE IN THE DIRECTORY IN CONFIG!!! 
         
         
-        preprocess_se_deseq2<-function(se_filt){
-          
-          se_filt<-filter_se_byExpr(se_filt)
-          
-          ### OUTPUT THE FILTERED se_filt 
-          ind<-which(is.na(se_filt$AGE_AT_VISIT))
-          se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
-          
-          ## Turn to factors for deseq
-          se_filt$SEX<-as.factor(se_filt$SEX)
-          se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
-          
-          ## these are almost the same so it is okay to scale AGE earlier 
-          hist(se_filt$AGE_AT_VISIT)
-          hist(se_filt$AGE_SCALED)
-          
-          # impute: 
-          # which()
-          se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
-          se_filt<-se_filt[,!(is.na(se_filt$SEX))]
-          
-          table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
-          
-          colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
-          return(se_filt)
-        }
+        
         se_filt<-preprocess_se_deseq2(se_filt)
         
         ### Perform the appropriate test depending on what you want as prediction variable
@@ -278,9 +253,82 @@ VISIT=c('BL',  'V08');
           
         }
   
-  
-  
-  
-  
+
+        
+### REMOVE BATCH EFFECT : 1. unwanted variation, 2. site 3. plate 
+        
+        # TODO: create function 
+
+
+
+
+se_remove_batch_effect<-function(se_filt, batch_var){
+          #'
+          #'
+          #' @param name remove batch effect 
+          #'
+          
+          
+          as.data.frame(colData(se_filt)[, c('Plate', 'PATNO_EVENT_ID')])
+          se_filt_qc<-se_filt[, !is.na(se_filt$Plate)]
+          
+         # batch1 = colData(se_filt_qc)[, 'Plate']
+          batch= colData(se_filt_qc)[, 'Plate']
+          
+          
+         # se_filt_edit<-preprocess_se_deseq2(se_filt_qc)
+          
+          ddsSE <- DESeqDataSet(se_filt, 
+                                design = as.formula('~AGE_AT_VISIT+SEX+SITE'))
+          ddsSE<-estimateSizeFactors(ddsSE)
+          
+          
+          ## vsd and correct the vsd 
+          vsd <- varianceStabilizingTransformation(ddsSE)
+          y=assay(vsd)
+          dim(as.matrix(y))
+          
+          
+          ### EITHER log and correct the log
+          y_log=log2(assay(ddsSE))
+          
+          y2 <- removeBatchEffect(as.matrix(y), batch = batch)
+          
+          y_log_corrected=removeBatchEffect(as.matrix(y_log), batch)
+          
+          
+          par(mfrow=c(2,1))
+          boxplot(as.data.frame(y[,seq(1,length(batch),2)]),main="Original")
+          boxplot(as.data.frame(y2[,seq(1,length(batch),2)]),main="Batch corrected")
+          
+          
+          
+          par(mfrow=c(2,1))
+          boxplot(as.data.frame(y_log[,seq(1,length(batch),2)]),main="Original")
+          boxplot(as.data.frame(y_log_corrected[,seq(1,length(batch),2)]),main="Batch corrected")
+          y2_unlog_corrected<-round(2^y_log_corrected, digits = 0)
+         
+          se_filt_corrected<-se_filt
+          assay(se_filt_corrected)<-y2_unlog_corrected
+          
+          
+          y2_unlog<-2^y2
+          
+          dim(y2_unlog)
+          dim(assay(se_filt))
+          head(assay(se_filt))[,1:5]
+          options(digits=10)
+          print(head(y2_unlog_corrected)[,1:5], quote = FALSE)   
+          
+          return(se_filt_corrected)
+          
+        }
+      
+        
+
+
+se_filt_corrected<-se_remove_batch_effect(se_filt)
+
+
 
 

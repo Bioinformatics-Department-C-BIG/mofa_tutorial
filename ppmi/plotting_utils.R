@@ -142,6 +142,68 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 
 
 
+library('EnhancedVolcano')
+
+
+plotVolcano<-function(deseq2ResDF, se_filt){
+  #'
+  #'
+  #' Take a sumarized experiment and deseq results 
+  #' @param deseq2ResDF deseq results dataframe 
+  #'  @param summarized experiment 
+  #'
+  #'
+  #'
+  
+  
+  if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
+  
+  mfc<-max(abs(deseq2ResDF$log2FoldChange))
+  pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
+  
+  xlim = c(-mfc-0.2,mfc+0.2)
+  ylim = c(0,pmax+0.2)
+  ylim = c(0,pmax-0.5)
+  
+  ns_full<-table(se_filt$COHORT_DEFINITION)
+  ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
+  
+  
+  pvol<-EnhancedVolcano(deseq2ResDF,
+                        lab = deseq2ResDF$GENE_SYMBOL,
+                        pCutoff = 10e-2,
+                        FCcutoff = 0.1,
+                        x = 'log2FoldChange',
+                        y = 'padj',
+                        
+                        
+                        ## format 
+                        pointSize = 2,
+                        legendIconSize = 5,
+                        labSize = 4,
+                        
+                        legendLabSize=16,
+                        subtitleLabSize = 13,
+                        axisLabSize=17,
+                        colAlpha = 0.5,
+                        
+                        # legend positions 
+                        # legendPosition = 'right',
+                        
+                        xlim=xlim, 
+                        ylim=ylim, 
+                        
+                        subtitle=ns, 
+                        title=''
+  )
+  
+  
+  pvol
+  return(pvol)
+}
+
+
+
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
                             factor_labels=NULL, draw_all_times=FALSE){

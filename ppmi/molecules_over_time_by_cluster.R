@@ -7,6 +7,9 @@ source(paste0(script_dir, 'ppmi/time_utils.R'))
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
+
+source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
+
 #get_de_features_by_group
 library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
@@ -22,6 +25,7 @@ se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+se_rnas=se_filt_corrected; # load the data after batch correction 
 
 
 # TODO: load proteins 
@@ -115,12 +119,10 @@ clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP
 # TODO: which variables are used as id? check when melting feat_names
 ## only if rna
 
-top_factor_feats<-gsub('\\..*', '',top_factor_feats)
-
 if (view=='RNA'){
   rownames(se)<-gsub('\\..*', '',rownames(se))
   feat_names<-gsub('\\..*', '',feat_names)
-  top_factor_feats_rna<-top_factor_feats
+  #top_factor_feats_rna<-top_factor_feats
   
   
 }else if (view=='proteomics_plasma' || view=='proteomics_csf' ){
@@ -222,34 +224,11 @@ merged_melt_groups<-merged_melt_filt %>%
   split(~group)
   
 
-
-
 library(stringr)
-#wilcox_all_vars
-
+# load from cluster_comparisons file  
 de_group_vs_control1<-deseq_all_names$SG1
-#de_group_vs_control2=NULL
 de_group_vs_control2<-deseq_all_names$SG2
 de_group_vs_control3<-deseq_all_names$SG3
-
-
-#which(de_group_vs_control3$gene_symb %in% 'BCL9L')
-
-#de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
-#de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
-#de_merged3<-merge(de_group_vs_control2,de_group_vs_control3, by='symbol' )
-
-##de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y), ]; 
-#de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
-#de_merged_to_remove3<-de_merged3[!(de_merged3$direction.x ==de_merged3$direction.y), ]
-
-#dim(de_merged)
-#dim(de_merged_to_remove3)
-
-#de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol,de_merged_to_remove3$symbol )
-#de_merged_to_remove
-
-
 
 
 

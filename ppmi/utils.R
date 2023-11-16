@@ -177,6 +177,39 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 #patno_event_ids = samples_metadata(MOFAobject)$PATNO_EVENT_ID
 #patno_event_ids = paste0(samples_metadata(MOFAobject)$PATNO, '_BL')
 
+preprocess_se_deseq2<-function(se_filt){
+  #' 
+  #' Preprocess metadata of summarized experiment 
+  #' 
+  #'  
+  se_filt<-filter_se_byExpr(se_filt)
+  
+  ### OUTPUT THE FILTERED se_filt 
+  ind<-which(is.na(se_filt$AGE_AT_VISIT))
+  se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
+  
+  ## Turn to factors for deseq
+  se_filt$SEX<-as.factor(se_filt$SEX)
+  se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
+  se_filt$SITE<-as.factor(se_filt$SITE)
+  se_filt$Plate<-as.factor(se_filt$Plate)
+  
+  
+  ## these are almost the same so it is okay to scale AGE earlier 
+ # hist(se_filt$AGE_AT_VISIT)
+#  hist(se_filt$AGE_SCALED)
+  
+  # impute: 
+  # which()
+  se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
+  se_filt<-se_filt[,!(is.na(se_filt$SEX))]
+  
+  table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
+  
+  colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
+  return(se_filt)
+}
+
  fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
    #'
    #' @param PATNO_EVENT_ID

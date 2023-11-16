@@ -57,11 +57,8 @@ combined_all_original<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv') 
 combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 
-curated_mofa<-combined_bl_log %>%
-  dplyr::filter(EVENT_ID=='V14') %>%
-  dplyr::filter(PATNO %in% sm$PATNO)
 
-curated_mofa
+
 
 combined_bl<-combined_all_original
 combined_bl<-combined_bl_log

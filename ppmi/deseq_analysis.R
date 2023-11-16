@@ -511,7 +511,7 @@ if (run_heatmap){
 deseq2ResDF$SYMBOL
 
 
-# TODO: function,take se filt and deseqresdf
+# TODO: function take se filt and deseq 
 plate
 se_filt2=se_filt_all[[2]]
 
@@ -522,61 +522,16 @@ se_filt1=se_filt_all[[1]]
 table(se_filt1$SITE)
 
 table(se_filt2$SITE)
-cluster_id = 2
+cluster_id = 1
 
 se_filt=se_filt_all[[cluster_id]]
 deseq2ResDF=deseq_all_groups[[cluster_id]]
 
-
-
-library('EnhancedVolcano')
-if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
-
-mfc<-max(abs(deseq2ResDF$log2FoldChange))
-pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
-pmax
-xlim = c(-mfc-0.2,mfc+0.2)
-ylim = c(0,pmax+0.2)
-ylim = c(0,pmax-0.5)
-
-ns_full<-table(se_filt$COHORT_DEFINITION)
-ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
-ns
-
-deseq2ResDF
-pvol<-EnhancedVolcano(deseq2ResDF,
-               lab = deseq2ResDF$GENE_SYMBOL,
-                pCutoff = 10e-2,
-                FCcutoff = 0.1,
-                x = 'log2FoldChange',
-                y = 'padj',
-                
-                
-                ## format 
-                pointSize = 2,
-                legendIconSize = 5,
-                labSize = 4,
-                
-                legendLabSize=16,
-                subtitleLabSize = 13,
-                axisLabSize=17,
-                colAlpha = 0.5,
-                
-                # legend positions 
-               # legendPosition = 'right',
-                
-                xlim=xlim, 
-               ylim=ylim, 
-               
-                subtitle=ns, 
-                title=''
-               )
+pvol<-plotVolcano(deseq2ResDF, se_filt)
 
 
 pvol
-
 fname
-VISIT=''
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
 

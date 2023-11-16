@@ -559,7 +559,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
 
 
 
-plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',add_patient_lines=FALSE ){
+plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',add_patient_lines=FALSE, trajectory_fname ){
   #'
   #' @param merged_melt_filt_most_sig
   #' @param x axis
@@ -603,9 +603,7 @@ plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',
   
   p
   #warnings()
-  ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
-                group_cat,'_',  factors_to_cluster_s, '_top_', filt_top,sel_cohort,
-                'cluster_',choose_group,'.jpeg'), 
+  ggsave(trajectory_fname, 
          width=width, height=height, dpi = 300)
   
   graphics.off()

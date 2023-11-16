@@ -42,8 +42,8 @@ combined_bl_log<-read.csv2(metadata_output)
 VISIT=c('BL','V08')
 VISIT='V08'
 
-VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL',  'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 
 #for (VISIT in list( list('V08', 'BL')) ){
 
@@ -110,6 +110,9 @@ VISIT=c('BL',  'V08');
         
         
         se_filt<-preprocess_se_deseq2(se_filt)
+        # TODO: remove the batch effect from all visits before separating to each visit 
+        se_filt_corrected<-se_remove_batch_effect(se_filt)
+        
         
         ### Perform the appropriate test depending on what you want as prediction variable
         if (length(sel_coh)>1){

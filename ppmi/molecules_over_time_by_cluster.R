@@ -15,6 +15,7 @@ library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
 
+factors_to_cluster_s<-paste0(c(which(all_fs_diff[,y_clust])), collapse='-')
 
 
 # load this only once..? 
@@ -103,11 +104,6 @@ rownames(se_rnas)<-gsub('\\..*', '',rownames(se_rnas))
 feats_rna_all<-gsub('\\..*', '',feats_rna_all)
 top_factor_feats_rna<-gsub('\\..*', '',top_factor_feats_rna)
 
-
-keep_all_feats
-
-
-
 ### add clinvars to the requested features too! 
 clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP3TOT', 'COHORT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
                    'con_putamen')
@@ -119,96 +115,17 @@ clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP
 # TODO: which variables are used as id? check when melting feat_names
 ## only if rna
 
-if (view=='RNA'){
-  rownames(se)<-gsub('\\..*', '',rownames(se))
-  feat_names<-gsub('\\..*', '',feat_names)
-  #top_factor_feats_rna<-top_factor_feats
-  
-  
-}else if (view=='proteomics_plasma' || view=='proteomics_csf' ){
+if (view=='proteomics_plasma' || view=='proteomics_csf' ){
   feat_names<-gsub('_proteomics.*', '',feat_names)
 }
+
+
+
 
 keep_all_feats
 
 merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
 merged_melt_filt_mirna<-create_merged_melt(se_rnas, feats_mirna_all, view='miRNA')
-
-
-
-create_merged_melt<-function(se, feat_names, view){
-  #' merged_melt_filt: is a merged sumamrized experiment, in long format, 
-  #' that includes multiple visits
-  #' and all molecules per patient 
-  #' @param se
-  #' @param
-  #'  
-  merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
-
-  merged_melt_orig<-merged_melt_orig_1
-  merged_melt_orig$symbol<-merged_melt_orig$variable
-  
-  
-  
-  #
-  ### ### NOW match factors to samples
-  # CREATE GROUPS BY FACTOR 
-  ############################################
-  # IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
-  sel_cohort<-c(1)
-  sel_cohort=FALSE
-  
-  if (sel_cohort){
-    #'
-    #'
-    merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
-  }else{
-    merged_melt=merged_melt_orig
-  }
-  merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
-  merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
- 
-  merged_melt_pd<-merged_melt
-  y_clust='NP2PTOT'
-  clust_name= paste0(y_clust, '_clust')
-  
-  MOFAobject_clusts=MOFAobjectPD
-  
-  
-  merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
-  merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
-  merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
-  
-  # ADD LABELS FOR controls
-  merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
-  
-  na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
-  merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
-  merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
-  
-  
-  
-  ################
-  
-  
-  ### Plot to remove the other group ####
-  # TAKE THE low group  
-  # TODO: decide how to take the lowest x and highest x 
-  ### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
-  
-  
-  
-  merged_melt_filt$group<-merged_melt_filt$kmeans_grouping
-  
-  group_cat='kmeans_grouping'
-  merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
-  group_cats<-levels(merged_melt_filt$group)
-  ## 
-  # TODO: Function: take a group and DE it with controls 
-  
-  return(merged_melt_filt)
-  
-}
 
 
 
@@ -219,7 +136,7 @@ deseq_all
 
 
 ### List of merged per group
-
+merged_melt_filt=merged_melt_filt_rna
 merged_melt_groups<-merged_melt_filt %>% 
   split(~group)
   
@@ -386,8 +303,8 @@ if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
   choose_group=1
+#  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_top$SG1[1:30],]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
   
  # choose_group=2
   #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2_unique_top,]
@@ -450,8 +367,12 @@ merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(m
                                                    from= names(EVENT_MAP), 
                                                    to=unlist(EVENT_MAP, use.names=FALSE))))
 
+factors_to_clust
+trajectory_fname<-paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
+       '_',  factors_to_cluster_s, '_top_', filt_top,
+       'cluster_',choose_group,'.jpeg')
 
-plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month' )
+plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory_fname = trajectory_fname )
 
 
 

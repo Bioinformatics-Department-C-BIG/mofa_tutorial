@@ -266,9 +266,11 @@ VISIT=c('BL','V04', 'V06',  'V08');
 
 
 se_remove_batch_effect<-function(se_filt, batch_var){
+  
           #'
           #'
           #' @param name remove batch effect 
+          #'
           #'
           
           
@@ -277,17 +279,18 @@ se_remove_batch_effect<-function(se_filt, batch_var){
           
          # batch1 = colData(se_filt_qc)[, 'Plate']
           batch= colData(se_filt_qc)[, 'Plate']
-          remove_plate<-names(table(batch)[table(batch)<2])
+          remove_plate<-names(table(batch)[table(batch)<2]) # remove sequencing plates where only one sample was available 
+          cohorts= colData(se_filt_qc)[, 'COHORT'] 
+          non_na_samples<-!is.na(cohorts) # remove samples where COHORT is not available
           
-          
-          
-          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)]
-          batch<- factor(batch[!(batch%in%remove_plate)])
+          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)   & non_na_samples ]
+          batch<- factor(batch[!(batch%in%remove_plate) & non_na_samples  ])
           table(batch)
           
           cohorts= colData(se_filt_qc)[, 'COHORT']
-          
-          
+          length(cohorts)
+          length(batch) 
+          dim(se_filt_qc)
          # se_filt_edit<-preprocess_se_deseq2(se_filt_qc)
           
           ddsSE <- DESeqDataSet(se_filt_qc, 
@@ -305,8 +308,8 @@ se_remove_batch_effect<-function(se_filt, batch_var){
           y_log=log2(assay(ddsSE)+1)
           
           table(batch)
-       
-       ## combat 
+          
+          ## combat remove batch correction 
           adjusted_counts <- ComBat_seq(as.matrix(y_log), batch=batch, group=cohorts)
           se_filt_combat<-se_filt_qc
           assay(se_filt_combat)<-adjusted_counts

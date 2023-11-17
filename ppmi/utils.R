@@ -193,6 +193,7 @@ preprocess_se_deseq2<-function(se_filt){
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   se_filt$SITE<-as.factor(se_filt$SITE)
   se_filt$Plate<-as.factor(se_filt$Plate)
+  se_filt$Usable_Bases_SCALE<-as.factor(se_filt$Usable.Bases....)
   
   
   ## these are almost the same so it is okay to scale AGE earlier 

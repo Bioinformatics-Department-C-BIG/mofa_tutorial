@@ -6,6 +6,7 @@
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
+
 ## 1. get se
 ## 2. deseq 
 ## 3. enrichment 
@@ -15,18 +16,18 @@ MOFAobject_clusts=MOFAobjectPD
 
 
 # TODO: make function to load for rnas and mirnas separately
-se_clusters<-filter_se(se_filt_corrected, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
 
+se_clusters<-filter_se(se_filt_combat, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps) # se_filt_combat is missing one sample that was on one plate 
 se_clusters<-filter_se(se_filt, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
 
 
 formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
-formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
+#formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
 
 assay(se_clusters)
 
 
-
+MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3)
 se_filt_all<- vector("list", length = 3)
 y_clust='NP2PTOT'
@@ -58,11 +59,11 @@ if (add_med=='PDMEDYN'){
   formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
   formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
   
-  #formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
   
 }
 
-formula_deseq
+formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'
 
 deseq_by_group<-function(se_filt, formula_deseq){
   
@@ -71,7 +72,8 @@ deseq_by_group<-function(se_filt, formula_deseq){
         # TODO: add plate and/OR site 
         # se_filt1 neutrophil counts, and usable bases
         se_filt$SITE<-as.factor(se_filt$SITE)
-  
+        se_filt$Usable_Bases_SCALE<-scale(se_filt$`Usable.Bases....`)
+        
         se_filt<-preprocess_se_deseq2(se_filt)
         se_filt$kmeans_grouping
         se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
@@ -147,11 +149,44 @@ deseq_all_names<-lapply(deseq_all, function(x){return(  gsub('\\..*', '',rowname
 names(deseq_all_names)<-paste0('SG', 1:length(deseq_all_names))
 
 #### 1. Venn from significant 
+nclusts=length(table(se_clusters$kmeans_grouping))-1
+clust_name=paste0(y_clust, '_clust')
 fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq.png')
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
 graphics.off()
 # TODO: 
-deseq_all_names 
+
+
+
+
+########### 
+
+
+
+# TODO: venn before and after correction 
+plate
+
+cluster_id = 2
+
+se_filt=se_filt_all[[cluster_id]]
+deseq2ResDF=deseq_all_groups[[cluster_id]]
+
+pvol<-plotVolcano(deseq2ResDF, se_filt)
+
+
+pvol
+fname
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
+
+ggsave(fname,pvol, width=4.5,height=7, dpi=300)
+
+
+
+
+
+
+
 
 #### 2. Venn from significant in top of factor
 

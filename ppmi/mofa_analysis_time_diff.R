@@ -46,6 +46,8 @@ clinical_scales<-scale_vars_diff
 #as.factor(samples_metadata(MOFAobject)$SCAU26CT)
 #MOFAobject@samples_metadata=meta_merged_ord
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
+
+MOFAobject@samples_metadata$Usable_Bases_SCALE<-scale(MOFAobject@samples_metadata$`Usable.Bases....`)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
 
@@ -345,10 +347,9 @@ set.seed(123)
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 #Z_scaled<-apply(as.data.frame(Z), 2, scale);
-colMedians(Z_scaled);
 
 
-fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )# +
+#fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )# +
   #geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
 fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
@@ -685,9 +686,9 @@ clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate')
-all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate' , 'NP2PTOT_LOG')
- sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE')
+all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate')
+sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
 # nfl serum,. lowput ratio etc.  
 sm$tau
@@ -695,6 +696,7 @@ sm$tau
 cors_all_pd[, 'PD_MED_USE']
 factors=names(sel_factors)
 sel_factors
+graphics.off()
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
@@ -709,7 +711,7 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 graphics.off()
 
 
-
+hist(scale(sm_pd$Usable.Bases....))
 
 
 

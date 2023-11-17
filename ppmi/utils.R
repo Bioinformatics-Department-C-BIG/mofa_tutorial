@@ -43,7 +43,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                         'MCA_TOT_diff_V16', 'SITE')
+                         'MCA_TOT_diff_V16', 'SITE', 'Plate')
 #'DYSKIRAT')
 
 
@@ -97,8 +97,8 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # And the change in the datascan binding  in the future?
                                  # THESE factors are the ones that we actually WANT 
                                  'MCATOT', 
-                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10'
-                                 
+                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                                 'SITE', 'Plate'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  
@@ -1163,7 +1163,7 @@ create_multi_experiment<-function(data_full, combined_bl){
 filter_se_byExpr<-function(se_filt){
       raw_counts <- assay(se_filt)
       
-      idx <- edgeR::filterByExpr(raw_counts)
+      idx <- edgeR::filterByExpr(raw_counts,min.count=20 )
       raw_counts <- as.matrix(raw_counts[idx, ])
       
       se_filt = se_filt[idx,]

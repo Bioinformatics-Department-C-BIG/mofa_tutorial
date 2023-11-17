@@ -17,7 +17,12 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 se_clusters<-filter_se(se_filt_corrected, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
 
+se_clusters<-filter_se(se_filt, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+
+
 formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
+
 assay(se_clusters)
 
 
@@ -53,7 +58,7 @@ if (add_med=='PDMEDYN'){
   formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
   formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
   
-  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+  #formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
   
 }
 

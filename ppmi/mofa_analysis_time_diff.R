@@ -39,7 +39,6 @@ library('factoextra')
 #scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
 clinical_scales<-scale_vars_diff
   
-combined_bl_log$SCAU_TOT_V16
 
 ## TODP
 
@@ -91,7 +90,7 @@ patno_event_ids = sapply(all_event_ids_p, function(event_id){
 
 patno_event_ids=unlist(patno_event_ids)
 # select data for the requested patiennts 
-#combined_bl_log<-combined_new
+
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids )
 
 
@@ -168,6 +167,7 @@ correlate_factors_categorical<-function(y){
 clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT', 'updrs3_score', 'updrs2_score')
 add_clinical_clusters=FALSE
 if (add_clinical_clusters){
+  
   cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
   rownames(cors_kruskal)<-1:N_FACTORS
   kw_cors<-format(cors_kruskal, digits=1)<0.05
@@ -180,6 +180,11 @@ if (add_clinical_clusters){
 }
 
 
+
+y_pvals
+
+y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
+#y_pvals<-y_pvals<0.05
 
   
 
@@ -339,7 +344,7 @@ cluster_samples_mofa=TRUE
 set.seed(123)
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
-Z_scaled<-apply(as.data.frame(Z), 2, scale);
+#Z_scaled<-apply(as.data.frame(Z), 2, scale);
 colMedians(Z_scaled);
 
 
@@ -459,12 +464,7 @@ boxplot_by_cluster<-function(met, clust_name, y){
   
   p<-ggplot(met ,aes_string(x=clust_name , y=y))+
     geom_boxplot(aes_string( x=clust_name, color=clust_name))+
-    #stat_compare_means(comparisons = my_comparisons)+
-    #geom_pwc(
-    #  aes(group = clust_name), tip.length = 0,
-    #  method = "wilcox_test", label = "p.format"
-    #)
-    #p
+
 
     geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
                aes_string(y=y), 
@@ -683,10 +683,11 @@ progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta'
 progression_markers_conf<-c( 'abeta', 'sft' )
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
+MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN')
-all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX' )
- sel_factors_conf<-get_factors_for_scales(clinical_scales_conf)
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate')
+all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate' , 'NP2PTOT_LOG')
+ sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
 # nfl serum,. lowput ratio etc.  
 sm$tau
@@ -733,13 +734,16 @@ all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )
 
 # 2. scales + 3. imaging 
 vars_to_plot=all_diff_variables; 
-all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts)
+all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts, 'NP2PTOT_LOG')
 sm=MOFAobjectPD@samples_metadata
 sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
+
 all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD@samples_metadata)]
-sm[vars_to_plot]
+
 all_diff_variables_prog=unique(all_diff_variables_prog)
+all_diff_variables_prog
 #### Factors related to the longterm change in scale #####
+graphics.off()
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'

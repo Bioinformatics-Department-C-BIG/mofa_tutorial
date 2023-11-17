@@ -277,25 +277,41 @@ se_remove_batch_effect<-function(se_filt, batch_var){
           
          # batch1 = colData(se_filt_qc)[, 'Plate']
           batch= colData(se_filt_qc)[, 'Plate']
+          remove_plate<-names(table(batch)[table(batch)<2])
+          
+          
+          
+          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)]
+          batch<- factor(batch[!(batch%in%remove_plate)])
+          table(batch)
+          
+          cohorts= colData(se_filt_qc)[, 'COHORT']
           
           
          # se_filt_edit<-preprocess_se_deseq2(se_filt_qc)
           
-          ddsSE <- DESeqDataSet(se_filt, 
+          ddsSE <- DESeqDataSet(se_filt_qc, 
                                 design = as.formula('~AGE_AT_VISIT+SEX+SITE'))
           ddsSE<-estimateSizeFactors(ddsSE)
           
           
           ## vsd and correct the vsd 
-          vsd <- varianceStabilizingTransformation(ddsSE)
+         # vsd <- varianceStabilizingTransformation(ddsSE)
           y=assay(vsd)
           dim(as.matrix(y))
           
           
           ### EITHER log and correct the log
-          y_log=log2(assay(ddsSE))
+          y_log=log2(assay(ddsSE)+1)
           
-          y2 <- removeBatchEffect(as.matrix(y), batch = batch)
+          table(batch)
+       
+       ## combat 
+          adjusted_counts <- ComBat_seq(as.matrix(y_log), batch=batch, group=cohorts)
+          se_filt_combat<-se_filt_qc
+          assay(se_filt_combat)<-adjusted_counts
+          
+          y2 <- removeBatchEffect(as.matrix(y), batch = batch )
           
           y_log_corrected=removeBatchEffect(as.matrix(y_log), batch)
           
@@ -313,6 +329,7 @@ se_remove_batch_effect<-function(se_filt, batch_var){
          
           se_filt_corrected<-se_filt
           assay(se_filt_corrected)<-y2_unlog_corrected
+          assay(se_filt_corrected)<-adjusted_counts
           
           
           y2_unlog<-2^y2
@@ -323,14 +340,28 @@ se_remove_batch_effect<-function(se_filt, batch_var){
           options(digits=10)
           print(head(y2_unlog_corrected)[,1:5], quote = FALSE)   
           
+          
+          
+          
+          
+          
           return(se_filt_corrected)
+          
+          
+          
           
         }
       
-        
+#BiocManager::install('sva')
+
+library('sva')
+
+formula_deseq
+se_filt_corrected<-se_remove_batch_effect(se_filt, design = design, covariates = svobj$sv)
+BiocManager::install('sva')
 
 
-se_filt_corrected<-se_remove_batch_effect(se_filt)
+
 
 
 

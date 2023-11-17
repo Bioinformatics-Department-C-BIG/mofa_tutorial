@@ -250,7 +250,7 @@ run_heatmap=TRUE
 deseq2ResDF$SYMBOL
 
 
-# TODO: function take se filt and deseq 
+ 
 plate
 
 cluster_id = 1

@@ -3,6 +3,8 @@
 
 
 library(dplyr)
+library(ggplot2)
+
 source(paste0(script_dir, '/ppmi/extract_metadata.R'))
 # deseq2 vst 
 #source(paste0(script_dir, 'ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
@@ -23,11 +25,8 @@ combined[which(combined$NHY==101),]$NHY<-NA
 
 
 #### 
-library(ggplot2)
-combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
 combined_choose<-combined[combined$COHORT %in% c(1,2) & combined$INEXPAGE %in% c('INEXPD', 'INEXHC', 'INEXSNCA', 'INEXLRRK2'),]
 
-combined$INEXPAGE
 group_by_var<-'INEXPAGE'
 ggplot(combined_choose)+
   geom_density(aes_string(x='AGE_AT_VISIT', fill=group_by_var,
@@ -42,7 +41,7 @@ ggplot(combined)+
 
 
 
-library(ggplot2)
+
 
 
 graphics.off()
@@ -403,16 +402,10 @@ hist(as.matrix(df_log_sel))
 
 
 
-# just for plotting
+## just for plotting: filter samples that we want to plot over time and normalize 
+
 combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 
-combined_new$RBD_TOT
-
-  dim(combined_new)
-  
-  
-  hist(log2(combined_new$stai_state))
-  
 
 
 ##################### CLINICAL CHANGES #####################################

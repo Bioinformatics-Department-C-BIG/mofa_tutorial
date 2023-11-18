@@ -102,6 +102,12 @@ colnames(curated_total_new_cols)
 
 
 
+## add rnaseq metadata
+rnaseq_meta<-read.csv(paste0(input_data, '/rnaseq/meta_data.11192021.csv'))
+rnaseq_meta$PATNO_EVENT_ID<-rnaseq_meta$PATNO.Visit
+
+rnaseq_meta_qc<-rnaseq_meta%>%
+  dplyr::filter( QC=='HighQC')
 
 
 #c1_filt<-curated_v1%>%
@@ -157,7 +163,6 @@ combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
 
 
-
 #which(!is.na(combined$Outcome))
 
 
@@ -170,24 +175,9 @@ combined[ind,'AGE' ]<-get_age_at_visit(combined[ind,])
 ## Turn to factors for deseq
 combined$SEX<-as.factor(combined$SEX)
 combined$AGE_SCALED<-scale(combined$AGE)
-
-
-combined$OFFPDMEDDT
-combined$INFODT_M1
-combined$OFFEXAMDT
-combined$HRPOSTMED ### hours since last dose 
-
-combined[,c('ONEXAM', 'OFFEXAM','PDMEDYN','ORIG_ENTRY_M3',  'INFODT_M3','NTEXAMDT',  'OFFEXAMDT' ,'OFFEXAMTM', 'OFFPDMEDDT', 'OFFPDMEDTM')]
-combined$PATNO
-rbd
-#demographics_2<-subset(demographics, select = -c(EVENT_ID))
-#combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
-
-
 combined$SCAU26CT<-tolower(combined$SCAU26CT)
 combined$SCAU26CT<-as.factor(combined$SCAU26CT)
 
-levels(as.factor(combined$SCAU26CT))
 # filtering here only to produce separate files for each visit? 
 
 ## add demographics with suffix if common? 
@@ -195,16 +185,16 @@ levels(as.factor(combined$SCAU26CT))
 ### Add new features here
 
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
-combined$AGE
+
+combined<-merge(combined, rnaseq_meta,by=c('PATNO_EVENT_ID'), suffixes = c("", '_rseq'),  all=TRUE)
+any(duplicated(rnaseq_meta_qc$PATNO_EVENT_ID))
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
-
+combined$Plate
 
 ### TODO: after this run the logs in analyse clinical vars 
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
-
-## add genetics
 
 
 

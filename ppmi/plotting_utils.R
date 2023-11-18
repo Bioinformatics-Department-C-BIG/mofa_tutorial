@@ -142,6 +142,68 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 
 
 
+library('EnhancedVolcano')
+
+
+plotVolcano<-function(deseq2ResDF, se_filt){
+  #'
+  #'
+  #' Take a sumarized experiment and deseq results 
+  #' @param deseq2ResDF deseq results dataframe 
+  #'  @param summarized experiment 
+  #'
+  #'
+  #'
+  
+  
+  if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
+  
+  mfc<-max(abs(deseq2ResDF$log2FoldChange))
+  pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
+  
+  xlim = c(-mfc-0.2,mfc+0.2)
+  ylim = c(0,pmax+0.2)
+  ylim = c(0,pmax-0.5)
+  
+  ns_full<-table(se_filt$COHORT_DEFINITION)
+  ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
+  
+  
+  pvol<-EnhancedVolcano(deseq2ResDF,
+                        lab = deseq2ResDF$GENE_SYMBOL,
+                        pCutoff = 10e-2,
+                        FCcutoff = 0.1,
+                        x = 'log2FoldChange',
+                        y = 'padj',
+                        
+                        
+                        ## format 
+                        pointSize = 2,
+                        legendIconSize = 5,
+                        labSize = 4,
+                        
+                        legendLabSize=16,
+                        subtitleLabSize = 13,
+                        axisLabSize=17,
+                        colAlpha = 0.5,
+                        
+                        # legend positions 
+                        # legendPosition = 'right',
+                        
+                        xlim=xlim, 
+                        ylim=ylim, 
+                        
+                        subtitle=ns, 
+                        title=''
+  )
+  
+  
+  pvol
+  return(pvol)
+}
+
+
+
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
                             factor_labels=NULL, draw_all_times=FALSE){
@@ -493,5 +555,63 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   
   
 }
+
+
+
+
+plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',add_patient_lines=FALSE, trajectory_fname ){
+  #'
+  #' @param merged_melt_filt_most_sig
+  #' @param x axis
+  #' @param add_patient_lines
+  #'
+  #'
+  
+  
+  p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = x, y = 'value', 
+                                                         fill='group', group='group', colour='group')) 
+  if (add_patient_lines){
+    p<- p+geom_line(aes_string(x = x, y = 'value', 
+                               group='PATNO', colour='group' ),size=0.1, alpha=0.5)
+  }
+  
+  
+  p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR, 
+                    position=position_dodge(0), alpha=0.9, width=0.3)+
+    # horizontal lines 
+    stat_summary(fun = median, position=position_dodge(width=0), 
+                 geom = "line", size = 0.9, alpha=0.9 ) + # , linetype='longdash' 
+    scale_color_viridis_d(option='turbo')+
+    facet_wrap(. ~ symbol, scales='free_y', 
+               nrow = nrow) +
+    
+    #geom_signif(comparisons = list(c('BL', 'V08')), 
+    #            map_signif_level=TRUE, 
+    #            tip_length = 0, vjust=0.3)+
+    
+    labs(y='logCPM')+
+    # legend(legend=c('Low', 'High'))+
+    theme(strip.text = element_text(
+      size = 12, color = "dark green", face="bold"), 
+      axis.title.y =element_text(
+        size = 12, color = "dark green", face="bold",), 
+      axis.text.x = element_text(
+        size = 12 ))+
+    guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))
+  
+  
+  
+  p
+  #warnings()
+  ggsave(trajectory_fname, 
+         width=width, height=height, dpi = 300)
+  
+  graphics.off()
+  
+  
+  return(p)
+  
+}
+
 
 

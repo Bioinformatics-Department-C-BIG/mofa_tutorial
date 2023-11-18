@@ -7,11 +7,15 @@ source(paste0(script_dir, 'ppmi/time_utils.R'))
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
+
+source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
+
 #get_de_features_by_group
 library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
 
+factors_to_cluster_s<-paste0(c(which(all_fs_diff[,y_clust])), collapse='-')
 
 
 # load this only once..? 
@@ -22,6 +26,7 @@ se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+se_rnas=se_filt_corrected; # load the data after batch correction 
 
 
 # TODO: load proteins 
@@ -62,8 +67,8 @@ factor=2
 top_view<-which.max(vars_by_factor[factor,])
 
 
-names(top_view)<-'RNA'; keep_all_feats=TRUE 
 names(top_view)<-'miRNA'; keep_all_feats=TRUE
+names(top_view)<-'RNA'; keep_all_feats=TRUE 
 
 
 if (names(top_view)=='miRNA'){
@@ -85,29 +90,19 @@ if (names(top_view)=='miRNA'){
 #### 2. top deseq molecules 
 #### 3. top timeOmics selected molecules 
 
-mode_mols='MOFA'
-if ((mode_mols)=='MOFA'){
   # TODO: function get top x% variables from factor!! 
   
-  ws<-get_weights(MOFAobject, views = view, factors=factor)[[1]]
 
-  top_factor_feats<-select_top_bottom_perc(view, factor, top_fr = 0.1)
-  feat_names<-top_factor_feats
-  
-  if (keep_all_feats){
-    feat_names=rownames(ws)
-    
-  }
-  
-}else{
-  feat_names= sigLRT_genes$gene
-  
-}
 
-### if use all 
-#feat_names=rownames(se)
 
-length(feat_names)
+top_factor_feats_rna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='RNA', factor, top_fr = 0.1)
+top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.1)
+feats_rna_all<-rownames(get_weights(MOFAobject, views = 'RNA', factors=factor)[[1]])
+feats_mirna_all<-rownames(get_weights(MOFAobject, views = 'miRNA', factors=factor)[[1]])
+
+rownames(se_rnas)<-gsub('\\..*', '',rownames(se_rnas))
+feats_rna_all<-gsub('\\..*', '',feats_rna_all)
+top_factor_feats_rna<-gsub('\\..*', '',top_factor_feats_rna)
 
 ### add clinvars to the requested features too! 
 clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP3TOT', 'COHORT', 'scopa', 'PDSTATE', 'PD_MED_USE', 
@@ -120,223 +115,48 @@ clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP
 # TODO: which variables are used as id? check when melting feat_names
 ## only if rna
 
-top_factor_feats<-gsub('\\..*', '',top_factor_feats)
-
-if (view=='RNA'){
-  rownames(se)<-gsub('\\..*', '',rownames(se))
-  feat_names<-gsub('\\..*', '',feat_names)
-  top_factor_feats_rna<-top_factor_feats
-  
-  
-}else if (view=='proteomics_plasma' || view=='proteomics_csf' ){
+if (view=='proteomics_plasma' || view=='proteomics_csf' ){
   feat_names<-gsub('_proteomics.*', '',feat_names)
 }
-merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
-levels(merged_melt_orig_1$variable) # check that the requested variables exist? 
 
 
 
 
-#}
+keep_all_feats
 
-feat_names_ens<-gsub('\\..*', '',feat_names)
-
-
-
-#feat_names= sigLRT_genes$gene
-
-# Now filter  for the requested molecules 
-merged_melt_orig<-merged_melt_orig_1
-
-
-merged_melt_orig$PATNO
-unique(merged_melt_orig$variable)
-ens<-gsub('\\..*', '',merged_melt_orig$variable)
-merged_melt_orig$symbol<-merged_melt_orig$variable
-
-
-
-#
-### ### NOW match factors to samples
-# CREATE GROUPS BY FACTOR 
-############################################
-
-
-
-# IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
-sel_cohort<-c(1)
-  sel_cohort=FALSE
-
-if (sel_cohort){
-  #'
-  #'
-  merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
-}else{
-  merged_melt=merged_melt_orig
-}
-merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
-merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
+merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
+merged_melt_filt_mirna<-create_merged_melt(se_rnas, feats_mirna_all, view='miRNA')
 
 
 
 
-merged_melt_pd<-merged_melt
-y_clust='NP2PTOT'
-clust_name= paste0(y_clust, '_clust')
-
-names(all_clusts_mofa)
-MOFAobject@samples_metadata
-MOFAobject_clusts=MOFAobjectPD
-
-
-merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
-merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
-merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
-
-# ADD LABELS FOR controls
-merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
-
-na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
-merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
-merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
-
-
-
-################
-
-
-### Plot to remove the other group ####
-# TAKE THE low group  
-# TODO: decide how to take the lowest x and highest x 
-### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
-
-
-
-merged_melt_filt$group<-merged_melt_filt$kmeans_grouping
-
-group_cat='kmeans_grouping'
-merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
-group_cats<-levels(merged_melt_filt$group)
-## 
-# TODO: Function: take a group and DE it with controls 
+deseq_all
 
 
 
 
 ### List of merged per group
-
+merged_melt_filt=merged_melt_filt_rna
 merged_melt_groups<-merged_melt_filt %>% 
   split(~group)
   
 
-
-merged_melt_filt_g1=merged_melt_groups[[1]]
-merged_melt_filt_g1_ct<-rbind(merged_melt_groups[[1]], merged_melt_groups[['HC']])
-merged_melt_filt_g2=merged_melt_groups[[2]]
-merged_melt_filt_g2_ct=rbind(merged_melt_groups[[2]], merged_melt_groups[['HC']])
-merged_melt_filt_g3=merged_melt_groups[[3]]
-merged_melt_filt_g3_ct=rbind(merged_melt_groups[[3]], merged_melt_groups[['HC']])
-
-
-
 library(stringr)
-#wilcox_all_vars
+# load from cluster_comparisons file  
+de_group_vs_control1<-deseq_all_names$SG1
+de_group_vs_control2<-deseq_all_names$SG2
+de_group_vs_control3<-deseq_all_names$SG3
 
-de_group_vs_control1<-get_de_features_by_group(merged_melt_filt_g1_ct, var_to_diff='kmeans_grouping') %>% 
-  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-#de_group_vs_control2=NULL
-de_group_vs_control2<-get_de_features_by_group(merged_melt_filt_g2_ct, var_to_diff='kmeans_grouping')%>% 
-  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-de_group_vs_control3<-get_de_features_by_group(merged_melt_filt_g3_ct, var_to_diff='kmeans_grouping')%>% 
-  dplyr::filter(str_detect(symbol, "^ENS|^hsa"))
-
-
-#de_group_vs_control3$gene_symb<-get_symbols_vector(as.character(de_group_vs_control3$symbol))
-#dim(de_group_vs_control3)
-#merged_melt_filt_g3_ct
-#de_group_vs_control3$gene_symb%in%'BCL9L'
-### CHECK MONOTONICITY FOR common de genes
-# idea: if there is a change: 
-# then check that the change is  in the same direction 
-
-#which(de_group_vs_control3$gene_symb %in% 'BCL9L')
-
-de_merged<-merge(de_group_vs_control1,de_group_vs_control3, by='symbol')
-de_merged2<-merge(de_group_vs_control1,de_group_vs_control2, by='symbol' )
-de_merged3<-merge(de_group_vs_control2,de_group_vs_control3, by='symbol' )
-
-de_merged_to_remove1<-de_merged[!( de_merged$direction.x ==de_merged$direction.y), ]; 
-de_merged_to_remove2<-de_merged2[!(de_merged2$direction.x ==de_merged2$direction.y), ]
-de_merged_to_remove3<-de_merged3[!(de_merged3$direction.x ==de_merged3$direction.y), ]
-
-dim(de_merged)
-dim(de_merged_to_remove3)
-
-de_merged_to_remove=c(de_merged_to_remove1$symbol,de_merged_to_remove2$symbol,de_merged_to_remove3$symbol )
-de_merged_to_remove
-
-
-
-
-inter_de<-Reduce(intersect,list(de_group_vs_control1$symbol,de_group_vs_control2$symbol, de_group_vs_control3$symbol ) )
-
-
-union_de<-list(group1=de_group_vs_control1$symbol, group2=de_group_vs_control2$symbol, group3=de_group_vs_control3$symbol)
-de_group_vs_control<-bind_rows(de_group_vs_control1, de_group_vs_control2, de_group_vs_control3 )
-de_group_vs_control_inter<-intersect(de_group_vs_control1$symbol, de_group_vs_control2$symbol)
-
-#### Venn diagram 
-nclusts<-max(unique(group_cats[group_cats!='HC']))
-fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_',keep_all_feats,'.png')
-create_venn(venn_list = union_de, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
-
-
-#### GET DE over time from the de features 
-length(unique(de_group_vs_control1$symbol))
-length(unique(de_group_vs_control2$symbol))
-length(unique(de_group_vs_control3$symbol))
 
 
 ## significant and varying with time 
-most_sig_over_time1<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,]) #%>% 
+most_sig_over_time1<-get_most_sig_over_time(merged_melt_groups[[1]][merged_melt_groups[[1]]$symbol %in% de_group_vs_control1 ,]) #%>% 
                                             #dplyr::filter(!(symbol %in% de_merged_to_remove) ))
 
-most_sig_over_time1_all<-get_most_sig_over_time(merged_melt_filt_g1[merged_melt_filt_g1$symbol %in% de_group_vs_control1$symbol ,])
-
-most_sig_over_time2=NULL
-most_sig_over_time2$symbol=NULL
-most_sig_over_time2<-get_most_sig_over_time(merged_melt_filt_g2[merged_melt_filt_g2$symbol %in% de_group_vs_control2$symbol,] )#%>% 
-                                            #  dplyr::filter(!(symbol %in% de_merged_to_remove) ) )
-most_sig_over_time3<-get_most_sig_over_time(merged_melt_filt_g3[merged_melt_filt_g3$symbol %in% de_group_vs_control3$symbol,])
-                                              #dplyr::filter(!(symbol %in% de_merged_to_remove) )
-                                            #)
-
-most_sig_over_time1
-
-length(most_sig_over_time1$symbol); length(most_sig_over_time2$symbol); length(most_sig_over_time3$symbol)
-
-union_de_time<-list(group1=most_sig_over_time1$symbol, group2=most_sig_over_time2$symbol, group3=most_sig_over_time3$symbol)
-fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_time', keep_all_feats,'.png')
-create_venn(venn_list = union_de_time, fname_venn =fname_venn,main =paste0( ' DE molecules with temporal and monotonic change
-                                                                            between the clusters and controls' ))
+most_sig_over_time2<-get_most_sig_over_time(merged_melt_groups[[2]][merged_melt_groups[[2]]$symbol %in% de_group_vs_control2 ,]) #%>% 
+most_sig_over_time3<-get_most_sig_over_time(merged_melt_groups[[3]][merged_melt_groups[[3]]$symbol %in% de_group_vs_control3 ,]) #%>% 
 
 
-
-
-intersect(most_sig_over_time1$symbol, de_group_vs_control1$symbol)
-
-most_sig_over_time_ct<-get_most_sig_over_time(merged_melt_ct)
-
-## TODO: DO IT FOR MULTIPLE GROUPS 
-most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
-
-
-
-######## First find out which of the molecules significantly change over time ####
-
-
-#### CHOOSE 
-merged_melt_filt_g2_sig<-merged_melt_filt_g2[merged_melt_filt_g2$symbol %in%  most_sig_over_time2$symbol,]
 
 
 # they should chgange in pd but not in controls!! 
@@ -378,12 +198,6 @@ if (choose_group==1){
 ##### CHECK MONOTONICITY AND REMOVE ####
 
 #### WHATEVER SET WE CHOOSE WE REMOVE the non monotonic genes 
-de_group_vs_control_and_time2<-de_group_vs_control_and_time[!(de_group_vs_control_and_time%in% de_merged_to_remove)]
-
-
-length(de_group_vs_control_and_time2)
-length(de_group_vs_control_and_time)
-de_group_vs_control_and_time2
 
 # 
 #### 
@@ -424,25 +238,17 @@ write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_contro
 
 
 ### PUT THEM ALL TOGETHER IN THE BOXPLOTS 
-#merged_melt_all<-rbind(merged_melt_ct, merged_melt_filt_g2_sig)
-#merged_melt_all<-rbind(merged_melt_all, merged_melt_filt_g1_sig)
-
 
 
 
 #######################################################
 ############ TIME TRAJECTORY FOR ALL VISITS ###########
 #######################################################
-
-
-
-de_group_vs_control %in% top_factor_feats
-
-de_group_vs_control_and_time
+merged_melt_filt = merged_melt_filt_rna
 
 unique(de_group_vs_control_and_time2)
 filt_top='top'; filt_top='selected'; filt_top='all' 
-filt_top='selected'; 
+filt_top='top'; 
 selected_mirs<-c('hsa.miR.101.3p', 'hsa.miR.486.3p', 'hsa.miR.340.5p')
 
 ### select top 
@@ -455,7 +261,7 @@ selected_rnas<-c("CASZ1" , "CAPN15" ,"ZFHX3" , "ULK1"  , "SDK2"  ) # top10 facto
 
 
 
-selected_mirs<-make.names(mirna_targets_edgel$variable)
+#selected_mirs<-make.names(mirna_targets_edgel$variable)
 selected_mirs<-c('hsa.miR.142.5p', 'hsa.miR.486.3p', 'hsa.miR.574.5p', 'hsa.miR.7.5p')
 
 selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
@@ -477,16 +283,32 @@ if (view=='RNA'){
 }
 
 
+# unique in 1? 
+
+de_group_vs_control1_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG1[!(deseq_all_top$SG1 %in% c(deseq_all_top$SG2, deseq_all_top$SG3) )] )
+de_group_vs_control2_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG2[!(deseq_all_top$SG2 %in% c(deseq_all_top$SG1, deseq_all_top$SG3) )] )
+de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG3[!(deseq_all_top$SG3 %in% c(deseq_all_top$SG1, deseq_all_top$SG2) )] )
+
+
+
+
+### Rules: 
+# 1. DE and time difference 
+# 2.  De only
+# 3. de in specific group unique
+# 4. de and in selected pathways 
 
 
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% most_sig_over_time$symbol[1:20],]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2[1:25],]
+  choose_group=1
+#  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_top$SG1[1:30],]
   
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% inter_de,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
+ # choose_group=2
+  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2_unique_top,]
+  
   
   
   nrow=NULL; height=7; width=30
@@ -531,7 +353,7 @@ print(merged_melt_filt_most_sig$NP2PTOT )
 # Boxplots of the grouping too !! 
 # TODO: SEPARATE BY PD STATE
 
-plot_molecular_trajectories(merged_melt_filt_most_sig)
+#plot_molecular_trajectories(merged_melt_filt_most_sig)
 
 
 
@@ -545,55 +367,12 @@ merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(m
                                                    from= names(EVENT_MAP), 
                                                    to=unlist(EVENT_MAP, use.names=FALSE))))
 
-merged_melt_filt_most_sig$month
-# TODO: choose 3 colours grey as control
-add_patient_lines=FALSE
-x='month'
-#merged_melt_filt_most_sig<-merged_melt_filt_most_sig %>% dplyr::filter(VISIT%in% c('BL', 'V04', 'V08'))
-p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = x, y = 'value', 
-                                                       fill='group', group='group', colour='group')) 
-if (add_patient_lines){
-  p<- p+geom_line(aes_string(x = x, y = 'value', 
-                             group='PATNO', colour='group' ),size=0.1, alpha=0.5)
-}
+factors_to_clust
+trajectory_fname<-paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
+       '_',  factors_to_cluster_s, '_top_', filt_top,
+       'cluster_',choose_group,'.jpeg')
 
-
-p=p+ stat_summary(geom = "errorbar", fun.data = median_IQR, 
-                  position=position_dodge(0), alpha=0.9, width=0.3)+
-  # horizontal lines 
-  stat_summary(fun = median, position=position_dodge(width=0), 
-               geom = "line", size = 0.9, alpha=0.9 ) + # , linetype='longdash' 
-  scale_color_viridis_d(option='turbo')+
-  facet_wrap(. ~ symbol, scales='free_y', 
-             nrow = nrow) +
-  
-  #geom_signif(comparisons = list(c('BL', 'V08')), 
-  #            map_signif_level=TRUE, 
-  #            tip_length = 0, vjust=0.3)+
-  
-  labs(y='logCPM')+
-  # legend(legend=c('Low', 'High'))+
-  theme(strip.text = element_text(
-    size = 12, color = "dark green", face="bold"), 
-    axis.title.y =element_text(
-      size = 12, color = "dark green", face="bold",), 
-    axis.text.x = element_text(
-      size = 12 ))+
-  guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))
-  
-
-
-p
-#warnings()
-ggsave(paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
-              group_cat,'_',  factors_to_cluster_s, '_top_', filt_top,sel_cohort,
-              'cluster_',choose_group,'.jpeg'), 
-       width=width, height=height, dpi = 300)
-
-
-
-p
-graphics.off()
+plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory_fname = trajectory_fname )
 
 
 

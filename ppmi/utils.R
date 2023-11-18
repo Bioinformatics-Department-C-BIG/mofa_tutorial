@@ -6,6 +6,9 @@ library(sgof)
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/factoextra")
 library('factoextra')
+library(plyr)
+library(dplyr)
+
 ## Utils 
 ## Summarized experiment 
 
@@ -40,7 +43,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                         'MCA_TOT_diff_V16')
+                         'MCA_TOT_diff_V16', 'SITE', 'Plate')
 #'DYSKIRAT')
 
 
@@ -94,8 +97,8 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # And the change in the datascan binding  in the future?
                                  # THESE factors are the ones that we actually WANT 
                                  'MCATOT', 
-                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10'
-                                 
+                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                                 'SITE', 'Plate'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  
@@ -173,6 +176,40 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 #pdstate=c('OFF', '')patno_event_ids
 #patno_event_ids = samples_metadata(MOFAobject)$PATNO_EVENT_ID
 #patno_event_ids = paste0(samples_metadata(MOFAobject)$PATNO, '_BL')
+
+preprocess_se_deseq2<-function(se_filt){
+  #' 
+  #' Preprocess metadata of summarized experiment 
+  #' 
+  #'  
+  se_filt<-filter_se_byExpr(se_filt)
+  
+  ### OUTPUT THE FILTERED se_filt 
+  ind<-which(is.na(se_filt$AGE_AT_VISIT))
+  se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
+  
+  ## Turn to factors for deseq
+  se_filt$SEX<-as.factor(se_filt$SEX)
+  se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
+  se_filt$SITE<-as.factor(se_filt$SITE)
+  se_filt$Plate<-as.factor(se_filt$Plate)
+  se_filt$Usable_Bases_SCALE<-as.factor(se_filt$Usable.Bases....)
+  
+  
+  ## these are almost the same so it is okay to scale AGE earlier 
+ # hist(se_filt$AGE_AT_VISIT)
+#  hist(se_filt$AGE_SCALED)
+  
+  # impute: 
+  # which()
+  se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
+  se_filt<-se_filt[,!(is.na(se_filt$SEX))]
+  
+  table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
+  
+  colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
+  return(se_filt)
+}
 
  fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
    #'
@@ -1127,7 +1164,7 @@ create_multi_experiment<-function(data_full, combined_bl){
 filter_se_byExpr<-function(se_filt){
       raw_counts <- assay(se_filt)
       
-      idx <- edgeR::filterByExpr(raw_counts)
+      idx <- edgeR::filterByExpr(raw_counts,min.count=20 )
       raw_counts <- as.matrix(raw_counts[idx, ])
       
       se_filt = se_filt[idx,]
@@ -1573,3 +1610,9 @@ create_venn<-function(venn_list, fname_venn, main){
                
                output=FALSE)
 }
+
+
+
+
+
+

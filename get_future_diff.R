@@ -1,65 +1,37 @@
 
 
+### analyse future diff 
 
-### GET FUTURE SCALES 
-input_df=df_mofa
-## TODO: create a function: fetch future data using diffs 
+# 1. diff vars
+# 2. CHECK IF variables are normal 
+# 3. before showing correlations
+y=all_diff_variables_prog[1]
+sm_pd<-MOFAobjectPD@samples_metadata
+sm_pd_diff<-sm_pd[,c(all_diff_variables_prog, 'PATNO_EVENT_ID')]
 
-df_all<-fetch_metadata_by_patient_visit(input_df$PATNO_EVENT_ID , combined=combined_bl_log)
-hist(df_all$NP2PTOT_V16)
-hist(df_all$NP2_TOT_V16)
-colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'mean_striatum','updrs2_score', 'moca')
-t1<-'BL';  t2='V10';
+sm_pd_diff<-apply(sm_pd_diff,2,as.numeric)
 
-#df=df_all
-df_change1= get_changes(input_df,colData_change, t1, t2 )
-colnames(df_change)
-df_all<-cbind(df_all, df_change1)
-t1<-'BL';  t2='V16'; 
-df_all$MCA_TOT_V16
-df_all$moca_BL
-df_all$moca_V10
-df_all$MCA_TOT_V16
-colData_change=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCA_TOT' )
-#df_all$NP3_TOT_V16
-df_change= get_changes(df_all,colData_change, t1, t2 )
-df_all<-cbind(df_all, df_change)
-df_all$updrs2_score_diff_V16
-
-df_all<-fetch_metadata_by_patient_visit(input_df$PATNO_EVENT_ID , combined=combined_bl_log, max_m='NP3TOT')
-df_change
-
-
-################# ##############
-
-
-df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
-df_all$NP3_TOT_V16
-
-colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
-t1<-'BL';  t2='V10';
-
-df_change1= get_changes(df_all,colData_change, t1, t2 )
-colnames(df_change)
-df_all<-cbind(df_all, df_change1)
-df_change1<-cbind(df_all$PATNO, df_change1)
-
-
-t1<-'BL';  t2='V16';
-colData_change=c('NP3TOT', 'NP2PTOT', 'RBD_TOT' , 'MCA_TOT')
-#df_all$NP3_TOT_V16
-df_change2= get_changes(df_all,colData_change, t1, t2 )
-df_all<-cbind(df_all, df_change2)
-df_change=cbind(df_change1, df_change2)
-df_change$PATNO<-df_change$`df_all$PATNO`
-
-
-### NOEW MERGE WITH MOFA 
+shapiro_diff<-apply(sm_pd_diff,2,function(x){
+                          if (!all(is.na(x)))
+                        shapiro.test(x)$p.value>0.05
+                              }
+                    )
+shapiro_diff$NP2PTOT_diff_V13_V14
+shapiro_diff$NP3TOT_diff_V13_V14 ### this one is normal shapiro is true
 
 
 
-############# AFTER WE ADDE THIS TO MOFA
-all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all)]
-cors_all[, all_diff]
+
+mydf <- reshape::melt(sm_pd_diff, id.vars=c('PATNO_EVENT_ID'))
 
 
+
+library('ggplot2')
+
+
+p<-ggplot(data =mydf, aes_string(x='value') )+
+  geom_density()+ 
+  facet_wrap(~variable, scales='free')
+  
+p
+graphics.off()

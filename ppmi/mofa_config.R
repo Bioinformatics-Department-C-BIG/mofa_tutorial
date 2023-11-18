@@ -3,6 +3,8 @@
 NORMALIZED=TRUE;
 #use_signif=FALSE
 run_vsn=TRUE
+ruv=TRUE
+
 
 if (use_signif){
   TOP_GN=0.50

@@ -167,26 +167,7 @@ outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT_S,'_',TISSUE, '_nor
 p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
 
 
-#p_params_all<- paste0(VISIT_S, '_',TISSUE, '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-#p_params_csf_all<- paste0(VISIT_S, '_','CSF', '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-#p_params_plasma_all<- paste0(VISIT_S, '_','Plasma', '_',  substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-
-
-
-#p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
-
-## for mofa - run_vsn=TRUE
-
-
-
-
-
-### mofa config 
-
-#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-#source(paste0(script_dir, '/config.R'))
 
 

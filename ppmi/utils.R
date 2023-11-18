@@ -193,7 +193,14 @@ preprocess_se_deseq2<-function(se_filt){
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
   se_filt$SITE<-as.factor(se_filt$SITE)
   se_filt$Plate<-as.factor(se_filt$Plate)
-  se_filt$Usable_Bases_SCALE<-as.factor(se_filt$Usable.Bases....)
+  se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
+
+  
+  # remove samples without cohort assignment ? 
+  # maybe they are controls..? 
+ 
+  se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
+  se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
   
   
   ## these are almost the same so it is okay to scale AGE earlier 
@@ -1003,7 +1010,26 @@ get_long_mir_targets<-function(mieaa_targets){
 
 
 
-
+adjust_unwanted_variance<-function(vsd ){
+  #'
+  #' Adjust vsd data for unwanted covariates : usable bases and plate 
+  #' @param vsd  description
+  #' @return vsd_cor corrected vsd
+  #'
+  colData(vsd)$Usable_Bases_SCALE  <-as.numeric(scale(colData(vsd)$Usable.Bases....))
+  colData(vsd)$Plate
+  
+  retainedCovariates<-colData(vsd)[,c('COHORT')]
+  removedCovariates<-colData(vsd)[,c('Usable_Bases_SCALE', 'Plate')]
+  
+  ### Asjustment works on gaussian data so insert vsd or log cplm
+  adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
+                                  retainedCovariates = retainedCovariates )
+  
+  vsd_cor<-t(adjusted_data$adjustedData)
+  return(vsd_cor)
+  
+}
 
 
 
@@ -1024,7 +1050,17 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   datalist=loadRDS(deseq_file)
   #ddsSE=datalist[[1]]
   vsd=datalist[[2]]
+  if (ruv){
+    # Remove unwanted variance from the vsd data associated with plate and removable bases 
+    # 
+    vsd_cor<-adjust_unwanted_variance(vsd)
+    vsd=vsd_cor
+  }
+    
   vsd_mat=assay(vsd)
+  
+  
+  # Perform correction 
   highly_variable_genes_mofa<-selectMostVariable(vsd_mat, TOP_N)
   print(paste('Loaded highly variables files with settings: ', param_str_tmp, TOP_N))
   
@@ -1512,7 +1548,6 @@ calc_zscore_change<-function(df_num_1, df_num_2, t2){
 ############## CLUSTERS 
 
 
-#library('kml')
 library('dplyr')
 
 get_clinical_clusters_kml<-function(combined_bl_log_sel_pd,y, nbCluster=4, scale_mat=FALSE){

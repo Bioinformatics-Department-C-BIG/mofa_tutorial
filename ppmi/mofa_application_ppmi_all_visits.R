@@ -218,10 +218,13 @@ for (N_FACTORS in c(15)){
   ## MOFA parameters, set directory 
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
-  out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', scale_views[1])
+  ruv_s<-(as.numeric(ruv))
+  out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
+                       scale_views[1],'ruv_', ruv_s)
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
   MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+  
   
   
   

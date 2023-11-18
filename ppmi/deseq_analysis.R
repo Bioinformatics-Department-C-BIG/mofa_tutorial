@@ -10,6 +10,7 @@ VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V06' ,'V08');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 
 #process_mirnas=FALSE
 

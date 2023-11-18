@@ -44,6 +44,7 @@ VISIT='V08'
 
 VISIT=c('BL',  'V08');
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('V08')
 
 #for (VISIT in list( list('V08', 'BL')) ){
 
@@ -111,7 +112,7 @@ VISIT=c('BL','V04', 'V06',  'V08');
         
         se_filt<-preprocess_se_deseq2(se_filt)
         # TODO: remove the batch effect from all visits before separating to each visit 
-        se_filt_corrected<-se_remove_batch_effect(se_filt)
+        #se_filt_corrected<-se_remove_batch_effect(se_filt)
         
         
         ### Perform the appropriate test depending on what you want as prediction variable
@@ -275,16 +276,18 @@ se_remove_batch_effect<-function(se_filt, batch_var){
           
           
           as.data.frame(colData(se_filt)[, c('Plate', 'PATNO_EVENT_ID')])
-          se_filt_qc<-se_filt[, !is.na(se_filt$Plate)]
+          
+  
+     
+          se_filt_qc<-se_filt[, !is.na(se_filt$Plate) & !is.na(se_filt$COHORT)]
           
          # batch1 = colData(se_filt_qc)[, 'Plate']
           batch= colData(se_filt_qc)[, 'Plate']
           remove_plate<-names(table(batch)[table(batch)<2]) # remove sequencing plates where only one sample was available 
           cohorts= colData(se_filt_qc)[, 'COHORT'] 
-          non_na_samples<-!is.na(cohorts) # remove samples where COHORT is not available
-          
-          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)   & non_na_samples ]
-          batch<- factor(batch[!(batch%in%remove_plate) & non_na_samples  ])
+
+          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)    ]
+          batch<- factor(batch[!(batch%in%remove_plate)   ])
           table(batch)
           
           cohorts= colData(se_filt_qc)[, 'COHORT']

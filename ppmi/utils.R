@@ -8,7 +8,7 @@ library(sgof)
 library('factoextra')
 library(plyr)
 library(dplyr)
-
+library('WGCNA') # need empiricalBayesLM
 ## Utils 
 ## Summarized experiment 
 
@@ -1050,14 +1050,15 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   datalist=loadRDS(deseq_file)
   #ddsSE=datalist[[1]]
   vsd=datalist[[2]]
+  vsd_mat=assay(vsd)
   if (ruv){
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
     # 
-    vsd_cor<-adjust_unwanted_variance(vsd)
-    vsd=vsd_cor
+  #  vsd_mat<-adjust_unwanted_variance(vsd)
+    vsd_mat=vsd_cor
   }
     
-  vsd_mat=assay(vsd)
+  
   
   
   # Perform correction 

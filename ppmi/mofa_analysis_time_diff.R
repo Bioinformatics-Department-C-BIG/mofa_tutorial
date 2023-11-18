@@ -250,7 +250,7 @@ all_diff
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP3TOT', 'updrs3_score', 'updrs2_score',
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
@@ -319,7 +319,7 @@ for (diff_var in names(all_clusts_mofa)){
   MOFAobject@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
 }
 
-all_clusts_mofa
+all_clusts_mofa$NP2PTOT_LOG
 
 all_clusts_mofa[['NP2PTOT_diff_V16' ]]
 all_clusts_mofa[['NP3TOT' ]]
@@ -346,16 +346,16 @@ cluster_samples_mofa=TRUE
 set.seed(123)
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
-#Z_scaled<-apply(as.data.frame(Z), 2, scale);
+Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
 
 #fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )# +
   #geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
-fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
+#fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
 
-gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
-                    K.max = 10, B = 10, )
+#gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
+#                    K.max = 10, B = 10, )
 print(gap_stat, method = "globalmax")
 fviz_gap_stat(gap_stat)
 
@@ -536,11 +536,14 @@ diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE',
                       'updrs3_score')
 
 diff_variables= c('updrs2_score')
+diff_variables= c('NP2PTOT_LOG')
+
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
-
+diff_variables_to_p=c('NP2PTOT')#, 'AGE' )
 
 met<-samples_metadata(MOFAobject)
+met$NP2PTOT_LOG_clust
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable

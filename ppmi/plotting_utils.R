@@ -520,10 +520,9 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
                              fill=clust_name, y='value'), alpha=0.9)+
 
   
-    facet_wrap(~variable, scales='free', labeller=labeller(
-      variable=labeller_clinical
-      
-    ) , nrow=1)+
+    facet_wrap(~variable, scales='free',#, labeller=labeller(
+      #variable=labeller_clinical
+      nrow=1)+
     geom_pwc( tip.length = 0,
       method = "wilcox_test", label = "p.adj.signif")+   
     scale_color_viridis_d(option="turbo")+

@@ -2,7 +2,7 @@
 
 #script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 
-#source(paste0('ppmi/setup_os.R'))
+source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
 #source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
@@ -46,7 +46,7 @@ run_vsn=TRUE
 use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
-
+run_rna_mirna<-FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
@@ -223,7 +223,7 @@ for (N_FACTORS in c(15)){
                        scale_views[1],'ruv_', ruv_s)
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=TRUE)
   
   
   
@@ -237,7 +237,7 @@ length(sel_sam)
 meta_merged_ord=fetch_metadata_by_patient_visit(samples_metadata(MOFAobject)$PATNO_EVENT_ID)
 length(meta_merged_ord$PATNO)
 meta_merged_ord<-as.data.frame(meta_merged_ord)
-meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
+meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID # MOFA needs a sample vector 
 #meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
 dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))

@@ -130,6 +130,10 @@ load_se_all_visits<-function(input_file, combined){
   raw_counts_all<-round(raw_counts_all)
   ## Question: why are there duplicate samples - seems to be controls!
   ## first filter what is in metadata and mirnas ?
+  
+  grep('1009',colnames(raw_counts_all))
+  
+  
   se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
   return(se)
 }
@@ -201,6 +205,7 @@ preprocess_se_deseq2<-function(se_filt){
  
   se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
   se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
+  se_filt<-se_filt[ , !is.na(se_filt$Usable_Bases_SCALE)]
   
   
   ## these are almost the same so it is okay to scale AGE earlier 
@@ -1020,7 +1025,7 @@ adjust_unwanted_variance<-function(vsd ){
   colData(vsd)$Plate
   
   retainedCovariates<-colData(vsd)[,c('COHORT')]
-  removedCovariates<-colData(vsd)[,c('Usable_Bases_SCALE', 'Plate')]
+  removedCovariates<-colData(vsd)[,c('Usable_Bases_SCALE', 'Plate', '')]
   
   ### Asjustment works on gaussian data so insert vsd or log cplm
   adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
@@ -1042,7 +1047,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   #' 
   #' 
   
-  
+  # TODO: Correct all visits together??? 
   param_str_tmp<-paste0(prefix, VISIT_S, '_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
   # also defined in config--> check if updated
   deseq_file <-paste0(output_files, param_str_tmp, 'deseq.Rds'); deseq_file
@@ -1050,16 +1055,28 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   datalist=loadRDS(deseq_file)
   #ddsSE=datalist[[1]]
   vsd=datalist[[2]]
+  
   vsd_mat=assay(vsd)
+  dim(vsd)
+  
+  
+  
+  
   if (ruv){
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
     # 
-  #  vsd_mat<-adjust_unwanted_variance(vsd)
-    vsd_mat=vsd_cor
-  }
+     # vsd_mat<-adjust_unwanted_variance(vsd)
+      #vsd_mat=vsd_cor
+    # load all and filter 
+    # load the corrected dataset - correction is done with all batches together
+      vsd_cor_l=loadRDS(vst_cor_all_vis)
+      vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
+      dim(vsd_cor_filt)
+      vsd_mat=assay(vsd_cor_filt)
+      # TODO: filter common or not??
     
-  
-  
+  }
+
   
   # Perform correction 
   highly_variable_genes_mofa<-selectMostVariable(vsd_mat, TOP_N)
@@ -1198,10 +1215,15 @@ create_multi_experiment<-function(data_full, combined_bl){
 }
 
 
-filter_se_byExpr<-function(se_filt){
+filter_se_byExpr<-function(se_filt, min.count=10){
+  #'
+  #' filter and return without low expression genes 
+  #' @param
+  #'
+  #'
       raw_counts <- assay(se_filt)
       
-      idx <- edgeR::filterByExpr(raw_counts,min.count=20 )
+      idx <- edgeR::filterByExpr(raw_counts,min.count=min.count )
       raw_counts <- as.matrix(raw_counts[idx, ])
       
       se_filt = se_filt[idx,]

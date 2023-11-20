@@ -117,6 +117,9 @@ input_file<-paste0(output_files, prefix, 'all_visits.csv.gz')
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
+
+vst_cor_all_vis<-paste0(output_files, prefix, 'vst_cor.csv')
+
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 

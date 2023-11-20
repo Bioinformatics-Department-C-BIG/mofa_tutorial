@@ -27,6 +27,10 @@ rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
 
 getwd()
 for (VISIT in Visits){
+  # 
+  #
+  #
+  
   rnas<-read.csv2(rnas_fname, sep = ',')
   #rnas<-read.csv2(gzfile(gz1))
   rownames(rnas)<-rnas$Geneid
@@ -36,7 +40,6 @@ for (VISIT in Visits){
   ### Split the names to extract patient number
   names_split<- strsplit(names(rnas_BL),split='\\.')
   names_split_df<-do.call(rbind, names_split);names_split_df
-  #PATNO<-sapply(names_split, '[[', 2)
   PATNO<-names_split_df[,2]
   length(unique(PATNO))
   

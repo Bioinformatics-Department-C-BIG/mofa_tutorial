@@ -95,7 +95,6 @@ VISIT=c('V08')
         
         
         
-        
         if (filter_common){
           se_filt<-se_filt[,se_filt$PATNO %in% common]
         }

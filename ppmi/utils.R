@@ -1063,12 +1063,14 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   
   
   if (ruv & prefix=='rnas_'){
+    
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
     # 
      # vsd_mat<-adjust_unwanted_variance(vsd)
       #vsd_mat=vsd_cor
     # load all and filter 
     # load the corrected dataset - correction is done with all batches together
+    print(paste(prefix, ' remove variance'))
       vsd_cor_l=loadRDS(vst_cor_all_vis)
       vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
       dim(vsd_cor_filt)

@@ -185,7 +185,7 @@ if (add_clinical_clusters){
 
 y_pvals
 
-y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
+#y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
 #y_pvals<-y_pvals<0.05
 
   
@@ -251,6 +251,7 @@ all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
 all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+                     'updrs2_score_LOG', 'updrs3_score_LOG', 
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
@@ -331,7 +332,7 @@ all_clusts_mofa[['NP3TOT' ]]
 clinical_scales
 y='abeta'
 y='NP2PTOT'
-y='updrs2_score'
+y='updrs2_score_LOG'
 
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
@@ -348,14 +349,14 @@ set.seed(123)
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
-
-#fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )# +
-  #geom_vline(xintercept = 3, linetype = 2)
+Z_scaled<-Z
+fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )#+
+  geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
-#fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
+fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
 
-#gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
-#                    K.max = 10, B = 10, )
+gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
+                    K.max = 10, B = 10, )
 print(gap_stat, method = "globalmax")
 fviz_gap_stat(gap_stat)
 
@@ -535,15 +536,18 @@ diff_variables= c('moca')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
                       'updrs3_score')
 
-diff_variables= c('updrs2_score')
 diff_variables= c('NP2PTOT_LOG')
+
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('NP2PTOT')#, 'AGE' )
+diff_variables_to_p=c('NP2PTOT_LOG','scopa', 'updrs2_score_LOG','updrs3_score', 'updrs3_score_LOG' )#, 'AGE' )
+all_fs_diff[,'NP2PTOT_LOG']
 
 met<-samples_metadata(MOFAobject)
-met$NP2PTOT_LOG_clust
+met$updrs2_score_LOG
+
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
@@ -689,8 +693,10 @@ clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE')
-all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate')
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
+                           'Neutrophils....', 'Lymphocytes....')
+all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG')
+#                                'Neutrophils....', 'Lymphocytes....')
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
 # nfl serum,. lowput ratio etc.  
@@ -1157,9 +1163,6 @@ plot_factors(MOFAobject,
 )
 
 color_by='COHORT'
-
-cors_both
-
 
 
 

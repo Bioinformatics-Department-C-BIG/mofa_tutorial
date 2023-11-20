@@ -223,7 +223,7 @@ for (N_FACTORS in c(15)){
                        scale_views[1],'ruv_', ruv_s)
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=TRUE)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
   
   
   

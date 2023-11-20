@@ -121,3 +121,6 @@ install.packages('igraph')
 install.packages("remotes")
 remotes::install_github("jmw86069/jamenrich")
 
+
+
+BiocManager::install('WGCNA')

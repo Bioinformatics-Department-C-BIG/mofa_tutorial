@@ -1062,7 +1062,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   
   
   
-  if (ruv){
+  if (ruv & prefix=='rnas_'){
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
     # 
      # vsd_mat<-adjust_unwanted_variance(vsd)

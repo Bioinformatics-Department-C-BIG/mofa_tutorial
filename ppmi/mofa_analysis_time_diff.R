@@ -536,7 +536,7 @@ diff_variables= c('moca')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE', 
                       'updrs3_score')
 
-diff_variables= c('NP2PTOT_LOG')
+diff_variables= c('updrs3_score')
 
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )

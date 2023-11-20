@@ -8,7 +8,7 @@ source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
 
-source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
+#source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
 
 #get_de_features_by_group
 library('EnsDb.Hsapiens.v79')
@@ -27,7 +27,12 @@ se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_rnas=se_filt_corrected; # load the data after batch correction 
+# TODO: load the corrected and filtered vsn dataset?? 
+# 
+vsd_cor_l=loadRDS(vst_cor_all_vis)
+vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
 
+se_rnas<-vsd_cor_filt
 
 # TODO: load proteins 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -125,7 +130,7 @@ if (view=='proteomics_plasma' || view=='proteomics_csf' ){
 keep_all_feats
 
 merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
-merged_melt_filt_mirna<-create_merged_melt(se_rnas, feats_mirna_all, view='miRNA')
+merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
 
 
 
@@ -298,13 +303,14 @@ de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG
 # 3. de in specific group unique
 # 4. de and in selected pathways 
 
-
+top_factor_feats_rna
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
   choose_group=1
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_top$SG1[1:30],]
+  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_top$SG1[1:30],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
   
  # choose_group=2
   #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2_unique_top,]
@@ -312,6 +318,7 @@ if (filt_top=='top'){
   
   
   nrow=NULL; height=7; width=30
+  nrow=4
 }else if (filt_top=='selected'){
   ## keep specific mirs for presentation 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% selected_feats,]
@@ -367,9 +374,9 @@ merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(m
                                                    from= names(EVENT_MAP), 
                                                    to=unlist(EVENT_MAP, use.names=FALSE))))
 
-factors_to_clust
+factors_to_clust_s<-paste0(unlist(factors_to_clust), collapse='_')
 trajectory_fname<-paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
-       '_',  factors_to_cluster_s, '_top_', filt_top,
+       '_',  factors_to_clust_s, '_top_', filt_top,
        'cluster_',choose_group,'.jpeg')
 
 plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory_fname = trajectory_fname )

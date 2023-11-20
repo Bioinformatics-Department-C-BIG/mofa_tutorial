@@ -555,8 +555,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   
 }
 
-
-
+#x='month'
+#add_patient_lines=FALSE
 
 plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',add_patient_lines=FALSE, trajectory_fname ){
   #'
@@ -565,7 +565,7 @@ plot_molecular_trajectories_line<-function(merged_melt_filt_most_sig, x='month',
   #' @param add_patient_lines
   #'
   #'
-  
+ # nrow=4
   
   p<-ggplot(data = merged_melt_filt_most_sig, aes_string(x = x, y = 'value', 
                                                          fill='group', group='group', colour='group')) 

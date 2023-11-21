@@ -7,7 +7,6 @@ source(paste0(script_dir, 'ppmi/time_utils.R'))
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
-
 #source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
 
 #get_de_features_by_group
@@ -29,7 +28,7 @@ se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 se_rnas=se_filt_corrected; # load the data after batch correction 
 # TODO: load the corrected and filtered vsn dataset?? 
 # 
-vsd_cor_l=loadRDS(vst_cor_all_vis)
+vsd_cor_l=loadRDS(vst_cor_all_vis_filt)
 vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
 
 se_rnas<-vsd_cor_filt
@@ -68,7 +67,7 @@ if (mode=='diagnosis'){
 }
 
 
-factor=2
+factor=4
 top_view<-which.max(vars_by_factor[factor,])
 
 
@@ -130,7 +129,7 @@ if (view=='proteomics_plasma' || view=='proteomics_csf' ){
 keep_all_feats
 
 merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
-merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
+#merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
 
 
 
@@ -254,20 +253,6 @@ merged_melt_filt = merged_melt_filt_rna
 unique(de_group_vs_control_and_time2)
 filt_top='top'; filt_top='selected'; filt_top='all' 
 filt_top='top'; 
-selected_mirs<-c('hsa.miR.101.3p', 'hsa.miR.486.3p', 'hsa.miR.340.5p')
-
-### select top 
-
-selected_rnas<-c("SREBF2",   "SKI"  ,    "ZFHX3" ,   "NACC1" ,   "KDM6B"  ,  "CDC42EP4", "CDKN1A" )
-selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
-
-selected_rnas<-c("FOXO3" ,"TAGLN", "ZFHX3", "NID1" , "RAB2B") # top10 factor 14
-selected_rnas<-c("CASZ1" , "CAPN15" ,"ZFHX3" , "ULK1"  , "SDK2"  ) # top10 factor 2
-
-
-
-#selected_mirs<-make.names(mirna_targets_edgel$variable)
-selected_mirs<-c('hsa.miR.142.5p', 'hsa.miR.486.3p', 'hsa.miR.574.5p', 'hsa.miR.7.5p')
 
 selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
 
@@ -309,13 +294,8 @@ if (filt_top=='top'){
   # TODO: ADD the clinical variables here? 
   choose_group=1
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_top$SG1[1:30],]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
-  
- # choose_group=2
-  #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2_unique_top,]
-  
-  
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_names$SG1[1:200],]
+ # merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
   
   nrow=NULL; height=7; width=30
   nrow=4

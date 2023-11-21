@@ -90,8 +90,8 @@ close(gz1)
 
 
 #### Read in the mirnas 
-mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv', sep = '\t')
 mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
+mirnas_rpmmm<-read.csv2(paste0(data_dir,'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
 
 names<-colnames(mirnas_rpmmm)[-1]
 
@@ -155,12 +155,11 @@ length((mirnas_df))
 tail(colnames(mirnas_df))
 rownames(mirnas_df)
 dim(mirnas_df)
-length(colnames(rna_all_visits)); 
-length(unique(colnames(rna_all_visits)))
 
 
 #write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
-mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
+#mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
+mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')
 
 # save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
 gz1 <- gzfile(mirnas_all_visits_fname, "w")

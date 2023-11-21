@@ -12,8 +12,8 @@ MIN_COUNT_M=10
 
 
 TOP_GN=0.10
-TOP_MN=0.5
 TOP_MN=0.75
+TOP_MN=0.5
 
 ### THE ONES THAT MOFA WILL USE! because to print we have set tgem in deseq_analysis
 ### if using signif
@@ -113,13 +113,14 @@ if (process_mirnas){
 
 input_file<-paste0(output_files, prefix, 'all_visits.csv')
 input_file<-paste0(output_files, prefix, 'all_visits.csv.gz')
+input_file_mirs<-paste0(output_files, 'mirnas_', 'all_visits_norm.csv.gz')
 
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
 
-vst_cor_all_vis<-paste0(output_files, prefix, 'vst_cor.csv')
-
+vst_cor_all_vis<-paste0(output_files, 'rnas_', 'vst_cor.csv')
+vst_cor_all_vis_filt<-paste0(output_files, 'rnas_', 'vst_cor_filt.csv')
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 

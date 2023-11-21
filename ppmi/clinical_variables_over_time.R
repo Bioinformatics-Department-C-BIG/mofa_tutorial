@@ -170,13 +170,11 @@ to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT
         dplyr::group_by(grouping) %>%
         dplyr::summarise(count = n_distinct(PATNO, grouping)) 
       
-      nums
-      
+
       #nums<-paste0('n=', paste0(table(unique(df_plot_2k[, c('grouping', 'PATNO')])[,'grouping'] ), collapse = ', '))
       nums<-paste0('n=', paste0(nums_plyr$count, collapse = ', '))
       
-      nums
-      
+
       p<-ggplot(data = df_plot_2k, aes_string(x = 'month', y = y, 
                                               fill='grouping',group='grouping',colour='grouping')) + 
         #stat_summary(geom = "pointrange", fun.data = median_IQR, 

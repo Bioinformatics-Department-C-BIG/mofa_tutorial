@@ -54,6 +54,9 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
+write_vars_output(MOFAobject, vars_by_factor)
+
+
 
 
 
@@ -183,12 +186,6 @@ if (add_clinical_clusters){
 
 
 
-y_pvals
-
-#y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
-#y_pvals<-y_pvals<0.05
-
-  
 
 
 ############ SUBSET PATIENTS ONLY ########################################
@@ -287,7 +284,7 @@ diff_var=y
 ## does not work as a loop 
 
 all_fs_diff[, 'NP1RTOT']
-rescale_option=FALSE
+rescale_option=TRUE
 all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
  # diff_var='NP2PTOT_diff_V16'
         fact=which(all_fs_diff[,diff_var])
@@ -333,6 +330,7 @@ clinical_scales
 y='abeta'
 y='NP2PTOT'
 y='updrs2_score_LOG'
+y='NP2PTOT_LOG'
 
 factors_to_clust<-which(all_fs_diff[ ,y])
 factors_to_clust
@@ -349,7 +347,7 @@ set.seed(123)
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
-Z_scaled<-Z
+#Z_scaled<-Z
 fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )#+
   geom_vline(xintercept = 3, linetype = 2)
 library('cluster')
@@ -537,12 +535,16 @@ diff_variables_to_p=c('NP2PTOT', 'scopa', 'NP3TOT', 'NP2PTOT_diff_V14', 'AGE',
                       'updrs3_score')
 
 diff_variables= c('updrs3_score')
+diff_variables= c('NP2PTOT_LOG')
 
-
+MOFAobject@samples_metadata$AGE_SCALED
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('NP2PTOT')#, 'AGE' )
-diff_variables_to_p=c('NP2PTOT_LOG','scopa', 'updrs2_score_LOG','updrs3_score', 'updrs3_score_LOG' )#, 'AGE' )
+diff_variables_to_p=c('NP2PTOT_LOG','scopa', 'updrs2_score_LOG','updrs3_score', 'updrs3_score_LOG', 
+                      
+                          'AGE_AT_VISIT')
+                     #'Usable_Bases_SCALE' #, 'AGE' 
 all_fs_diff[,'NP2PTOT_LOG']
 
 met<-samples_metadata(MOFAobject)
@@ -585,27 +587,20 @@ table(met[,c(clust_name, "PD_MED_USE")])
 
 ########### 
 all_fs_diff<-as.data.frame(all_fs_diff)
+all_fs_diff[,y]
 
-y='abeta'
+y='NP2PTOT'
+color_by='NP2PTOT'
 color_by=paste0(y, '_clust')
+
 # Plot clustering for scales 
 plot_factors(MOFAobjectPD, 
              factors=which(all_fs_diff[,y]),
-             color_by ='NP2PTOT' , 
+             color_by =color_by , 
              shape_by = color_by)
 
 
 
-
-
-
-
-
-
-
-#if (length(sel_coh)>1){
-#  selected_covars2<-c(selected_covars2, 'COHORT')
-#}
 
 sm$NP3_TOT
 selected_covars_img<-c('Disease status','hi_caudate', 'ips_caudate', 'con_putamen', 'con_putamen_V10' )
@@ -693,18 +688,13 @@ clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
-                           'Neutrophils....', 'Lymphocytes....')
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE')
+#, 
+#                           'Neutrophils....', 'Lymphocytes....')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG')
 #                                'Neutrophils....', 'Lymphocytes....')
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
-# nfl serum,. lowput ratio etc.  
-sm$tau
-
-cors_all_pd[, 'PD_MED_USE']
-factors=names(sel_factors)
-sel_factors
 graphics.off()
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
@@ -720,7 +710,6 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 graphics.off()
 
 
-hist(scale(sm_pd$Usable.Bases....))
 
 
 
@@ -789,6 +778,7 @@ samples_metadata(MOFAobject)$NP2_TOT
 
 
 fname<-'factors_covariates_only_nonzero_broad_PD'
+MOFAobjectPD@samples_metadata$Lymphocytes....
 plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
 
 fname<-'factors_covariates_only_nonzero_broad_PD'
@@ -1326,7 +1316,7 @@ views=names(MOFAobject@data)
   for (i in seq(1,MOFAobject@dimensions$M)){
   for (ii in seq(1,MOFAobject@dimensions$K)){
    
-    nFeatures=15
+    nFeatures=25
     
     ### oNLY SAVE THE ones with high variance
    # if (high_vars_by_factor[ii, i]){
@@ -1343,7 +1333,8 @@ views=names(MOFAobject@data)
 
           
           if (views[i]=='RNA'){
-            p_ws<-plot_top_weights2(MOFAobject_gs,
+            #plot_top_weights2
+            p_ws<-plot_top_weights(MOFAobject_gs,
                                     view = 'RNA',
                                     factor = ii,
                                     nfeatures = nFeatures,     # Top number of features to highlight

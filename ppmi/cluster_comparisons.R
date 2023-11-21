@@ -4,7 +4,7 @@
 
 
 process_mirnas=FALSE
-source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+#source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
 
 ## 1. get se
@@ -18,7 +18,8 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 
 se_clusters<-filter_se(se_filt_combat, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps) # se_filt_combat is missing one sample that was on one plate 
-se_clusters<-filter_se(se_filt, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+se_clusters<-filter_se(se_rnas, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+
 
 
 formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
@@ -63,7 +64,7 @@ if (add_med=='PDMEDYN'){
   
 }
 
-formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'
+formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+kmeans_grouping'
 
 deseq_by_group<-function(se_filt, formula_deseq){
   
@@ -92,7 +93,7 @@ deseq_by_group<-function(se_filt, formula_deseq){
         #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
         
         
-        deseq2Data <- DESeq(ddsSE)
+        deseq2Data <- DESeq(ddsSE, parallel=TRUE)
         deseq2Results<-results(deseq2Data)
         deseq2ResDF <- as.data.frame(deseq2Results)
         

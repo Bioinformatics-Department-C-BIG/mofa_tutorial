@@ -18,7 +18,9 @@ library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
 library(rbioapi)
+library(BiocParallel)
 
+process_mirnas=FALSE
 
 ## Output directory
 # output_de=paste0(output_1, 'gene')
@@ -33,7 +35,6 @@ metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
 #combined_bl_log$Plate
 
-#process_mirnas=FALSE
 #combined_bl_log$np2
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
@@ -58,7 +59,9 @@ VISIT=c('V08')
         # TODO: input all the visits 
         # MOVE ALL this to a configuration file!! 
         #### Remove low expression 
-        
+       # if (process_mirnas==TRUE){
+      #    input_file=input_file_mirs
+      #  }
         
         se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
         
@@ -167,7 +170,7 @@ VISIT=c('V08')
         
       
         
-        deseq2Data <- DESeq(ddsSE)
+        deseq2Data <- DESeq(ddsSE, parallel = TRUE)
         ### Contrast disease-control: parkinsons = 1, control = 2 
         se_filt$COHORT_DEFINITION; se_filt$COHORT
         if (4 %in% sel_coh){

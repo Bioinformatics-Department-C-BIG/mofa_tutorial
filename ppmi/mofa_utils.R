@@ -185,3 +185,25 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE )
 
 
 
+
+
+write_vars_output<-function(MOFAobject, vars_by_factor){
+  #'
+  #'
+  #'write the variance plot 
+  #' @param MOFAobject
+  #' @param vars_by_factor
+  #'
+  #'
+  vars_by_factor_f<-format(vars_by_factor*100, digits=2)
+  write.table(format(vars_by_factor_f,digits = 2)
+              ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
+  
+  p3<-plot_variance_explained(MOFAobject, max_r2=20)+
+    theme(axis.text.x=element_text(size=20), 
+          axis.text.y=element_text(size=20))
+  ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
+         width = 5, height=N_FACTORS/2,
+         dpi=100)
+}
+

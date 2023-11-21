@@ -9,6 +9,7 @@ library('factoextra')
 library(plyr)
 library(dplyr)
 library('WGCNA') # need empiricalBayesLM
+library(R.filesets)
 ## Utils 
 ## Summarized experiment 
 
@@ -43,7 +44,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                         'MCA_TOT_diff_V16', 'SITE', 'Plate')
+                         'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
+                         'Neutrophils....', 'Lymphocytes....')
 #'DYSKIRAT')
 
 
@@ -112,6 +114,7 @@ mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
 mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
 mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
+mirnas_all_visits_fname
 
 
 load_se_all_visits<-function(input_file, combined){
@@ -131,7 +134,7 @@ load_se_all_visits<-function(input_file, combined){
   ## Question: why are there duplicate samples - seems to be controls!
   ## first filter what is in metadata and mirnas ?
   
-  grep('1009',colnames(raw_counts_all))
+ # grep('1009',colnames(raw_counts_all))
   
   
   se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
@@ -174,56 +177,62 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
 }
 
-#patno_event_ids<-colData(vsd_filt)$PATNO_EVENT_ID
-#patno_event_ids
 
-#pdstate=c('OFF', '')patno_event_ids
-#patno_event_ids = samples_metadata(MOFAobject)$PATNO_EVENT_ID
-#patno_event_ids = paste0(samples_metadata(MOFAobject)$PATNO, '_BL')
-
-preprocess_se_deseq2<-function(se_filt){
+#se_filt<-se
+preprocess_se_deseq2<-function(se_filt, min.count=10){
   #' 
   #' Preprocess metadata of summarized experiment 
   #' 
   #'  
-  se_filt<-filter_se_byExpr(se_filt)
+  
+  # Raw data preprocess 
+  # 
+ 
+  ## Turn to factors for deseq
+  se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
+  se_filt$SEX<-as.factor(se_filt$SEX)
+  se_filt$SITE<-as.factor(se_filt$SITE)
+  se_filt$Plate<-as.factor(se_filt$Plate)
+  
+  
+  se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
+  se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
+  
+  se_filt<-se_filt[ , !is.na(se_filt$Usable_Bases_SCALE)]
+  
   
   ### OUTPUT THE FILTERED se_filt 
   ind<-which(is.na(se_filt$AGE_AT_VISIT))
   se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
-  
-  ## Turn to factors for deseq
-  se_filt$SEX<-as.factor(se_filt$SEX)
   se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
-  se_filt$SITE<-as.factor(se_filt$SITE)
-  se_filt$Plate<-as.factor(se_filt$Plate)
-  se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
-
-  
-  # remove samples without cohort assignment ? 
-  # maybe they are controls..? 
- 
-  se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
-  se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
-  se_filt<-se_filt[ , !is.na(se_filt$Usable_Bases_SCALE)]
-  
-  
-  ## these are almost the same so it is okay to scale AGE earlier 
- # hist(se_filt$AGE_AT_VISIT)
-#  hist(se_filt$AGE_SCALED)
-  
-  # impute: 
-  # which()
   se_filt$AGE_SCALED[is.na(se_filt$AGE_SCALED)]<-mean(se_filt$AGE_SCALED, na.rm=TRUE)
   se_filt<-se_filt[,!(is.na(se_filt$SEX))]
   
   table(colData(se_filt)[,c( 'EVENT_ID', 'SEX')])
   
   colData(se_filt)[,c( 'EVENT_ID', 'SEX', 'AGE', 'PATNO')]
+  
+  
+  #### remove genes
+  se_filt<-se_filt[!(rownames(se_filt) %in% remove_genes),]
+  # removed genes associated with the batch effects as explained in Craig 2020 paper
+  # 
+  se_filt<-filter_se_byExpr(se_filt, min.count=min.count)
+  
+ 
+  
+ 
+  
   return(se_filt)
 }
 
- fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
+
+
+
+
+fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
+  
+
    #'
    #' @param PATNO_EVENT_ID
    #'
@@ -569,9 +578,9 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
 }
 
 
-# default 
-N_DOT=15
-N_EMAP=30
+
+
+
 run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_sig=0.05){
   #'
   #' Run enrichment and write the results 
@@ -1071,10 +1080,17 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
     # load all and filter 
     # load the corrected dataset - correction is done with all batches together
     print(paste(prefix, ' remove variance'))
-      vsd_cor_l=loadRDS(vst_cor_all_vis)
+      vsd_cor_l=loadRDS(vst_cor_all_vis_filt)
       vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
       dim(vsd_cor_filt)
+      
+      vsd_cor_filt<-vsd_cor_filt[!(rownames(vsd_cor_filt) %in% remove_genes),]
+      #vsd_cor_filt<-vsd_cor_filt[rownames(vsd_cor_filt) %in% remove_genes,]
+      
       vsd_mat=assay(vsd_cor_filt)
+      
+    
+      
       # TODO: filter common or not??
     
   }
@@ -1225,10 +1241,13 @@ filter_se_byExpr<-function(se_filt, min.count=10){
   #'
       raw_counts <- assay(se_filt)
       
+      idx <- edgeR::filterByExpr(raw_counts,min.count=min.count, group=se_filt$COHORT )
       idx <- edgeR::filterByExpr(raw_counts,min.count=min.count )
+      
       raw_counts <- as.matrix(raw_counts[idx, ])
       
-      se_filt = se_filt[idx,]
+      se_filt = se_filt[idx,];
+      dim(se_filt)
       return(se_filt)
       
 }

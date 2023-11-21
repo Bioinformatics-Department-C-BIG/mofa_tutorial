@@ -2,26 +2,34 @@
 
 library('sva')
 library('WGCNA')
+library('R.filesets')
 
 library('FactoMineR')
 ### Analysis of batch effects  due to ###
-# 1. usable bases, 2. plate 3. site ###
+# 1. remove the most variable genes from the pools (filtered_genes)
+# Correct for sequencing metrics: 
+# 1. usable bases, 2. plate 
+# (3. site is also associated witht echnical variability but also biological so we don't remove it..###)
 # remove genes related to the first PCA ###
+
+filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+remove_genes<-filtered_genes$perc0.1
 
 formula_deseq<-"~AGE_SCALED+SEX+Usable_Bases_SCALE+COHORT"
 
 
-raw_mat<-assay(se_filt)
-se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
-se_filt_V08_pr<-preprocess_se_deseq2(se_filt_V08) # scale and transform covariates used in preprocessing 
-dim(se)
-table(se$COHORT)
-se_pr<-preprocess_se_deseq2(se) # scale and transform covariates used in preprocessing 
+
+prefix='mirnas'
+input_file=mirnas_all_visits_fname
+se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
+
+# TODO: here try also the tpm measures that are already normalized!! 
+se_pr<-preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 
+se_pr<-preprocess_se_deseq2(se, min.count = MIN_COUNT_M) # scale and transform covariates used in preprocessing 
 
 
 
-kruskal.test(se_pr$Usable_Bases_SCALE, as.factor(se_pr$Plate))
-
+#kruskal.test(se_pr$Usable_Bases_SCALE, as.factor(se_pr$Plate))
 
 se_pr$Usable_Bases_SCALE<-as.numeric(se_pr$Usable_Bases_SCALE)
 
@@ -36,10 +44,6 @@ cohorts<-ddsSE$COHORT
 retainedCovariates<-colData(ddsSE)[,c('AGE_SCALED', 'SEX', 'COHORT')]
 removedCovariates<-colData(ddsSE)[,c('Usable_Bases_SCALE', 'Plate')]
 
-
-#ddsSE_cpm<-cpm(assay(ddsSE))
-
-
 ## PCA with 1. vsd 2. CPM 3. 
 
 vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
@@ -48,27 +52,27 @@ adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=remo
                                 retainedCovariates = retainedCovariates )
 
 vsd_cor<-vsd
-
-dim(vsd_cor)
-dim(vsd)
 assay(vsd_cor)<-t(adjusted_data$adjustedData)
 
 ## Save the vsd corrected with all visits inside 
 
 saveRDS(vsd_cor,vst_cor_all_vis)
-
-
-
+vsd_cor<-loadRDS(vst_cor_all_vis)
+dim(vsd_cor)
+vsd_cor_filt<-vsd_cor[!(rownames(vsd_cor) %in% filtered_genes$perc0.1),]
+saveRDS(vsd_cor_filt,vst_cor_all_vis_filt)
 
 ### filter by visit
 # 1. 
-
+# Compare corrected and uncorected only for V08
 vsd_V08<-filter_se(se = vsd,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh = sel_subcoh) 
-
-
 vsd_cor_V08<-filter_se(se = vsd_cor,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh = sel_subcoh) 
+vsd_cor_V08_rem<-vsd_cor_V08[!(rownames(vsd_cor_V08) %in% filtered_genes$perc0.1), ]
+saveRDS(vsd_cor,vst_cor_all_vis_filt)
 
-vsd_p<-vsd_V08
+
+
+vsd_p<-vsd_cor_V08
 
       pca_data<-t(assay(vsd_p)) # transpose because rows must be samples
       meta_d<-colData(vsd_p)
@@ -114,12 +118,13 @@ vsd_p<-vsd_V08
       
       
 
+vsd1=vsd_cor_V08
+vsd2=vsd_cor_V08_rem
+median_expr_vsd_cor<-apply(t(assay(vsd1)), 1, mean)
+median_expr_vsd<-apply(t(assay(vsd2)), 1, mean)
 
-median_expr_vsd_cor<-apply(t(assay(vsd_p)), 1, mean)
-median_expr_vsd<-apply(t(assay(vsd)), 1, mean)
-
-sd_vsd<-apply(t(assay(vsd)), 1, sd)
-sd_vsd_cor<-apply(t(assay(vsd_p)), 1, sd)
+sd_vsd<-apply(t(assay(vsd1)), 1, sd)
+sd_vsd_cor<-apply(t(assay(vsd2)), 1, sd)
 length(sd_vsd)
 length(sd_vsd_cor)
 
@@ -127,9 +132,8 @@ length(sd_vsd_cor)
 ##
 df<-data.frame(vsd=sd_vsd, vsd_corrected=sd_vsd_cor)
 df<-data.frame(vsd=median_expr_vsd, vsd_corrected=median_expr_vsd_cor)
-df<-data.frame( vsd_corrected=median_expr_vsd_cor)
+df<-data.frame(vsd=median_expr_vsd,vsd_corrected=median_expr_vsd_cor)
 dim(df)
-removedCovariates
 df<-cbind(df, colData(vsd_p)[, c('Usable_Bases_SCALE', 'Plate')] );
 colnames(df)
 df_melt<-reshape2::melt(df,id.vars=c('Usable_Bases_SCALE', 'Plate') )

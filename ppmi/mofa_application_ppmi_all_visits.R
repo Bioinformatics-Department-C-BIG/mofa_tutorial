@@ -223,7 +223,7 @@ for (N_FACTORS in c(15)){
                        scale_views[1],'ruv_', ruv_s)
   outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+  MOFAobject=run_mofa_get_cors(N_FACTORS, force=TRUE)
   
   
   
@@ -243,6 +243,19 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+
+batch_effect_genes<-filtered_genes$perc0.1[filtered_genes$perc0.1 %in% MOFAobject@features_metadata$feature ]
+all_mofa_genes<-data.frame(get_weights(MOFAobject,view='RNA', factors=1)[[1]] )
+all_mofa_genes$batch_effect<-rownames(all_mofa_genes) %in% batch_effect_genes  
+
+ggplot(all_mofa_genes, aes(Factor1))+
+  geom_histogram(aes(fill=as.factor(batch_effect)))
+
+
+
+
 
 
 

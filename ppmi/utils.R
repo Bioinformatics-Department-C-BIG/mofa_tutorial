@@ -114,8 +114,12 @@ mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
 mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
 mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
-mirnas_all_visits_fname
 
+## GENES RELATED TO THE BATCH EFFECT
+filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+
+batch_effect_genes<-filtered_genes$perc0.1
+remove_genes<-batch_effect_genes
 
 load_se_all_visits<-function(input_file, combined){
   #'
@@ -988,6 +992,18 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 }
 
 
+get_enrich_result_pcgse<-function(all_fs_merged2_pval2){
+  
+      all_fs_merged2_pval2$ID<-all_fs_merged2_pval2$Description
+        enr_full <- multienrichjam::enrichDF2enrichResult(all_fs_merged2_pval2,
+                                                        keyColname =  'Description',
+                                                        geneColname ='Description',
+                                                        pvalueColname = 'pvalue')
+                                                       # pvalueCutoff = pvalueCutoff)
+ return(enr_full)
+#}
+}
+
 
 get_pval_text<-function(gse, pvalueCutoff_sig){
   text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
@@ -1084,7 +1100,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
       vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
       dim(vsd_cor_filt)
       
-      vsd_cor_filt<-vsd_cor_filt[!(rownames(vsd_cor_filt) %in% remove_genes),]
+      #vsd_cor_filt<-vsd_cor_filt[!(rownames(vsd_cor_filt) %in% remove_genes),]
       #vsd_cor_filt<-vsd_cor_filt[rownames(vsd_cor_filt) %in% remove_genes,]
       
       vsd_mat=assay(vsd_cor_filt)

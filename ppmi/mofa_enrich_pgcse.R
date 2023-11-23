@@ -167,14 +167,4 @@ plot_enrichment_heatmap(res.negative,
 )
 
 
-dev.off()
-#ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
 
-
-F3<-res.positive$pval.adj[,'Factor8']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:20]
-
-F3<-res.negative$pval.adj[,'Factor6']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:10]

@@ -24,10 +24,9 @@ se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 
 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+#se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_rnas=se_filt_corrected; # load the data after batch correction 
-# TODO: load the corrected and filtered vsn dataset?? 
-# 
+# TODO: Correct also for neutrophils to see the trajectories?
 vsd_cor_l=loadRDS(vst_cor_all_vis_filt)
 vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
 
@@ -127,17 +126,13 @@ if (view=='proteomics_plasma' || view=='proteomics_csf' ){
 
 
 keep_all_feats
-
+#rescale_option
 merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
 #merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
 
 
 
-
-deseq_all
-
-
-
+dim(unique(merged_melt_filt$symbol))
 
 ### List of merged per group
 merged_melt_filt=merged_melt_filt_rna
@@ -146,22 +141,39 @@ merged_melt_groups<-merged_melt_filt %>%
   
 
 library(stringr)
-# load from cluster_comparisons file  
-de_group_vs_control1<-deseq_all_names$SG1
-de_group_vs_control2<-deseq_all_names$SG2
-de_group_vs_control3<-deseq_all_names$SG3
+# load DE genes from cluster_comparisons file
+# load also time related features?? 
+# TODO: load these from the other file
+deseq_all<- vector("list", length = 3)
 
+de_files<-paste0(cluster_params_dir, '/de_cluster_')
+
+for (cluster_id in 1:3){
+    deseq2ResDF<-read.csv(paste0(de_files,  cluster_id , '.csv'), row.names=1 )
+    head(deseq2ResDF)
+    deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
+   # print(head(deseq_all[[cluster_id]]))
+    deseq_all_names <- lapply(deseq_all, function(x){
+      return(  gsub('\\..*', '',rownames(x))   )  })
+    names(deseq_all_names)<-paste0('SG', 1:length(deseq_all_names))
+}
+names(deseq_all_names)
+# check that they are in mofa
+
+sel_feats<-unique(merged_melt_filt$symbol)
+sel_feats
+intersect(deseq_all_names$SG2, sel_feats)
+deseq_all_names$SG1 %in% sel_feats
+de_group_vs_control1<-deseq_all_names$SG1[deseq_all_names$SG1 %in% sel_feats]
+de_group_vs_control2<-deseq_all_names$SG2[deseq_all_names$SG2 %in% sel_feats]
+de_group_vs_control3<-deseq_all_names$SG3[deseq_all_names$SG3 %in% sel_feats]
+length(de_group_vs_control1); length(de_group_vs_control2); length(de_group_vs_control3)
 
 
 ## significant and varying with time 
 most_sig_over_time1<-get_most_sig_over_time(merged_melt_groups[[1]][merged_melt_groups[[1]]$symbol %in% de_group_vs_control1 ,]) #%>% 
-                                            #dplyr::filter(!(symbol %in% de_merged_to_remove) ))
-
 most_sig_over_time2<-get_most_sig_over_time(merged_melt_groups[[2]][merged_melt_groups[[2]]$symbol %in% de_group_vs_control2 ,]) #%>% 
 most_sig_over_time3<-get_most_sig_over_time(merged_melt_groups[[3]][merged_melt_groups[[3]]$symbol %in% de_group_vs_control3 ,]) #%>% 
-
-
-
 
 # they should chgange in pd but not in controls!! 
 # remove the ones in the controls
@@ -287,14 +299,13 @@ de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG
 # 2.  De only
 # 3. de in specific group unique
 # 4. de and in selected pathways 
-
-top_factor_feats_rna
+head(deseq_all_names$SG2)
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
   choose_group=1
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% deseq_all_names$SG1[1:200],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control1[1:20],]
  # merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
   
   nrow=NULL; height=7; width=30
@@ -313,7 +324,7 @@ if (filt_top=='top'){
   
   nrow=NULL; height=12; 
 }
-
+merged_melt_filt_most_sig
 unique(merged_melt_filt_most_sig$GENE_SYMBOL)
 
 if (view=='RNA'){
@@ -326,12 +337,6 @@ if (view=='RNA'){
   
 }
 
-
-
-
-#merged_melt_filt_most_sig_g1<-
-
-print(merged_melt_filt_most_sig$NP2PTOT )
 
 
 #### in the boxplots add the groups 

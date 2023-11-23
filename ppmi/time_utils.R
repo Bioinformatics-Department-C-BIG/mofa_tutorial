@@ -1,8 +1,7 @@
 
 
 
-
-
+s
 create_merged_melt<-function(se, feat_names, view){
   #' merged_melt_filt: is a merged sumamrized experiment, in long format, 
   #' that includes multiple visits
@@ -11,12 +10,8 @@ create_merged_melt<-function(se, feat_names, view){
   #' @param
   #'  
   merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
-  
   merged_melt_orig<-merged_melt_orig_1
   merged_melt_orig$symbol<-merged_melt_orig$variable
-  
-  
-  
   #
   ### ### NOW match factors to samples
   # CREATE GROUPS BY FACTOR 

@@ -4,7 +4,7 @@
 
 
 process_mirnas=FALSE
-#source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
 
 ## 1. get se
@@ -19,6 +19,22 @@ MOFAobject_clusts=MOFAobjectPD
 
 se_clusters<-filter_se(se_filt_combat, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps) # se_filt_combat is missing one sample that was on one plate 
 se_clusters<-filter_se(se_rnas, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+se_clusters<-filter_se(se_filt_V08, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
+
+
+### Decide on the parameters settings 
+# Set the outdirectory 
+nclusts=length(table(se_clusters$kmeans_grouping))-1
+y_clust='NP2PTOT_LOG'
+clust_name=paste0(y_clust, '_clust')
+
+## Outputs 
+# 1. DE files 
+# 2. Venns 
+cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
+
+fname_venn=paste0(cluster_params_dir, '/','venn_de_per_group_deseq.png')
+
 
 
 
@@ -31,7 +47,7 @@ assay(se_clusters)
 MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3)
 se_filt_all<- vector("list", length = 3)
-y_clust='NP2PTOT'
+y_clust='NP2PTOT_LOG'
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust )
 
 se_clusters$kmeans_grouping
@@ -104,6 +120,7 @@ deseq_by_group<-function(se_filt, formula_deseq){
         deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
         deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
         
+
         return(deseq2ResDF)
 }
 
@@ -126,33 +143,30 @@ for (cluster_id in 1:3){
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
   deseq_all_groups[[cluster_id]]=deseq_by_group(se_filt_all[[cluster_id]], formula_deseq)
   deseq2ResDF<-deseq_all_groups[[cluster_id]]
-
-  
   deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
 
 } 
-#rds_data=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/clusters_data')
-#saveRDS(deseq_all_groups, rds_data)
 
 for (cluster_id in 1:3){
   deseq2ResDF=deseq_all_groups[[cluster_id]]
   
   deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
+  write.csv(deseq2ResDF, paste0(cluster_params_dir, '/de_cluster_', cluster_id , '.csv'), row.names=TRUE)
   deseq_all_groups[[cluster_id]]<-deseq2ResDF
+  
   
   }
 
+# Save and load 
 
 deseq_all_names<-lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
-
-
-
 names(deseq_all_names)<-paste0('SG', 1:length(deseq_all_names))
 
+
+
+
 #### 1. Venn from significant 
-nclusts=length(table(se_clusters$kmeans_grouping))-1
-clust_name=paste0(y_clust, '_clust')
-fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq.png')
+
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
 graphics.off()
 # TODO: 

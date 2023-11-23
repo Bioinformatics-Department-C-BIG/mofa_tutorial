@@ -478,11 +478,12 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10){
   #'
   #' Create boxplot by cluster 
   #' 
   #' @param met
+  #' @param bn: name of metric
   #'  
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
@@ -546,9 +547,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p){
   #plot.title = element_text(size = 30, color = "green")
   p
 
-  bn<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option ,'/all_vars' ,  '.png')
   print(bn)
-  ggsave(bn, dpi=300, width=10, height = 10/1.5, units='in')
+  ggsave(bn, dpi=300, width=width, height = height, units='in')
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   

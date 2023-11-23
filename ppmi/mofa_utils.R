@@ -21,6 +21,62 @@ get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
 
 
 
+
+
+
+correlate_factors_with_covariates_categ<-function(MOFAobject, covariates){
+  #'
+  #' performs Kruskal wallis test for mofa covariates 
+  #' @param MOFAobject
+  #' @param covariates the categorical covariates to test against
+  #'
+  #'
+  NFACTORS<-MOFAobject@dimensions$K
+   Z <- get_factors(MOFAobject, factors = 1:NFACTORS, 
+                   as.data.frame = FALSE)[[1]]
+  
+  
+  #Z <- do.call(rbind, Z)
+  sm_pd<-MOFAobject@samples_metadata
+  cat_covariates<-sm_pd[, covariates ]
+  
+  
+  # Perform kruskal test for each factor and each covariate
+  # Extract the pvalue 
+  # TODO: consider adjusting? 
+  cors_kruskal<-apply(Z, 2, function(z){
+    
+    apply(cat_covariates,2, 
+          
+          function(covariate){kruskal.test(z,
+                                           covariate)$p.value })
+    
+  })
+  
+  
+  
+  
+  cors_kruskal_log<-(-log10(cors_kruskal))
+  th<-(-log10(0.05))
+  #cors_kruskal_log[cors_kruskal_log < th ] <-0
+  cors_kruskal_p<-cors_kruskal
+  cors_kruskal_p[cors_kruskal_log < th ]<-0
+  
+  #corrplot::corrplot(cors_kruskal_p)
+  fname=paste0(outdir, '/covariates/cor_plot_categorical.jpeg'  )
+  graphics.off()
+  jpeg(fname, width=9, height=4, res=300, units='in')
+  pheatmap(cors_kruskal_log, main='Kruskal wallis test', 
+           ylab='log10 p-adj.')
+  
+  dev.off()
+  return(cors_kruskal_log)
+  
+}
+
+
+
+
 run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   ### Run mofa and write to file
   #'
@@ -207,3 +263,115 @@ write_vars_output<-function(MOFAobject, vars_by_factor){
          dpi=100)
 }
 
+
+
+
+
+
+
+
+boxplot_by_cluster<-function(met, clust_name, y, bn){
+  #'
+  #' Create boxplot by cluster 
+  #' 
+  #' @param met
+  #' @param bn 
+  #'  
+  #' 
+  clust_metric<-gsub('_clust', '', clust_name)
+  
+  met[,clust_metric ]<-as.numeric(met[,clust_metric])
+  met<-met[!is.na(met[, clust_metric]),]
+  print(paste('Using subset of  ', dim(met)[1], ' patients'))
+  freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
+  
+  
+  #### PROPORTIONS OF BINARY VARS
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
+  tot_med<-as.matrix(table(met[,c(clust_name, "SEX")])); paste_sex<-paste('SEX:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "PDSTATE")])); paste_state<-paste('PD state:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "td_pigd")])); paste_tdpigd<-paste('td/pigd:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  tot_med<-as.matrix(table(met[,c(clust_name, "NHY")])); paste_nhy<-paste('H&Y:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
+  
+  
+  met[, clust_name]=as.factor(met[, clust_name])
+  met[, y]=as.numeric(met[, y])
+  
+  
+  k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+  k_centers
+  ## Add kruskal wallis to the total plot and separately to each one 
+  ## 
+  
+  kw=NULL
+  try(if (!all(is.na(met[, y]))){
+    met_pd<-met[met$INEXPAGE%in% 'INEXPD',]
+    kw<-kruskal.test(x=met_pd[, y], met_pd[, clust_name])
+    
+  })
+  
+  factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
+  
+  my_comparisons=combn(levels(met[,clust_name]),2)
+  a=max(met[, y], na.rm = TRUE)
+  
+  
+  
+  p<-ggplot(met ,aes_string(x=clust_name , y=y))+
+    geom_boxplot(aes_string( x=clust_name, color=clust_name))+
+
+
+    geom_signif(comparisons=list( c(1,2), c(2,3), c(1,3) ),
+               aes_string(y=y), 
+               y_position=c(a, a+0.5,a+1))+
+            
+    labs(title = paste(y),  
+         subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
+         caption = paste0('\n',
+                          'factors: ',factors, '\n',
+                          paste_med,  '\n',
+                          paste_sex, '\n',
+                          paste_state,  '\n',
+                          paste_tdpigd, '\n', 
+                          paste_nhy) )+
+    theme(text =element_text(size=20))
+  #plot.title = element_text(size = 30, color = "green")
+    
+  
+  
+  p
+  print(bn)
+  ggsave(bn, dpi=300)
+  graphics.off()
+  ## TODO: WILCOX TEST BY GROUP
+  
+  
+}
+
+
+
+
+plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
+                           MOFAobject_to_plot=MOFAobject, res=200){
+  
+          # function to plot covariates heatmap for MOFA object
+          #' @param MOFAobject
+          #' @param selected_covars 
+          #' @param factors
+          # logic to filter the input covariates if some do not exist in the colnames of metadata
+          # or if for some the standard deviation is zero 
+
+
+          # 1. first check if the requested names exist in the metadata 
+          selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject_to_plot@samples_metadata) ]
+          sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
+          sd_na<-c(is.na(sds)|sds==0)
+          # 2. then check that the sd is not NA
+          selected_covars=selected_covars[ !(sd_na) ]
+          
+          if (labels_col){
+            labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
+            labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
+          }else{
+            labels_col=selected_covars
+  }

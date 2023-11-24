@@ -1,6 +1,9 @@
-process_mirnas=FALSE
-source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
+
+process_mirnas=TRUE
+source(paste0(script_dir, '/ppmi/config.R'))
+source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+print(prefix)
 
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
@@ -48,7 +51,7 @@ se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts=length(table(se_clusters$kmeans_grouping));nclusts
 cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
 
-fname_venn=paste0(cluster_params_dir, '/','venn_de_per_group_deseq.png');fname_venn
+fname_venn=paste0(cluster_params_dir, '/' prefix ,'venn_de_per_group_deseq.png');fname_venn
 
 
 cd<-colData(se_clusters)
@@ -77,8 +80,15 @@ if (add_med=='PDMEDYN'){
   formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
   
 }
+formula_deseq
+if (process_mirna){
+  # TODO: try site? and lymphocytes too? 
+  formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
 
-formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+kmeans_grouping'
+}else{
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+kmeans_grouping'
+
+}
 
 deseq_by_group<-function(se_filt, formula_deseq){
   
@@ -128,8 +138,9 @@ deseq_all<- vector("list", length = 3)
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
+prefix  
 
-
+prefix
 for (cluster_id in 1:3){
   
 
@@ -137,14 +148,14 @@ for (cluster_id in 1:3){
   ### 2. run deseq 
   ### 3. get significant per cluster 
 
-  de_file<-paste0(cluster_params_dir, '/de_cluster_', cluster_id , '.csv')
-
+  de_file<-paste0(cluster_params_dir, '/',prefix, 'de_cluster_', cluster_id , '.csv')
+#de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
   # if deseq exists load:
   if (file.exists(de_file)){
     # if de file exists load it - unfiltered de results file
-    deseq2ResDF<-read.csv(paste0(de_files,  cluster_id , '.csv'), row.names=1 )
+    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
   }else{
     # else run the deseq with the design formula specified 
@@ -223,7 +234,7 @@ deseq_all_top<-lapply(deseq_all_names, function(x) intersect(x,top10 ) )
 deseq_all_top
 
 
-fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
+fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/',prefix, 'venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
 create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster AND highly variable' ))
 
 
@@ -242,7 +253,7 @@ cluster_id=1
 
 gene_list1<-get_ordered_gene_list(deseq2ResDF1,  order_by_metric, padj_T=1, log2fol_T=0 )
 names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
-results_file_cluster=paste0(outdir, '/clustering/enrichment/gseGO',add_med, '_', ONT, '_', order_by_metric, 'clust', cluster_id)
+results_file_cluster=paste0(outdir, '/clustering/enrichment/gseGO',prefix,add_med, '_', ONT, '_', order_by_metric, 'clust', cluster_id)
 gse1<-run_enrich_per_cluster(deseq2ResDF1, results_file_cluster,N_DOT=20, N_EMAP=30 )
 
 cluster_id=3

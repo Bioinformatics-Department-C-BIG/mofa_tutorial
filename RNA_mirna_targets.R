@@ -18,8 +18,7 @@ mirs=gsub( '\\.','-', de_group_vs_control_and_time2)
 mirs=gsub( '\\.','-', most_sig_over_time1$symbol); clust_index=1
 mirs=gsub( '\\.','-', mirs_de$symbol); clust_index=1
 # TODO: get mirs for cluster 1
-# TODO: get mirs for cluster 
-mirs
+
 
 
 #mirs=gsub( '\\.','-', selected_mirs)
@@ -35,8 +34,7 @@ if (file.exists(mieaa_results_fname)){
   ### TODO: Rerun with updated pvalue cutoff 
 }else{
   ## otherwise run GSEA analysis 
-  
-  
+   
   mieaa_all_gsea <- rba_mieaa_enrich(test_set = mirs,
                                      mirna_type = "mature",
                                      test_type = test_type,

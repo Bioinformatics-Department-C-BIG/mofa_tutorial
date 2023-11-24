@@ -170,12 +170,6 @@ dev.off()
 
 
 
-
-
-
-
-
-
 #### TODO: tune with silhouette score ####
 
 
@@ -190,9 +184,10 @@ source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 ## TODO: get heatmaps time v08 only 
 
 
-### TODO: get network plots 
+### TODO: get network plots -
+## TODO: add to the pipeline here the deseq groups or load them from the file!! 
 
-
+  
 
 
 

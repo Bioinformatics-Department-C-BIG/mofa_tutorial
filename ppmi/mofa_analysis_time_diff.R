@@ -43,10 +43,8 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
-write_vars_output(MOFAobject, vars_by_factor)
 
-
-
+write_vars_output(MOFAobject, vars_by_factor) # output plots on var metrics
 
 
 ### ADD FUTURE CHANGES ####
@@ -168,8 +166,6 @@ if (add_clinical_clusters){
 
 
 
-
-
 ############ SUBSET PATIENTS ONLY ########################################
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 
@@ -177,29 +173,51 @@ if (add_clinical_clusters){
 PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
 
+
+
 # CORS PATIENTS ONLY #### 
+dir.create(paste0(outdir, '/covariates/'))
+
 stats<-apply(MOFAobjectPD@samples_metadata, 2,table )
 non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
+covariates_dir<-paste0(outdir, '/covariates/covariate_corelations_')
+covars_f_pearson<-paste0(covariates_dir, 'pearson.csv' )
+covars_f_pvalue<-paste0(covariates_dir, 'pvalue.csv' )
+covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
+covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
+
+
+
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
-cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
-cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1]]
+if (file.exists(covars_f_pearson_pd)){
+  # Loading covariates from file
+  print('Load covariates from file')
+  cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
+  cors_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
+  
+  cors<-read.csv2(covars_f_pvalue, row.names=1)
+  cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
+  
+}else{
+  cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
+  cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1]]
 
 
-### Cors separately for off and on? 
-
-MOFAobjectPD@samples_metadata$PDSTATE
-
+  write.csv2(cors_pd,covars_f_pearson_pd)
+  write.csv2(cors_pearson_pd,covars_f_pvalue_pd )
 
 # CORS ALL SAMPLES 
-run_cors_all_samples=TRUE
-if (run_cors_all_samples){
   stats<-apply(MOFAobject@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
   cors_both<-get_correlations(MOFAobject, names(non_na_vars))
   cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
-  
+
+  write.csv2(cors_pearson,covars_f_pearson)
+  write.csv2(cors,covars_f_pvalue)
+
 }
+
 
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
@@ -245,9 +263,10 @@ if (add_clinical_clusters){
 ######### Cluster patients with clinical trajectory factors ####
 ### get metrics to test how many clusters to use ####
 
-BiocManager::install('M3C')
+#BiocManager::install('M3C')
 library(M3C)
-clinical_scales
+library('cluster')
+
 y='abeta'
 y='NP2PTOT'
 y='updrs2_score_LOG'
@@ -263,14 +282,14 @@ set.seed(1239)
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
-#Z_scaled<-Z
-fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )#+
-  geom_vline(xintercept = 3, linetype = 2)
-library('cluster')
+Z_scaled<-Z
+graphics.off()
+fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )#
+  #geom_vline(xintercept = 3, linetype = 2)
 fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
 
 gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
-                    K.max = , B = 10)
+                    K.max =10 , B = 10)
 print(gap_stat, method = "globalmax")
 fviz_gap_stat(gap_stat)
 

@@ -1,14 +1,9 @@
-
-
-
-
-
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 
 
-## 1. get se
-## 2. deseq 
+## 1. get Summarized Experiment with metrics from all time points 
+## 2. Run deseq 
 ## 3. enrichment 
 
 
@@ -24,17 +19,13 @@ se_clusters<-filter_se(se_filt_V08, VISIT='V08', sel_coh = sel_coh, sel_sub_coh 
 
 ### Decide on the parameters settings 
 # Set the outdirectory 
-nclusts=length(table(se_clusters$kmeans_grouping))-1
+
 y_clust='NP2PTOT_LOG'
 clust_name=paste0(y_clust, '_clust')
 
 ## Outputs 
 # 1. DE files 
 # 2. Venns 
-cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-
-fname_venn=paste0(cluster_params_dir, '/','venn_de_per_group_deseq.png')
-
 
 
 
@@ -45,13 +36,20 @@ assay(se_clusters)
 
 
 MOFAobject_clusts<-MOFAobjectPD
-deseq_all_groups <- vector("list", length = 3)
-se_filt_all<- vector("list", length = 3)
+deseq_all_groups <- vector("list", length = 3);
+se_filt_all<- vector("list", length = 3);
 y_clust='NP2PTOT_LOG'
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust )
 
 se_clusters$kmeans_grouping
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
+
+
+nclusts=length(table(se_clusters$kmeans_grouping));nclusts
+cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
+
+fname_venn=paste0(cluster_params_dir, '/','venn_de_per_group_deseq.png');fname_venn
+
 
 cd<-colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
@@ -96,12 +94,10 @@ deseq_by_group<-function(se_filt, formula_deseq){
         se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
         se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
         
-        
+
         se_filt$LEDD[is.na(se_filt$LEDD)]=0 # add zeros to na then scale!
         se_filt$LEDD_scaled<- scale(se_filt$LEDD)
 
-        
-    
         ddsSE <- DESeqDataSet(se_filt, 
                               design = as.formula(formula_deseq))
         ddsSE<-estimateSizeFactors(ddsSE)
@@ -140,22 +136,28 @@ for (cluster_id in 1:3){
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
+
+  de_file<-paste0(cluster_params_dir, '/de_cluster_', cluster_id , '.csv')
+
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
-  deseq_all_groups[[cluster_id]]=deseq_by_group(se_filt_all[[cluster_id]], formula_deseq)
-  deseq2ResDF<-deseq_all_groups[[cluster_id]]
-  deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
+
+  # if deseq exists load:
+  if (file.exists(de_file)){
+    # if de file exists load it - unfiltered de results file
+    deseq2ResDF<-read.csv(paste0(de_files,  cluster_id , '.csv'), row.names=1 )
+
+  }else{
+    # else run the deseq with the design formula specified 
+        deseq2ResDF=deseq_by_group(se_filt_all[[cluster_id]], formula_deseq)
+        deseq_all_groups[[cluster_id]]<-deseq2ResDF
+        deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
+        write.csv(deseq2ResDF, de_files[[cluster_id]], row.names=TRUE)
+      
+  }
+  deseq_all_groups[[cluster_id]]<-deseq2ResDF
+  deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 
 } 
-
-for (cluster_id in 1:3){
-  deseq2ResDF=deseq_all_groups[[cluster_id]]
-  
-  deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
-  write.csv(deseq2ResDF, paste0(cluster_params_dir, '/de_cluster_', cluster_id , '.csv'), row.names=TRUE)
-  deseq_all_groups[[cluster_id]]<-deseq2ResDF
-  
-  
-  }
 
 # Save and load 
 
@@ -166,8 +168,9 @@ names(deseq_all_names)<-paste0('SG', 1:length(deseq_all_names))
 
 
 #### 1. Venn from significant 
-
+fname_venn
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
+
 graphics.off()
 # TODO: 
 
@@ -181,20 +184,22 @@ graphics.off()
 # TODO: venn before and after correction 
 plate
 
-cluster_id = 2
+cluster_id = 1
 
 se_filt=se_filt_all[[cluster_id]]
+
 deseq2ResDF=deseq_all_groups[[cluster_id]]
 
-pvol<-plotVolcano(deseq2ResDF, se_filt)
+#any(rownames(deseq2ResDF) %in% remove_genes)
+pvol<-plotVolcano(deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1))
 
-
+outdir_s
 pvol
 fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
 
-ggsave(fname,pvol, width=4.5,height=7, dpi=300)
+ggsave(fname,pvol, width=9,height=12, dpi=300)
 
 
 
@@ -205,10 +210,12 @@ ggsave(fname,pvol, width=4.5,height=7, dpi=300)
 
 #### 2. Venn from significant in top of factor
 
-## 1. get top of factor 
+## 1. get top of factor / or all higly variable genes input into MOFA
 ## 2. intersect with DE 
 sel_factor=2
 top10<- gsub('\\..*', '',select_top_bottom_perc(MOFAobject=MOFAobject, view=2, factors = sel_factor, top_fr = 0.1))
+top10<- gsub('\\..*', '',select_top_bottom_perc(MOFAobject=MOFAobject, view=2, factors = sel_factor, top_fr = 1))
+length(top10)
 # intersect with the top factors 
 deseq_all_top<-lapply(deseq_all_names, function(x) intersect(x,top10 ) )
 
@@ -217,7 +224,7 @@ deseq_all_top
 
 
 fname_venn=paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/','venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
-create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster' ))
+create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster AND highly variable' ))
 
 
 

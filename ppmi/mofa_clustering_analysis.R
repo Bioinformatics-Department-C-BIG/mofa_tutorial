@@ -51,11 +51,14 @@ for (diff_var in names(all_clusts_mofa)){
 
 
 ### Boxplots by cluster 
-
+diff_variables=c('NP2PTOT_LOG')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
-diff_variables_to_p=c('NP2PTOT_LOG','scopa', 'updrs2_score_LOG','updrs3_score', 'updrs3_score_LOG', 
-                      'tremor','NP3BRADY', 'rigidity', 'pigd' )
+diff_variables_to_p=c('NP2PTOT_LOG','scopa','updrs3_score', 
+                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
+                      'upsit', 'VLTFRUIT', 'sft', 
+                      'stai_state', 'stai_trait', 
+                      'AGE_SCALED' )
                      #'Usable_Bases_SCALE' #, 'AGE' 
 all_fs_diff[,'NP2PTOT_LOG']
 
@@ -70,35 +73,27 @@ sapply(diff_variables, function(y_clust){
   print(table(samples_metadata(MOFAobject)[, clust_name]))
   
   if (clust_name %in% colnames(met)){
-    
-     bn<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option ,'/' , y,  '.png')
 
- #   sapply(diff_variables_to_p_all, boxplot_by_cluster, met=met, clust_name=clust_name)
 
      # k centers might be different for each score 
-    cluster_params_dir
     k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
-    cluster_params_dir<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
+    cluster_params<-paste0(clust_name ,'/', k_centers,'/',rescale_option)
+    cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
     cluster_params_dir
+
+    bn<-paste0(cluster_params_dir , y,  '.png') # need to fix to add y in every iteration in function
+     #   sapply(diff_variables_to_p_all, boxplot_by_cluster, met=met, clust_name=clust_name, bn=bn)
+
     bn_all<-paste0(cluster_params_dir, '/all_vars' ,  '.png')
     bn_all
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,diff_variables_to_p, width=15, bn=bn_all)
     }
-    
   })
 
 
 
-
-
-
-
-
-
-
-
-
+cluster_params_dir
 ### Variables in this script 
 # 1. Plot the clusters on the factor plot 
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
@@ -112,19 +107,19 @@ met[,clust_metric ]<-as.numeric(met[,clust_metric])
 met<-met[!is.na(met[, clust_metric]),]
 print(paste('Using subset of  ', dim(met)[1], ' patients'))
 freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
-k_centers
 
 k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
 cluster_params_dir<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
 cluster_params_dir
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters' ,  '.png')
-
+color_by
 # Plot clustering for scales 
 p <- plot_factors(MOFAobjectPD, 
              factors=which(all_fs_diff[,y]),
-             color_by =color_by , 
-             shape_by = color_by)
-
+             color_by =color_by
+#             shape_by = color_by
+)
+p
 ggsave(outfile_clusters, width = 4, height = 4 )
 
 
@@ -142,7 +137,6 @@ diff_variables_to_p=c('NP2PTOT_LOG','scopa','updrs3_score',
                       'AGE_SCALED' )
                       # nfl serum is the other way round why? 
 
-sm$nfl_serum
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 clust_name
@@ -178,7 +172,27 @@ dev.off()
 
 
 
+
+
+
+
 #### TODO: tune with silhouette score ####
+
+
+#### TODO: plot also clinical trajectories over time ####
+
+source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+
+
+
+
+
+## TODO: get heatmaps time v08 only 
+
+
+### TODO: get network plots 
+
+
 
 
 
@@ -221,6 +235,15 @@ group_by(col_data, cluster) %>%
   )
 
  
+
+
+
+
+
+
+
+
+
 
 
 

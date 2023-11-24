@@ -17,7 +17,8 @@ mirs=gsub( '\\.','-', de_group_vs_control_and_time2)
 
 mirs=gsub( '\\.','-', most_sig_over_time1$symbol); clust_index=1
 mirs=gsub( '\\.','-', mirs_de$symbol); clust_index=1
-
+# TODO: get mirs for cluster 1
+# TODO: get mirs for cluster 
 mirs
 
 

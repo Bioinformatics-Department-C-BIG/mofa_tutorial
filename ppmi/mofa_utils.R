@@ -125,7 +125,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
 
 factors=1
 
-select_top_bottom_perc<-function(MOFAobject=MOFAobject, view, factors, top_fr=.01 ){
+select_top_bottom_perc<-function(MOFAobject, view, factors, top_fr=.01 ){
   #'select top bottom features 
   #'#'
   #'factors
@@ -150,16 +150,17 @@ select_top_bottom_perc<-function(MOFAobject=MOFAobject, view, factors, top_fr=.0
 
 
 
-#factors=heatmap_factors
-concatenate_top_features<-function(factors, view, top_fr){
-  
-  f_all<-sapply(factors,function(f){
-    select_top_bottom_perc(view=view, factors=f, top_fr=top_fr )
+
+concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
+  # get the top features from multiple factors and add the factor in second column
+  f_all<-sapply(factors_all, function(f){
+    select_top_bottom_perc(MOFAobject=MOFAobject,view=view, factors=f, top_fr=top_fr )
     }
     )
+    colnames(f_all)<-factors_all
   f_features<-melt(f_all)[,2:3]
   colnames(f_features)<-c('Factor', 'feature')
-  
+  f_features$Factor
   return(f_features)
   
   
@@ -374,4 +375,6 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
             labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
           }else{
             labels_col=selected_covars
-  }
+
+          }
+      }

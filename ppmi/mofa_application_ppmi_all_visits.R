@@ -23,6 +23,10 @@ library(dplyr)
 library('MultiAssayExperiment')
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
+
+source(paste0(script_dir, '/ppmi/config.R'))
+
+
 source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
@@ -42,7 +46,6 @@ use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
-source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 output_files
@@ -249,6 +252,23 @@ all_mofa_genes$batch_effect<-rownames(all_mofa_genes) %in% batch_effect_genes
 
 ggplot(all_mofa_genes, aes(Factor1))+
   geom_histogram(aes(fill=as.factor(batch_effect)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

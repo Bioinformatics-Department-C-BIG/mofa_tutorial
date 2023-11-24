@@ -3,7 +3,7 @@
 library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
-source(paste0(script_dir, 'ppmi/time_utils.R'))
+source(paste0(script_dir, 'ppmi/time_utils.R'));  create_merged_melt()
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
@@ -300,16 +300,21 @@ de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG
 # 3. de in specific group unique
 # 4. de and in selected pathways 
 head(deseq_all_names$SG2)
+
+any(get_symbols_vector(de_group_vs_control2)=='ATP13A2')
+ds3<-deseq_all_groups[[3]]
+ds3[ds3$GENE_SYMBOL =='ATP13A2',]
+
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
-  choose_group=1
+  choose_group=2
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control1[1:20],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2[1:30],]
  # merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
   
-  nrow=NULL; height=7; width=30
-  nrow=4
+  nrow=NULL; height=7; width=18
+  nrow=6
 }else if (filt_top=='selected'){
   ## keep specific mirs for presentation 
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% selected_feats,]

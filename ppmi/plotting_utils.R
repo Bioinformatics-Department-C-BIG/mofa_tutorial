@@ -4,12 +4,6 @@
 ### Complex heatmap 
 
 library('ComplexHeatmap')
-
-
-
-
-
-
 plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                        cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
   
@@ -145,7 +139,7 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 library('EnhancedVolcano')
 
 
-plotVolcano<-function(deseq2ResDF, se_filt){
+plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL){
   #'
   #'
   #' Take a sumarized experiment and deseq results 
@@ -161,7 +155,11 @@ plotVolcano<-function(deseq2ResDF, se_filt){
   mfc<-max(abs(deseq2ResDF$log2FoldChange))
   pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
   
-  xlim = c(-mfc-0.2,mfc+0.2)
+  if (is.null(xlim)){ # if not supplied create it 
+
+    xlim = c(-mfc-0.2,mfc+0.2)
+
+  }
   ylim = c(0,pmax+0.2)
   ylim = c(0,pmax-0.5)
   
@@ -194,7 +192,7 @@ plotVolcano<-function(deseq2ResDF, se_filt){
                         ylim=ylim, 
                         
                         subtitle=ns, 
-                        title=''
+                        title=title
   )
   
   
@@ -202,7 +200,8 @@ plotVolcano<-function(deseq2ResDF, se_filt){
   return(pvol)
 }
 
-
+library(ComplexHeatmap)
+library(circlize)
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
@@ -343,8 +342,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   # 1. SCALE
   # 2. Split time
   # 3. Cluster genes within groups? 
-  library(ComplexHeatmap)
-  library(circlize)
+
   
   # if only 1 timepoint
   

@@ -149,17 +149,9 @@ colnames(mirnas_df)<-PATNO_VISIT
 length(unique(colnames(mirnas_df))); length(PATNO_VISIT)
 rownames(mirnas_df)<-mirnas_rpmmm$miRNA; head(rownames(mirnas_df)); head(mirnas_df)
 
-
-### TODO: which are the duplicates? can we delete them? 
-length((mirnas_df))
-tail(colnames(mirnas_df))
-rownames(mirnas_df)
-dim(mirnas_df)
-
-
-#write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
 #mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
-mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')
+
+mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
 
 # save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
 gz1 <- gzfile(mirnas_all_visits_fname, "w")

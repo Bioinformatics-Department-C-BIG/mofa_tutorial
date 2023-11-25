@@ -3,82 +3,6 @@
 
 
 
-create_merged_melt<-function(se, feat_names, view){
-  #' merged_melt_filt: is a merged sumamrized experiment, in long format, 
-  #' that includes multiple visits
-  #' and all molecules per patient 
-  #' @param se
-  #' @param
-  #'  
-  merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
-  
-  merged_melt_orig<-merged_melt_orig_1
-  merged_melt_orig$symbol<-merged_melt_orig$variable
-  
-  
-  
-  #
-  ### ### NOW match factors to samples
-  # CREATE GROUPS BY FACTOR 
-  ############################################
-  # IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
-  sel_cohort<-c(1)
-  sel_cohort=FALSE
-  
-  if (sel_cohort){
-    #'
-    #'
-    merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
-  }else{
-    merged_melt=merged_melt_orig
-  }
-  merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
-  merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
-  
-  merged_melt_pd<-merged_melt
-  y_clust='NP2PTOT'
-  clust_name= paste0(y_clust, '_clust')
-  
-  MOFAobject_clusts=MOFAobjectPD
-  
-  
-  merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
-  merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
-  merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
-  
-  # ADD LABELS FOR controls
-  merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
-  
-  na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
-  merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
-  merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
-  
-  
-  
-  ################
-  
-  
-  ### Plot to remove the other group ####
-  # TAKE THE low group  
-  # TODO: decide how to take the lowest x and highest x 
-  ### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
-  
-  
-  
-  merged_melt_filt$group<-merged_melt_filt$kmeans_grouping
-  
-  group_cat='kmeans_grouping'
-  merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
-  group_cats<-levels(merged_melt_filt$group)
-  ## 
-  # TODO: Function: take a group and DE it with controls 
-  
-  return(merged_melt_filt)
-  
-}
-
-
-
 
 
 
@@ -324,3 +248,73 @@ get_most_sig_over_time<-function(merged_melt_filt_group){
 
 
 
+
+create_merged_melt<-function(se, feat_names, view){
+  #' merged_melt_filt: is a merged sumamrized experiment, in long format, 
+  #' that includes multiple visits
+  #' and all molecules per patient 
+  #' @param se
+  #' @param
+  #'  
+  merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
+  merged_melt_orig<-merged_melt_orig_1
+  merged_melt_orig$symbol<-merged_melt_orig$variable
+  #
+  ### ### NOW match factors to samples
+  # CREATE GROUPS BY FACTOR 
+  ############################################
+  # IMPORTANT, IF YOU ADD CONTROLS HERE THEY WILL BE INCLUDED IN THE kmeans grouping!!! 
+  sel_cohort<-c(1)
+  sel_cohort=FALSE
+  
+  if (sel_cohort){
+    #'
+    #'
+    merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
+  }else{
+    merged_melt=merged_melt_orig
+  }
+  merged_melt_pd=merged_melt_orig[merged_melt_orig$COHORT==1, ]
+  merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
+  
+  merged_melt_pd<-merged_melt
+  y_clust='NP2PTOT'
+  clust_name= paste0(y_clust, '_clust')
+  
+  MOFAobject_clusts=MOFAobjectPD
+  
+  
+  merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
+  merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
+  merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
+  
+  # ADD LABELS FOR controls
+  merged_melt$kmeans_grouping<-as.factor(merged_melt$kmeans_grouping)
+  
+  na_ps<-unique(merged_melt[!is.na(merged_melt$kmeans_grouping),]$PATNO)
+  merged_melt_filt<-merged_melt[merged_melt$PATNO %in% na_ps, ]
+  merged_melt_filt$VISIT<-as.factor(merged_melt_filt$VISIT)
+  
+  
+  
+  ################
+  
+  
+  ### Plot to remove the other group ####
+  # TAKE THE low group  
+  # TODO: decide how to take the lowest x and highest x 
+  ### TODO: DO THIS BOTH FOR CONTROLS AND DISEASE ####? 
+  
+  
+  
+  merged_melt_filt$group<-merged_melt_filt$kmeans_grouping
+  
+  group_cat='kmeans_grouping'
+  merged_melt_filt$group<-as.factor(merged_melt_filt[, group_cat] )
+  group_cats<-levels(merged_melt_filt$group)
+  ## 
+  # TODO: Function: take a group and DE it with controls 
+  
+  return(merged_melt_filt)
+  
+}

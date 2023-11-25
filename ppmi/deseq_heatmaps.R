@@ -166,7 +166,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
   colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
   sm<-MOFAobject@samples_metadata
   df_all<-cbind(df_all,sm[match(df_all$PATNO_EVENT_ID, sm$PATNO_EVENT_ID ),c(diff_variables, 'INEXPAGE') ])
-  y='NP2PTOT'
+  y='NP2PTOT_LOG'
   y_clust<-paste0(y, '_clust')
   #y_diff=paste0(y, '_diff_V12')
   
@@ -200,15 +200,21 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     
     # 2. FACTORS   
-
+    #sel_view
+    # THE LOGIC IS to get the top genes from each factor 
+    # TODO: what happens if one gene is in the top of two factors? get the highest rank/ normalized weight
     if (sel_view=='RNA'){top_fr=0.00955}else{top_fr=0.05}
-    f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=top_fr)
+    heatmap_factors
+    f_features=concatenate_top_features(MOFAobject=MOFAobject,view=sel_view, factors_all=heatmap_factors,top_fr=0.9)
+    #f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=0.9)
+
+    f_features
     f_features$feature<-gsub('\\..*', '',f_features$feature)
     f_features=f_features[!duplicated(f_features$feature),]
     f_features
     
     factor_labels<-f_features$Factor; names(factor_labels)<-f_features$feature
-    
+    table(factor_labels)
     
     sigGenes=f_features$feature
     sigGenes
@@ -243,10 +249,10 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     sel_clusts<-c(1,3)
     sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
 
-    draw_all_times=TRUE; wf<-200
+    draw_all_times=TRUE; wf<-100
     sm_pd=MOFAobjectPD@samples_metadata
     sel_cluster_ids=c(1,2,3)
-    sel_cluster_ids=c(1,3)
+    sel_cluster_ids=c(1,2)
     
     sel_cluster_ids_s=paste0(sel_cluster_ids, collapse='_')
     
@@ -263,7 +269,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     
 
-    jpeg(fname, width=10*wf, height=12*200, res=200)
+    jpeg(fname, width=30*wf, height=12*200, res=200)
     
     my_pheatmap
     dev.off()
@@ -283,6 +289,10 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     # 1. match the clusters 
     # 2. deseq the clusters
     colData(se_filt)
+
+
+
+
 
 
 

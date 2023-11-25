@@ -12,12 +12,6 @@ library(ggplot2)
 
 
 
-
-
-order_by_metric<-'abslog2pval'
-order_by_metric<-'abslog2pval'
-order_by_metric<-'log2pval'
-order_by_metric<-'abslog2pval'
 order_by_metric<-'log2pval'
 order_by_metric<-'log2FoldChange'
 

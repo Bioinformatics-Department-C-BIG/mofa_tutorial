@@ -1,14 +1,19 @@
 
 #BiocManager::install('rrvgo')
 library(rrvgo)
+library('R.filesets')
 ont='BP'
-sem_sim<-GOSemSim::godata(orgdb, ont=ont)
+orgdb="org.Hs.eg.db"
 
+#sem_sim<-GOSemSim::godata(orgdb, ont=ont)
+saveRDS(sem_sim,paste0('semsim', ont,'.RDS'))
+# SAVE similarities to speed up reuse
+sem_sim2<-loadRDS(paste0('semsim', ont,'.RDS'))
 go_analysis<-read.csv(paste0(data_dir,
-  '/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/gsego_12_.csv')
+                             '/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUE_split_FALSE/enrichment/gsego_12_.csv')
 )
 
-
+# calculate sim matrix and reuse the sem_sim already calculate for this orddb and ont
 simMatrix <- calculateSimMatrix(go_analysis$ID,
                                 orgdb="org.Hs.eg.db",
                                 ont="BP",
@@ -16,11 +21,25 @@ simMatrix <- calculateSimMatrix(go_analysis$ID,
                                 semdata = sem_sim
                                 )
 
-
-scores <- setNames(-log10(go_analysis$qvalue), go_analysis$ID)
+go_analysis$p.adjust
+scores <- setNames(-log10(go_analysis$pvalue), go_analysis$ID)
 # reduce the terms which are at least within a similarity belowe threshold
 # and select the group representative 
 reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
                                 orgdb="org.Hs.eg.db")
+
+
+heatmapPlot(simMatrix,
+            reducedTerms,
+            annotateParent=TRUE,
+            annotationLabel="parentTerm",
+            fontsize=6)
+
+
+
+
+scatterPlot(simMatrix, reducedTerms)
+
+

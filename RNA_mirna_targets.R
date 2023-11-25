@@ -18,12 +18,13 @@ mirs=gsub( '\\.','-', de_group_vs_control_and_time2)
 mirs=gsub( '\\.','-', most_sig_over_time1$symbol); clust_index=1
 mirs=gsub( '\\.','-', mirs_de$symbol); clust_index=1
 
-mirs
+
 
 
 #mirs=gsub( '\\.','-', selected_mirs)
 ## NOTE : the more mirs you add the less gene targets you get back as significant....
 
+clust_name='NP2PTOT_clust'
 mieaa_results_fname = paste0(outdir, '/trajectories/enrichment/', clust_name, clust_index)
 
 dir.create(mieaa_results_fname)
@@ -43,7 +44,7 @@ if (file.exists(mieaa_results_fname)){
                                      sig_level=pvalueCutoff
   )
   
-  
+  mieaa_all_gsea<-as.data.frame(mieaa_all_gsea)
   write.csv(mieaa_all_gsea, mieaa_results_fname, row.names = FALSE)
   
 }
@@ -74,7 +75,7 @@ to_load<-paste0(outdir,'/trajectories/enrichment/NP2PTOT_clust1mir_targets.csv')
 
 
 ################# 
-BiocManager::install('miRTarBase')
+#BiocManager::install('miRTarBase')
 
 
 
@@ -181,8 +182,16 @@ vis_net_vis<-visNetwork(visnet$nodes, visnet$edges,
 #improvedLayout =TRUE,
 
                   #physics=TRUE)# same as   visLayout(hierarchical = TRUE) 
-vis_net_vis
+vis_net_vis  %>% visExport(type = "jpeg", name = 'result_net', 
+                            float = "left", label = "Save network", background = "purple", style= "") 
 
+
+visNetwork(visnet$nodes, visnet$edges, 
+           color='color') %>%
+  addFontAwesome()%>%
+  # visIgraphLayout(layout = 'layout_nicely', smooth = TRUE)
+  visIgraphLayout(layout = 'layout.fruchterman.reingold', smooth = TRUE)%>%
+  
 
 visSave(vis_net_vis, file = paste0(mieaa_results_fname, '.html'))
 

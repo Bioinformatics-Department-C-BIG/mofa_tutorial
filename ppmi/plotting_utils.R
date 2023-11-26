@@ -139,7 +139,7 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 library('EnhancedVolcano')
 
 
-plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL){
+plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL){
   #'
   #'
   #' Take a sumarized experiment and deseq results 
@@ -166,9 +166,11 @@ plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL){
   ns_full<-table(se_filt$COHORT_DEFINITION)
   ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
   
-  
+  if (is.null(lab)){
+    lab=rownames(deseq2ResDF)
+  }
   pvol<-EnhancedVolcano(deseq2ResDF,
-                        lab = deseq2ResDF$GENE_SYMBOL,
+                        lab = lab,
                         pCutoff = 10e-2,
                         FCcutoff = 0.1,
                         x = 'log2FoldChange',

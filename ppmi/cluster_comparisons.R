@@ -16,10 +16,10 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 
 se_clusters<-filter_se(se_filt_combat, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps) # se_filt_combat is missing one sample that was on one plate 
-se_clusters<-filter_se(se_rnas, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
 se_clusters<-filter_se(se_filt_V08, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps)
 
 
+prefix
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
@@ -51,7 +51,7 @@ se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts=length(table(se_clusters$kmeans_grouping));nclusts
 cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
 
-fname_venn=paste0(cluster_params_dir, '/' prefix ,'venn_de_per_group_deseq.png');fname_venn
+fname_venn=paste0(cluster_params_dir, '/', prefix ,'venn_de_per_group_deseq.png');fname_venn
 
 
 cd<-colData(se_clusters)
@@ -81,7 +81,7 @@ if (add_med=='PDMEDYN'){
   
 }
 formula_deseq
-if (process_mirna){
+if (process_mirnas){
   # TODO: try site? and lymphocytes too? 
   formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
 
@@ -140,7 +140,6 @@ deseq_all<- vector("list", length = 3)
 ### deseq_significant_all_groups: list to hold significant 
 prefix  
 
-prefix
 for (cluster_id in 1:3){
   
 
@@ -161,8 +160,11 @@ for (cluster_id in 1:3){
     # else run the deseq with the design formula specified 
         deseq2ResDF=deseq_by_group(se_filt_all[[cluster_id]], formula_deseq)
         deseq_all_groups[[cluster_id]]<-deseq2ResDF
-        deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
-        write.csv(deseq2ResDF, de_files[[cluster_id]], row.names=TRUE)
+        if (!process_mirnas){
+          deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF)))
+          
+        }
+        write.csv(deseq2ResDF, de_file, row.names=TRUE)
       
   }
   deseq_all_groups[[cluster_id]]<-deseq2ResDF
@@ -193,15 +195,15 @@ graphics.off()
 
 
 # TODO: venn before and after correction 
-plate
 
-cluster_id = 1
+
+cluster_id = 2
 
 se_filt=se_filt_all[[cluster_id]]
 
 deseq2ResDF=deseq_all_groups[[cluster_id]]
 
-#any(rownames(deseq2ResDF) %in% remove_genes)
+#deseq2ResDF$GENE_SYMBOL
 pvol<-plotVolcano(deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1))
 
 outdir_s

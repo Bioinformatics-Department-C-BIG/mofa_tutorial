@@ -5,17 +5,19 @@
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
-# source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
-# BiocManager::install('GOSemSim') # nolint # nolint: commented_code_linter.
+#source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
+#BiocManager::install('GOSemSim')
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit: ALL, V02, V04, V06, V08 
 # BiocManager::install("MOFA2", version="1.8")
-# detach('package:MOFA2', unload=TRUE)
+#etach('package:MOFA2', unload=TRUE)
 #source("https://bioconductor.org/biocLite.R")
 
 
 library(MOFA2)
+
+
 library(data.table)
 library(ggplot2)
 library(ggpubr)
@@ -23,17 +25,15 @@ library(dplyr)
 library('MultiAssayExperiment')
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
-
-source(paste0(script_dir, '/ppmi/config.R'))
-
-
-source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
 output_files
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
+#if (split){
+#  N_FACTORS=8
+#}
 VISIT=c('BL');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL','V08');
@@ -46,9 +46,11 @@ use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
+source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
-output_files
+source(paste0(script_dir,'ppmi/utils.R'))
+
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
@@ -149,7 +151,7 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
     
     
     dir.create(outdir, showWarnings = FALSE)
-    #force=FALSE
+   # force=FALSE
     MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=force, N_FACTORS=N_FACTORS )
     
     
@@ -212,10 +214,9 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
 
 
 # n_factors best=15
-#for (N_FACTORS in c(15)){
+for (N_FACTORS in c(15)){
   ## MOFA parameters, set directory 
   #'
-  print(N_FACTORS)
   mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
   ruv_s<-(as.numeric(ruv))
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
@@ -228,7 +229,7 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
   
   
   
-#}
+}
 
 ## attach some extra clinical variables 
 sel_sam=MOFA2::samples_names(MOFAobject)
@@ -242,62 +243,6 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
-
-filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
-
-batch_effect_genes<-filtered_genes$perc0.1[filtered_genes$perc0.1 %in% MOFAobject@features_metadata$feature ]
-
-all_mofa_genes<-data.frame(get_weights(MOFAobject,view='RNA', factors=1)[[1]] )
-all_mofa_genes$batch_effect<-rownames(all_mofa_genes) %in% batch_effect_genes  
-
-ggplot(all_mofa_genes, aes(Factor1))+
-  geom_histogram(aes(fill=as.factor(batch_effect)))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

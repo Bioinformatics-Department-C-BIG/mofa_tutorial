@@ -93,7 +93,6 @@ sapply(diff_variables, function(y_clust){
 
 
 
-cluster_params_dir
 ### Variables in this script 
 # 1. Plot the clusters on the factor plot 
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score

@@ -20,7 +20,7 @@ library(dplyr)
 library(rbioapi)
 library(BiocParallel)
 
-process_mirnas=FALSE
+process_mirnas=TRUE
 
 ## Output directory
 # output_de=paste0(output_1, 'gene')

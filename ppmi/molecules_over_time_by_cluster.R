@@ -146,11 +146,13 @@ library(stringr)
 # TODO: load these from the other file
 deseq_all<- vector("list", length = 3)
 
-de_files<-paste0(cluster_params_dir, '/de_cluster_')
+de_files<-paste0(cluster_params_dir, '/',prefix, 'de_cluster_',)
+deseq_all_names
+
+#de_file<-paste0(cluster_params_dir, '/',prefix, 'de_cluster_', cluster_id , '.csv')
 
 for (cluster_id in 1:3){
     deseq2ResDF<-read.csv(paste0(de_files,  cluster_id , '.csv'), row.names=1 )
-    head(deseq2ResDF)
     deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',]
    # print(head(deseq_all[[cluster_id]]))
     deseq_all_names <- lapply(deseq_all, function(x){

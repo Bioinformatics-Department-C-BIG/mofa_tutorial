@@ -188,24 +188,26 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
 
-
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd)){
   # Loading covariates from file
   print('Load covariates from file')
   cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
-  cors_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
+  cors_all_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
   
   cors<-read.csv2(covars_f_pvalue, row.names=1)
   cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
   
 }else{
+  stats<-apply(MOFAobjectPD@samples_metadata, 2,table )
+  non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+
   cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
-  cors_pearson_pd=cors_both[[2]]; cors_pd=cors_both[[1]]; cors_all_pd=cors_both[[1]]
+  cors_pearson_pd = as.data.frame(cors_both[[2]]);  cors_all_pd = as.data.frame(cors_both[[1]])
 
 
-  write.csv2(cors_pd,covars_f_pearson_pd)
-  write.csv2(cors_pearson_pd,covars_f_pvalue_pd )
+  write.csv2(cors_pd, covars_f_pearson_pd)
+  write.csv2(cors_pearson_pd, covars_f_pvalue_pd )
 
 # CORS ALL SAMPLES 
   stats<-apply(MOFAobject@samples_metadata, 2,table )
@@ -240,11 +242,12 @@ all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP3
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
-
+cors_all_pd$NP2PTOT_LOG
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
-all_fs_diff<-cors_all_pd[,all_diff_in_cors]>(-log10(0.05))
+cors_all_pd$NP2PTOT_LOG
+all_fs_diff<-as.data.frame(cors_all_pd[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff_cor<-cors_all_pd[,all_diff_in_cors]
-
+all_fs_diff$NP2PTOT_LOG
 #### RUN CLUSTERING ####
 library(DescTools)
 

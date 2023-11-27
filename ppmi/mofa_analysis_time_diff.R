@@ -437,8 +437,6 @@ graphics.off()
 
 
 
-
-
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )]
 

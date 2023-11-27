@@ -597,11 +597,16 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_s
   #' Run enrichment and write the results 
   #' @param gene_list
   #' ordered gene list to run gse 
-  #'
+  #' @return return the significant results 
   #' 
   #'
-  gene_list; 
-  pvalueCutoff=1
+
+  #pvalueCutoff=1
+  # gse_full
+  # N_DOT=15
+  #N_EMAP=30 
+ # results_file=results_file_cluster
+  #results_file
   gse_full <- clusterProfiler::gseGO(gene_list, 
                                      ont=ONT, 
                                      keyType = 'ENSEMBL', 
@@ -609,14 +614,12 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_s
                                      pvalueCutoff  = pvalueCutoff  )
   
   
-  gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
+  gse = write_filter_gse_results(gse_full, results_file, pvalueCutoff)
   
-  gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
-  gse@result$Description
-  
-  gse@result$p.adjust
-  
-  enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP)
+  gse = dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
+ 
+
+  enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, run_ORA=FALSE)
   
   return(gse)
 }
@@ -709,8 +712,6 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-
-
 plot_enrich_compare<-function(gse_compare,enrich_compare_path){
   ### GSE COMPARE ANALYSIS 
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=20, split=".sign") + facet_grid(.~.sign)
@@ -744,24 +745,14 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path){
 library('clusterProfiler')
 #options(warn=0, error=NULL)
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
-                               process_mofa=FALSE, text_p='', title_p='', geneList=NULL){
+                               process_mofa=FALSE, text_p='', title_p='', geneList=NULL, run_ORA=FALSE){
 
   #gse=gse_mofa_rna; 
   #geneList=gene_list_ord_g
   #N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
-  #'
-  #'
-  #'
-  #'
+  #run_ORA=FALSE
   N=25
-  ## TODO: ADD FACET IF SIGNED 
-  #if (length(showCategory_list)>1){
-  #  print('Filter by selected category')
-  #  N_DOT<-showCategory_list
-  #  N_TREE<-showCategory_list
-  #  N_NET<-showCategory_list
-  #  N_EMAP<-showCategory_list
-  ##  
+ 
     write_n=FALSE
   
   
@@ -799,10 +790,11 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   if (!(process_mirnas) && !(run_ORA)){
 
     dp_sign<-  clusterProfiler::dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
-    ggsave(paste0(results_file, '_dot_sign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
+    ggsave(paste0(results_file, '_dsign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
     
   }
-  
+
+
   #### EMAP PLOT 
   options(ggrepel.max.overlaps = Inf)
   x2 <- pairwise_termsim(gse )
@@ -867,7 +859,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
     
-    ggsave(paste0(results_file, '_geneconcept_', node_label, '_',write_n, '.jpeg'), width=8, height=8)
+    ggsave(paste0(results_file, '_gc_', node_label, '_',write_n, '.jpeg'), width=8, height=8)
   }
   
   
@@ -905,7 +897,8 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
       p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
       labs(caption=text_p, title=title_p)
       #write_n='test'
-      ggsave(paste0(results_file, '_clusterplot_average_',N_TREE, '.jpeg'),
+      #N_TREE=10
+      ggsave(paste0(results_file, '_cp_',N_TREE, '.jpeg'),
              width=10, height=0.5*log(N_TREE)+3, dpi=300)
   
   

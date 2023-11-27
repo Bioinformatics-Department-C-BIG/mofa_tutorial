@@ -26,7 +26,7 @@ MOFAobject_clusts=MOFAobjectPD
 
 se_clusters<-filter_se(se_filt_combat, VISIT='V08', sel_coh = sel_coh, sel_sub_coh = sel_ps) # se_filt_combat is missing one sample that was on one plate 
 if (process_mirnas){
-  se_sel=se_mirs
+  se_sel = se_mirs
 }else{
   se_sel = se_rnas
 }
@@ -55,8 +55,8 @@ assay(se_clusters)
 MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
-y_clust='NP2PTOT_LOG'
-se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust )
+y_clust='NP2PTOT_LOG';
+se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
@@ -71,7 +71,6 @@ cd<-colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
-se_filt
 
 ### TODO: add LEDD --> Turn it to zero for the ones that dont take it? 
 se$LEDD
@@ -148,6 +147,9 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
 
 
 deseq_all <- vector("list", length = 3) # holds the significant gene/mirs ids only for each cluster
+deseq_all_names<-vector("list", length = 3)
+gene_lists<-vector("list", length = 3)
+gse_all<-vector("list", length = 3)
 
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
@@ -223,11 +225,6 @@ ggsave(fname,pvol, width=9,height=12, dpi=300)
 
 
 
-
-
-
-
-
 #### 2. Venn from significant in top of factor
 
 ## 1. get top of factor / or all higly variable genes input into MOFA
@@ -249,64 +246,51 @@ create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE
 
 
 deseq2ResDF$log2FoldChange
-order_by_metric='log2FoldChange'
 order_by_metric='log2pval'
+order_by_metric='log2FoldChange'
 
 ONT='BP'
 pvalueCutoff_sig=0.05
 enrich_params<-paste0(ONT, '_', order_by_metric)
-dir.create(paste0(cluster_params_dir, '/enrichment/'))
+#dir.create(paste0(enrich_compare_path, '/enr/'))
 
-cluster_id=2
-gse1
-gene_list1
-library('fgsea')
-data(examplePathways)
-data(exampleRanks)
-set.seed(42)
-for (cluster_id in 1:3){
-  # run enrichment with the log2pval metric 
+enrich_compare_path=paste0(cluster_params_dir, '/enr/'  ,'/gse', prefix, enrich_params, 'comp')
+
+for (cluster_id in 2:3){
+  # run enrichment with the log2pval metric
+  print(cluster_id) 
   deseq2ResDF = deseq_all_groups[[cluster_id]]
   gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
-  results_file_cluster=paste0(cluster_params_dir, '/enrichment/'  ,'/gseGO',prefix,'_', enrich_params, 'clust', cluster_id)
+
+  gene_lists[[cluster_id]]<-gene_list1
+
+  results_file_cluster=paste0(cluster_params_dir, '/enr/'  ,'/gse',prefix, enrich_params, 'cl', cluster_id)
   gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 )
+
   # TODO: try also  the other tool 
 
 }
-length(gene_list)
- gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-  gene_list_ord=gene_list
-  names(gene_list)<-gsub('\\..*', '',names(gene_list))
-  #gse=run_enrich_gene_list(gene_list, results_file)
 
-gse_full <- clusterProfiler::gseGO(gene_list, 
-                                     ont=ONT, 
-                                     keyType = 'ENSEMBL', 
-                                     OrgDb = 'org.Hs.eg.db', 
-                                     pvalueCutoff  = 0.05, 
-                                     # nproc=1,
-                                      eps=0)
-
-
-fgseaRes <- fgsea(pathways = examplePathways, 
-                  stats = exampleRanks,
-                  minSize=15,
-                  maxSize=500,
-                  nproc=1, 
-                  eps = 0)
-
-
-gse_compare<-compareCluster(geneClusters = list(G1=gene_list1,G3=gene_list3 ), 
+clust_pair<-c(2,1)
+clust_pair_s=paste0(clust_pair, collapse='_')
+clust_pair_s
+gse_compare<-compareCluster(geneClusters = list(G2=gene_lists[[clust_pair[1]]],G1=gene_lists[[clust_pair[2]]] ), 
                             fun = "gseGO", 
                             OrgDb='org.Hs.eg.db', 
                             ont=ONT, 
                             keyType = 'ENSEMBL') 
 
+gse_compare<-compareCluster(geneClusters = list(G2=gene_lists[[2]],G1=gene_lists[[1]] ), 
+                            fun = "gseGO", 
+                            OrgDb='org.Hs.eg.db', 
+                            ont=ONT, 
+                            keyType = 'ENSEMBL') 
 ### RUN SCRUPTI compare
 
 
 
+plot_enrich_compare(gse_compare,paste0(enrich_compare_path, clust_pair_s))
 
 
 

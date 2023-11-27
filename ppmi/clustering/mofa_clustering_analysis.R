@@ -100,11 +100,11 @@ sapply(diff_variables, function(y_clust){
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
 y <- 'NP2PTOT_LOG' # cluster metric 
 color_by=paste0(y, '_clust')
-
+clust_metric<-y
 # Settings for each clustering 
-clust_metric<-gsub('_clust', '', clust_name)
-met[,clust_metric ]<-as.numeric(met[,clust_metric])
+
 met<-met[!is.na(met[, clust_metric]),]
+clust_name<-paste0(clust_metric, '_clust')
 print(paste('Using subset of  ', dim(met)[1], ' patients'))
 freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 
@@ -112,7 +112,7 @@ k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_nam
 cluster_params_dir <- paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
 cluster_params_dir
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters' ,  '.png')
-color_by = 'NP2PTOT'
+color_by = 'NP2PTOT_clust'
 
 MOFAobjectPD@samples_metadata$NP2PTOT
 # Plot clustering for scales 
@@ -150,13 +150,16 @@ col_data$rem
 col_data$cluster<-col_data[, clust_name];col_data[, clust_name]<-NULL
 
 # Get the median per cluster and scale it for the ehatmap 
+
+#means_by_cluster %>% group_indices()
 means_by_cluster <- col_data %>% 
       dplyr::select(-PATNO) %>%
       group_by(cluster) %>%
       mutate_if(is.character, as.numeric) %>%
   summarise_each(funs(median(., na.rm = TRUE)))%>%
-  scale() %>% as.data.frame() %>% 
-  select(-cluster) %>% as.data.frame()
+  scale() %>% as.data.frame() %>% select(-cluster) %>% 
+  as.data.frame()
+rownames(means_by_cluster)<-means_by_cluster$cluster
 
 
 # TODO: adjust clustering method to get the correct roder
@@ -167,8 +170,9 @@ means_by_cluster_na$moca<-NULL
 graphics.off()
 jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
   pheatmap(means_by_cluster_na, 
+   labels_row= c(1,2,3),
   clustering_method = 'centroid',
-  color=colorRampPalette(c("turquoise4", "white", "red"))(50))
+  color = colorRampPalette(c("turquoise4", "white", "red"))(50))
 dev.off()
 
 
@@ -196,6 +200,7 @@ source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
 
 corrplot::corrplot(stat[sig,], tl.col = "black", title="Pearson correlation coefficient")
+
 
 
 
@@ -234,6 +239,7 @@ group_by(col_data, cluster) %>%
   )
 
  
+
 
 
 

@@ -75,7 +75,7 @@ if (file.exists(mieaa_results_fname)){
 }
 
 
-#### 
+####
 colnames(mieaa_all_gsea)<-make.names(  colnames(mieaa_all_gsea))
 
 mieaa_all_gsea_sig<-mieaa_all_gsea %>%
@@ -109,6 +109,8 @@ rnas_de$GENE_SYMBOL<-symb
 
 
 list_of_rnas = rnas_de$GENE_SYMBOL 
+#list_of_rnas = de_group_vs_control1[de_group_vs_control1$symbol  %in% top_factor_feats,
+#                                   'GENE_SYMBOL']
 
 list_of_rnas
 #####
@@ -120,6 +122,7 @@ selected_mirs_from_targets<-mieaa_targets_de_rnas
 mirna_targets_edgel<-get_long_mir_targets(mieaa_targets_de_rnas)
   
 selected_mirs<-mirna_targets_edgel$variable
+
 mirna_targets_el<-mirna_targets_edgel
 unique(mirna_targets_el$Subcategory)
 
@@ -136,13 +139,13 @@ deg<-degree(g)
 
 length(deg[deg>5])
 if (length(deg)>30){
-  
-  bc_remove_mirs<-deg[deg<5]
-  bc_remove_mirs<-bc_remove_mirs[startsWith(names(bc_remove_mirs), 'hsa')]
-  #genes_to_keep<-V(g)$name[!startsWith(V(g)$name, 'hsa')]
-  deg
-  g_filt<-delete_vertices(g, V(g)$name %in% c(names(bc_remove_mirs)))
-  g_filt<-remove_subcomponents(g_filt, subcomp_min_edge = 1)[[1]]
+
+bc_remove_mirs<-deg[deg<5]
+bc_remove_mirs<-bc_remove_mirs[startsWith(names(bc_remove_mirs), 'hsa')]
+#genes_to_keep<-V(g)$name[!startsWith(V(g)$name, 'hsa')]
+deg
+g_filt<-delete_vertices(g, V(g)$name %in% c(names(bc_remove_mirs)))
+g_filt<-remove_subcomponents(g_filt, subcomp_min_edge = 1)[[1]]
 }else{
   g_filt<-g
   
@@ -168,13 +171,13 @@ visnet$nodes$font.size=25
 #visnet$nodes$font<-list(size=25,mod='bold' )
 add_subclusters=FALSE
 if (add_subclusters){
-  mst<-g_filt
-  mst.communities <- edge.betweenness.community(mst, weights=NULL, directed=FALSE)
-  mst.clustering <- make_clusters(mst, membership=mst.communities$membership)
-  V(mst)$color <-  mst.communities$membership + 1
-  
-  visnet$nodes$clusters<-mst.communities$membership
-  
+mst<-g_filt
+mst.communities <- edge.betweenness.community(mst, weights=NULL, directed=FALSE)
+mst.clustering <- make_clusters(mst, membership=mst.communities$membership)
+V(mst)$color <-  mst.communities$membership + 1
+
+visnet$nodes$clusters<-mst.communities$membership
+
 }
 
 visnet$nodes$font.size=60
@@ -214,7 +217,7 @@ visNetwork(visnet$nodes, visnet$edges,
   addFontAwesome()%>%
   # visIgraphLayout(layout = 'layout_nicely', smooth = TRUE)
   visIgraphLayout(layout = 'layout.fruchterman.reingold', smooth = TRUE)%>%
-  
+
 
 visSave(vis_net_vis, file = paste0(mieaa_results_fname, '.html'))
 

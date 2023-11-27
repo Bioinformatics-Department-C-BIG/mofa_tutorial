@@ -15,8 +15,15 @@ library(R.filesets)
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
-
-
+safeBPParam <- function(nworkers) {
+    if (.Platform$OS.type=="windows") {
+        BiocParallel::SerialParam()
+         BiocParallel::SnowParam(workers = 1)
+    } else {
+        BiocParallel::MulticoreParam(nworkers)
+    }
+}
+safeBPParam()
 ### map event to months 
 
 EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'=12,   'V05'=18,   'V06'=24,   'V07'=30,   
@@ -568,9 +575,9 @@ library('enrichplot')
 
 run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
   #'
-  #'
-  #'
-  #'
+  #' Get the ordered list 
+  #' @param deseq2ResDF
+  #' 
   #'
   #deseq2ResDF=deseq2ResDF1
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
@@ -585,7 +592,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_sig=0.05){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_sig=0.05, pvalueCutoff=1){
   #'
   #' Run enrichment and write the results 
   #' @param gene_list
@@ -593,13 +600,15 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_s
   #'
   #' 
   #'
+  gene_list; 
+  pvalueCutoff=1
   gse_full <- clusterProfiler::gseGO(gene_list, 
                                      ont=ONT, 
                                      keyType = 'ENSEMBL', 
                                      OrgDb = 'org.Hs.eg.db', 
-                                     pvalueCutoff  = pvalueCutoff)
+                                     pvalueCutoff  = pvalueCutoff  )
   
-  pvalueCutoff
+  
   gse=write_filter_gse_results(gse_full, results_file, pvalueCutoff)
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)

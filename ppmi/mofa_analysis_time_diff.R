@@ -194,7 +194,7 @@ if (file.exists(covars_f_pearson_pd)){
   print('Load covariates from file')
   cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
   cors_all_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
-  
+  cors_pearson_pd$NP2PTOT_LOG
   cors<-read.csv2(covars_f_pvalue, row.names=1)
   cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
   
@@ -206,8 +206,8 @@ if (file.exists(covars_f_pearson_pd)){
   cors_pearson_pd = as.data.frame(cors_both[[2]]);  cors_all_pd = as.data.frame(cors_both[[1]])
 
 
-  write.csv2(cors_pd, covars_f_pearson_pd)
-  write.csv2(cors_pearson_pd, covars_f_pvalue_pd )
+  write.csv2(cors_pearson_pd, covars_f_pearson_pd)
+  write.csv2(cors_all_pd, covars_f_pvalue_pd )
 
 # CORS ALL SAMPLES 
   stats<-apply(MOFAobject@samples_metadata, 2,table )

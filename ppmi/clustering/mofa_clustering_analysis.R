@@ -3,10 +3,6 @@
 #install.packages('DescTools')
 library(DescTools)
 library('factoextra')
-
-
-
-
 # Using an existing trained model on simulated data
 #file <- system.file("extdata", "model.hdf5", package = "MOFA2")
 #model <- load_model(file)
@@ -17,17 +13,23 @@ library('factoextra')
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
-
+all_fs_diff$NP2PTOT_LOG
 rescale_option=TRUE
-all_clusts_mofa<-sapply(colnames(all_fs_diff),function(diff_var){
+all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
+  #'
+  #' @param
+  #' 
+  #' 
+
         fact <- which(all_fs_diff[,diff_var])
         xname = paste0(diff_var, '_clust')
       if (length(fact) > 0){
         set.seed(42)
         set.seed(60)
         clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD, centers=k_centers_m,
-         factors=fact, rescale=rescale_option) # nolint
+         factors=fact, rescale=rescale_option) # Cluster using kmeans
         clust_ps<-clusters_x$cluster
+        MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
         MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
 
         return(clust_ps)
@@ -43,7 +45,7 @@ for (diff_var in names(all_clusts_mofa)){
     MOFAobject@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO,names(clusters_ids ) )]
     MOFAobject@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
 }
-
+MOFAobject@samples_metadata$NP2PTOT_LOG_clust
 
 
 
@@ -97,7 +99,6 @@ sapply(diff_variables, function(y_clust){
 # 1. Plot the clusters on the factor plot 
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
 y <- 'NP2PTOT_LOG' # cluster metric 
-color_by='NP2PTOT'
 color_by=paste0(y, '_clust')
 
 # Settings for each clustering 
@@ -107,11 +108,13 @@ met<-met[!is.na(met[, clust_metric]),]
 print(paste('Using subset of  ', dim(met)[1], ' patients'))
 freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 
-k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
-cluster_params_dir<-paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
+k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+cluster_params_dir <- paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
 cluster_params_dir
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters' ,  '.png')
-color_by
+color_by = 'NP2PTOT'
+
+MOFAobjectPD@samples_metadata$NP2PTOT
 # Plot clustering for scales 
 p <- plot_factors(MOFAobjectPD, 
              factors=which(all_fs_diff[,y]),
@@ -138,8 +141,10 @@ diff_variables_to_p=c('NP2PTOT_LOG','scopa','updrs3_score',
 
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
+diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD))
 clust_name
 col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
+
 MOFAobjectPD@samples_metadata[, clust_name]
 col_data$rem
 col_data$cluster<-col_data[, clust_name];col_data[, clust_name]<-NULL
@@ -229,6 +234,51 @@ group_by(col_data, cluster) %>%
   )
 
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

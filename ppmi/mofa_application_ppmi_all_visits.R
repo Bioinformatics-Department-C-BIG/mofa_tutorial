@@ -27,7 +27,7 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
-output_files
+
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
@@ -243,6 +243,8 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+
 
 
 

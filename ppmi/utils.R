@@ -592,7 +592,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_sig=0.05, pvalueCutoff=1){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1){
   #'
   #' Run enrichment and write the results 
   #' @param gene_list
@@ -604,7 +604,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15, pvalueCutoff_s
   #pvalueCutoff=1
   # gse_full
   # N_DOT=15
-  #N_EMAP=30 
+
  # results_file=results_file_cluster
   #results_file
   gse_full <- clusterProfiler::gseGO(gene_list, 
@@ -712,21 +712,21 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
   ### GSE COMPARE ANALYSIS 
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=20, split=".sign") + facet_grid(.~.sign)
   dot_comp
-  ggsave(paste0(enrich_compare_path, 'dot_compare.jpeg' ), plot=dot_comp,
+  ggsave(paste0(enrich_compare_path, 'dt.jpeg' ), plot=dot_comp,
          dpi=300
   )
   
   
   gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
-  N_EMAP=20
+  
   emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
                       cex.params = list(category_label = 1.1) ) 
   emap_comp
-  ggsave(paste0(enrich_compare_path, 'emap_compare.jpeg' ), plot=emap_comp,
+  ggsave(paste0(enrich_compare_path, 'emap.jpeg' ), plot=emap_comp,
          dpi=300)
   
   

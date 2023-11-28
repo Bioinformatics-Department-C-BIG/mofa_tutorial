@@ -150,7 +150,7 @@ plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL){
   #'
   
   
-  if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$SYMBOL}
+  #if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$GENE_SYMBOL}
   
   mfc<-max(abs(deseq2ResDF$log2FoldChange))
   pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)

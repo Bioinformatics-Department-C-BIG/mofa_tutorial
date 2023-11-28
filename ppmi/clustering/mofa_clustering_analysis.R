@@ -56,7 +56,7 @@ MOFAobject@samples_metadata$NP2PTOT_LOG_clust
 diff_variables=c('NP2PTOT_LOG')
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
-diff_variables_to_p=c('NP2PTOT_LOG','scopa','updrs3_score', 
+diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 

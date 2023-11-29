@@ -15,15 +15,15 @@ library(R.filesets)
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
-safeBPParam <- function(nworkers) {
+safeBPParam <- function(nworkers=14) {
     if (.Platform$OS.type=="windows") {
         BiocParallel::SerialParam()
-         BiocParallel::SnowParam(workers = 1)
+         BiocParallel::SnowParam(nworkers)
     } else {
         BiocParallel::MulticoreParam(nworkers)
     }
 }
-safeBPParam()
+
 ### map event to months 
 
 EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'=12,   'V05'=18,   'V06'=24,   'V07'=30,   
@@ -52,7 +52,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
-                         'Neutrophils....', 'Lymphocytes....')
+                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes')
 #'DYSKIRAT')
 
 
@@ -107,7 +107,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # THESE factors are the ones that we actually WANT 
                                  'MCATOT', 
                                  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                                 'SITE', 'Plate'
+                                 'SITE', 'Plate', 'Neutrophils.Lymphocytes'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  
@@ -594,7 +594,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
 
 run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1){
   #'
-  #' Run enrichment and write the results 
+  #' Run enrichment GSEA using an ordered gene list, write, and plot and save the results 
   #' @param gene_list
   #' ordered gene list to run gse 
   #' @return return the significant results 

@@ -261,3 +261,4 @@ samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
 
 
+

@@ -61,13 +61,13 @@ correlate_factors_with_covariates_categ<-function(MOFAobject, covariates){
   #cors_kruskal_log[cors_kruskal_log < th ] <-0
   cors_kruskal_p<-cors_kruskal
   cors_kruskal_p[cors_kruskal_log < th ]<-0
-  
+  cors_kruskal_p
   #corrplot::corrplot(cors_kruskal_p)
   fname=paste0(outdir, '/covariates/cor_plot_categorical.jpeg'  )
   graphics.off()
   jpeg(fname, width=9, height=4, res=300, units='in')
-  pheatmap(cors_kruskal_log, main='Kruskal wallis test', 
-           ylab='log10 p-adj.')
+  pheatmap(cors_kruskal_log, main='Correlations of factors with covariates \n Kruskal wallis test ')
+        #    legend_labels=list(c('log10 p-adj.')))
   
   dev.off()
   return(cors_kruskal_log)
@@ -355,26 +355,38 @@ boxplot_by_cluster<-function(met, clust_name, y, bn){
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
                            MOFAobject_to_plot=MOFAobject, res=200){
   
-          # function to plot covariates heatmap for MOFA object
-          #' @param MOFAobject
-          #' @param selected_covars 
-          #' @param factors
-          # logic to filter the input covariates if some do not exist in the colnames of metadata
-          # or if for some the standard deviation is zero 
-
-
-          # 1. first check if the requested names exist in the metadata 
-          selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject_to_plot@samples_metadata) ]
-          sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
-          sd_na<-c(is.na(sds)|sds==0)
-          # 2. then check that the sd is not NA
-          selected_covars=selected_covars[ !(sd_na) ]
-          
-          if (labels_col){
-            labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
-            labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
-          }else{
-            labels_col=selected_covars
-
-          }
-      }
+  # filter if some do not exist in the colnames of metadata
+  #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
+  # first check if the requested names exist in the metadata 
+  selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject_to_plot@samples_metadata) ]
+  
+  
+  sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
+  sd_na<-c(is.na(sds)|sds==0)
+  
+  print(selected_covars)
+  # then check that the sd is not NA
+  selected_covars=selected_covars[ !(sd_na) ]
+  
+  if (labels_col){
+    labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
+    labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
+  }else{
+    labels_col=selected_covars
+  }
+  
+  
+  
+  
+  jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
+         )
+  P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
+                                        covariates =selected_covars , plot = plot,
+                                        labels_col=labels_col, 
+                                        factors = factors, 
+                                        cluster_cols=TRUE)
+  
+  dev.off()
+  
+  
+}

@@ -61,11 +61,15 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
                       'AGE_SCALED' )
+                      
+
+diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
+         'Neutrophils....', 'Lymphocytes....' )
                      #'Usable_Bases_SCALE' #, 'AGE' 
 all_fs_diff[,'NP2PTOT_LOG']
 
 met<-samples_metadata(MOFAobject)
-met$updrs2_score_LOG
+met$NE
 y_clust="NP2PTOT_LOG"
 
 
@@ -74,6 +78,7 @@ sapply(diff_variables, function(y_clust){
   ## check if there are clusters for this variable
   print(table(samples_metadata(MOFAobject)[, clust_name]))
   
+
   if (clust_name %in% colnames(met)){
 
 
@@ -132,7 +137,7 @@ ggsave(outfile_clusters, width = 4, height = 4 )
 ### Means by group 
 library(dplyr)
 diff_variables_to_p
-diff_variables_to_p=c('NP2PTOT_LOG','scopa','updrs3_score', 
+diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 

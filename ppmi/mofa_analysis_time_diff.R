@@ -267,7 +267,7 @@ if (add_clinical_clusters){
 ### get metrics to test how many clusters to use ####
 
 #BiocManager::install('M3C')
-library(M3C)
+#library(M3C)
 library('cluster')
 
 y='abeta'

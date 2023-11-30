@@ -6,11 +6,8 @@ library(igraph)
 library(ggraph)
 library(magrittr)
 
-BiocManager::install('OmnipathR')
+#BiocManager::install('OmnipathR')
 library('OmnipathR')
-
-which('OmnipathR')
-
 
 # interactions <- import_omnipath_interactions( resources = c('SignaLink3', 'PhosphoSite', 'SIGNOR') )
 #interactions <- import_omnipath_interactions( resources = c('SignaLink3', 'PhosphoSite', 'SIGNOR','miRTarBase') )
@@ -27,7 +24,8 @@ ptms_g = ptms_graph(ptms = enzsub)
 OPI_g = interaction_graph(interactions = interactions)
 
 
-
+BiocManager::install("dorothea")
+BiocManager::install("decoupleR")
 
 ### mirnas-rnas targets 
 import_mirnatarget_interactions(
@@ -36,8 +34,7 @@ import_mirnatarget_interactions(
   fields = NULL,
   default_fields = TRUE,
   references_by_resource = TRUE,
-  exclude = NULL,
-  ...
+  exclude = NULL
 )
 
 

@@ -714,10 +714,10 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 
 plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
   ### GSE COMPARE ANALYSIS 
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=20, split=".sign") + facet_grid(.~.sign)
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=15, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
-         dpi=300
+         dpi=200
   )
   
   
@@ -727,12 +727,12 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' ), plot=emap_comp,
-         dpi=300)
+         dpi=200)
   
   
-  cnetplot(gse_compare, showCategory = 10)
-  ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=emap_comp,
-         dpi=300)
+  cnet_comp<-cnetplot(gse_compare, showCategory = 10)
+  ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
+         dpi=200)
   
   
 }

@@ -24,8 +24,8 @@ ptms_g = ptms_graph(ptms = enzsub)
 OPI_g = interaction_graph(interactions = interactions)
 
 
-BiocManager::install("dorothea")
-BiocManager::install("decoupleR")
+#BiocManager::install("dorothea")
+#BiocManager::install("decoupleR")
 
 ### mirnas-rnas targets 
 import_mirnatarget_interactions(
@@ -37,6 +37,11 @@ import_mirnatarget_interactions(
   exclude = NULL
 )
 
+
+
+##### STRING 
+
+#BiocManager::install("STRINGdb")
 
 
 

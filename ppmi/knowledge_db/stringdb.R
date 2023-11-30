@@ -4,6 +4,7 @@
 ### code chunk number 1: initialization
 ###################################################
 library(STRINGdb)
+library(ggplot2)
 string_db <- STRINGdb$new( version="11.5", species=9606, 
                            score_threshold=200, network_type="full", input_directory="")
 
@@ -20,13 +21,16 @@ STRINGdb$help("get_graph")      # To visualize their documentation.
 ###################################################
 data(diff_exp_example1)
 head(diff_exp_example1)
-
-
+diff_exp<-read.csv('/Volumes/GoogleDrive/Other computers/My computer (1) (1)/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUEruv_1_split_FALSE/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V06/rnas_de_cluster_2.csv')
+head(diff_exp)
+head(diff_exp_example1)
+diff_exp_example2<-data.frame(gene=diff_exp$GENE_SYMBOL, logFC=diff_exp$log2FoldChange, pvalue=diff_exp$padj)
 ###################################################
 ### code chunk number 4: map
 ###################################################
 example1_mapped <- string_db$map( diff_exp_example1, "gene", removeUnmappedRows = TRUE )
-
+example2_mapped <- string_db$map( diff_exp_example2, "gene", removeUnmappedRows = TRUE )
+example1_mapped<-example2_mapped
 
 ###################################################
 ### code chunk number 5: STRINGdb.Rnw:112-114
@@ -55,7 +59,6 @@ string_db$plot_network( hits )
 # (i.e. green down-regulated gened and red for up-regulated genes)
 example1_mapped_pval05 <- string_db$add_diff_exp_color( subset(example1_mapped, pvalue<0.05), 
                                                         logFcColStr="logFC" )    
-
 
 ###################################################
 ### code chunk number 9: post_payload
@@ -104,7 +107,7 @@ head(annotations, n=20)
 ### code chunk number 15: clustering1
 ###################################################
 # get clusters
-clustersList <- string_db$get_clusters(example1_mapped$STRING_id[1:600])
+clustersList <- string_db$get_clusters(example1_mapped$STRING_id[1:200])
 
 
 ###################################################
@@ -119,11 +122,12 @@ options(SweaveHooks=list(fig=function()
 ###################################################
 getOption("SweaveHooks")[["fig"]]()
 # plot first 4 clusters
+pdf('signor/clusters.pdf')
 par(mfrow=c(2,2))
 for(i in seq(1:4)){
   string_db$plot_network(clustersList[[i]])
 }
-
+dev.off()
 
 ###################################################
 ### code chunk number 18: proteins

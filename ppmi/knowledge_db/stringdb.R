@@ -3,6 +3,7 @@
 ###################################################
 ### code chunk number 1: initialization
 ###################################################
+#BiocManager::install('STRINGdb')
 library(STRINGdb)
 library(ggplot2)
 string_db <- STRINGdb$new( version="11.5", species=9606, 
@@ -21,7 +22,9 @@ STRINGdb$help("get_graph")      # To visualize their documentation.
 ###################################################
 data(diff_exp_example1)
 head(diff_exp_example1)
-diff_exp<-read.csv('/Volumes/GoogleDrive/Other computers/My computer (1) (1)/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUEruv_1_split_FALSE/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V06/rnas_de_cluster_2.csv')
+data_dir
+diff_exp<-read.csv(paste0(outdir,  '/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V08/rnas_de_cluster_2.csv'))
+
 head(diff_exp)
 head(diff_exp_example1)
 diff_exp_example2<-data.frame(gene=diff_exp$GENE_SYMBOL, logFC=diff_exp$log2FoldChange, pvalue=diff_exp$padj)
@@ -44,6 +47,7 @@ options(SweaveHooks=list(fig=function()
 ###################################################
 hits <- example1_mapped$STRING_id[1:200]  
 
+colnames(example1_mapped)
 
 ###################################################
 ### code chunk number 7: plot_network
@@ -67,14 +71,20 @@ example1_mapped_pval05 <- string_db$add_diff_exp_color( subset(example1_mapped, 
 payload_id <- string_db$post_payload( example1_mapped_pval05$STRING_id, 
                                       colors=example1_mapped_pval05$color )
 
-
+string_interactions<-string_db$get_interactions(  hits)
+string_db$get_interactions(   )
+string_neighbours<-string_db$get_neighbors(hits)
+string_neighbours
+colnames(string_interactions)
 ###################################################
 ### code chunk number 10: plot_halo_network
 ###################################################
 getOption("SweaveHooks")[["fig"]]()
 # display a STRING network png with the "halo"
+dir.create(paste0(outdir,'/string/'))
+pdf(paste0(outdir,'/string/string.pdf' ))
 string_db$plot_network( hits, payload_id=payload_id )
-
+dev.off()
 
 ###################################################
 ### code chunk number 11: enrichment
@@ -173,4 +183,19 @@ string_db$get_interactions( c(tp53, atm) )
 ###################################################
 ## # get the homologs of the following two proteins in the mouse (i.e. species_id=10090)
 ## string_db$get_homologs_besthits(c(tp53, atm), target_species_id=10090, bitscore_threshold=60)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

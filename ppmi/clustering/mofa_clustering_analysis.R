@@ -141,8 +141,10 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
-                      'AGE_SCALED' )
-                      # nfl serum is the other way round why? 
+                      'AGE_SCALED', 'Neutrophil.Lymphocyte' )
+                      # nfl serum is the other way round why?
+                      # Also check if the neutrophil: lymphocyte is higher in more severe patients 
+                      # is cluster 3 with higher neutrophils more severe in the longterm or less?  
 
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')

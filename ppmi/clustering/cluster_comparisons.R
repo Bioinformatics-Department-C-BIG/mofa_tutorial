@@ -25,7 +25,7 @@ MOFAobject_clusts=MOFAobjectPD
 
 
 # TODO: make function to load for rnas and mirnas separately
-VISIT_COMP = 'V04'
+VISIT_COMP = 'V08'
 if (process_mirnas){
   se_sel = se_mirs
 }else{
@@ -48,7 +48,6 @@ clust_name=paste0(y_clust, '_clust')
 
 
 formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
-#formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
 
 assay(se_clusters)
 
@@ -69,7 +68,7 @@ cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', 
 
 
 
-cd<-colData(se_clusters)
+cd <- colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
@@ -168,11 +167,12 @@ gse_all<-vector("list", length = 3)
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
 
-
+deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr))
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr),  '/',VISIT_COMP)
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr)))
 dir.create(deseq_params)
 fname_venn=paste0(deseq_params, prefix , 'min_',min.count,'venn_de_per_group_deseq.png');fname_venn
+
 
 
 
@@ -181,14 +181,28 @@ for (cluster_id in 1:3){
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
-  print('cluster:',cluster_id)
+  print(paste('cluster:',cluster_id))
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
-#de_file
+  #de_file
+  se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
+}
+
+tail(colData(se_filt_all[[2]])[,c('PATNO', 'EVENT_ID')] %>% as.data.frame() %>%
+arrange(PATNO))
+
+for (cluster_id in 1:3){
+
+  ### 1. for each cluster, create se filt with controls, 
+  ### 2. run deseq 
+  ### 3. get significant per cluster 
+  print(paste('cluster:',cluster_id))
+  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
+  #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
   # if deseq exists load:
-if (file.exists(de_file)){
-#  if (FALSE){
+  #if (file.exists(de_file)){
+  if (FALSE){
     # if de file exists load it - unfiltered de results file
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
@@ -227,26 +241,26 @@ graphics.off()
 
 # TODO: venn before and after correction 
 
+for (cluster_id in c(1,2,3)){
 
-cluster_id = 3
 
-se_filt=se_filt_all[[cluster_id]]
+      se_filt=se_filt_all[[cluster_id]]
 
-deseq2ResDF=deseq_all_groups[[cluster_id]]
-deseq2ResDF$log2FoldChange
-#deseq2ResDF$GENE_SYMBOL
-deseq2ResDF$GENE_SYMBOL
+      deseq2ResDF=deseq_all_groups[[cluster_id]]
+      deseq2ResDF$log2FoldChange
+      #deseq2ResDF$GENE_SYMBOL
+      deseq2ResDF$GENE_SYMBOL
 
-pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1),
- lab=deseq2ResDF$GENE_SYMBOL)
-pvol
-fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
-fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
-fname<-paste0(deseq_params, '/Volcano_', '_cluster_',cluster_id, '.jpeg')
+      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1),
+      lab=deseq2ResDF$GENE_SYMBOL)
+      pvol
+      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
+      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
+      fname<-paste0(deseq_params, '/Volcano_', '_cluster_',cluster_id, '.jpeg')
 
-pvol
-ggsave(fname,pvol, width=9,height=12, dpi=300)
-
+      pvol
+      ggsave(fname,pvol, width=9,height=12, dpi=300)
+}
 outdir_s
 
 #### 2. Venn from significant in top of factor
@@ -275,7 +289,7 @@ order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
 ONT='BP'
 pvalueCutoff_sig=0.05
-enrich_params<-paste0(ONT, '_', order_by_metric)
+enrich_params<-paste0(ONT, '_', order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))
 
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
@@ -310,9 +324,115 @@ gse_compare<-compareCluster(geneClusters = list(G1=gene_lists[[clust_pair[1]]],G
                             keyType = 'ENSEMBL') 
 
 
-### RUN SCRUPTI compare
+### RUN SCRIPT compare
 
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 25)
+plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 40)
+
+
+
+
+### Cluster compare by visit ### 
+# 1. 
+#    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
+
+cluster_id=3
+deseq_all_times<-vector("list", length = 3)
+deseq_all_times
+
+
+deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){
+  deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' , prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
+  
+  gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
+  names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
+
+
+  return(gene_list1)
+  }
+)
+
+dir.create(paste0(deseq_params_all, '/enr/'))
+enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+
+enrich_compare_path
+gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq_all_times[[2]],T3=deseq_all_times[[3]] ), 
+                            fun = "gseGO", 
+                            OrgDb='org.Hs.eg.db', 
+                            ont=ONT, 
+                            keyType = 'ENSEMBL') 
+
+
+plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

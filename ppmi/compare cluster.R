@@ -1,4 +1,7 @@
 
+
+
+
 out_compare<-'ppmi/plots/single/compare/'
 enrich_compare<-paste0(out_compare, '/enrichment/')
 dir.create(enrich_compare)
@@ -19,6 +22,10 @@ gene_list_V04<-get_genelist_byVisit(VISIT)
 
 length(gene_list_BL)
 length(gene_list_V08)
+
+
+#### Compare also by group 
+
 
 gse_compare<-compareCluster(geneClusters = list(BL=gene_list_BL,V08=gene_list_V08 ), 
               fun = "gseGO", 

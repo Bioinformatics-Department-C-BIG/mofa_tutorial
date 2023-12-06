@@ -14,6 +14,8 @@
 *.png
 ./*.jpeg
 
+
+
 # Session Data files
 .RData
 .RDataTmp
@@ -33,7 +35,13 @@ review/output/*
 output/*
 
 ppmi/.tmp.driveupload/*
+network_files/*
+networks/mirna-rna_files/*
 
+
+mirna-rna_files/*
+omnipathr-log/*
+ppmi/tutorials/xmwas/xmwas*
 
 bladder_cancer/Enrichment/*
 */plots/*

@@ -96,7 +96,7 @@ formula_deseq
 # TODO: include corrected for cell counts  and uncorrected formula
 if (process_mirnas){
   # TODO: try site? and lymphocytes too? 
-  formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
 }else if (cell_corr) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+ Neutrophils+ Lymphocytes+Plate+kmeans_grouping'

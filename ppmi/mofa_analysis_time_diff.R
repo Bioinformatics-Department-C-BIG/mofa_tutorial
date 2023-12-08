@@ -1,9 +1,5 @@
 
 #install.packages('psych')
-#BiocManager::install('kml')
-
-#install.packages("remotes")
-#remotes::install_github("bioFAM/MOFAdata")
 #####  MOFA ANALYSIS 
 
 ### this one depends on mofa application to inherit: 
@@ -20,18 +16,17 @@
 ###### CORRELATIONS WITH COVARIATES ##########
 ##### Corelations
 ## TODO: load mofa object from outdir 
-library('pheatmap')
 
+library('pheatmap')
 #library('kml')
 library('dplyr')
 library('factoextra')
 
 
 #### Covariance of factors with metadata 
+source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
-##source(paste0('ppmi/plotting_utils.R'))
-# source(paste0('ppmi/mofa_utils.R'))
 
 clinical_scales<-scale_vars_diff
 length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
@@ -151,6 +146,7 @@ correlate_factors_categorical<-function(y){
 # TODO: padjust
 clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT', 'updrs3_score', 'updrs2_score')
 add_clinical_clusters=FALSE
+
 if (add_clinical_clusters){
   
   cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
@@ -194,7 +190,6 @@ if (file.exists(covars_f_pearson_pd)){
   print('Load covariates from file')
   cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
   cors_all_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
-  cors_pearson_pd$NP2PTOT_LOG
   cors<-read.csv2(covars_f_pvalue, row.names=1)
   cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
   
@@ -267,7 +262,7 @@ if (add_clinical_clusters){
 ### get metrics to test how many clusters to use ####
 
 #BiocManager::install('M3C')
-#library(M3C)
+library(M3C)
 library('cluster')
 
 y='abeta'
@@ -352,14 +347,10 @@ if (cluster_samples_mofa){
 ###DO THE CLUSTERS HAVE DIFFERENT NP3? ####
 
 
-
-names(all_clusts_mofa)
-
-
 met<-samples_metadata(MOFAobjectPD)
 
 
-boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
+#boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
 
 
 
@@ -392,24 +383,30 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
   return(sel_factors)
   
 }
-progression_markers<-c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
+progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 progression_markers_conf<-c( 'abeta', 'sft' )
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
-all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE')
-#, 
-#                           'Neutrophils....', 'Lymphocytes....')
-all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG')
-#                                'Neutrophils....', 'Lymphocytes....')
+all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
+                       'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte')
+all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
+                   'Neutrophils....', 'Lymphocytes....', 'Neutrophil.Lymphocyte')
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
+outdir
 graphics.off()
+
+MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
+MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:15 ),covariates = all_diff_variables_prog_conf)
+
 fname<-'factors_covariates_only_nonzero_strict_PD'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,labels_col=FALSE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
+                    labels_col=FALSE, MOFAobject=MOFAobjectPD )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,
+            labels_col=TRUE, MOFAobject=MOFAobjectPD )
 
 fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
@@ -461,11 +458,11 @@ plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',fac
 
 
 ### ALSO PLOT DIFF VARS for the controls 
-all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all)]
-all_cors_diff<-cors_all[, all_diff]
+all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors)]
+all_cors_diff<-cors[, all_diff]
 sel_factors_diff<-which(rowSums(all_cors_diff)>0)
 all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
-sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors_all)
+sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
 
 
 #### Factors related to the longterm change in scale #####
@@ -505,8 +502,8 @@ plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, h
 
 MOFAobject_nams<-MOFAobject
 hist(MOFAobject@samples_metadata[,'DYSKIRAT'])
-
-selected_covars_pearson<-selected_covars[!grepl('con_putamen', selected_covars) ]; length(selected_covars_pearson)
+selected_covars<-selected_covars2
+selected_covars_pearson<-selected_covars2[!grepl('con_putamen', selected_covars2) ];
 
 f_to_plot<-names(sel_factors)
 ind_to_update<-colnames(MOFAobject_nams@samples_metadata) %in%selected_covars_pearson
@@ -515,11 +512,12 @@ MOFAobject_nams@samples_metadata$scopa
 
 ### Corelation not log_pval####
 
+imaging_variables_diff
 fname<-'factors_covariates_img_cor'
-plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='r',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
+plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='r',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
 
 fname<-'factors_covariates_img_pval'
-plot_covars_mofa(selected_covars=selected_covars_img,fname,plot='log_pval',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
+plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='log_pval',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
 
 
 
@@ -620,7 +618,7 @@ for (i in seq(1,vps)){
   }
   }
 
-  dev.off()
+graphics.off()
   p1<-plot_variance_explained(MOFAobject, plot_total = T)[[2]]
   p1<-p1+theme(axis.text.x=element_text(size=16), 
                axis.title.y=element_text(size=16), 
@@ -654,12 +652,14 @@ x_cor_t=2
 
 i=111
 #### Factor plots ####
-
+to_remove_regex=''
 positive_cors_to_plot<-positive_cors[,!grepl(tolower(to_remove_regex),tolower(colnames(positive_cors))) ]
-positive_cors_to_plot
+positive_cors_to_plot<-positive_cors[,colnames(positive_cors) %in% c(clinical_scales, selected_covars2, selected_covars_broad)]
+colnames(positive_cors_to_plot)
 grepl(positive_cors,names(positive_cors_to_plot))
 #install.packages('forcats')
 select_factors_manually=TRUE
+sel_pos_factors_manual=c(4,8)
 for (i in 1:dim(positive_cors_to_plot)[2]){
       #' fix find 2d plots 
       #' i= index of the clinical variable 
@@ -678,7 +678,7 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
       print(paste(i, pos_factors))
       
       if (select_factors_manually){
-        pos_factors=c(1,4)
+        pos_factors=sel_pos_factors_manual
       }
       if (length(pos_factors)){
       
@@ -728,8 +728,28 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
             #    ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
       }
 }
-dev.off()
+graphics.off()
 
+met<-MOFAobjectPD@samples_metadata
+colnames(MOFAobject@samples_metadata)[grep('Neutr',colnames(MOFAobject@samples_metadata))]
+plot(met[, 'Neutrophils....'], met$NP2PTOT)
+plot(met[, 'Neutrophils....'], met$updrs2_score)
+
+
+met$neutrophils<-met[, 'Neutrophils....']
+met$Neutrophil.Lymphocyte
+met$updrs3_score
+ggplot(met, aes_string(x='Neutrophil.Lymphocyte', y='NP2PTOT'))+
+  geom_point(aes_string(x='Neutrophil.Lymphocyte', y='NP2PTOT'))+
+  geom_smooth()
+
+hist(met$Neutrophils....)
+is.numeric(met[!is.na(met$updrs3_score),'updrs3_score'])
+lmfit<-lm(NP2PTOT_LOG~log(Neutrophil.Lymphocyte)+AGE_SCALED+SEX, data=met[!is.na(met$NP2PTOT),])
+#lmfit<-lm(NP2PTOT_LOG~neutrophils+AGE_SCALED+SEX, data=met[!is.na(met$NP2PTOT),])
+
+lmfit
+summary(lmfit)
 
 ######## Specific correlations #########
 library(tidyverse)

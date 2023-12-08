@@ -11,7 +11,7 @@ source(paste0(script_dir, '/ppmi/config.R'))
 
 #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-
+process_mirnas=TRUE
 
 print(prefix)
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
@@ -98,6 +98,7 @@ if (process_mirnas){
   # TODO: try site? and lymphocytes too? 
   formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
+  cell_corr = FALSE # ensure they are always in the same folder c0
 }else if (cell_corr) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+ Neutrophils+ Lymphocytes+Plate+kmeans_grouping'
 

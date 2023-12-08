@@ -165,6 +165,9 @@ plot(OPI_g_1 %u% OPI_g_2, vertex.label.color="black",
     vertex.shape = ifelse(grepl("miR",igraph::V(OPI_g_1 %u% OPI_g_2)$name),
     "vrectangle","circle"),edge.width=0.8)
 
+
+
+
 ## ----small-molecules----------------------------------------------------------------------------------------
 trametinib_interactions <- import_small_molecule_protein_interactions(
     sources = 'TRAMETINIB'

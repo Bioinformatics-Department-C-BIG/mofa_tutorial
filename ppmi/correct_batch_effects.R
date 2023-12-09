@@ -16,16 +16,24 @@ filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.c
 remove_genes<-filtered_genes$perc0.1
 
 formula_deseq<-"~AGE_SCALED+SEX+Usable_Bases_SCALE+COHORT"
+formula_deseq<-"~AGE_SCALED+SEX+Usable_Bases_SCALE+COHORT"
 
 
 
-prefix='mirnas'
-input_file=mirnas_all_visits_fname
+prefix='rnas'; process_mirnas<-FALSE;  
+source(paste0(script_dir,'ppmi/config.R'))
+
+
+se_mirs_prenorm=load_se_all_visits(input_file = input_file_mirs_norm, combined=combined_bl_log)
+se_pr_mirs_prenorm<-preprocess_se_deseq2(se_mirs_prenorm, min.count = min.count) # scale and transform covariates used in preprocessing 
+
+
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
-
+hist(assay(se))
+View(assay(se))
 # TODO: here try also the tpm measures that are already normalized!! 
 se_pr<-preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 
-se_pr<-preprocess_se_deseq2(se, min.count = MIN_COUNT_M) # scale and transform covariates used in preprocessing 
+se_pr<-preprocess_se_deseq2(se, min.count = min.count) # scale and transform covariates used in preprocessing 
 
 
 
@@ -46,7 +54,12 @@ removedCovariates<-colData(ddsSE)[,c('Usable_Bases_SCALE', 'Plate')]
 
 ## PCA with 1. vsd 2. CPM 3. 
 
-vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE) 
+##vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+##-- note: fitType='parametric', but the dispersion trend was not well captured by the
+##function: y = a/x + b, and a local regression fit was automatically substituted.
+##specify fitType='local' or 'mean' to avoid this message next time.
+
 ### Asjustment works on gaussian data so insert vsd or log cplm
 adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
                                 retainedCovariates = retainedCovariates )
@@ -55,11 +68,13 @@ vsd_cor<-vsd
 assay(vsd_cor)<-t(adjusted_data$adjustedData)
 
 ## Save the vsd corrected with all visits inside 
-
+vst_cor_all_vis
 saveRDS(vsd_cor,vst_cor_all_vis)
 vsd_cor<-loadRDS(vst_cor_all_vis)
 dim(vsd_cor)
 vsd_cor_filt<-vsd_cor[!(rownames(vsd_cor) %in% filtered_genes$perc0.1),]
+vsd_cor_filt
+vst_cor_all_vis_filt
 saveRDS(vsd_cor_filt,vst_cor_all_vis_filt)
 
 ### filter by visit
@@ -97,7 +112,7 @@ vsd_p<-vsd_cor_V08
       
       
       pc_ind_p
-      pc_ind_ps[[i]]=pc_ind_p
+      ##pc_ind_ps[[i]]=pc_ind_p
       ggsave(paste0(pca_files, 'individuals', pca_pars, '.jpeg'), width=6, height = 6)
       
       ### graph of variables 
@@ -118,8 +133,20 @@ vsd_p<-vsd_cor_V08
       
       
 
-vsd1=vsd_cor_V08
-vsd2=vsd_cor_V08_rem
+vsd1=vsd_V08
+vsd2=vsd_cor_V08
+
+####input mirs alrready normalized
+se_pr_mirs_prenorm_log<-se_pr_mirs_prenorm
+assay(se_pr_mirs_prenorm_log)=log2(assay(se_pr_mirs_prenorm)+1)
+se_mirs_prenorm_log_V08<-filter_se(se = se_pr_mirs_prenorm_log,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh = sel_subcoh) 
+
+vsd1=se_mirs_prenorm_log_V08;dim(vsd1)
+vsd2=vsd_cor_V08; dim(vsd2)
+
+View(assay(vsd1))
+View(assay(vsd2))
+
 median_expr_vsd_cor<-apply(t(assay(vsd1)), 1, mean)
 median_expr_vsd<-apply(t(assay(vsd2)), 1, mean)
 
@@ -132,6 +159,9 @@ length(sd_vsd_cor)
 ##
 df<-data.frame(vsd=sd_vsd, vsd_corrected=sd_vsd_cor)
 df<-data.frame(vsd=median_expr_vsd, vsd_corrected=median_expr_vsd_cor)
+
+
+## Choose df, variance or mean
 df<-data.frame(vsd=median_expr_vsd,vsd_corrected=median_expr_vsd_cor)
 dim(df)
 df<-cbind(df, colData(vsd_p)[, c('Usable_Bases_SCALE', 'Plate')] );
@@ -139,10 +169,19 @@ colnames(df)
 df_melt<-reshape2::melt(df,id.vars=c('Usable_Bases_SCALE', 'Plate') )
 colnames(df_melt)
 
+
+which(df_melt$value <8)
+df_melt_remove_outl<-df_melt[df_melt$value <10 &df_melt$value >8 ,]
+ggplot(df_melt_remove_outl, aes(y=value, fill=Plate))+
+  geom_boxplot()+
+  facet_wrap(~variable, nrow = 2)
+
 ggplot(df_melt, aes(y=value, fill=Plate))+
   geom_boxplot()+
   facet_wrap(~variable, nrow = 2)
 
+ggplot(df_melt_remove_outl, aes(y=value, fill=Plate))+
+  geom_boxplot()
 
 
 ggplot(df_melt, aes(y=value, x=Usable_Bases_SCALE))+

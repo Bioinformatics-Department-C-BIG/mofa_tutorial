@@ -9,31 +9,52 @@ library(dnet)
 library(gprofiler2)
 # interactions - proteins
 
-mofa_cluster_id<-2
-rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V08/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+mofa_cluster_id<-1
+VISIT_COMP<-'V08'
+rnas_V08<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/','V08' ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
+
+vis2='V08'
+rnas_2<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',vis2 ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+rnas_sig_2<-rnas_2%>% dplyr::filter(mofa_sign == 'Significant')
+
+intersect(rnas_sig_2$GENE_SYMBOL, rnas_sig_V08$GENE_SYMBOL)
+
+rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',VISIT_COMP ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+
 dim(rnas)
+
 rnas$mofa_sign
+rnas$padj
 rnas_sig<-rnas%>% dplyr::filter(mofa_sign == 'Significant')
 dim(rnas_sig)
 rnas_sig$padj
 
 
-mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V08/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
-mirnas$GENE_SYMBOL<-mirnas$X
 
+mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/', VISIT_COMP ,  '/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
+mirnas
+mirnas$GENE_SYMBOL<-mirnas$X
+mirnas
 mirnas_sig<-mirnas%>% dplyr::filter(mofa_sign == 'Significant')
+mirnas_sig
+
+mirnas$padj
 
 rnas_top<-rnas %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 mirnas_top<-mirnas %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
-sel_factor=4; top_fr=0.2
+sel_factor=8; top_fr=0.2
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
+
+top_mirnas_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'miRNA',  factors=sel_factor, top_fr = top_fr))
+
 length(top_genes_factor8)
 ## 1. Colour if in TOP 1% of factor
 ## 2. Colour if in specific pathways 
 ## 
-
+top_genes_factor8
 
 dim(rnas_top); dim(mirnas_top)
 top_g<-10000
@@ -45,35 +66,15 @@ top_mirnas<-mirnas_top[1:top_m,]
 top_mirnas$GENE_SYMBOL<-top_mirnas$X
 top_mirnas$GENE_SYMBOL
 interactions <- import_omnipath_interactions( resources = c( 'SIGNOR','STRING_talklr' ) )
-interactions
-top100_rnas$GENE_SYMBOL
+
 
 top_mirnas
 ## FILTER THE REFERENCE
 interactions_filt_genes<-interactions %>% 
         dplyr::filter(source_genesymbol %in% top_rnas$GENE_SYMBOL |
-        target_genesymbol %in% top100_rnas$GENE_SYMBOL ) 
+        target_genesymbol %in% top_rnas$GENE_SYMBOL ) 
 
 
-
-### interactions_filt
-## We transform the interactions data frame into a graph
-OPI_g <- interaction_graph(interactions = interactions_filt_genes)
-
-
-## -- clustering --##
-OPI_g_undirected <- as.undirected(OPI_g, mode=c("mutual"))
-OPI_g_undirected <- simplify(OPI_g_undirected)
-cl_results <- cluster_fast_greedy(OPI_g_undirected)
-table(cl_results$membership)
-cl_results
-
-p_sel<-'BCL2L1'
-p_sel<-'AKT1'
-clus_id <- cl_results$membership[which(cl_results$names == p_sel)]
-clus_id
-module_graph <- induced_subgraph(OPI_g_undirected,
-    V(OPI_g)$name[which(cl_results$membership == clus_id)])
 
 
 
@@ -88,10 +89,9 @@ interactions <- import_dorothea_interactions(
 
 ## Until the DoRothEA issue gets fixed we have this here:
 interactions_dor <- import_transcriptional_interactions(
-    resources = c("ORegAnno", "DoRothEA")
+    resources = c("ORegAnno", "DoRothEA", "SIGNOR", "STRING_talklr")
 )
 
-interactions_dor$source_genesymbol
 
 
 ## ----mirnatarget--------------------------------------------------------------------------------------------
@@ -99,21 +99,40 @@ interactions_dor$source_genesymbol
 interactions_mirs <-
   import_mirnatarget_interactions(resources = c("miR2Disease", "miRDeathDB", "miRTarBase"))
 
-
+source(paste0(script_dir, 'ppmi/network_utils.R'))
 ############# MY ADDITION 
 # 1. DE MIRS 
 # 2. DE GENES 
 
-
-
+top_mirnas_factor8
+# TODO: add top mirs in factor 8? 
 ## We select the interactions where a de miRNA is interacting with a de gene? 
 interactions_de_mirs_de_genes <-interactions_mirs %>% 
-   # dplyr::filter( source_genesymbol %in% top_mirnas$GENE_SYMBOL) %>%
-# dplyr::filter(target_genesymbol %in% top_rnas$GENE_SYMBOL) %>%
-    dplyr::filter( source_genesymbol %in% mirnas_sig$GENE_SYMBOL) %>%
-     dplyr::filter(target_genesymbol %in% rnas_sig$GENE_SYMBOL) %>%
+    dplyr::filter( source_genesymbol %in% mirnas_sig$GENE_SYMBOL) %>% # mirs should be de
+   dplyr::filter( source_genesymbol %in% top_mirnas_factor8) %>% # mirs should be de
+
+     dplyr::filter(target_genesymbol %in% rnas_sig$GENE_SYMBOL) %>% # genes should be in 
 
     dplyr::filter(target_genesymbol %in% top_genes_factor8)
+
+
+interactions_de_mirs_de_genes
+top_genes_factor8
+interactions_dor_target_genes<-interactions_dor %>%
+    dplyr::filter(target_genesymbol %in% c(rnas_sig$GENE_SYMBOL,top_genes_factor8 )) %>%
+    dplyr::filter(source_genesymbol %in% c(rnas_sig$GENE_SYMBOL,top_genes_factor8 ))
+
+
+
+
+interactions_de_mirs_de_genes$target_genesymbol
+interactions_dor_target_genes<-interactions_dor %>%
+    dplyr::filter( target_genesymbol %in%  interactions_de_mirs_de_genes$target_genesymbol) %>%
+        dplyr::filter( source_genesymbol %in% interactions_de_mirs_de_genes$target_genesymbol) 
+
+
+
+interactions_de_mirs_de_genes$target_genesymbol
 
 ## TODO: Function filter or colour network by 
 # 1. factor 
@@ -121,20 +140,35 @@ interactions_de_mirs_de_genes <-interactions_mirs %>%
 # 2 data driven anticorelation
 length(interactions_de_mirs_de_genes)
 OPI_g_de_mirs_de_genes <- interaction_graph(interactions = interactions_de_mirs_de_genes)
+OPI_g_dor_target_genes <-interaction_graph(interactions= interactions_dor_target_genes )
+# TODO: add tfs with a different symbol ? 
+# add gene interaction with different colour 
+# add mir-gene target with a different colour
+# 
 
-cluster_id
+
+OPI_g_de_mirs_de_genes
+OPI_g_dor_target_genes
+
+OPI_g_de_mirs_de_genes_targets<- union(OPI_g_dor_target_genes, OPI_g_de_mirs_de_genes)
+OPI_g_de_mirs_de_genes_targets
 
 
-g_fc<-get_logFC_by_node(OPI_g_de_mirs_de_genes)
-V(g_fc)$color
+g_fc<-get_logFC_by_node(OPI_g_de_mirs_de_genes_targets)
+V(g_fc)$name
+V(g_fc)$name[is.na(V(g_fc)$color)]
 V(g_fc)$group<-NA
+
+V(g_fc)$name[!(V(g_fc)$name %in% rnas_sig$GENE_SYMBOL)]
+V(g_fc)$name[!(V(g_fc)$name %in% mirnas_sig$GENE_SYMBOL)]
+
 
 #V(g_fc)$shape<- ifelse(grepl("miR|hsa-let",igraph::V(g)$name), "vrectangle", "circle")
 visnet <- toVisNetworkData(g_fc)
 
 
   # visnet rectangle 
-   visnet$nodes$font.size=30
+   visnet$nodes$font.size=35
    visnet$nodes$size=10
 
     names(visnet$edges)
@@ -256,11 +290,6 @@ sources <- c(Sys.getenv("RSTUDIO_PANDOC"), if (nzchar(sys_pandoc)) dirname(sys_p
 
 visualize_net(visnet)
 library('visNetwork')
-
-
-
-
-
 
 
 

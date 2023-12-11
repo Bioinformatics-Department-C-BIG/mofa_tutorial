@@ -1,8 +1,8 @@
 
 
 ## graph utils
-g<-OPI_g_de_mirs_de_genes
-V(g)$name
+rnas_sig$X
+
 
 get_logFC_by_node<-function(g){
     # get the colors for up and down for a graph 
@@ -33,21 +33,16 @@ get_logFC_by_node<-function(g){
     return(g)
 }
 
-plot(g)
+
 
 library('visNetwork')
 
-
-visualize_net(toVisNetworkData(g))
-V(g)
-visnet=toVisNetworkData(g)
-visnet$nodes
 
 visualize_net<-function(visnet, net_name='net'){
     # visnet rectangle 
     visnet$nodes$font.size=30
     visnet$nodes$size=5
-visnet$nodes$color
+    visnet$nodes$color
     vis_net_vis<-visNetwork(visnet$nodes, visnet$edges) %>%
                 visNodes( color =visnet$nodes$color  ) %>%
                 visEdges(color='gray')
@@ -67,3 +62,8 @@ visnet$nodes$color
 
   return(vis_net_vis)
 }
+
+visualize_net(toVisNetworkData(g))
+V(g)
+visnet=toVisNetworkData(g)
+visnet$nodes

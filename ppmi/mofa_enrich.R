@@ -109,7 +109,7 @@ sel_factors_to_enrich
 if (!isRStudio){
   
       for (factor in sel_factors_to_enrich){
-          for (view in c('RNA')){
+          for (view in c('proteomics_plasma')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'

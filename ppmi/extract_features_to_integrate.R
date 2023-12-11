@@ -1,4 +1,7 @@
 
+
+
+
 # TODO: extract all visits at once, then separate them later on for your analysus
 library(dplyr)
 library(data.table)
@@ -27,16 +30,14 @@ rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
 
 getwd()
 for (VISIT in Visits){
-  # 
-  #
-  #
-  
+  #' 
+  #'
+  #'
   rnas<-read.csv2(rnas_fname, sep = ',')
   #rnas<-read.csv2(gzfile(gz1))
   rownames(rnas)<-rnas$Geneid
   rnas$Geneid<-NULL
   rnas_BL<-select(rnas,contains(VISIT))
-  
   ### Split the names to extract patient number
   names_split<- strsplit(names(rnas_BL),split='\\.')
   names_split_df<-do.call(rbind, names_split);names_split_df
@@ -90,8 +91,20 @@ close(gz1)
 
 
 #### Read in the mirnas 
-mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
+# Load both the unormalized and the normalized and save to separate files 
+# Input to mofa- normalized
+# Input to deseq - not normalized..?
+#mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
+#mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
+
+
+
+
+
 mirnas_rpmmm<-read.csv2(paste0(data_dir,'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
+mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
+
+
 
 names<-colnames(mirnas_rpmmm)[-1]
 
@@ -149,9 +162,6 @@ colnames(mirnas_df)<-PATNO_VISIT
 length(unique(colnames(mirnas_df))); length(PATNO_VISIT)
 rownames(mirnas_df)<-mirnas_rpmmm$miRNA; head(rownames(mirnas_df)); head(mirnas_df)
 
-#mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
-
-mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
 
 # save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
 gz1 <- gzfile(mirnas_all_visits_fname, "w")

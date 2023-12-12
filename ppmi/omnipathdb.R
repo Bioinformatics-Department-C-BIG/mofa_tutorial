@@ -9,7 +9,7 @@ library(dnet)
 library(gprofiler2)
 # interactions - proteins
 
-mofa_cluster_id<-1
+mofa_cluster_id<-2
 VISIT_COMP<-'V08'
 rnas_V08<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/','V08' ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
 rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
@@ -70,10 +70,6 @@ interactions <- import_omnipath_interactions( resources = c( 'SIGNOR','STRING_ta
 
 top_mirnas
 ## FILTER THE REFERENCE
-interactions_filt_genes<-interactions %>% 
-        dplyr::filter(source_genesymbol %in% top_rnas$GENE_SYMBOL |
-        target_genesymbol %in% top_rnas$GENE_SYMBOL ) 
-
 
 
 
@@ -88,47 +84,61 @@ interactions <- import_dorothea_interactions(
 )
 
 ## Until the DoRothEA issue gets fixed we have this here:
-interactions_dor <- import_transcriptional_interactions(
-    resources = c("ORegAnno", "DoRothEA", "SIGNOR", "STRING_talklr")
-)
+interactions_string <-
+    import_omnipath_interactions(resources=c("SIGNOR", "STRING_talklr"))
 
+
+interactions_dor <- import_transcriptional_interactions(
+    resources = c("ORegAnno", "DoRothEA", "SIGNOR")
+)
 
 
 ## ----mirnatarget--------------------------------------------------------------------------------------------
 ## We query and store the interactions into a dataframe
 interactions_mirs <-
-  import_mirnatarget_interactions(resources = c("miR2Disease", "miRDeathDB", "miRTarBase"))
+  import_mirnatarget_interactions(resources = c("miR2Disease", "miRDeathDB", "miRTarBase", "TransmiR"))
+
 
 source(paste0(script_dir, 'ppmi/network_utils.R'))
 ############# MY ADDITION 
 # 1. DE MIRS 
 # 2. DE GENES 
 
-top_mirnas_factor8
+mirnas_sig$GENE_SYMBOL
+interactions_mirs
+mirnas_sig_factor<-mirnas_sig %>% dplyr::filter(GENE_SYMBOL %in% top_mirnas_factor8)
+rnas_sig_factor<-rnas_sig %>% dplyr::filter(GENE_SYMBOL %in% top_genes_factor8)
+
+
 # TODO: add top mirs in factor 8? 
 ## We select the interactions where a de miRNA is interacting with a de gene? 
 interactions_de_mirs_de_genes <-interactions_mirs %>% 
-    dplyr::filter( source_genesymbol %in% mirnas_sig$GENE_SYMBOL) %>% # mirs should be de
-   dplyr::filter( source_genesymbol %in% top_mirnas_factor8) %>% # mirs should be de
-
-     dplyr::filter(target_genesymbol %in% rnas_sig$GENE_SYMBOL) %>% # genes should be in 
-
-    dplyr::filter(target_genesymbol %in% top_genes_factor8)
+   dplyr::filter( source_genesymbol %in% c(mirnas_sig_factor$GENE_SYMBOL)) %>% # mirs should be de
+    dplyr::filter(target_genesymbol %in% rnas_sig_factor$GENE_SYMBOL)
 
 
-interactions_de_mirs_de_genes
-top_genes_factor8
+
+# if a mir target is a tf bring its target genes  - OR
+interactions_string_mirtars<-interactions_string %>%
+ #   dplyr::filter( target_genesymbol %in% c(interactions_de_mirs_de_genes$target_genesymbol)) 
+    dplyr::filter( source_genesymbol %in% c(interactions_de_mirs_de_genes$target_genesymbol)) 
+
+print_interactions(interactions_string_mirtars)
+
+
+dim(interactions_de_mirs_de_genes)
+
 interactions_dor_target_genes<-interactions_dor %>%
-    dplyr::filter(target_genesymbol %in% c(rnas_sig$GENE_SYMBOL,top_genes_factor8 )) %>%
-    dplyr::filter(source_genesymbol %in% c(rnas_sig$GENE_SYMBOL,top_genes_factor8 ))
+    dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) %>%
+     dplyr::filter( source_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL )) 
 
-
+dim(interactions_dor_target_genes)
 
 
 interactions_de_mirs_de_genes$target_genesymbol
-interactions_dor_target_genes<-interactions_dor %>%
-    dplyr::filter( target_genesymbol %in%  interactions_de_mirs_de_genes$target_genesymbol) %>%
-        dplyr::filter( source_genesymbol %in% interactions_de_mirs_de_genes$target_genesymbol) 
+#interactions_dor_target_genes<-interactions_dor %>%
+#    dplyr::filter( target_genesymbol %in%  interactions_de_mirs_de_genes$target_genesymbol) %>%
+#        dplyr::filter( source_genesymbol %in% interactions_de_mirs_de_genes$target_genesymbol) 
 
 
 
@@ -162,7 +172,7 @@ V(g_fc)$group<-NA
 V(g_fc)$name[!(V(g_fc)$name %in% rnas_sig$GENE_SYMBOL)]
 V(g_fc)$name[!(V(g_fc)$name %in% mirnas_sig$GENE_SYMBOL)]
 
-
+ visnet$nodes
 #V(g_fc)$shape<- ifelse(grepl("miR|hsa-let",igraph::V(g)$name), "vrectangle", "circle")
 visnet <- toVisNetworkData(g_fc)
 

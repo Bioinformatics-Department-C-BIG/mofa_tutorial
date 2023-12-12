@@ -9,7 +9,7 @@ library(dnet)
 library(gprofiler2)
 # interactions - proteins
 
-mofa_cluster_id<-1
+mofa_cluster_id<-2
 VISIT_COMP<-'V08'
 rnas_V08<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/','V08' ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
 rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
@@ -44,7 +44,7 @@ mirnas$padj
 rnas_top<-rnas %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 mirnas_top<-mirnas %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
-sel_factor=8; top_fr=0.2
+sel_factor=8; top_fr=0.1
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 
@@ -65,23 +65,21 @@ top_mirnas<-mirnas_top[1:top_m,]
 
 top_mirnas$GENE_SYMBOL<-top_mirnas$X
 top_mirnas$GENE_SYMBOL
+
+
+
+
+
+
+
+
+
 interactions <- import_omnipath_interactions( resources = c( 'SIGNOR','STRING_talklr' ) )
 
 
 top_mirnas
 ## FILTER THE REFERENCE
 
-
-
-
-
-## ----dorothea-----------------------------------------------------------------------------------------------
-## We query and store the interactions into a dataframe
-interactions <- import_dorothea_interactions(
-    resources = c("DoRothEA"),
-    dorothea_levels = 'A',
-    organism = 9606
-)
 
 ## Until the DoRothEA issue gets fixed we have this here:
 interactions_string <-
@@ -91,7 +89,6 @@ interactions_string <-
 interactions_dor <- import_transcriptional_interactions(
     resources = c("ORegAnno", "DoRothEA", "SIGNOR")
 )
-
 
 ## ----mirnatarget--------------------------------------------------------------------------------------------
 ## We query and store the interactions into a dataframe
@@ -122,32 +119,39 @@ interactions_de_mirs_de_genes_all_targets <-interactions_mirs %>%
 rnas_sig_factor
 # if a mir target is a tf bring its target genes 
 # todo bring also other  interactions
-interactions_string_mirtars1 <- interactions_string %>%
+interactions_string_mirtars <- interactions_string %>%
      # get the neighbourin interactions of  mir targets 
-    dplyr::filter(  source_genesymbol %in% c(interactions_de_mirs_de_genes_all_targets$target_genesymbol) &  # BRING THE targets which are also de 
-                        source_genesymbol %in% rnas_sig_factor$GENE_SYMBOL) 
-
-
-  
-  
-  interactions_string_mirtars2 <- interactions_string %>%
- dplyr::filter( ( target_genesymbol %in% c(interactions_de_mirs_de_genes_all_targets$target_genesymbol) & 
+    dplyr::filter(  (source_genesymbol %in% c(interactions_de_mirs_de_genes_all_targets$target_genesymbol) &  # BRING THE targets which are also de 
+                        source_genesymbol %in% rnas_sig_factor$GENE_SYMBOL) |
+ ( target_genesymbol %in% c(interactions_de_mirs_de_genes_all_targets$target_genesymbol) & 
                             target_genesymbol %in% rnas_sig_factor$GENE_SYMBOL)
  )
 
+interactions_string_mirtars$source_genesymbol
 
 
+# filter mir targets so that they are interacting with a de gene
 interactions_de_mirs_de_genes <- interactions_de_mirs_de_genes_all_targets %>%
 # 1. if target has a target that is DE, or is DE itself  
-    dplyr::filter( target_genesymbol %in%  interactions_string_mirtars$source_genesymbol)# %>% # mirs should be de
+# 2. if it is in the list of interactions_string_mirtars1
+    dplyr::filter( target_genesymbol %in%  c(interactions_string_mirtars$source_genesymbol )  )
 
 
 interactions_de_mirs_de_genes$target_genesymbol
-dim(interactions_de_mirs_de_genes)
+interactions_string_mirtars$source_genesymbol
+
+interactions_de_mirs_de_genes$target_genesymbol
+
+# a gene interaction should be either de or target a de gene 
+interactions_string_mirtars_de_only<-interactions_string_mirtars %>%
+                    dplyr::filter(target_genesymbol %in% 
+                    c(interactions_de_mirs_de_genes$target_genesymbol)) %>%
+                     dplyr::filter(source_genesymbol %in% 
+                    c(interactions_de_mirs_de_genes$target_genesymbol))
 
 # intersection of graph 
-
-print_interactions(interactions_string_mirtars2)
+interactions_string_mirtars_de_only$source_genesymbol
+print_interactions(interactions_string_mirtars_de_only)
 
 interactions_dor_target_genes<-interactions_dor %>%
     dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) %>%
@@ -164,7 +168,7 @@ dim(interactions_dor_target_genes)
 length(interactions_de_mirs_de_genes)
 OPI_g_de_mirs_de_genes <- interaction_graph(interactions = interactions_de_mirs_de_genes)
 OPI_g_dor_target_genes <-interaction_graph(interactions= interactions_dor_target_genes )
-OPI_g_mirtars_inter <- interaction_graph(interactions= interactions_string_mirtars )
+OPI_g_mirtars_inter <- interaction_graph(interactions= interactions_string_mirtars_de_only )
 
 
 interactions_string_mirtars$source_genesymbol
@@ -182,45 +186,10 @@ OPI_g_dor_target_genes
 
 # OPI_g_de_mirs_de_genes_targets<- union(OPI_g_dor_target_genes, OPI_g_mirtargets_and_inters)
 OPI_g_de_mirs_de_genes_targets<- union(OPI_g_dor_target_genes, OPI_g_de_mirs_de_genes,OPI_g_mirtars_inter)
-
-
-OPI_g_de_mirs_de_genes_targets
-
-# color by logFC 
-g_fc<-get_logFC_by_node(OPI_g_de_mirs_de_genes_targets)
-V(g_fc)$name
-V(g_fc)$name[is.na(V(g_fc)$color)]
-V(g_fc)$group<-NA
-
-V(g_fc)$name[!(V(g_fc)$name %in% rnas_sig$GENE_SYMBOL)]
-V(g_fc)$name[!(V(g_fc)$name %in% mirnas_sig$GENE_SYMBOL)]
-
-
-#V(g_fc)$shape<- ifelse(grepl("miR|hsa-let",igraph::V(g)$name), "vrectangle", "circle")
-visnet <- toVisNetworkData(g_fc)
+OPI_g_union<-OPI_g_de_mirs_de_genes_targets
 
 
 
- visnet$nodes$abs_FC<- abs(visnet$nodes$FC)
- 
-  # visnet rectangle 
-   visnet$nodes$font.size=35
-   min(visnet$nodes$abs_FC*20, na.rm=TRUE)
-   visnet$nodes$size= visnet$nodes$abs_FC*20
-
-visnet$nodes[is.na(visnet$nodes$abs_FC), ]$size = 5
-    names(visnet$edges)
-    visnet$edges<-visnet$edges[c('from', 'to')]
-    vis_net_vis<-visNetwork(visnet$nodes, visnet$edges) %>%
-               # visNodes( color =visnet$nodes$color  ) %>%
-                visEdges(color='gray')
-
-    vis_net_vis
-
-    dir.create(paste0(outdir, '/networks/'))
-    net_name=paste0('mirs_genes_', mofa_cluster_id, '_f',sel_factor,top_fr )
-    net_name
-    visSave(vis_net_vis, file = paste0(outdir, '/networks/',  net_name, '.html'))
 
 
 

@@ -1,7 +1,7 @@
 
 
 ## graph utils
-rnas_sig$X
+
 #g<-OPI_g_de_mirs_de_genes_targets
 
 get_logFC_by_node<-function(g){
@@ -31,7 +31,7 @@ get_logFC_by_node<-function(g){
         g <- set.vertex.attribute(g, 'group',down , 'down')
 
 
-        V(g)$color <- ifelse(igraph::V(g)$group == 'up', "pink","lightblue")
+        V(g)$color <- ifelse(igraph::V(g)$group == 'up', "#a02828","#126d8b")
         V(g)$FC<-fc_all[match(V(g)$name, fc_all$GENE_SYMBOL),]$log2FoldChange
         
         
@@ -48,18 +48,31 @@ library('visNetwork')
 
 
 visualize_net<-function(visnet, net_name='net'){
-    # visnet rectangle 
-    visnet$nodes$font.size=30
-    visnet$nodes$size=5
-    visnet$nodes$color
+
+
+
+  # visnet rectangle 
+   visnet$nodes$font.size=35
+   min(visnet$nodes$abs_FC*20, na.rm=TRUE)
+   visnet$nodes$size= visnet$nodes$abs_FC*20
+
+    visnet$nodes[is.na(visnet$nodes$abs_FC), ]$size = 5
+    names(visnet$edges)
+    visnet$edges<-visnet$edges[c('from', 'to')]
     vis_net_vis<-visNetwork(visnet$nodes, visnet$edges) %>%
-                visNodes( color =visnet$nodes$color  ) %>%
+               # visNodes( color =visnet$nodes$color  ) %>%
                 visEdges(color='gray')
 
     vis_net_vis
 
     dir.create(paste0(outdir, '/networks/'))
-    visSave(vis_net_vis, file = paste0(outdir, '/networks/', net_name, '.html'))
+    net_name=paste0('mirs_genes_', mofa_cluster_id, '_f',sel_factor,top_fr )
+    net_name
+    visSave(vis_net_vis, file = paste0(outdir, '/networks/',  net_name, '.html'))
+
+
+
+    
 
 
 
@@ -72,7 +85,4 @@ visualize_net<-function(visnet, net_name='net'){
   return(vis_net_vis)
 }
 
-visualize_net(toVisNetworkData(g))
-V(g)
-visnet=toVisNetworkData(g)
-visnet$nodes
+

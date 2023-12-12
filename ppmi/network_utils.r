@@ -2,7 +2,7 @@
 
 ## graph utils
 rnas_sig$X
-
+#g<-OPI_g_de_mirs_de_genes_targets
 
 get_logFC_by_node<-function(g){
     # get the colors for up and down for a graph 
@@ -13,6 +13,11 @@ get_logFC_by_node<-function(g){
         rna_fc<-rnas_sig[rnas_sig$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
         rna_fc$GENE_SYMBOL[rna_fc$log2FoldChange >0]
         mirs_fc<-mirnas_sig[mirnas_sig$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
+        
+        mirs_fc
+        rna_fc
+        fc_all=rbind(mirs_fc, rna_fc)
+
         up<-which(V(g)$name %in% mirs_fc$GENE_SYMBOL[mirs_fc$log2FoldChange >0])
         down<-which(V(g)$name %in% mirs_fc$GENE_SYMBOL[mirs_fc$log2FoldChange <0])
 
@@ -27,7 +32,11 @@ get_logFC_by_node<-function(g){
 
 
         V(g)$color <- ifelse(igraph::V(g)$group == 'up', "pink","lightblue")
-            
+        V(g)$FC<-fc_all[match(V(g)$name, fc_all$GENE_SYMBOL),]$log2FoldChange
+        
+        
+
+
 
 
     return(g)

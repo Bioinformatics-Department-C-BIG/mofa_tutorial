@@ -1,6 +1,7 @@
 
 ### Load the rnas and mirnas
 
+# 1. 
 
 #BiocManager::install('OmnipathR')
 library('OmnipathR')
@@ -11,43 +12,49 @@ library(dnet)
 library(gprofiler2)
 # interactions - proteins
 
-mofa_cluster_id<-1
+mofa_cluster_id<-3
 VISIT_COMP<-'V08'
-rnas_V08<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/','V08' ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, prefix='rnas_' ){
+     #'
+     #' @param VISIT_COMP
+     #' @param mofa_cluster_id   
+    rnas_visit<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/', VISIT_COMP ,  '/', prefix,  'de_cluster_', mofa_cluster_id, '.csv'))
+    return(rnas_visit )
+
+}
+
+rnas_V08<-load_de_by_visit_and_cluster(VISIT_COMP, mofa_cluster_id )
 rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
 
-vis2='V08'
-rnas_2<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',vis2 ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
-rnas_sig_2<-rnas_2%>% dplyr::filter(mofa_sign == 'Significant')
+rnas_V06<-load_de_by_visit_and_cluster(VISIT_COMP='V06', mofa_cluster_id )
+rnas_V04<-load_de_by_visit_and_cluster(VISIT_COMP='V04', mofa_cluster_id )
+rnas_BL<-load_de_by_visit_and_cluster(VISIT_COMP='BL', mofa_cluster_id )
 
-intersect(rnas_sig_2$GENE_SYMBOL, rnas_sig_V08$GENE_SYMBOL)
-
-rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',VISIT_COMP ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+rnas_sig_V06<-rnas_V06%>% dplyr::filter(mofa_sign == 'Significant')
 
 
-dim(rnas)
-
-rnas$mofa_sign
-rnas$padj
-rnas_sig<-rnas%>% dplyr::filter(mofa_sign == 'Significant')
-dim(rnas_sig)
-rnas_sig$padj
+### define the rnas fcs that will be used 
+rnas_visit<-rnas_V08
+rnas_sig_visit<-rnas_sig_V08
 
 
 
-mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/', VISIT_COMP ,  '/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
-mirnas
-mirnas$GENE_SYMBOL<-mirnas$X
-mirnas
-mirnas_sig<-mirnas%>% dplyr::filter(mofa_sign == 'Significant')
-mirnas_sig
+## load mirs
+mirnas_V08<-load_de_by_visit_and_cluster(VISIT_COMP, mofa_cluster_id = mofa_cluster_id, prefix='mirnas_'); mirnas_V08$GENE_SYMBOL<-mirnas_V08$X
+mirnas_visit<-mirnas_V08
+mirnas_V06<-load_de_by_visit_and_cluster('V06', mofa_cluster_id = mofa_cluster_id, prefix='mirnas_'); mirnas_V06$GENE_SYMBOL<-mirnas_V06$X
+mirnas_V04<-load_de_by_visit_and_cluster('V04', mofa_cluster_id = mofa_cluster_id, prefix='mirnas_'); mirnas_V04$GENE_SYMBOL<-mirnas_V04$X
+mirnas_BL<-load_de_by_visit_and_cluster('BL', mofa_cluster_id = mofa_cluster_id, prefix='mirnas_'); mirnas_BL$GENE_SYMBOL<-mirnas_BL$X
 
-mirnas$padj
 
-rnas_top<-rnas %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
-mirnas_top<-mirnas %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
+mirnas_sig_visit<-mirnas_visit%>% dplyr::filter(mofa_sign == 'Significant')
 
-sel_factor=8; top_fr=0.2
+
+
+rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
+mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
+
+sel_factor=4; top_fr=0.05
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 
@@ -84,8 +91,8 @@ source(paste0(script_dir, 'ppmi/network_utils.R'))
 # 2. DE GENES 
 
 
-mirnas_sig_factor<-mirnas_sig %>% dplyr::filter(GENE_SYMBOL %in% top_mirnas_factor8)
-rnas_sig_factor<-rnas_sig %>% dplyr::filter(GENE_SYMBOL %in% top_genes_factor8)
+mirnas_sig_factor<-mirnas_sig_visit %>% dplyr::filter(GENE_SYMBOL %in% top_mirnas_factor8)
+rnas_sig_factor<-rnas_sig_visit %>% dplyr::filter(GENE_SYMBOL %in% top_genes_factor8)
 
 
 
@@ -164,7 +171,6 @@ g_targets<-interaction_graph(interactions_of_mirtargets_tar_is_de)
 
 g_mirs_targets_filt
 
-V(g_extended)
 
 
 
@@ -187,10 +193,11 @@ g_extended<-union(g_mirs_targets_filt, g_targets) # mir-gene-gene interactions
 
 ### Now plot! 
 OPI_g_union<-g_extended
+# TODO: give the layout 
 
-
+set.seed(123) 
 # color by logFC 
-g_fc<-get_logFC_by_node(OPI_g_union)
+g_fc<-get_logFC_by_node(OPI_g_union, de_rnas=rnas_BL,  de_mirnas=mirnas_BL)
 
 
 V(g_fc)$name[is.na(V(g_fc)$color)]
@@ -202,6 +209,24 @@ visnet$nodes$abs_FC<- abs(visnet$nodes$FC)
  
 
  visualize_net(visnet)
+
+
+
+
+
+### Plot with specified coords 
+#Get the coordinates of the Nodes
+Coords <- layout_with_fr(g_fc) %>% 
+  as_tibble %>%
+    bind_cols(data_frame(names = names(V(g_fc))))
+
+Coords
+#get the coordinates of the remaining Nodes
+  NetCoords <- data_frame(names = names(V(g_fc))) %>%
+    left_join(Coords, by= "names")
+
+
+
 
 
 

@@ -4,18 +4,16 @@
 
 #g<-OPI_g_de_mirs_de_genes_targets
 
-get_logFC_by_node<-function(g){
+get_logFC_by_node<-function(g, de_rnas, de_mirnas){
     # get the colors for up and down for a graph 
     # @param
     # todo: add also an attribute size for the amount of DE? 
         g_names<-V(g)$name
 
-        rna_fc<-rnas_sig[rnas_sig$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
-        rna_fc$GENE_SYMBOL[rna_fc$log2FoldChange >0]
-        mirs_fc<-mirnas_sig[mirnas_sig$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
-        
-        mirs_fc
-        rna_fc
+        # extract fold change from de results 
+        rna_fc<-de_rnas[de_rnas$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
+        mirs_fc<-de_mirnas[de_mirnas$GENE_SYMBOL %in% g_names , c('GENE_SYMBOL', 'log2FoldChange')]
+
         fc_all=rbind(mirs_fc, rna_fc)
 
         up<-which(V(g)$name %in% mirs_fc$GENE_SYMBOL[mirs_fc$log2FoldChange >0])
@@ -34,11 +32,6 @@ get_logFC_by_node<-function(g){
         V(g)$color <- ifelse(igraph::V(g)$group == 'up', "#a02828","#126d8b")
         V(g)$FC<-fc_all[match(V(g)$name, fc_all$GENE_SYMBOL),]$log2FoldChange
         
-        
-
-
-
-
     return(g)
 }
 

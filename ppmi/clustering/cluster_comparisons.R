@@ -3,9 +3,12 @@
 process_mirnas = TRUE;
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 input_file
+input_file_mirs
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
+se_mirs
 head(assay(se_mirs))
-
+head(assay(se_mirs_norm))
 
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
@@ -26,8 +29,8 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V04'
-process_mirnas=TRUE
+VISIT_COMP = 'V08'
+process_mirnas=FALSE 
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -61,7 +64,9 @@ MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 y_clust='NP2PTOT_LOG';
-cell_corr<-FALSE
+
+# Correct for blood cell proportions of neutrophils and lymphocytes 
+cell_corr<-TRUE
 
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 
@@ -194,7 +199,6 @@ for (cluster_id in 1:3){
   ### 2. run deseq 
   ### 3. get significant per cluster 
   print(paste('cluster:',cluster_id))
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
   #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 }
@@ -220,7 +224,9 @@ for (cluster_id in 1:3){
 
   se_filt_all[[cluster_id]]$kmeans_grouping
   formula_deseq
-  if (file.exists(de_file)){
+  # if (file.exists(de_file)){
+  if (FALSE){
+
 
     # if de file exists load it - unfiltered de results file
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )

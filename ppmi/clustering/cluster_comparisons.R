@@ -68,16 +68,11 @@ y_clust='NP2PTOT_LOG';
 # Correct for blood cell proportions of neutrophils and lymphocytes 
 cell_corr<-TRUE
 
+# Obtain clustering from mofa
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
-
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
-
-
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-
-
-
 cd <- colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
@@ -85,7 +80,7 @@ se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 
 
-
+# todo move to config
 add_med='LEDD_scaled'
 add_med='PDMEDYN'
 add_med=FALSE
@@ -120,59 +115,6 @@ cluster_id=1
 
 #param <- SnowParam(workers = 6, type = "MPI")
 
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
-        #'
-        #' @param 
-        # TODO: add plate and/OR site 
-        # se_filt1 neutrophil counts, and usable bases
-        se_filt$SITE <- as.factor(se_filt$SITE); dim(assay(se_filt))
-        se_filt$Usable_Bases_SCALE<-scale(se_filt$`Usable.Bases....`)
-        se_filt$Neutrophils<-scale(se_filt$`Neutrophils....`)
-        se_filt$Lymphocytes<-scale(se_filt$`Lymphocytes....`)
-        #IF NEUTROPHILS IN DESIGN
-        if (cell_corr){
-           se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
-           se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
-        }
-      
-        se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
-        se_filt$kmeans_grouping
-        se_filt<-se_filt[,!(is.na(se_filt$COHORT))] 
-        assay(se_filt)
-
-
-        se_filt<-preprocess_se_deseq2(se_filt, min.count=min.count)
-        dim(assay(se_filt))
-        se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
-        se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
-        
-
-        se_filt$LEDD[is.na(se_filt$LEDD)]=0 # add zeros to na then scale!
-        se_filt$LEDD_scaled<- scale(se_filt$LEDD)
-
-        ddsSE <- DESeqDataSet(se_filt, 
-                              design = as.formula(formula_deseq))
-        ddsSE<-estimateSizeFactors(ddsSE)
-        
-        #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-
-        deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
-        #deseq2Data <- DESeq(ddsSE, parallel=TRUE)
-        #deseq2Data <- DESeq(ddsSE)
-
-        deseq2Results<-results(deseq2Data)
-        deseq2ResDF <- as.data.frame(deseq2Results)
-        
-        padj_T_hv<-0.05
-        log2fol_T_hv<-0.1
-        
-        ### this is also done later on -- save from there? 
-        deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
-        deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
-        return(deseq2ResDF)
-}
-
-
 
 
 deseq_all <- vector("list", length = 3) # holds the significant gene/mirs ids only for each cluster
@@ -202,11 +144,9 @@ for (cluster_id in 1:3){
   #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 }
+## filter for grouping here - it is not in the prerpocessing by default
+#se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
 
-de_file
-
-tail(colData(se_filt_all[[2]])[,c('PATNO', 'EVENT_ID')] %>% as.data.frame() %>%
-arrange(PATNO))
 
 for (cluster_id in 1:3){
 
@@ -273,7 +213,7 @@ deseq_all_groups[[2]]
 
 for (cluster_id in c(1,2,3)){
 
-
+      # Take the original data and deseq results to plot a volcano 
       se_filt=se_filt_all[[cluster_id]]
 
       deseq2ResDF=deseq_all_groups[[cluster_id]]

@@ -183,7 +183,7 @@ combined$SCAU26CT<-as.factor(combined$SCAU26CT)
 ## add demographics with suffix if common? 
 
 ### Add new features here
-
+colnames(rnaseq_meta)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 combined<-merge(combined, rnaseq_meta,by=c('PATNO_EVENT_ID'), suffixes = c("", '_rseq'),  all=TRUE)

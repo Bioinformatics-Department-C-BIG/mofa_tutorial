@@ -8,7 +8,7 @@ library(sgof)
 library('factoextra')
 library(plyr)
 library(dplyr)
-library('WGCNA') # need empiricalBayesLM
+library('WGCNA') # needƒ empiricalBayesLM
 library(R.filesets)
 ## Utils 
 ## Summarized experiment 
@@ -200,6 +200,11 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   # 
  
   ## Turn to factors for deseq
+  
+  se_filt$SITE <- as.factor(se_filt$SITE); dim(assay(se_filt))
+  se_filt$Neutrophils<-scale(se_filt$`Neutrophils....`)
+  se_filt$Lymphocytes<-scale(se_filt$`Lymphocytes....`)
+  
   se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
   se_filt$SEX<-as.factor(se_filt$SEX)
   se_filt$SITE<-as.factor(se_filt$SITE)
@@ -225,16 +230,79 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   
   
   #### remove genes
-  se_filt<-se_filt[!(rownames(se_filt) %in% remove_genes),]
+  #se_filt<-se_filt[!(rownames(se_filt) %in% remove_genes),]
   # removed genes associated with the batch effects as explained in Craig 2020 paper
+  rownames(assay(se_filt))
+  
+  
+  remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
+  assay_r<-gsub( '\\..*','' ,rownames(assay(se_filt)))
+  rem_r<-gsub( '\\..*','' ,remaining$V1)
+
+  ## assay r  ##
+  se_filt<-se_filt[assay_r %in% intersect(assay_r, rem_r),]
+
   # 
   se_filt<-filter_se_byExpr(se_filt, min.count=min.count)
-  
+
  
-  
+  min.count
  
   
   return(se_filt)
+}
+
+
+
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
+  #'
+  #' @param 
+  # TODO: add plate and/OR site 
+  # se_filt1 neutrophil counts, and usable bases
+  
+  #IF NEUTROPHILS IN DESIGN
+  if (cell_corr){
+    se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
+    se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
+  }
+  # If using kmeans grouping filter if NA
+  
+  
+  se_filt<-se_filt[,!(is.na(se_filt$COHORT))] 
+  
+  # preprocess data turn to factors etc
+  se_filt<-preprocess_se_deseq2(se_filt, min.count=min.count)
+  assay(se_filt)
+  # if correcting by medication 
+  se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
+  se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
+  se_filt$LEDD[is.na(se_filt$LEDD)]=0 # add zeros to na then scale!
+  se_filt$LEDD_scaled<- scale(se_filt$LEDD)
+  
+  
+  assay(se_filt)
+  
+  
+  ddsSE <- DESeqDataSet(se_filt, 
+                        design = as.formula(formula_deseq))
+  ddsSE<-estimateSizeFactors(ddsSE)
+  
+  #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+  
+  deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
+  #deseq2Data <- DESeq(ddsSE, parallel=TRUE)
+  #deseq2Data <- DESeq(ddsSE)
+  
+  deseq2Results<-results(deseq2Data)
+  deseq2ResDF <- as.data.frame(deseq2Results)
+  
+  padj_T_hv<-0.05
+  log2fol_T_hv<-0.1
+  
+  ### this is also done later on -- save from there? 
+  deseq2ResDF$mofa_sign<- ifelse(deseq2ResDF$padj <padj_T_hv & abs(deseq2ResDF$log2FoldChange) >log2fol_T_hv , "Significant", NA)
+  deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
+  return(deseq2ResDF)
 }
 
 
@@ -881,32 +949,39 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   #install.packages('ggtree')
   
   #### heatmap
-  nCluster=ifelse(dim(x2)[1]<4,1, 4) 
+  plot_tree=FALSE
+  if (plot_tree){
+    nCluster=ifelse(dim(x2)[1]<4,1, 4) 
     p1 <- treeplot(x2,showCategory =N_TREE, nWords=0, nCluster=nCluster)
-        
+    
+    
+    
+    p2_tree <- treeplot(x2, hclust_method = "average", 
+                        showCategory =N_TREE, nWords=0, nCluster=nCluster,
+                        label_format =50, 
+                        fontsize = 300, 
+                        extend=-0.001, 
+                        offset=15, 
+                        hilight=FALSE, 
+                        branch.length=0.1)
+    
+    #aplot::plot_list(p1, p2_tree, tag_levels='A')
+    #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
+    
+    # p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
+    # labs(caption=text_p, title=title_p)
+    #write_n='test'
+    #N_TREE=10
+    ggsave(paste0(results_file, '_cp_',N_TREE, '.jpeg'),
+           width=10, height=0.5*log(N_TREE)+3, dpi=300)
+    #
+    
+  }
+  
       
     
-      p2_tree <- treeplot(x2, hclust_method = "average", 
-                          showCategory =N_TREE, nWords=0, nCluster=nCluster,
-                          label_format =50, 
-                          fontsize = 300, 
-                          extend=-0.001, 
-                          offset=15, 
-                          hilight=FALSE, 
-                          branch.length=0.1)
-      
-      #aplot::plot_list(p1, p2_tree, tag_levels='A')
-      #ggsave(paste0(results_file, '_clusterplot_', node_label, '_',N, '.jpeg'), width=8, height=8)
-      
-      p2_tree<-p2_tree+theme(plot.caption= element_text(hjust = 0, face = "italic", size=20)) +
-      labs(caption=text_p, title=title_p)
-      #write_n='test'
-      #N_TREE=10
-      ggsave(paste0(results_file, '_cp_',N_TREE, '.jpeg'),
-             width=10, height=0.5*log(N_TREE)+3, dpi=300)
   
-  
-  return(list(dp, p_enrich, p2_tree))
+  return(list(dp, p_enrich))
   
 }
 
@@ -1090,9 +1165,6 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   vsd_mat=assay(vsd)
   dim(vsd)
   
-  
-  
-  
   if (ruv & prefix=='rnas_'){
     
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
@@ -1116,8 +1188,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
       # TODO: filter common or not??
     
   }
-
-  
+  # TODO: for mirs load the already normalized and add log2(mirs_expr_norm+1)
   # Perform correction 
   highly_variable_genes_mofa<-selectMostVariable(vsd_mat, TOP_N)
   print(paste('Loaded highly variables files with settings: ', param_str_tmp, TOP_N))

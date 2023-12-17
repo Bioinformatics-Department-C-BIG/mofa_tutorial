@@ -6,12 +6,12 @@ source(paste0('ppmi/setup_os.R'))
 
 ### disconnect from mofa and other scripts 
 
-VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
+
 # Pipeline steps 
 # 1. run deseq  - with and without correction for cell types
 # 2. volcanot plots 
 # 3. PCA batch corrected with vsd or lognorm top genes - colour PCA with cohort/updrs 
-
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
@@ -55,30 +55,26 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V08'
+VISIT_COMP = 'V08'; VISIT = 'V08'
+VISIT=c('BL','V04', 'V06',  'V08') ; VISIT_COMP=VISIT
+VISIT_COMP = 'V08'; VISIT = 'V08'
+
 process_mirnas=FALSE ;
 cell_corr=TRUE
 #cell_corr=FALSE
 
-script_dir
-
 source(paste0(script_dir,'ppmi/config.R'))
-outdir_s
 
 if (process_mirnas){
   se_sel = se_mirs
-  prefix='mirnas_'
+  prefix='mirnas_'; view='miRNA'
 }else{
   se_sel = se_rnas
-  prefix='rnas_'
+  prefix='rnas_'; view='RNA'
 }
 
-view=ifelse(process_mirnas, 'miRNA', 'RNA');view
-
-VISIT_COMP = 'V08'
 se_filt<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
-
-
+table(se_filt$EVENT_ID);table(se_filt$INEXPAGE);table(se_filt$COHORT);
 
 ### Decide on the parameters settings 
 ## Deseq here
@@ -90,7 +86,7 @@ se_filt<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = se
 # 4. Enrichment analysis 
 
 de_file = paste0(outdir_s, '/results_df.csv')
-min.count = 10
+#min.count = 10
 deseq2ResDF = deseq_by_group(se_filt, formula_deseq, min.count=min.count)
     
 if (!process_mirnas){
@@ -100,19 +96,26 @@ if (!process_mirnas){
 write.csv(deseq2ResDF, de_file, row.names=TRUE)
 deseq_all_combined<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 deseq_all_names_combined<- gsub('\\..*', '',rownames(deseq_all_combined)) # remove the dots from ensembl names 
-
+deseq_all_names_combined
 
 des
 deseq_all_names_combined
+de_genes_ppmi<-read.csv('ppmi/de_genes', header=FALSE)
+de_genes_ppmi_r<-gsub('\\..*', '',de_genes_ppmi$V1)
+intersect(deseq_all_names_combined,de_genes_ppmi_r)
+
+
+
+
 ## Volcano plot #### 
 volcano_title<-paste0( as.character(cell_corr), des)
 pvol<-plotVolcano(  deseq2ResDF, se_filt, title=volcano_title, xlim=c(-1.1,1.1),
                       lab=deseq2ResDF$GENE_SYMBOL)
-  fname<-paste0(outdir_s, '/EnhancedVolcano_edited_','.jpeg')
- # fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id, '.jpeg')
+fname<-paste0(outdir_s, '/EnhancedVolcano_edited_','.jpeg')
+# fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id, '.jpeg')
   
-  pvol
-  ggsave(fname,pvol, width=9,height=12, dpi=300)
+pvol
+ggsave(fname,pvol, width=9,height=12, dpi=300)
 
 
 #### 2. Venn from significant in top of factor
@@ -144,35 +147,15 @@ names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 gene_lists[[cluster_id]]<-gene_list1
 results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params)
 gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=50 )
-  
+
+# TODO: add mirs enrichment 
 
 
 
-####
-clust_pair<-c(1,2,3)
-clust_pair_s=paste0(clust_pair, collapse='_')
-clust_pair_s
-gse_compare<-compareCluster(geneClusters = list(G1=gene_lists[[clust_pair[1]]],G2=gene_lists[[clust_pair[2]]], G3=gene_lists[[clust_pair[3]]] ), 
-                            fun = "gseGO", 
-                            OrgDb='org.Hs.eg.db', 
-                            ont=ONT, 
-                            keyType = 'ENSEMBL') 
+###COMPARE BY VISIT 
 
+# TODO: fix by visit 
 
-### RUN SCRIPT compare
-
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 40)
-
-
-
-
-### Cluster compare by visit ### 
-# 1. 
-#    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
-
-cluster_id=3
-deseq_all_times<-vector("list", length = 3)
-deseq_all_times
 
 
 deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){

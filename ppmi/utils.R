@@ -204,6 +204,8 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   se_filt$SITE <- as.factor(se_filt$SITE); dim(assay(se_filt))
   se_filt$Neutrophils<-scale(se_filt$`Neutrophils....`)
   se_filt$Lymphocytes<-scale(se_filt$`Lymphocytes....`)
+  se_filt$Neutrophil.Score<-scale(se_filt$Neutrophil.Score)
+  
   
   se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
   se_filt$SEX<-as.factor(se_filt$SEX)
@@ -241,9 +243,12 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 
   ## assay r  ##
   se_filt<-se_filt[assay_r %in% intersect(assay_r, rem_r),]
-
+  dim(assay(se_filt) )
+  median(assay(se_filt) ) # this was 350
+  
   # 
-  se_filt<-filter_se_byExpr(se_filt, min.count=min.count)
+  se_filt<-filter_se_byExpr(se_filt, min.count=min.count);   dim(assay(se_filt) )
+
 
  
   min.count
@@ -262,8 +267,10 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
   
   #IF NEUTROPHILS IN DESIGN
   if (cell_corr){
-    se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
-    se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
+    #se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
+    se_filt<-se_filt[,!(is.na(se_filt$Neutrophil.Score))] ;dim(assay(se_filt))
+    
+    #se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
   }
   # If using kmeans grouping filter if NA
   
@@ -782,20 +789,21 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 
 plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
   ### GSE COMPARE ANALYSIS 
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=15, split=".sign") + facet_grid(.~.sign)
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=10, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
-         dpi=200
+         dpi=250, width=12, height=10, 
   )
   
-  
+  # N_EMAP 
+  N_EMAP=80
   gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
   
   emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' ), plot=emap_comp,
-         dpi=200)
+         dpi=300, width=10, height=10, units='in')
   
   
   cnet_comp<-cnetplot(gse_compare, showCategory = 10)

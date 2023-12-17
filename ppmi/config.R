@@ -46,7 +46,9 @@ sel_subcoh=FALSE
 sel_subcoh=FALSE
 
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
-sel_subcoh=FALSE
+sel_subcoh=TRUE
+sel_subcoh=c('INEXPD');
+
 
 #sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 
@@ -89,9 +91,8 @@ outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'
 formula_deseq2 = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'
 formula_deseq3<-'~PATNO+AGE_SCALED+SEX'
-
 if (cell_corr) {
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophils+Lymphocytes+Plate+COHORT'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+Plate+COHORT'
   
 }else{
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'

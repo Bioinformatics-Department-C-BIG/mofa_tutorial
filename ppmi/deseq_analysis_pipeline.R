@@ -7,6 +7,7 @@ source(paste0('ppmi/setup_os.R'))
 ### disconnect from mofa and other scripts 
 
 VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
+VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
 
 # Pipeline steps 
 # 1. run deseq  - with and without correction for cell types
@@ -56,14 +57,16 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP = 'V08'; VISIT = 'V08'
-VISIT=c('BL','V04', 'V06',  'V08') ; VISIT_COMP=VISIT
-VISIT_COMP = 'V08'; VISIT = 'V08'
+#VISIT=c( 'V06',  'V08') ; VISIT_COMP=VISIT
 
 process_mirnas=FALSE ;
-cell_corr=TRUE
+cell_corr=FALSE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr0<-outdir_s
+
+cell_corr=TRUE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr1<-outdir_s
+
 #cell_corr=FALSE
 
-source(paste0(script_dir,'ppmi/config.R'))
+dir.create(outdir_s);outdir_s
 
 if (process_mirnas){
   se_sel = se_mirs
@@ -84,24 +87,35 @@ table(se_filt$EVENT_ID);table(se_filt$INEXPAGE);table(se_filt$COHORT);
 # 2. Venns 
 # 3. Volcano plot
 # 4. Enrichment analysis 
-
+de_file
 de_file = paste0(outdir_s, '/results_df.csv')
 #min.count = 10
-deseq2ResDF = deseq_by_group(se_filt, formula_deseq, min.count=min.count)
-    
-if (!process_mirnas){
-      # get symbols for RNA only 
-  deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
+(file.exists(de_file))
+if (file.exists(de_file)){
+  
+  
+  # if de file exists load it - unfiltered de results file
+  deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
+}else{
+  
+  deseq2ResDF = deseq_by_group(se_filt, formula_deseq, min.count=min.count)
+  
+  if (!process_mirnas){
+    # get symbols for RNA only 
+    deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
+  }
+  write.csv(deseq2ResDF, de_file, row.names=TRUE)
 }
-write.csv(deseq2ResDF, de_file, row.names=TRUE)
+
 deseq_all_combined<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 deseq_all_names_combined<- gsub('\\..*', '',rownames(deseq_all_combined)) # remove the dots from ensembl names 
 deseq_all_names_combined
 
 des
-deseq_all_names_combined
-de_genes_ppmi<-read.csv('ppmi/de_genes', header=FALSE)
-de_genes_ppmi_r<-gsub('\\..*', '',de_genes_ppmi$V1)
+length(deseq_all_names_combined)
+de_genes_ppmi<-read.csv('ppmi/de_genes', header=FALSE); 
+de_genes_ppmi_r<-gsub('\\..*', '',de_genes_ppmi$V1); length(de_genes_ppmi_r)
+
 intersect(deseq_all_names_combined,de_genes_ppmi_r)
 
 
@@ -124,7 +138,7 @@ ggsave(fname,pvol, width=9,height=12, dpi=300)
 ## 2. intersect with DE 
 
 # intersect with the top factors 
-
+# LOAD DESEQ? 
 
   deseq_params = outdir_s
 
@@ -140,27 +154,31 @@ dir.create(paste0(deseq_params, '/enr/'))
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
 
-
 gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
-  
-gene_lists[[cluster_id]]<-gene_list1
 results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params)
 gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=50 )
+
+
+
 
 # TODO: add mirs enrichment 
 
 
-
+### TODO: compare with and withour correction the p-values 
+# 1. whi
 ###COMPARE BY VISIT 
 
 # TODO: fix by visit 
+# read all visits 
+deseq
 
 
 
 deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){
+  # TODO: load deseq_file with different visit every time 
   deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' , prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
-  
+
+  # todo: etract gene lsit
   names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
   
   

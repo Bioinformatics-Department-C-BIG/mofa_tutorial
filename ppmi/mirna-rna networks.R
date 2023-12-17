@@ -64,6 +64,7 @@ ggsave(paste0(outdir_s_mirnas, '/mirna_rna_net.svg'), plot=last_plot())
 
 ##### 
 mst<-g
+
 mst.communities <- edge.betweenness.community(mst, weights=NULL, directed=FALSE)
 mst.clustering <- make_clusters(mst, membership=mst.communities$membership)
 V(mst)$color <- mst.communities$membership + 1

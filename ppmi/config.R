@@ -13,7 +13,7 @@ MIN_COUNT_M=10
 
 TOP_GN=0.10
 TOP_MN=0.75
-TOP_MN=0.5
+TOP_MN=0.50
 
 ### THE ONES THAT MOFA WILL USE! because to print we have set tgem in deseq_analysis
 ### if using signif
@@ -94,6 +94,8 @@ formula_deseq3<-'~PATNO+AGE_SCALED+SEX'
 des=gsub('~', '', formula_deseq2)
 
 process_mirnas
+
+
 if (process_mirnas){
   prefix='mirnas_'
   # if we filter too much we get normalization problems 
@@ -101,12 +103,16 @@ if (process_mirnas){
   most_var=TOP_MN
   param_str=param_str_m_f
   param_str_f=param_str_m_f
+  
+  
 }else{
   prefix='rnas_'
    min.count=MIN_COUNT_G
    most_var=TOP_GN
    param_str=param_str_g_f
    param_str_f=param_str_g_f
+   
+
 }
 
 
@@ -114,13 +120,15 @@ if (process_mirnas){
 input_file<-paste0(output_files, prefix, 'all_visits.csv')
 input_file<-paste0(output_files, prefix, 'all_visits.csv.gz')
 input_file_mirs<-paste0(output_files, 'mirnas_', 'all_visits_norm.csv.gz')
-
+input_file_mirs_norm<-input_file_mirs
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
 
-vst_cor_all_vis<-paste0(output_files, 'rnas_', 'vst_cor.csv')
-vst_cor_all_vis_filt<-paste0(output_files, 'rnas_', 'vst_cor_filt.csv')
+vst_cor_all_vis<-paste0(output_files, prefix, 'vst_cor.csv')
+vst_cor_all_vis_filt<-paste0(output_files, prefix, 'vst_cor_filt.csv')
+
+
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 

@@ -8,9 +8,13 @@ library(tidyr)
 library(dnet)
 library(gprofiler2)
 # interactions - proteins
-
+outdir<-'/Volumes/GoogleDrive/Other computers/My computer (1) (1)/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUEruv_1_split_FALSE (1)/'
 mofa_cluster_id<-2
-rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V08/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+sel_vis<-'V08'
+
+# todo visit 6 and compare -mirs are missing 
+rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/', sel_vis,'/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+
 dim(rnas)
 rnas$mofa_sign
 rnas_sig<-rnas%>% dplyr::filter(mofa_sign == 'Significant')
@@ -18,7 +22,7 @@ dim(rnas_sig)
 rnas_sig$padj
 
 
-mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/V08/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
+mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',sel_vis, '/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
 mirnas$GENE_SYMBOL<-mirnas$X
 
 mirnas_sig<-mirnas%>% dplyr::filter(mofa_sign == 'Significant')
@@ -36,7 +40,7 @@ length(top_genes_factor8)
 
 
 dim(rnas_top); dim(mirnas_top)
-top_g<-10000
+top_g<-1000
 top_m<-200
 
 top_rnas<-rnas_top[1:top_g,]
@@ -44,6 +48,8 @@ top_mirnas<-mirnas_top[1:top_m,]
 
 top_mirnas$GENE_SYMBOL<-top_mirnas$X
 top_mirnas$GENE_SYMBOL
+library(dplyr)
+mutate
 interactions <- import_omnipath_interactions( resources = c( 'SIGNOR','STRING_talklr' ) )
 interactions
 top100_rnas$GENE_SYMBOL

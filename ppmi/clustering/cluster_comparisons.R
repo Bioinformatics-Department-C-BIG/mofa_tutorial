@@ -1,36 +1,47 @@
 
-
-process_mirnas=TRUE;
+### FIRST LOAD required files  ####
+process_mirnas = TRUE;
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+input_file
+input_file_mirs
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-
-
+se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
+se_mirs
+head(assay(se_mirs))
+head(assay(se_mirs_norm))
 
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
 
 #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-process_mirnas=TRUE
 
 print(prefix)
-view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
 
-dir.create(paste0(cluster_params_dir, '/de/'))
 MOFAobject_clusts=MOFAobjectPD
 
 
+## SETUP the script parameters here ####
+# 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
+# edit this one 
 VISIT_COMP = 'V08'
+process_mirnas=FALSE 
 if (process_mirnas){
   se_sel = se_mirs
+  prefix='mirnas_'
 }else{
   se_sel = se_rnas
+  prefix='rnas_'
 }
+
+view=ifelse(process_mirnas, 'miRNA', 'RNA');view
+
+
 se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
 se_clusters
 ### Decide on the parameters settings 
@@ -49,14 +60,13 @@ clust_name=paste0(y_clust, '_clust')
 
 formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
-assay(se_clusters)
-
-
 MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 y_clust='NP2PTOT_LOG';
-cell_corr<-FALSE
+
+# Correct for blood cell proportions of neutrophils and lymphocytes 
+cell_corr<-TRUE
 
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 
@@ -84,22 +94,20 @@ if (add_med=='PDMEDYN'){
   
 }else if(add_med=='LEDD_scaled') {
   formula_deseq = '~AGE_SCALED+SEX+LEDD_scaled+kmeans_grouping'
-  
 }else{
   formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
   formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
-  
   formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
-  
 }
 formula_deseq
 # TODO: include corrected for cell counts  and uncorrected formula
-if (process_mirnas){
+#if (process_mirnas){
   # TODO: try site? and lymphocytes too? 
-  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+#  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
-  cell_corr = FALSE # ensure they are always in the same folder c0
-}else if (cell_corr) {
+#  cell_corr = FALSE # ensure they are always in the same folder c0
+# apply this both for mirs and rnas 
+if (cell_corr) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+ Neutrophils+ Lymphocytes+Plate+kmeans_grouping'
 
 }else{
@@ -108,26 +116,33 @@ if (process_mirnas){
 
 }
 formula_deseq
+cluster_id=1
+
 #param <- SnowParam(workers = 6, type = "MPI")
+
 deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
         #'
         #' @param 
-
-  
-  
         # TODO: add plate and/OR site 
         # se_filt1 neutrophil counts, and usable bases
-        se_filt$SITE <- as.factor(se_filt$SITE)
+        se_filt$SITE <- as.factor(se_filt$SITE); dim(assay(se_filt))
         se_filt$Usable_Bases_SCALE<-scale(se_filt$`Usable.Bases....`)
         se_filt$Neutrophils<-scale(se_filt$`Neutrophils....`)
         se_filt$Lymphocytes<-scale(se_filt$`Lymphocytes....`)
-
-        se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] 
-        se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
+        #IF NEUTROPHILS IN DESIGN
+        if (cell_corr){
+           se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
+           se_filt<-se_filt[,!(is.na(se_filt$`Lymphocytes....`))] 
+        }
+      
+        se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
+        se_filt$kmeans_grouping
+        se_filt<-se_filt[,!(is.na(se_filt$COHORT))] 
+        assay(se_filt)
 
 
         se_filt<-preprocess_se_deseq2(se_filt, min.count=min.count)
-        dim(se_filt)
+        dim(assay(se_filt))
         se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
         se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
         
@@ -143,6 +158,7 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
 
         deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
         #deseq2Data <- DESeq(ddsSE, parallel=TRUE)
+        #deseq2Data <- DESeq(ddsSE)
 
         deseq2Results<-results(deseq2Data)
         deseq2ResDF <- as.data.frame(deseq2Results)
@@ -172,21 +188,22 @@ deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr))
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr),  '/',VISIT_COMP)
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr)))
 dir.create(deseq_params)
-fname_venn=paste0(deseq_params, prefix , 'min_',min.count,'venn_de_per_group_deseq.png');fname_venn
+fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
+deseq_params
 
-
-
+formula_deseq
 for (cluster_id in 1:3){
 
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
   print(paste('cluster:',cluster_id))
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
   #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 }
+
+de_file
 
 tail(colData(se_filt_all[[2]])[,c('PATNO', 'EVENT_ID')] %>% as.data.frame() %>%
 arrange(PATNO))
@@ -203,13 +220,23 @@ for (cluster_id in 1:3){
 
   # if deseq exists load:
   #if (file.exists(de_file)){
+
+
+  se_filt_all[[cluster_id]]$kmeans_grouping
+  formula_deseq
+  # if (file.exists(de_file)){
   if (FALSE){
+
+
     # if de file exists load it - unfiltered de results file
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
   }else{
     # else run the deseq with the design formula specified 
+    assay(se_filt_all[[cluster_id]])
         deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id]], formula_deseq, min.count=min.count)
+
+        deseq2ResDF
         deseq_all_groups[[cluster_id]]<-deseq2ResDF
         if (!process_mirnas){
           # get symbols for RNA only 
@@ -229,7 +256,7 @@ names(deseq_all_names) <- paste0('SG', 1:length(deseq_all_names))
 
 
 #### 1. Venn from significant 
-fname_venn
+
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,
                     main =paste0( ' DE molecules for each molecular cluster' ))
 
@@ -241,6 +268,8 @@ graphics.off()
 
 
 # TODO: venn before and after correction 
+deseq_params
+deseq_all_groups[[2]]
 
 for (cluster_id in c(1,2,3)){
 
@@ -250,19 +279,18 @@ for (cluster_id in c(1,2,3)){
       deseq2ResDF=deseq_all_groups[[cluster_id]]
       deseq2ResDF$log2FoldChange
       #deseq2ResDF$GENE_SYMBOL
-      deseq2ResDF$GENE_SYMBOL
+      deseq2ResDF$padj
 
       pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1),
       lab=deseq2ResDF$GENE_SYMBOL)
       pvol
-      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
-      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
-      fname<-paste0(deseq_params, '/Volcano_', '_cluster_',cluster_id, '.jpeg')
+      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_COMP,'.jpeg')
+      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id, '.jpeg')
 
       pvol
       ggsave(fname,pvol, width=9,height=12, dpi=300)
 }
-outdir_s
+fname
 
 #### 2. Venn from significant in top of factor
 
@@ -364,6 +392,7 @@ gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq
 
 
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
 
 
 

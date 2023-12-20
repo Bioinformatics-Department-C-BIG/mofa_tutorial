@@ -30,7 +30,7 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP = 'V08'
-process_mirnas=FALSE 
+process_mirnas=TRUE 
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -103,10 +103,10 @@ formula_deseq
 #  cell_corr = FALSE # ensure they are always in the same folder c0
 # apply this both for mirs and rnas 
 if (cell_corr) {
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+ Neutrophils+ Lymphocytes+Plate+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+Plate+kmeans_grouping'
 
 }else{
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+ Plate+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+kmeans_grouping'
 
 
 }
@@ -115,7 +115,7 @@ cluster_id=1
 
 #param <- SnowParam(workers = 6, type = "MPI")
 
-
+se_filt$COHORT
 
 deseq_all <- vector("list", length = 3) # holds the significant gene/mirs ids only for each cluster
 deseq_all_names<-vector("list", length = 3)
@@ -332,6 +332,8 @@ gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq
 
 
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
 
 
 

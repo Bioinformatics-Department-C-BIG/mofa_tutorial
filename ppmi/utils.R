@@ -189,7 +189,9 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 }
 
 
-#se_filt<-se
+#se_filt<-se_filt_all[[cluster_id]]
+dim(assay(se_filt))
+se_filt$COHORT
 preprocess_se_deseq2<-function(se_filt, min.count=10){
   #' 
   #' Preprocess metadata of summarized experiment 
@@ -210,14 +212,14 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   se_filt$Usable_Bases_SCALE<-as.numeric(scale(se_filt$Usable.Bases....))
   se_filt$SEX<-as.factor(se_filt$SEX)
   se_filt$SITE<-as.factor(se_filt$SITE)
-  se_filt$Plate<-as.factor(se_filt$Plate)
+  se_filt$Plate<-as.factor(se_filt$Plate); dim(assay(se_filt))
   
   
-  se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
+  #se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
   se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
   
   se_filt<-se_filt[ , !is.na(se_filt$Usable_Bases_SCALE)]
-  
+   dim(assay(se_filt))
   
   ### OUTPUT THE FILTERED se_filt 
   ind<-which(is.na(se_filt$AGE_AT_VISIT))
@@ -236,15 +238,18 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   # removed genes associated with the batch effects as explained in Craig 2020 paper
   rownames(assay(se_filt))
   
-  
-  remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
-  assay_r<-gsub( '\\..*','' ,rownames(assay(se_filt)))
-  rem_r<-gsub( '\\..*','' ,remaining$V1)
+  if (!process_mirnas){
+    # filter by specified genes in
+      remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
+      assay_r<-gsub( '\\..*','' ,rownames(assay(se_filt)))
+      rem_r<-gsub( '\\..*','' ,remaining$V1)
 
-  ## assay r  ##
-  se_filt<-se_filt[assay_r %in% intersect(assay_r, rem_r),]
-  dim(assay(se_filt) )
-  median(assay(se_filt) ) # this was 350
+      ## assay r  ##
+      se_filt<-se_filt[assay_r %in% intersect(assay_r, rem_r),]
+      dim(assay(se_filt) )
+      median(assay(se_filt) ) # this was 350
+  }
+ 
   
   # 
   se_filt<-filter_se_byExpr(se_filt, min.count=min.count);   dim(assay(se_filt) )

@@ -135,8 +135,8 @@ input_file_mirs_norm<-input_file_mirs
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
 
-vst_cor_all_vis<-paste0(output_files, prefix, 'vst_cor.csv')
-vst_cor_all_vis_filt<-paste0(output_files, prefix, 'vst_cor_filt.csv')
+vst_cor_all_vis<-paste0(output_files, prefix, '_cell_corr_', cell_corr, 'vst_cor.csv')
+vst_cor_all_vis_filt<-paste0(output_files, prefix, '_cell_corr_', cell_corr, 'vst_cor_filt.csv')
 
 
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file

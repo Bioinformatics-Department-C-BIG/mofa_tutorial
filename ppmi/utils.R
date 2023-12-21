@@ -58,12 +58,9 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
 
 # sPLIT DIAGNOSIS vs progression  
 selected_covars2<-c( 'AGE', 'SEX',
-                     'NP2_TOT','NP3_TOT',
-                     'updrs2_score','updrs3_score',
-                     
                      'NP2PTOT','NP3TOT',
-                     
-                     'NHY', 
+                     'updrs2_score','updrs3_score', # Todo some are missing from these scores...
+                    'NHY', 
                      'NP3RIGN',
                      'rigidity', 
                      'NP3RTARU',
@@ -78,7 +75,7 @@ selected_covars2<-c( 'AGE', 'SEX',
 
 selected_covars2_progression<-c( 'AGE', 'SEX',
                                  #'NP1_TOT', 
-                                 'NP2_TOT_LOG','NP3_TOT_LOG',
+                                 'NP2PTOT_LOG','NP3TOT_LOG',
                                  'updrs3_score',
                                  #'NP4_TOT',
                                  'NHY', 
@@ -97,17 +94,18 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  'RBD_TOT', 
                                  'td_pigd_old_on', 
                                  'PD_MED_USE' , 
-                                 'months', 
+                             #    'months', 
                                  'con_putamen_V10', 
-                                 'change','asyn' , 'CSFSAA', 
+                             'asyn' , 'CSFSAA', 
                                  'mean_striatum_V10', 
                                  
                                  ## WHICH factors have to do with the change in the scale
                                  # And the change in the datascan binding  in the future?
                                  # THESE factors are the ones that we actually WANT 
                                  'MCATOT', 
-                                 'con_putamen_diff_V10', 'hi_putamen_diff_V10',
-                                 'SITE', 'Plate', 'Neutrophils.Lymphocytes'
+                               #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                                 'SITE', 'Plate', 
+                                 'Neutrophil.Score'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  
@@ -190,8 +188,8 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
 
 
 #se_filt<-se_filt_all[[cluster_id]]
-dim(assay(se_filt))
-se_filt$COHORT
+#dim(assay(se_filt))
+#se_filt$COHORT
 preprocess_se_deseq2<-function(se_filt, min.count=10){
   #' 
   #' Preprocess metadata of summarized experiment 
@@ -216,6 +214,8 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   
   
   #se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
+  se_filt<-se_filt[ , !is.na(se_filt$Neutrophil.Score)]
+
   se_filt<-se_filt[ , !is.na(se_filt$COHORT)]
   
   se_filt<-se_filt[ , !is.na(se_filt$Usable_Bases_SCALE)]
@@ -1087,7 +1087,8 @@ mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Categ
 
 
 get_enrich_result_pcgse<-function(all_fs_merged2_pval2){
-  
+  #
+
       all_fs_merged2_pval2$ID<-all_fs_merged2_pval2$Description
         enr_full <- multienrichjam::enrichDF2enrichResult(all_fs_merged2_pval2,
                                                         keyColname =  'Description',
@@ -1187,7 +1188,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
     # load all and filter 
     # load the corrected dataset - correction is done with all batches together
     print(paste(prefix, ' remove variance'))
-      vsd_cor_l=loadRDS(vst_cor_all_vis_filt)
+      vsd_cor_l=loadRDS(vst_cor_all_vis_filt) # load the corrected 
       vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
       dim(vsd_cor_filt)
       

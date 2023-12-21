@@ -222,11 +222,11 @@ run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
 for (N_FACTORS in c(15)){
   ## MOFA parameters, set directory 
   #'
-  mofa_params<-paste0(N_FACTORS,'_sig_',  use_signif,'complete', run_mofa_complete )
+  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       scale_views[1],'ruv_', ruv_s)
-  outdir = paste0(outdir_orig,out_params, '_split_', split );outdir
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s))
+  outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
   MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
   

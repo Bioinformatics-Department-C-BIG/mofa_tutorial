@@ -21,8 +21,8 @@ write_enrich<-function(res, sign_mode){
   #'
   #'res$pval.adj
       res$pval.adj=as.data.frame(res$pval.adj)   ;
-       results_enrich<-as.data.frame(sapply(res$pval.adj, as.numeric));
-       results_enrich$Description=rownames(res$pval.adj); 
+      results_enrich<-as.data.frame(sapply(res$pval.adj, as.numeric));
+      results_enrich$Description=rownames(res$pval.adj); 
       all_fs_merged2<-reshape::melt(results_enrich, id.vars = 'Description');
       
       res$pval=as.data.frame(res$pval) 
@@ -101,11 +101,14 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
                                          sign = "positive"
           )
           
-          
-          res_negative_df<-write_enrich(res.negative, sign_mode='negative')
+          mode='negative'
+          res_negative_df<-write_enrich(res.negative, sign_mode=mode)
           saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
-          res_positive_df<-write_enrich(res.positive, sign_mode='positive')
+
+          mode='positive'
+
+          res_positive_df<-write_enrich(res.positive, sign_mode=mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
             by=c('Description','Factor' ))
@@ -114,7 +117,7 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           write.csv(res_merged, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
   }
   
-  
+  head(res.positive$feature.statistics)
   
   
   
@@ -165,6 +168,15 @@ jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, 
 plot_enrichment_heatmap(res.negative, 
                         alpha=0.00000000004, cap=0.00000000005 
 )
+
+
+
+
+###### turn to enrichment result to plot 
+
+
+
+
 
 
 

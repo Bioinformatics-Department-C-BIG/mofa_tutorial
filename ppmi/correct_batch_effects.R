@@ -5,40 +5,51 @@ library('WGCNA')
 library('R.filesets')
 
 library('FactoMineR')
+
+
+# https://docplayer.net/21369417-Differential-analysis-of-count-data-the-deseq2-package.html
 ### Analysis of batch effects  due to ###
 # 1. remove the most variable genes from the pools (filtered_genes)
 # Correct for sequencing metrics: 
 # 1. usable bases, 2. plate 
 # (3. site is also associated witht echnical variability but also biological so we don't remove it..###)
+
+
 # remove genes related to the first PCA ###
 
 filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
 remove_genes<-filtered_genes$perc0.1
 
-formula_deseq<-"~AGE_SCALED+SEX+Usable_Bases_SCALE+COHORT"
-formula_deseq<-"~AGE_SCALED+SEX+Usable_Bases_SCALE+COHORT"
+
+cell_corr=TRUE
+prefix='rnas_'; process_mirnas<-FALSE;  
+#prefix='mirnas_'; process_mirnas<-TRUE;  
+if (cell_corr){
+    to_remove_covars<-c('Usable_Bases_SCALE', 'Plate', 'Neutrophil.Score')
+
+}else{
+    to_remove_covars<-c('Usable_Bases_SCALE', 'Plate')
+
+}
+to_keep_covars = c('AGE_SCALED', 'SEX', 'COHORT')
 
 
-
-prefix='rnas'; process_mirnas<-FALSE;  
 source(paste0(script_dir,'ppmi/config.R'))
 
-
-se_mirs_prenorm=load_se_all_visits(input_file = input_file_mirs_norm, combined=combined_bl_log)
+input_file_mirs_norm
+se_mirs_prenorm = load_se_all_visits(input_file = input_file_mirs_norm, combined=combined_bl_log)
 se_pr_mirs_prenorm<-preprocess_se_deseq2(se_mirs_prenorm, min.count = min.count) # scale and transform covariates used in preprocessing 
 
 
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
-hist(assay(se))
-View(assay(se))
 # TODO: here try also the tpm measures that are already normalized!! 
-se_pr<-preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 
-se_pr<-preprocess_se_deseq2(se, min.count = min.count) # scale and transform covariates used in preprocessing 
+se_pr <- preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 
+se_pr <- preprocess_se_deseq2(se, min.count = min.count) # scale and transform covariates used in preprocessing 
 
 
 
 #kruskal.test(se_pr$Usable_Bases_SCALE, as.factor(se_pr$Plate))
-
+formula_deseq
 se_pr$Usable_Bases_SCALE<-as.numeric(se_pr$Usable_Bases_SCALE)
 
 ddsSE <- DESeqDataSet(se_pr, 
@@ -49,17 +60,27 @@ ddsSE<-estimateSizeFactors(ddsSE)
 ######
 batch<-ddsSE$Usable_Bases_SCALE
 cohorts<-ddsSE$COHORT
-retainedCovariates<-colData(ddsSE)[,c('AGE_SCALED', 'SEX', 'COHORT')]
-removedCovariates<-colData(ddsSE)[,c('Usable_Bases_SCALE', 'Plate')]
+
+removedCovariates<-colData(ddsSE)[,to_remove_covars]
+retainedCovariates<-colData(ddsSE)[,to_keep_covars]
 
 ## PCA with 1. vsd 2. CPM 3. 
 
+ddsSE$COHORT
 vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE) 
+
+vsd
+vsd<-vst(ddsSE)
+
 ##vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
 ##-- note: fitType='parametric', but the dispersion trend was not well captured by the
 ##function: y = a/x + b, and a local regression fit was automatically substituted.
 ##specify fitType='local' or 'mean' to avoid this message next time.
+retainedCovariates
+removedCovariates
 
+dim(t(as.matrix(assay(vsd))))
+dim(removedCovariates)
 ### Asjustment works on gaussian data so insert vsd or log cplm
 adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
                                 retainedCovariates = retainedCovariates )
@@ -85,9 +106,20 @@ vsd_cor_V08<-filter_se(se = vsd_cor,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh
 vsd_cor_V08_rem<-vsd_cor_V08[!(rownames(vsd_cor_V08) %in% filtered_genes$perc0.1), ]
 saveRDS(vsd_cor,vst_cor_all_vis_filt)
 
+pca_files = paste0(data_dir, '/ppmi/plots/single/pca/')
+pca_pars = paste0(cell_corr)
 
 
-vsd_p<-vsd_cor_V08
+
+plot_corr = TRUE # Choose corrected or uncorrected plots 
+if (plot_corr){
+  vsd_p<-vsd_cor_V08
+}else{
+  vsd_p<-vsd_V08
+
+}
+
+
 
       pca_data<-t(assay(vsd_p)) # transpose because rows must be samples
       meta_d<-colData(vsd_p)
@@ -96,14 +128,28 @@ vsd_p<-vsd_cor_V08
       pca.data_vsd <- PCA(pca_data,
                       scale.unit = TRUE, graph = FALSE)
     
-     
+      pc1<-get_pca_ind(   pca.data_vsd )$coord[, 1]
+      pc2<-get_pca_ind(   pca.data_vsd )$coord[, 2]
+
+      cor(pc1,vsd_p$Neutrophil.Score, method='pearson' )
+      cor(pc1,as.numeric(vsd_p$COHORT), method='spearman' )
+
+      corr.test(pc1,vsd_p$Neutrophil.Score, method='pearson' )
+
+
+      cor(pc2,as.numeric(vsd_p$COHORT), method='spearman' )
+      cor(pc2,vsd_p$Neutrophil.Score,method='pearson' )
+
       
       fviz_eig(pca.data_vsd, addlabels = TRUE, ylim = c(0, 70))
 
       graphics.off()
       covar<-'Usable_Bases_SCALE'
       covar<-'Plate'
-      
+      covar<-'Neutrophil.Score'
+
+      View(pca.data_vsd$loadings)
+
       pc_ind_p<-fviz_pca_ind(pca.data_vsd,col.ind = as.numeric(colData(vsd_p)[,covar]), 
                              label=covar
                               )+
@@ -113,7 +159,7 @@ vsd_p<-vsd_cor_V08
       
       pc_ind_p
       ##pc_ind_ps[[i]]=pc_ind_p
-      ggsave(paste0(pca_files, 'individuals', pca_pars, '.jpeg'), width=6, height = 6)
+      ggsave(paste0(pca_files, 'individuals_correct_',plot_corr, pca_pars, covar,'.jpeg'), width=6, height = 6)
       
       ### graph of variables 
       
@@ -176,6 +222,8 @@ ggplot(df_melt_remove_outl, aes(y=value, fill=Plate))+
   geom_boxplot()+
   facet_wrap(~variable, nrow = 2)
 
+ggsave(pca_files, '/var.csv')
+
 ggplot(df_melt, aes(y=value, fill=Plate))+
   geom_boxplot()+
   facet_wrap(~variable, nrow = 2)
@@ -198,5 +246,101 @@ ggplot(df_melt, aes(y=value, x=Usable_Bases_SCALE))+
 # TODO: 1. check the raw data for 1009 and 1010
 
 colData(se[,se$PATNO %in% c(1009, 1010)])
+
+
+
+
+### METADATA correlations 
+## 1. 
+clinical_data$Usable_Bases_SCALE
+selected_covars2_progression[!selected_covars2_progression %in% colnames(colData(se))]
+
+
+se$Usable_Bases_SCALE<-as.numeric(scale(se$`Usable.Bases....`))
+selected_covars2_cor<-c('SITE', 'Plate', 'NP2PTOT', 'MCATOT', 'Neutrophil.Score', 'Usable_Bases_SCALE')
+clinical_data<-as.data.frame(colData(se)[, selected_covars2_cor])
+
+clinical_data$Plate<-as.factor(clinical_data$Plate)
+#clinical_data = as.data.frame(sapply((clinical_data), as.factor))
+clinical_data = sapply((clinical_data), as.numeric)
+clinical_data
+colnames(clinical_data)
+
+
+
+cor <- psych::corr.test(clinical_data, clinical_data, method = "pearson", adjust = "BH" )
+stat <- cor$r
+
+jpeg(paste0(outdir, '/covariates/corr_plot.jpeg'))
+cor_plot<-corrplot::corrplot(stat, tl.col = "black", title="Pearson correlation coefficient",diag=FALSE, )
+
+dev.off()
+
+
+hist(se$Neutrophil.Score)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

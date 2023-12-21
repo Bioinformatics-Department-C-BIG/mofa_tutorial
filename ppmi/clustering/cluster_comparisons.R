@@ -115,7 +115,6 @@ cluster_id=1
 
 #param <- SnowParam(workers = 6, type = "MPI")
 
-se_filt$COHORT
 
 deseq_all <- vector("list", length = 3) # holds the significant gene/mirs ids only for each cluster
 deseq_all_names<-vector("list", length = 3)
@@ -164,8 +163,8 @@ for (cluster_id in 1:3){
 
   se_filt_all[[cluster_id]]$kmeans_grouping
   formula_deseq
-  # if (file.exists(de_file)){
-  if (FALSE){
+   if (file.exists(de_file)){
+  #if (FALSE){
 
 
     # if de file exists load it - unfiltered de results file
@@ -173,7 +172,6 @@ for (cluster_id in 1:3){
 
   }else{
     # else run the deseq with the design formula specified 
-    assay(se_filt_all[[cluster_id]])
         deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id]], formula_deseq, min.count=min.count)
 
         deseq2ResDF

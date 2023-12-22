@@ -217,8 +217,7 @@ vertex.frame.width=3,
   layout = Coords)
 title(paste('Visit: ', VISIT_COMP, ', Cluster: ', mofa_cluster_id, ', Factor: ', sel_factor, top_fr  ),cex.main=3,col.main="green")
 
-
-top_fr
+write.csv(V(g_fc_plot)$name,paste0(outdir, '/genes_network.csv'))
 
 #V(g_fc)$shape<- ifelse(grepl("miR|hsa-let",igraph::V(g)$name), "vrectangle", "circle")
 visnet <- toVisNetworkData(g_fc)

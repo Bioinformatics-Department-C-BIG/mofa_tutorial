@@ -204,11 +204,11 @@ source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
   
 
-
+selected_covars3 = selected_covars2
 
 corrplot::corrplot(stat[sig,], tl.col = "black", title="Pearson correlation coefficient")
 
-
+selected_covars_broad
 
 
 x1_all<-samples_metadata(MOFAobject)[selected_covars3][,1:10]

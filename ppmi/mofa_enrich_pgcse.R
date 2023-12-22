@@ -169,6 +169,8 @@ plot_enrichment_heatmap(res.negative,
                         alpha=0.00000000004, cap=0.00000000005 
 )
 
+dev.off()
+
 
 
 

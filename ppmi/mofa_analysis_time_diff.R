@@ -425,7 +425,6 @@ graphics.off()
 
 
 
-
 ########################## NEW LOGIC GET ONLY FACTORS WITH DIFF IN V16 ##############
 ############# AFTER WE ADDED THIS TO MOFA
 
@@ -476,9 +475,13 @@ fname<-'factors_covariates_only_nonzero_strict'
 plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE, MOFAobject=MOFAobject )
 
 
+all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
 
 
+round(cors_pearson_pd[,all_diff_variables_prog_in_cors], digits=2)
 
+
+correlate_factors_with_covariates
 # Plot 1: some more non motor that we discovered
 samples_metadata(MOFAobject)$rigidity
 samples_metadata(MOFAobject)$NP2_TOT

@@ -1,6 +1,7 @@
 
 script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
 script_dir
+cell_corr = TRUE
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
@@ -10,4 +11,6 @@ source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 
-source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
+## Add future scales 
+
+

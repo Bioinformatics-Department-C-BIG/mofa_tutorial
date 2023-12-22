@@ -1,9 +1,11 @@
 
+
+
+# WARNING DO NOT CHANGE THIS, MOVE TO A FUNCTION!! ## 
 ### FIRST LOAD required files  ####
-process_mirnas = TRUE;
+
+process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-input_file
-input_file_mirs
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
 se_mirs
@@ -12,11 +14,9 @@ head(assay(se_mirs_norm))
 
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
-
 #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
 se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 
-print(prefix)
 
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
@@ -29,7 +29,7 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V06'
+VISIT_COMP = 'V08'
 process_mirnas=TRUE 
 if (process_mirnas){
   se_sel = se_mirs
@@ -56,9 +56,6 @@ clust_name=paste0(y_clust, '_clust')
 # 3. Volcano plot
 # 4. Enrichment analysis 
 
-
-
-formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
 MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
@@ -153,19 +150,14 @@ for (cluster_id in 1:3){
   ### 2. run deseq 
   ### 3. get significant per cluster 
   print(paste('cluster:',cluster_id))
+  #cluster_id=1
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
   #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
-  # if deseq exists load:
-  #if (file.exists(de_file)){
 
-
-  se_filt_all[[cluster_id]]$kmeans_grouping
-  formula_deseq
    if (file.exists(de_file)){
-  #if (FALSE){
-
+  #if (FALSE)
 
     # if de file exists load it - unfiltered de results file
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
@@ -174,7 +166,6 @@ for (cluster_id in 1:3){
     # else run the deseq with the design formula specified 
         deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id]], formula_deseq, min.count=min.count)
 
-        deseq2ResDF
         deseq_all_groups[[cluster_id]]<-deseq2ResDF
         if (!process_mirnas){
           # get symbols for RNA only 
@@ -185,7 +176,7 @@ for (cluster_id in 1:3){
   deseq_all_groups[[cluster_id]]<-deseq2ResDF
   deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
-
+deseq_all[[3]]$GENE_SYMBOL
 # Save and load # Rrename ens id.*
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <- paste0('SG', 1:length(deseq_all_names))
@@ -330,6 +321,21 @@ gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq
 
 
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

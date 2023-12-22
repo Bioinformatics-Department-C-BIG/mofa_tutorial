@@ -12,8 +12,8 @@ MIN_COUNT_M=10
 
 
 TOP_GN=0.10
-TOP_MN=0.75
-TOP_MN=0.50
+#TOP_MN=0.75
+TOP_MN=0.50 # this is called inside mofa so check if it is the same as the mofa config... 
 
 ### THE ONES THAT MOFA WILL USE! because to print we have set tgem in deseq_analysis
 ### if using signif
@@ -127,16 +127,15 @@ if (process_mirnas){
 
 
 
-input_file<-paste0(output_files, prefix, 'all_visits.csv')
 input_file<-paste0(output_files, prefix, 'all_visits.csv.gz')
 input_file_mirs<-paste0(output_files, 'mirnas_', 'all_visits_norm.csv.gz')
 input_file_mirs_norm<-input_file_mirs
 # se file with all visits
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
+vst_all_vis<-paste0(output_files, param_str, '_vst')
+vst_cor_all_vis<-paste0(output_files, prefix, 'cell_corr_', cell_corr, 'vst_cor')  ## this is either filtered for rnas or full for mirnas  
 
-vst_cor_all_vis<-paste0(output_files, prefix, '_cell_corr_', cell_corr, 'vst_cor.csv')
-vst_cor_all_vis_filt<-paste0(output_files, prefix, '_cell_corr_', cell_corr, 'vst_cor_filt.csv')
 
 
 deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
@@ -190,6 +189,24 @@ p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  se
 
 
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

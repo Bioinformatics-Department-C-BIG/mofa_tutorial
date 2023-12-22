@@ -31,6 +31,7 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
+
 #if (split){
 #  N_FACTORS=8
 #}
@@ -63,8 +64,8 @@ metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 
 
-combined_bl<-combined_all_original
-combined_bl<-combined_bl_log
+combined_bl <- combined_all_original
+combined_bl <- combined_bl_log
 
 combined_bl_log$RBD_TOT
 all(is.na(combined_bl_log$updrs2_score_BL))
@@ -225,7 +226,8 @@ for (N_FACTORS in c(15)){
   mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s))
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr))
+  
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
   MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
@@ -251,7 +253,34 @@ samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
 
 
-outdir
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

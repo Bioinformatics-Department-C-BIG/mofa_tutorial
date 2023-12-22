@@ -29,7 +29,7 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V08'
+VISIT_COMP = 'V06'
 process_mirnas=TRUE 
 if (process_mirnas){
   se_sel = se_mirs

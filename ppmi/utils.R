@@ -31,7 +31,9 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 
-
+diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
+diff_vars<-diff_vars[!grepl('clust',diff_vars)]
+diff_vars
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
@@ -52,7 +54,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
-                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes')
+                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 
+                         diff_vars)
 #'DYSKIRAT')
 
 
@@ -122,6 +125,9 @@ mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 ## GENES RELATED TO THE BATCH EFFECT
 filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+
+remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
+remaining_genes<-gsub( '\\..*', '', remaining$V1)
 
 batch_effect_genes<-filtered_genes$perc0.1
 remove_genes<-batch_effect_genes
@@ -240,14 +246,9 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   
   if (!process_mirnas){
     # filter by specified genes in
-      remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
       assay_r<-gsub( '\\..*','' ,rownames(assay(se_filt)))
-      rem_r<-gsub( '\\..*','' ,remaining$V1)
+      se_filt<-se_filt[assay_r %in% intersect(assay_r, remaining_genes),]
 
-      ## assay r  ##
-      se_filt<-se_filt[assay_r %in% intersect(assay_r, rem_r),]
-      dim(assay(se_filt) )
-      median(assay(se_filt) ) # this was 350
   }
  
   
@@ -1179,33 +1180,34 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   vsd_mat=assay(vsd)
   dim(vsd)
   
-  if (ruv & prefix=='rnas_'){
+
+  if (ruv){
     
     # Remove unwanted variance from the vsd data associated with plate and removable bases 
     # 
-     # vsd_mat<-adjust_unwanted_variance(vsd)
-      #vsd_mat=vsd_cor
     # load all and filter 
     # load the corrected dataset - correction is done with all batches together
-    print(paste(prefix, ' remove variance'))
-      vsd_cor_l=loadRDS(vst_cor_all_vis_filt) # load the corrected 
-      vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
-      dim(vsd_cor_filt)
+      print(paste(prefix, ' remove variance'))
+      # we do not need the config here but double check that the right file is used.. 
+
+      vst_cor_all_vis_to_load<-paste0(output_files, prefix, 'cell_corr_', cell_corr, 'vst_cor') # 
+      vsd_cor_l=loadRDS(vst_cor_all_vis_to_load) # load the corrected 
       
-      #vsd_cor_filt<-vsd_cor_filt[!(rownames(vsd_cor_filt) %in% remove_genes),]
-      #vsd_cor_filt<-vsd_cor_filt[rownames(vsd_cor_filt) %in% remove_genes,]
-      
-      vsd_mat=assay(vsd_cor_filt)
-      
-    
-      
-      # TODO: filter common or not??
-    
+      ## filter for the specified visit 
+      vsd_cor_visit_filt<-filter_se(vsd_cor_l, VISIT = VISIT, sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
+      vsd_mat=assay(vsd_cor_visit_filt)
+
+
+
+
+
   }
   # TODO: for mirs load the already normalized and add log2(mirs_expr_norm+1)
   # Perform correction 
   highly_variable_genes_mofa<-selectMostVariable(vsd_mat, TOP_N)
   print(paste('Loaded highly variables files with settings: ', param_str_tmp, TOP_N))
+ 
+ 
   
   
   return(highly_variable_genes_mofa)
@@ -1263,6 +1265,8 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   ### problem with saving of rownmaes 
   highly_variable_mirnas_mofa = get_highly_variable_matrix(prefix='mirnas_', VISIT_S = VISIT_S ,min.count = MIN_COUNT_M, 
                                                         sel_coh_s = sel_coh_s, sel_subcoh_s = sel_subcoh_s, TOP_N=TOP_MN)
+
+  #dim(highly_variable_genes_mofa)
   # EITHER input to vst or put as is normalized
   miRNA<-as.data.frame(highly_variable_mirnas_mofa)
   ##### Load RNA seq: 

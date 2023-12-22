@@ -48,8 +48,8 @@ se_pr <- preprocess_se_deseq2(se, min.count = min.count) # scale and transform c
 
 
 
-#kruskal.test(se_pr$Usable_Bases_SCALE, as.factor(se_pr$Plate))
-formula_deseq
+
+###
 se_pr$Usable_Bases_SCALE<-as.numeric(se_pr$Usable_Bases_SCALE)
 
 ddsSE <- DESeqDataSet(se_pr, 
@@ -64,47 +64,69 @@ cohorts<-ddsSE$COHORT
 removedCovariates<-colData(ddsSE)[,to_remove_covars]
 retainedCovariates<-colData(ddsSE)[,to_keep_covars]
 
+
+
+
 ## PCA with 1. vsd 2. CPM 3. 
+if (file.exists(vst_cor_all_vis)){
+  
+  # load the already computed files 
 
-ddsSE$COHORT
-vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE) 
+   vsd_cor<-loadRDS(vst_cor_all_vis)
+   vsd<-loadRDS( vst_all_vis )
 
-vsd
-vsd<-vst(ddsSE)
+}else{
 
-##vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
-##-- note: fitType='parametric', but the dispersion trend was not well captured by the
-##function: y = a/x + b, and a local regression fit was automatically substituted.
-##specify fitType='local' or 'mean' to avoid this message next time.
-retainedCovariates
-removedCovariates
+    # TODO: turn into function to create the correction 
+    if (NROW(assay(ddsSE)) > 1000){
+       vsd<-vst(ddsSE)# switched tot this because it is faster 
 
-dim(t(as.matrix(assay(vsd))))
-dim(removedCovariates)
-### Asjustment works on gaussian data so insert vsd or log cplm
-adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
-                                retainedCovariates = retainedCovariates )
+    }else{
+      vsd<-varianceStabilizingTransformation(ddsSE,blind = FALSE)
+    }
+    saveRDS(vsd,  vst_all_vis )
 
-vsd_cor<-vsd
-assay(vsd_cor)<-t(adjusted_data$adjustedData)
 
-## Save the vsd corrected with all visits inside 
-vst_cor_all_vis
-saveRDS(vsd_cor,vst_cor_all_vis)
-vsd_cor<-loadRDS(vst_cor_all_vis)
-dim(vsd_cor)
-vsd_cor_filt<-vsd_cor[!(rownames(vsd_cor) %in% filtered_genes$perc0.1),]
-vsd_cor_filt
-vst_cor_all_vis_filt
-saveRDS(vsd_cor_filt,vst_cor_all_vis_filt)
+    # correction 
+    adjusted_data<-empiricalBayesLM(t(as.matrix(assay(vsd))), removedCovariates=removedCovariates, 
+                                    retainedCovariates = retainedCovariates )
+    vsd_cor<-vsd
+    assay(vsd_cor)<-t(adjusted_data$adjustedData)
+
+    ## Save the vsd corrected with all visits inside 
+  
+
+  #### if you want to skip re-running load 
+    if (!process_mirnas){
+      vsd_cor_filt<-vsd_cor[!(rownames(vsd_cor) %in% filtered_genes$perc0.1),]
+      #
+      #vsd_cor_filt<-vsd_cor_filt[rownames(vsd_cor_filt)]    
+
+      dim(vsd_cor_filt)
+      
+     
+      vsd_cor<-vsd_cor_filt
+      
+      assay_r<-gsub( '\\..*','' ,rownames(assay(vsd_cor)))
+      vsd_cor<-se_filt[assay_r %in% intersect(assay_r, remaining_genes),]
+
+
+
+    } 
+    saveRDS(vsd_cor, vst_cor_all_vis)
+
+}
+
 
 ### filter by visit
-# 1. 
+# 1.  
 # Compare corrected and uncorected only for V08
 vsd_V08<-filter_se(se = vsd,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh = sel_subcoh) 
 vsd_cor_V08<-filter_se(se = vsd_cor,VISIT = 'V08',sel_coh = sel_coh, sel_sub_coh = sel_subcoh) 
 vsd_cor_V08_rem<-vsd_cor_V08[!(rownames(vsd_cor_V08) %in% filtered_genes$perc0.1), ]
-saveRDS(vsd_cor,vst_cor_all_vis_filt)
+
+
+saveRDS(vsd_cor, vst_cor_all_vis_filt)
 
 pca_files = paste0(data_dir, '/ppmi/plots/single/pca/')
 pca_pars = paste0(cell_corr)
@@ -128,17 +150,8 @@ if (plot_corr){
       pca.data_vsd <- PCA(pca_data,
                       scale.unit = TRUE, graph = FALSE)
     
-      pc1<-get_pca_ind(   pca.data_vsd )$coord[, 1]
-      pc2<-get_pca_ind(   pca.data_vsd )$coord[, 2]
-
-      cor(pc1,vsd_p$Neutrophil.Score, method='pearson' )
+      pc_all<-get_pca_ind(   pca.data_vsd )$coord
       cor(pc1,as.numeric(vsd_p$COHORT), method='spearman' )
-
-      corr.test(pc1,vsd_p$Neutrophil.Score, method='pearson' )
-
-
-      cor(pc2,as.numeric(vsd_p$COHORT), method='spearman' )
-      cor(pc2,vsd_p$Neutrophil.Score,method='pearson' )
 
       
       fviz_eig(pca.data_vsd, addlabels = TRUE, ylim = c(0, 70))
@@ -147,25 +160,27 @@ if (plot_corr){
       covar<-'Usable_Bases_SCALE'
       covar<-'Plate'
       covar<-'Neutrophil.Score'
+      covar<-'COHORT'
+      covar<-'Neutrophil.Score'
 
       View(pca.data_vsd$loadings)
-
+      pc_neutr_cor=cor(pc_all,as.numeric(colData(vsd_p)[,covar]), method='spearman' )
+  
       pc_ind_p<-fviz_pca_ind(pca.data_vsd,col.ind = as.numeric(colData(vsd_p)[,covar]), 
                              label=covar
                               )+
-        labs(title = paste0("PCA, color: ", covar))
-      
+        labs(title = paste0("PCA, color: ", covar, '\ncor: ', paste0(round(pc_neutr_cor[1:2], digits=2 ),  collapse=', ')) )      
       
       
       pc_ind_p
       ##pc_ind_ps[[i]]=pc_ind_p
-      ggsave(paste0(pca_files, 'individuals_correct_',plot_corr, pca_pars, covar,'.jpeg'), width=6, height = 6)
+      ggsave(paste0(pca_files, 'individuals_correct_',plot_corr, pca_pars, covar,'.jpeg'), width=4, height = 4, dpi=300)
       
       ### graph of variables 
       
       
       
-      fviz_pca_var(pca.data,
+      fviz_pca_var(pca.data_vsd,
         col.var="contrib")+
         scale_color_gradient2(low="blue", mid="white", 
                               high="red", midpoint=1.5)+theme_bw()
@@ -178,6 +193,9 @@ if (plot_corr){
       
       
       
+
+
+# todo: load corrected without cell types and corrected with cell types 
 
 vsd1=vsd_V08
 vsd2=vsd_cor_V08
@@ -278,6 +296,15 @@ dev.off()
 
 
 hist(se$Neutrophil.Score)
+
+
+
+
+
+
+
+
+
 
 
 

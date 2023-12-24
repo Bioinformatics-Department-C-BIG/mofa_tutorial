@@ -40,13 +40,20 @@ dcast(mieaa_targets_de_rnas$miRNAs.precursors,  )
 
 merged_targets_el<-merged_targets_onlyde[, c('mature_mirna_id', 'symbol', 'cor')]
 
+# definitions 
+# 1. de mirs
+# 2. de genes 
+de_mirs<-mirnas_V08_cl1
+de_mirs<-mirnas_V08_cl1
 mirna_targets_el<-merged_targets_el
-
+de_rnas_all<-rnas_V08_cl1$GENE_SYMBOL
 
 
 ############
 
 g<-graph_from_edgelist(as.matrix(mirna_targets_el[,c(1,2)]), directed = TRUE)
+g<-graph_from_edgelist(as.matrix(mirna_targets), directed = TRUE)
+
 #E(g)$weight <- merged_targets_onlyde[,'cor']
 g$layout <- layout_with_kk
 

@@ -7,7 +7,7 @@ rnas_V08$mofa_sign
 #g<-OPI_g_de_mirs_de_genes_targets
 
 get_logFC_by_node<-function(g, de_rnas, de_mirnas){
-    # get the colors for up and down for a graph 
+    # get the colors for up and down for a graph that is already built 
     # @param
     # todo: add also an attribute size for the amount of DE? 
 
@@ -80,30 +80,17 @@ visualize_net<-function(visnet, net_name='net'){
     visSave(vis_net_vis, file = paste0(outdir, '/networks/',  net_name, '.html'))
 
 
-
-    
-
-
-
-    
-   # vis_net_vis %>% visExport(type = "jpeg", name = "export-network", 
-   #float = "left", label = "Save network", background = "white", style= "") 
-
-   # visExport(  vis_net_vis,  file = "network.png", background = "black")
-
   return(vis_net_vis)
 }
 
-
-
-
+library('OmnipathR')
 create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor ){
   #'
   #' @param rnas_sig_factor significant de rnas
   #' @param mirnas_sig_factor
   #' take de rnas sig
   #' take de mirnas sign
-  #' Load their interactions 
+  #' Load their interactions c
 
 
     ### Start loading dbs interactions, mirnas, mirtarges
@@ -176,5 +163,31 @@ create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor ){
 
       return(g_extended)
 
+}
+
+
+
+
+create_regulatory_net_backbone_mirtar<-function(rnas_sig_factor, mirnas_sig_factor){
+
+
+    top_miRNAs<-mirnas_sig_factor$GENE_SYMBOL
+
+  # Plug miRNA's into multiMiR and getting validated targets
+  multimir_results <- get_multimir(org     = 'human',
+                                 mirna   = top_miRNAs,
+                                 table   = 'validated',
+                                 summary = TRUE)
+
+  multimir_results_filt_targets<-multimir_results@summary[multimir_results@summary$target_symbol %in% 
+                rnas_sig_factor_all_clusts$GENE_SYMBOL,]
+
+  mirna_targets<-multimir_results_filt_targets[, c('mature_mirna_id','target_symbol' )]
+
+
+  mirna_targets
+  g<-graph_from_edgelist(as.matrix(mirna_targets), directed = TRUE)
+
+return(g)
 }
 

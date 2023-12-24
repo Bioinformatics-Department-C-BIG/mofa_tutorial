@@ -2,20 +2,23 @@
 ### Load the rnas and mirnas
 
 # 1. 
-
 #BiocManager::install('OmnipathR')
+#BiocManager::install('OmnipathR')
+
 library('OmnipathR')
 
 library(OmnipathR)
 library(tidyr)
 library(dnet)
-library(gprofiler2)
+
+#library(gprofiler2)
 # interactions - proteins
 
 mofa_cluster_id<-2
 VISIT_COMP<-'V08'
 as.numeric(cell_corr)
 cell_corr=TRUE
+outdir
 load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, cell_corr_state = FALSE, prefix='rnas_' ){
      #'
      #' @param VISIT_COMP
@@ -82,7 +85,7 @@ mirnas_sig_V08_cl3<-mirnas_V08_cl3%>% dplyr::filter(mofa_sign == 'Significant')
 rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
-sel_factor=8; top_fr=0.1
+sel_factor=4; top_fr=0.03
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 
@@ -152,9 +155,12 @@ g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_factor_all_clu
 
 #g_extended<-create_regulatory_net_backbone(rnas_sig_factor, mirnas_sig_factor)
 
+### 
+g_extended_both_clusters<-create_regulatory_net_backbone_mirtar(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts)
+
 
 ### Now plot! 
-g_extended_both_clusters
+
 OPI_g_union<-g_extended_both_clusters
 # TODO: give the layout 
 
@@ -175,38 +181,25 @@ g_fc_V04<-get_logFC_by_node(OPI_g_union, de_rnas=rnas_V04,  de_mirnas=mirnas_V04
 
 
 
-## TODO:: save the layout 
-
-V(g_fc)$name[is.na(V(g_fc)$color)]
-V(g_fc)$group<-NA
 
 rnas_sig_visit
 
 ## igraph plotting 
 
 ### Plot with specified coords 
-#Get the coordinates of the Nodes
+#Get the coordinates of the Nodes of the backbone that includes all clusters 
 Coords <- layout_with_fr(g_fc_V08)# %>% 
   #as_tibble %>%
   #  bind_cols(data_frame(names = names(V(g_fc))))
 
-
-Coords
-
-sel_factor
-
-g_fc_V06
-V(g_fc_V06)$FC
-g_fc_plot<-g_fc_V08_cl3
-VISIT_COMP
-
-sel_factor
-V(g_fc)$group<-NA
+## Plot cluster 3 as specified by backbone coords 
+g_fc_plot<-g_fc_V08_cl2;mofa_cluster_id=2
 
 ## ADD border if significant 
 # create a vertor of border colours conditional on node type
 bd <- ifelse(V(g_fc_plot)$significant, "#2fc729", NA) 
 bd
+#g_fc_plot$layout<-Coords
 
 V(g_fc_plot)$size<-ifelse(!is.na(V(g_fc_plot)$FC), log2(abs(V(g_fc_plot)$FC)+1)*17, 0.1*20)
 plot(g_fc_plot, 
@@ -217,14 +210,39 @@ vertex.frame.width=3,
   layout = Coords)
 title(paste('Visit: ', VISIT_COMP, ', Cluster: ', mofa_cluster_id, ', Factor: ', sel_factor, top_fr  ),cex.main=3,col.main="green")
 
+
+
+
+### 
+set.seed(123) 
+V(g_fc_plot)$size<-V(g_fc_plot)$size*5
+V(g_fc_plot)$label.cex = seq(1,1, length.out = length(V(g_fc_plot)))
+
+visIgraph(g_fc_plot)
+
+
+
+ 
+    dir.create(paste0(outdir, '/networks/'))
+    net_name=paste0('mirs_genes_', mofa_cluster_id, '_f',sel_factor,top_fr )
+    net_name
+    visSave(visIgraph(g_fc_plot), file = paste0(outdir, '/networks/',  net_name, '.html'))
+
+saveWidget(visIgraph(g_fc_plot), file = net_name)
+
+
+
+
+
 write.csv(V(g_fc_plot)$name,paste0(outdir, '/genes_network.csv'))
 
 #V(g_fc)$shape<- ifelse(grepl("miR|hsa-let",igraph::V(g)$name), "vrectangle", "circle")
-visnet <- toVisNetworkData(g_fc)
+visnet <- toVisNetworkData(g_fc_plot)
 visnet$nodes$abs_FC<- abs(visnet$nodes$FC)
  
 
- #visualize_net(visnet)
+ visualize_net(visnet)
+
 
 
 

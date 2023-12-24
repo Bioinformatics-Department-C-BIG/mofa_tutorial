@@ -1,7 +1,7 @@
 
 
-script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
-script_dir
+#script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
+#script_dir
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
@@ -16,7 +16,7 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 
 
 library(MOFA2)
-
+library(tidyverse)
 
 library(data.table)
 library(ggplot2)
@@ -250,6 +250,38 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

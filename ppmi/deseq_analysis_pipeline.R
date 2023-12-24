@@ -56,7 +56,7 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V08'; VISIT = 'V08'
+VISIT_COMP = 'V06'; VISIT = 'V06'
 #VISIT=c( 'V06',  'V08') ; VISIT_COMP=VISIT
 
 process_mirnas=FALSE ;

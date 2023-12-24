@@ -223,8 +223,8 @@ covariates=c('SITE', 'Plate', 'NHY', 'NP2PTOT_LOG', 'AGE_SCALED', 'SEX',
              'Usable.Bases....', 'updrs2_score',  'scopa')
 
 correlate_factors_with_covariates_categ(MOFAobjectPD, covariates=covariates)
-
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3TOT_LOG' )]>(-log10(0.05)))
+
 
 ### DIFF ####
 all_diff<-colnames(sm)[grep('diff', colnames(sm))]
@@ -1120,8 +1120,6 @@ views=names(MOFAobject@data)
 #### 3. Save heatmaps and top weighted feaqtures ####
 
 
-vps
-fps
 # rename because value is too long in the legend
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
@@ -1411,14 +1409,14 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 ## Prediction of clinical subgroups 
 ## Predict the EORTC.risk
 
-#install.packages('caret')
-#install.packages('tibble')
+
 library('tibble')
 library('caret')
-packages <- c('dplyr', 'ggplot2', 'caret', 'party')
+# packages <- c('dplyr', 'ggplot2', 'caret', 'party')
+packages <- c('dplyr', 'ggplot2', 'caret')
+
 invisible(lapply(packages, library, character.only = TRUE))
 
-suppressPackageStartupMessages(library(randomForest))
 
 # Prepare data
 df <- as.data.frame(get_factors(MOFAobject, factors=1:15)[[1]])

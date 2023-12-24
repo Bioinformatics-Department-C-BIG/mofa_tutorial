@@ -31,9 +31,6 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 
-diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
-diff_vars<-diff_vars[!grepl('clust',diff_vars)]
-diff_vars
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
@@ -54,8 +51,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
-                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 
-                         diff_vars)
+                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes'
+                         )
 #'DYSKIRAT')
 
 
@@ -641,7 +638,7 @@ get_ordered_gene_list<-function(deseq2ResDF,  order_by_metric, padj_T=1, log2fol
 
 
 #### enrichment packages 
-library('GOfuncR')
+#library('GOfuncR')
 require(DOSE)
 library(clusterProfiler)
 library(ggplot2)

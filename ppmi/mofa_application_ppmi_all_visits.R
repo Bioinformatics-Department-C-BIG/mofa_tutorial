@@ -40,10 +40,11 @@ VISIT=c('BL');
 
 
 
-VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL','V08');
 VISIT=c('V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 
+cell_corr=TRUE
 
 
 run_vsn=TRUE
@@ -52,6 +53,7 @@ use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
+
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
@@ -94,30 +96,12 @@ if (run_mofa_complete){
 
 
 
-run_mofa_get_cors<-function(N_FACTORS, force=FALSE){
+run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
   ### run mofa and write stats of corelation to file!! 
   #'
   #'
 
-  ## histograms to check normality pattern 
-  #create_hist(data_full['RNA'], 'RNA')
-  #create_hist(data_full['miRNA'], 'miRNA')
-  
-  #combined_bl=combined_bl_log
-  ## get list of three mats 
-  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
-  # create multi experiment 
-  mofa_multi<-create_multi_experiment(data_full, combined_bl)
-  mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
-  
-  #mofa_multi_rna_mir<-subsetByAssay(mofa_multi, c('RNA', 'miRNA'))
- # mofa_multi_rna_mir_complete<-mofa_multi_rna_mir[,complete.cases(mofa_multi_rna_mir)]
-  
-  
-  
-  mofa_multi_to_use<- if(run_mofa_complete){mofa_multi_to_use=mofa_multi_complete}else{
-    mofa_multi_to_use=mofa_multi
-  }
+ 
   
   ##### Split and run many times ###
   ns<-dim(assays(mofa_multi_to_use)[['RNA']])[2]
@@ -230,7 +214,30 @@ for (N_FACTORS in c(15)){
   
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
-  MOFAobject=run_mofa_get_cors(N_FACTORS, force=FALSE)
+
+
+
+
+ ## get list of three matrices 
+  # TODO: load all time points then filter? 
+
+  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
+  # create multi-assay experiment object 
+  mofa_multi<-create_multi_experiment(data_full, combined_bl)
+
+  mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+
+  # select if complete cases are used or samples with missing omics are included.
+  # We need the multi assay experiment for other analysis too eg. time omics 
+  mofa_multi_to_use<- if(run_mofa_complete){mofa_multi_to_use=mofa_multi_complete}else{
+    mofa_multi_to_use=mofa_multi
+  }
+
+  assays(mofa_multi_to_use)[[3]]
+
+
+
+  #MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
   
   
   
@@ -250,6 +257,18 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

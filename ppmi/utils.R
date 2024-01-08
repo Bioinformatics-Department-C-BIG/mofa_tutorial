@@ -651,7 +651,7 @@ library('enrichplot')
 
 
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25){
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15){
   #'
   #' Get the ordered list 
   #' @param deseq2ResDF
@@ -696,8 +696,13 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
   
   gse = dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
  
+  # supply a cut gene list to avoid to many 
+  
+  gene_list_cut<-c(head(gene_list, 20), tail(gene_list, 20))
 
-  enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, run_ORA=FALSE)
+
+  enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
+      run_ORA=FALSE, geneList = gene_list)
   
   return(gse)
 }
@@ -706,7 +711,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
 
 #results_file_ora = paste0(results_file_cluster,'_ora' )
 
-run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL'){
+run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25){
   #'
   #' Run enrichment and write the results 
   #' @param gene_list
@@ -743,7 +748,7 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL'){
   gse_full=gse_protein_full_enrich
   pvalueCutoff_sig = 0.1
   gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1)
-  write.csv(as.data.frame(gse_mofa@result), paste0(results_file_ora, '.csv'))
+  write.csv(as.data.frame(gse_full@result), paste0(results_file_ora, '.csv'))
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
   gse@result$Description
@@ -756,10 +761,9 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL'){
     
     
        print(paste(factor,'sig'))
-         which(gse_mofa@result$p.adjust<0.05)
-        gse_mofa
+         which(gse_full@result$p.adjust<0.05)
   
-        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP)
+        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP, run_ORA=TRUE)
   }
   return(gse_full)
 }
@@ -799,7 +803,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
   )
   
   # N_EMAP 
-  N_EMAP=80
+  #N_EMAP=80
   gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
   
   emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
@@ -808,9 +812,18 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
   ggsave(paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' ), plot=emap_comp,
          dpi=300, width=10, height=10, units='in')
   
+
+
+## first convert gene ID to Symbol
+gse_compare.orig <- setReadable(gse_compare, 'org.Hs.eg.db', 'ENSEMBL')
+
+## use new way of specifying visualization options
+cex.params = list(category_label = 0.6, gene_label = 0.4)
   
-  cnet_comp<-cnetplot(gse_compare, showCategory = 10)
-  ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
+cnet_comp<-cnetplot(gse_compare.orig, showCategory = 10, 
+         cex.params = cex.params)
+
+ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
          dpi=200)
   
   
@@ -823,11 +836,12 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
 #title_p
 
 #gse=gse_mofa_sig
+#gse=gse1
 #N_EMAP=25; N_DOT=15; N_TREE=16; N_NET=30
 #results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
 library('clusterProfiler')
 #options(warn=0, error=NULL)
-run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=30, showCategory_list=FALSE,
+run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=20, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL, run_ORA=FALSE){
 
   #gse=gse_mofa_rna; 
@@ -870,13 +884,15 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
          plot=dp, width=width, height=N_DOT*0.5, 
          dpi = 300)
   
-  if (!(process_mirnas) && !(run_ORA)){
-
-    dp_sign<-  clusterProfiler::dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
-    ggsave(paste0(results_file, '_dsign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
+  if (!(process_mirnas) & !(run_ORA)){
+    
+      print('signed dotplot')
+      #dp_sign<-  clusterProfiler::dotplot(gse, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
+      #ggsave(paste0(results_file, '_dsign', N_DOT,  '.jpeg'), width=8, height=N*0.7)
+    
+   
     
   }
-
 
   #### EMAP PLOT 
   options(ggrepel.max.overlaps = Inf)
@@ -899,7 +915,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   N_RIDGE=25
   # only if all 3 are false run it 
-  if ( !(process_mirnas) && !(process_mofa) && !(run_ORA)){
+  if ( !(process_mirnas) & !(process_mofa) & !(run_ORA)){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     if (dim(r_p$data)[1]>0){
@@ -924,8 +940,8 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     
   }
   if (!is.null(geneList)){
-    p1_net <- cnetplot(gse_x, foldChange =  geneList)
-    show(p1_net)
+#  geneList=gene_list1
+  
     node_label<-"gene"
     node_label<-"category"
     node_label<-"all"
@@ -933,7 +949,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     
     p2_net<- cnetplot(gse_x,
                       node_label=node_label,
-                      cex_label_category = 1.2,
+                      cex_label_category = 0.9,
                       showCategory=N_NET, 
                       foldChange =  geneList)
     
@@ -942,7 +958,13 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
     
-    ggsave(paste0(results_file, '_gc_', node_label, '_',write_n, '.jpeg'), width=8, height=8)
+    ggsave(paste0(results_file, '_gc_', node_label, '_',write_n, '.jpeg'), width=20, height=20)
+  }else{
+    p1_net <- cnetplot(gse_x)
+    show(p1_net)
+    ggsave(paste0(results_file, '_gc_', '_',write_n, '.jpeg'), width=12, height=12)
+
+    
   }
   
   
@@ -1220,36 +1242,19 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   #' 
   
   
-  #highly_variable_genes_mofa<-selectMostVariable(vsd_mat, most_var)
-  #highly_variable_sign_genes_mofa<-highly_variable_genes_mofa[rownames(highly_variable_genes_mofa) %in%  signif_genes,]
+  proteins_outfile = paste0(output_files, p_params_out , '_vsn.csv')
+  proteins_outfile_csf = paste0(output_files, p_params_csf , '_vsn.csv')
+  proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_vsn.csv')
   
   
-  highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-  highly_variable_proteins_outfile_csf = paste0(output_files, p_params_csf , '_highly_variable_proteins_mofa.csv')
-  highly_variable_proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_highly_variable_proteins_mofa.csv')
-  
-  
-  
-  if (use_signif){
-    #highly_variable_genes_outfile<-paste0(output_files, param_str_g,'_highly_variable_genes_mofa_signif.csv')
-    #highly_variable_mirnas_outfile<-paste0(output_files, param_str_m,'_highly_variable_genes_mofa_signif.csv')
-   
-     # TODO: shall I input significant here? 
-    highly_variable_proteins_outfile = paste0(output_files, p_params , '_highly_variable_proteins_mofa.csv')
-    highly_variable_proteins_outfile_csf = paste0(output_files, p_params_csf , '_highly_variable_proteins_mofa.csv')
-    highly_variable_proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_highly_variable_proteins_mofa.csv')
-    
-    
-  }
-  
-  
-  in_file<-highly_variable_proteins_outfile
-  in_file_csf<-highly_variable_proteins_outfile_csf
-  in_file_plasma<-highly_variable_proteins_outfile_plasma
-  
-  highly_variable_proteins_mofa<-as.matrix(fread(in_file,header=TRUE), rownames=1)
-  highly_variable_proteins_mofa_plasma<-as.matrix(fread(in_file_plasma,header=TRUE), rownames=1)
-  highly_variable_proteins_mofa_csf<-as.matrix(fread(in_file_csf,header=TRUE), rownames=1)
+  proteins_vsn_mat<-as.matrix(read.csv2(proteins_outfile, row.names=1, header=TRUE, check.names = FALSE))
+  proteins_csf_vsn_mat<-as.matrix(read.csv2(proteins_outfile_csf, row.names=1, header=TRUE, check.names = FALSE))
+  proteins_plasma_vsn_mat<-as.matrix(read.csv2(proteins_outfile_plasma, row.names=1, header=TRUE, check.names = FALSE))
+
+
+  highly_variable_proteins_mofa<-  selectMostVariable(proteins_vsn_mat, TOP_PN)
+  highly_variable_proteins_mofa_plasma<-selectMostVariable(proteins_plasma_vsn_mat, TOP_PN)
+  highly_variable_proteins_mofa_csf<-selectMostVariable(proteins_csf_vsn_mat, TOP_PN)
   
   
   ### Start loading mofa data
@@ -1277,7 +1282,6 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   data_full<-list(miRNA=as.matrix(miRNA), 
                   RNA=as.matrix(RNA),
                   proteomics=as.matrix(proteomics), 
-                  
                   proteomics_plasma=as.matrix(proteomics_plasma), 
                   proteomics_csf=as.matrix(proteomics_csf))
   

@@ -380,8 +380,11 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   
   jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
          )
+
+  # check which have zero corelation? 
   P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
-                                        covariates =selected_covars , plot = plot,
+                                        covariates =selected_covars , 
+                                        plot = plot,
                                         labels_col=labels_col, 
                                         factors = factors, 
                                         cluster_cols=TRUE)

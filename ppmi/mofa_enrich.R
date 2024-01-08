@@ -2,8 +2,10 @@
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/utils.R'))
 ## run mofa / or just load model 
-source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
+#cell_corr=TRUE
 
+ #source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
+#source(paste0(script_dir,'ppmi/mofa_analysis_time_diff.R'))
 
 library(R.filesets)
 library(stats)
@@ -106,10 +108,10 @@ just_load=TRUE
 just_load=FALSE
 
 sel_factors_to_enrich
-if (!isRStudio){
+if (TRUE){
   
       for (factor in sel_factors_to_enrich){
-          for (view in c('proteomics_plasma')){
+          for (view in c('proteomics_csf', 'proteomics_plasma')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -145,8 +147,7 @@ if (!isRStudio){
                     list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
                     tissue = 'proteins_csf'
                     
-                }
-                  else if  (view=='proteomics_plasma' & just_load){
+                }else if  (view=='proteomics_plasma' & just_load){
                     list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_plasma'))
                     tissue = 'proteins_plasma'
                     
@@ -175,7 +176,7 @@ if (!isRStudio){
                           if (run_ORA){
                             names(gene_list_ord) = gsub('_proteomics.*', '',names(gene_list_ord))
                             results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',factor,'_')
-                            dir.create(paste0(outdir, '/enrichment/', tissue,'/ora/'))
+                            dir.create(paste0(outdir, '/enrichment/', tissue,'/ora/'), recursive = TRUE)
                             
                             
                             gse_protein_full_enrich =   run_ora_gene_list(gene_list_ord,results_file=results_file_mofa)
@@ -183,8 +184,7 @@ if (!isRStudio){
                             list_proteins_enrich[[factor]]<-gse_protein_full_enrich
                             saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
                           
-                          
-                           
+                                                    
                            
                           
                           }else{
@@ -198,7 +198,7 @@ if (!isRStudio){
                                                                   OrgDb = 'org.Hs.eg.db', 
                                                                     pvalueCutoff  = pvalueCutoff)
                           
-                          
+                        
                            list_proteins[[factor]]<-gse_protein_full
                           saveRDS(list_proteins,fname)
                           }

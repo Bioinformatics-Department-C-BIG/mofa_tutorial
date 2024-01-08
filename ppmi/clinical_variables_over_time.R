@@ -79,7 +79,7 @@ to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT
     lv='V13_V14';   
 
   
-  plot_clinical_trajectory<-function(y, clust_name, df_plot_2k=df_plot, lv='V12', fname=fname){
+  plot_clinical_trajectory<-function(y, clust_name, df_plot_2k=df_plot, lv='V12', fname=fname, add_individual_lines=FALSE){
     #'
     #' Plot the clinical value trajectory over time, until the last visit defined for each subgroup
     #' takes the clinival score, the last visit, and the cluster ids 
@@ -109,6 +109,8 @@ to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT
         dplyr::summarise(count = n_distinct(PATNO, grouping)) 
       nums<-paste0('n=', paste0(nums_plyr$count, collapse = ', '))
     
+
+
       p<-ggplot(data = df_plot_2k, aes_string(x = 'month', y = y,
                 fill='grouping',group='grouping',colour='grouping')) + 
         stat_summary(geom = "errorbar", fun.data = median_IQR, 
@@ -154,9 +156,12 @@ to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT
     
     }
     
-    
-to_plot=c('updrs2_score')
-clust_metric='NP2PTOT_LOG'
+    add_individual_lines=TRUE
+to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca')
+clust_metric='moca'
+clust_metric='updrs2_score_LOG'
+
+all_fs_diff$updrs2_score_LOG
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
   for (y in to_plot){
 
@@ -165,7 +170,7 @@ clust_metric='NP2PTOT_LOG'
     cluster_params<-paste0(clust_name ,'/', k_centers,'/',rescale_option)
     cluster_params
     fname=paste0(outdir, cluster_params, '/trajectories/clinical/trajectory_','_', y,'_','_lv_' , lv_to_plot)
-    plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V12', fname=fname)
+    plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V12', fname=fname, add_individual_lines=add_individual_lines)
   }
 
   
@@ -179,227 +184,7 @@ clust_metric='NP2PTOT_LOG'
 
 
 ## CLUSTER TRAJECTORIES ####
-
+y='NP2PTOT'
 get_clinical_clusters(y)
-
-
-
-combined_bl_log_sel
-scale_mat=FALSE
-y='NP3TOT'
-y='NP3TOT'
-
-y='SCAU_TOT'
-y='stai_state'
-y='stai_trait'
-y='NP3TOT';
-y='NP2PTOT'; nbCluster=3 #(last cluster is too small)
-y='RBD_TOT'; nbCluster=3 #(last cluster is too small)
-
-
-combined_bl_log_sel_pd$RBD_TOT==0
-
-combined_bl_log_sel_pd$stai_state
-    ### CLINICAcombined_bl_log_sel_pdL trajectories 
-combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
-combined_bl_log_sel_pd<-combined_bl_log_sel[combined_bl_log_sel$INEXPAGE=='INEXPD',]
-
-combined_bl_log_sel_pd<-combined_bl_log_sel_pd[!is.na(combined_bl_log_sel_pd$EVENT_ID),]
-combined_bl_log_sel_pd[, y]=as.numeric(combined_bl_log_sel_pd[, y])
-combined_bl_log_sel_pd<-combined_bl_log_sel_pd[!is.na(combined_bl_log_sel_pd$EVENT_ID),]
-
-
-    df_plot_2k=combined_bl_log_sel_pd
-    
-    #y='NP2PTOT'
-    
-    x='EVENT_ID'
-    df_plot_2k$PATNO=as.factor(df_plot_2k$PATNO)
-    unique(combined_bl_log_sel_pd$PDMEDYN_V16)
-    
-    combined_bl_log_sel_pd_to_clust<-combined_bl_log_sel_pd[!(combined_bl_log_sel_pd$PDMEDYN_V14==0) ,]
-    #combined_bl_log_sel_pd_to_clust<-combined_bl_log_sel_pd[combined_bl_log_sel_pd$PD_MED_USE_V12==1,]
-    
-    unique(combined_bl_log_sel_pd_to_clust$PATNO)
-    cl_clusters_kml<-get_clinical_clusters_kml(combined_bl_log_sel_pd_to_clust,y, scale_mat = scale_mat, nbCluster=nbCluster )   
-    cl_clusters<-cl_clusters_kml
-    
-    
-    df_plot_2k$cluster<-as.factor(cl_clusters[match(df_plot_2k$PATNO,names(cl_clusters) )])
-    df_plot_2k<-df_plot_2k[!is.na(df_plot_2k$cluster),]
-    
-    
-    
-    df_plot_2k_non_na<-df_plot_2k[!is.na(df_plot_2k[,y]), ]
-    
-    if (scale_mat){
-      df_plot_2k_non_na[, y]<-scale(df_plot_2k_non_na[,y])
-      
-    }
-    p<-ggplot(data = df_plot_2k_non_na, aes_string(x = x, y = y, colour='cluster', group='cluster'))
-    p<-p+ 
-      geom_line(aes_string(x = x, y = y ,group='PATNO', colour='cluster' ),size=0.2, alpha=0.3)+
-      #geom_point(aes_string(x = x, y = y, colour='PDSTATE' ),size=0.6, alpha=0.6)+ 
-      geom_point()+ 
-      geom_smooth()
-      #facet_wrap(~cluster)
-    
-    p
-    
-    
-    ggsave(paste0(outdir, '/trajectories/clinical/clusters_',y, 'scale_',scale_mat, '.jpeg'), width=5, height=3)
-
-
-    
-
-
-
-
-
-
-### for categorical 
-#table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'],merged_melt_cl$grouping )
-#table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3SPCH'], )
-ggplot(data = combined_bl_log_common, aes( x=factor(grouping), 
-                                           fill = factor(PDSTATE) )) + 
-  geom_bar()+
-  facet_wrap(. ~ VISIT, scales='free_y') 
-
-
-ggplot(data = combined_bl_log_common, aes( x=factor(grouping), 
-                                           fill = factor(PDSTATE) )) + 
-  geom_bar()+
-  facet_wrap(. ~ EVENT_ID, scales='free_y') 
-
-#theme_bw() 
-to_sel
-
-### for continous 
-is.numeric(merged_melt_cl$LAST_UPDATE_M1)
-
-
-to_sel
-
-
-
-merged_melt_cl3<-merged_melt_cl
-for (y in to_plot){
-  ggplot(data = df_plot, aes_string(x = 'VISIT', y = y, 
-                                    fill='grouping')) + 
-    geom_boxplot()+
-    scale_color_viridis_d(option='turbo')+
-    #facet_wrap(. ~ symbol, scales='free_y', 
-    #           nrow = 1) +
-    
-    #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-    theme_bw()+ 
-    # geom_signif(comparisons = list(c('BL', 'V08')), 
-    #            map_signif_level=TRUE, 
-    #           tip_length = 0, vjust=0)+
-    
-    labs(y=y)+
-    facet_wrap(~PDSTATE)+
-    # legend(legend=c('Low', 'High'))+
-    theme(strip.text = element_text(
-      size = 10, color = "dark green"), 
-      axis.title.y =element_text(
-        size = 13, color = "dark green"), 
-      axis.text.x = element_text(
-        size = 9 ))
-  
-  
-  
-  warnings()
-  ggsave(paste0(outdir, '/trajectories/clinical/box_', sel_factors[fn_sel],'_', filt_top, y,'_', PDSTATE_SEL,  '.jpeg'), 
-         width=5, height=3)
-}
-
-
-
-
-
-
-
-
-
-
-
-merged_melt_cl3=merged_melt_cl
-merged_melt_cl2=merged_melt_cl
-
-
-
-for (cov_to_plot in to_sel){
-  
-  if (is.numeric(merged_melt_cl3[, cov_to_plot])){
-    
-    
-    ggplot(data = merged_melt_cl3, aes_string(x = 'grouping', y =cov_to_plot  )) + 
-      geom_boxplot(aes(fill=VISIT ))+
-      #facet_wrap(. ~ symbol, scales='free_y') +
-      theme_bw() 
-    
-    ggsave(paste0(outdir, '/trajectories/', 'cl_var', cov_to_plot, sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
-    merged_melt_cl2[,cov_to_plot]<-factor(merged_melt_cl2[,cov_to_plot])
-    
-    ggplot(data = merged_melt_cl2, aes_string( x='grouping', 
-                                               fill = cov_to_plot) ) + 
-      geom_bar()+
-      facet_wrap(. ~ VISIT, scales='free_y') 
-    
-    ggsave(paste0(outdir, '/trajectories/', 'cl_var_discrete', cov_to_plot, sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
-    
-  }
-}
-
-sm=samples_metadata(MOFAobject)
-
-
-ggsave(paste0(outdir, '/trajectories/', sel_factors[fn_sel],to_sel[2]  , '.jpeg'))
-
-
-
-
-
-
-
-
-table( merged_melt_cl[, 'VISIT'], merged_melt_cl[, 'NP3TOT'],merged_melt_cl$grouping )
-
-
-ggplot(data = merged_melt_cl, aes_string(x = 'VISIT', y ='NP3SPCH'  )) + 
-  geom_point(aes(col=factor(VISIT)), size = 2) +
-  geom_line(aes(group=PATNO, col=VISIT), jitter()) +
-  geom_jitter(aes(colour=grouping))+
-  #  geom_boxplot(aes(fill=grouping))+
-  #geom_line(aes(group=patno), palette='jco') +
-  #facet_wrap(. ~ symbol) +
-  
-  #ggtitle(paste0('Factor ',sel_factors[fn_sel]))+
-  theme_bw() 
-
-
-
-#  stat_compare_means(comparisons = list(c("BL", "V08")), 
-#                    label = "p.format", method = "wilcox.test", tip.length = 0)
-
-
-
-
-
-
-### compare and group
-library(ggpubr)
-library(rstatix)
-
-
-
-
-
-
-
-
-
-
 
 

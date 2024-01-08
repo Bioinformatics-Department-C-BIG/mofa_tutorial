@@ -1,5 +1,5 @@
 suppressPackageStartupMessages(library(randomForest))
-packages <- c('dplyr', 'ggplot2', 'caret', 'party')
+packages <- c('dplyr', 'ggplot2', 'caret')
 invisible(lapply(packages, library, character.only = TRUE))
 
 suppressPackageStartupMessages(library(randomForest))

@@ -166,7 +166,7 @@ create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor ){
 }
 
 
-
+library(multiMiR)
 
 create_regulatory_net_backbone_mirtar<-function(rnas_sig_factor, mirnas_sig_factor){
 
@@ -178,6 +178,8 @@ create_regulatory_net_backbone_mirtar<-function(rnas_sig_factor, mirnas_sig_fact
                                  mirna   = top_miRNAs,
                                  table   = 'validated',
                                  summary = TRUE)
+
+  head(multimir_results@data, 10)
 
   multimir_results_filt_targets<-multimir_results@summary[multimir_results@summary$target_symbol %in% 
                 rnas_sig_factor_all_clusts$GENE_SYMBOL,]

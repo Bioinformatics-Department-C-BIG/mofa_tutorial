@@ -3,6 +3,7 @@
 
 # WARNING DO NOT CHANGE THIS, MOVE TO A FUNCTION!! ## 
 ### FIRST LOAD required files  ####
+source(paste0(script_dir, '/ppmi/utils.R'))
 
 process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
@@ -30,7 +31,7 @@ MOFAobject_clusts=MOFAobjectPD
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP = 'V08'
-process_mirnas=TRUE 
+process_mirnas=FALSE 
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -264,7 +265,7 @@ for (cluster_id in c(1,2,3)){
   gene_lists[[cluster_id]]<-gene_list1
 
   results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id)
-  gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 )
+  gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 , N_NET=10)
 
   # TODO: try also  the other tool 
 
@@ -284,7 +285,7 @@ gse_compare<-compareCluster(geneClusters = list(G1=gene_lists[[clust_pair[1]]],G
 
 ### RUN SCRIPT compare
 
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 40)
+plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60)
 
 
 

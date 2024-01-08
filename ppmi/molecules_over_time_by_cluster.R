@@ -27,7 +27,7 @@ process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 #se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_rnas=se_filt_corrected; # load the data after batch correction 
 # TODO: Correct also for neutrophils to see the trajectories?
-vsd_cor_l=loadRDS(vst_cor_all_vis_filt)
+vsd_cor_l=loadRDS(vst_cor_all_vis)
 vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
 
 se_rnas<-vsd_cor_filt

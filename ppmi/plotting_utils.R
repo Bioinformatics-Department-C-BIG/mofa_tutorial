@@ -541,14 +541,14 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
                           paste_nhy), 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
-    theme(text =element_text(size=20), axis.title.y=element_blank())+
+    theme(text =element_text(size=15), axis.title.y=element_blank())+
 
     theme(strip.text = element_text(face = "bold"))
   #plot.title = element_text(size = 30, color = "green")
   p
 
   print(bn)
-  ggsave(bn, dpi=300, width=width, height = height, units='in')
+  ggsave(bn, dpi=200, width=width, height = height, units='in')
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   

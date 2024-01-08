@@ -15,6 +15,8 @@ k_centers_m=3
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 all_fs_diff$NP2PTOT_LOG
 rescale_option=TRUE
+diff_var='NP2PTOT_LOG'
+
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
   #' @param
@@ -31,10 +33,19 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
         clust_ps<-clusters_x$cluster
         MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
         MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
+        # TODO: save labels
 
+        #write.csv()
         return(clust_ps)
+
 }}
 )
+
+all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
+
+all_clusts_mofa_true_t<-do.call(cbind,all_clusts_mofa_true)
+all_clusts_file<-paste0(outdir,'/clustering/all_clusts_mofa.csv')
+write.csv2(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE )
 
 # Attach clusters 
 ### Add all clusterings to mofa object 
@@ -44,6 +55,8 @@ for (diff_var in names(all_clusts_mofa)){
     clusters_ids<-all_clusts_mofa[[diff_var]]
     MOFAobject@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO,names(clusters_ids ) )]
     MOFAobject@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
+    
+
 }
 MOFAobject@samples_metadata$NP2PTOT_LOG_clust
 
@@ -63,13 +76,19 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       'AGE_SCALED' )
                       
 
+
+other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
+other_metrics[rowSums(other_metrics)>0,]
 diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
-         'Neutrophils....', 'Lymphocytes....' )
+         'Neutrophils....', 'Lymphocytes....' , 'NP2PTOT_BL',
+         'NP2PTOT_V10', 'hvlt_immediaterecall', 'updrs2_score_diff_V12_perc', 
+         'updrs3_score_LOG_V12', 'hvlt_immediaterecall_V12', 'VLTFRUIT_V10'
+         )
+
                      #'Usable_Bases_SCALE' #, 'AGE' 
 all_fs_diff[,'NP2PTOT_LOG']
 
 met<-samples_metadata(MOFAobject)
-met$NE
 y_clust="NP2PTOT_LOG"
 
 
@@ -94,7 +113,8 @@ sapply(diff_variables, function(y_clust){
     bn_all<-paste0(cluster_params_dir, '/all_vars' ,  '.png')
     bn_all
 
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,diff_variables_to_p, width=15, bn=bn_all)
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
+    diff_variables_to_p, width=10+length(diff_variables_to_p), bn=bn_all)
     }
   })
 
@@ -136,12 +156,14 @@ ggsave(outfile_clusters, width = 4, height = 4 )
 
 ### Means by group 
 library(dplyr)
+sm$NP2PTOT_LOG_V10
 diff_variables_to_p
 diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
-                      'AGE_SCALED', 'Neutrophil.Lymphocyte' )
+                      'AGE_SCALED', 'Neutrophil.Lymphocyte', 
+                       'nfl_serum')
                       # nfl serum is the other way round why?
                       # Also check if the neutrophil: lymphocyte is higher in more severe patients 
                       # is cluster 3 with higher neutrophils more severe in the longterm or less?  
@@ -151,13 +173,17 @@ outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD))
 clust_name
 col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
-
+colnames(col_data)
 MOFAobjectPD@samples_metadata[, clust_name]
 col_data$rem
-col_data$cluster<-col_data[, clust_name];col_data[, clust_name]<-NULL
-
+col_data$cluster<-col_data[, clust_name];
+col_data[, clust_name]<-NULL
+col_data$nfl_serum<-as.numeric(col_data$nfl_serum)
+col_data
 # Get the median per cluster and scale it for the ehatmap 
 
+library(dplyr)
+col_data_t<-tibble(col_data)
 #means_by_cluster %>% group_indices()
 means_by_cluster <- col_data %>% 
       dplyr::select(-PATNO) %>%
@@ -203,49 +229,53 @@ source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 ## TODO: add to the pipeline here the deseq groups or load them from the file!! 
 
   
+if (FALSE){
 
 selected_covars3 = selected_covars2
 
-corrplot::corrplot(stat[sig,], tl.col = "black", title="Pearson correlation coefficient")
+#corrplot::corrplot(stat[sig,], tl.col = "black", title="Pearson correlation coefficient")
 
-selected_covars_broad
+#selected_covars_broad
 
-
+selected_covars3<-selected_covars2[selected_covars2 %in% colnames(samples_metadata(MOFAobject))]
 x1_all<-samples_metadata(MOFAobject)[selected_covars3][,1:10]
 
 x2<-as.numeric(samples_metadata(MOFAobject)$cluster)
-cor_clust <- psych::corr.test(samples_metadata(MOFAobject)[selected_covars2]$td_pigd_old_on ,as.numeric(samples_metadata(MOFAobject)$cluster), method = "pearson", adjust = "BH")
+#cor_clust <- psych::corr.test(samples_metadata(MOFAobject)$td_pigd_old_on ,as.numeric(samples_metadata(MOFAobject)$cluster), method = "pearson", adjust = "BH")
 samples_metadata(MOFAobject)[selected_covars2]
 #install.packages('DescTools')
-apply(x1_all,2  ,MutInf, x2=x2, base=2)
+#apply(x1_all,2  ,MutInf, x2=x2, base=2)
 
 
-for (i in 1: length(selected_covars3)){
-  x1<-samples_metadata(MOFAobject)[selected_covars3][,i]
-  print(paste(selected_covars3[i], MutInf(x1, x2)))
+#for (i in 1: length(selected_covars3)){
+#  x1<-samples_metadata(MOFAobject)[selected_covars3][,i]
+#  print(paste(selected_covars3[i], MutInf(x1, x2)))
+#}
+
+
+
+  ############## Create boxplots by group #### 
+  col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
+  col_data_melt<-reshape::melt(col_data, id=c('PATNO', clust_name))
+
+  ggplot(col_data_melt)+ 
+    geom_boxplot(aes_string(y='value', group=clust_name))+
+    facet_wrap(~variable,scales =  'free')
+    
+
+
+
+
+  group_by(col_data, cluster) %>%
+    summarise(across(everything(), list(~var(., na.rm=TRUE)))
+              
+    )
+
+  
 }
 
 
 
-
-############## Create boxplots by group #### 
-col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
-col_data_melt<-reshape::melt(col_data, id=c('PATNO', clust_name))
-
-ggplot(col_data_melt)+ 
-  geom_boxplot(aes_string(y='value', group=clust_name))+
-  facet_wrap(~variable,scales =  'free')
-  
-
-
-
-
-group_by(col_data, cluster) %>%
-  summarise(across(everything(), list(~var(., na.rm=TRUE)))
-            
-  )
-
- 
 
 
 

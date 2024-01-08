@@ -385,7 +385,7 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
 }
 progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 progression_markers_conf<-c( 'abeta', 'sft' )
-clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca')
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)

@@ -350,8 +350,9 @@ boxplot_by_cluster<-function(met, clust_name, y, bn){
 }
 
 
-
-
+#selected_covars=all_diff_variables_prog_conf
+#MOFAobject_to_plot=MOFAobjectPD
+#labels_col=FALSE
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
                            MOFAobject_to_plot=MOFAobject, res=200){
   
@@ -374,9 +375,21 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   }else{
     labels_col=selected_covars
   }
+
+  # remove if there are at least non-na values
+  selected_covars = selected_covars[colSums(!is.na(MOFAobject_to_plot@samples_metadata[, selected_covars]))>3]
   
-  
-  
+ P2_data<-correlate_factors_with_covariates(MOFAobject_to_plot,
+                                        covariates =selected_covars , plot = plot,
+                                        labels_col=labels_col, 
+                                        factors = factors, 
+                                        cluster_cols=TRUE, 
+                                        return_data = TRUE)
+
+# keep only what is >0
+selected_covars = selected_covars[colSums(P2_data)>0]
+
+
   
   jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
          )
@@ -385,6 +398,9 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
                                         labels_col=labels_col, 
                                         factors = factors, 
                                         cluster_cols=TRUE)
+
+
+
   
   dev.off()
   

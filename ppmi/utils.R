@@ -31,9 +31,9 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 
-diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
-diff_vars<-diff_vars[!grepl('clust',diff_vars)]
-diff_vars
+#diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
+#diff_vars<-diff_vars[!grepl('clust',diff_vars)]
+#diff_vars
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
@@ -54,8 +54,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
-                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 
-                         diff_vars)
+                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes')
+                   #      diff_vars)
 #'DYSKIRAT')
 
 
@@ -1167,19 +1167,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   #' @param prefix
   #' 
   #' 
-  
-  # TODO: Correct all visits together??? 
   param_str_tmp<-paste0(prefix, VISIT_S, '_', min.count, '_coh_', sel_coh_s, '_', sel_subcoh_s )
-  # also defined in config--> check if updated
-  deseq_file <-paste0(output_files, param_str_tmp, 'deseq.Rds'); deseq_file
-  
-  datalist=loadRDS(deseq_file)
-  #ddsSE=datalist[[1]]
-  vsd=datalist[[2]]
-  
-  vsd_mat=assay(vsd)
-  dim(vsd)
-  
 
   if (ruv){
     
@@ -1201,6 +1189,17 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
 
 
 
+  } else{
+  # TODO: Correct all visits together???
+  # uncorrected  
+  # also defined in config--> check if updated
+  deseq_file <-paste0(output_files, param_str_tmp, 'deseq.Rds'); deseq_file
+  
+  datalist=loadRDS(deseq_file)
+  #ddsSE=datalist[[1]]
+  vsd=datalist[[2]]
+  vsd_mat=assay(vsd)
+  dim(vsd)
   }
   # TODO: for mirs load the already normalized and add log2(mirs_expr_norm+1)
   # Perform correction 

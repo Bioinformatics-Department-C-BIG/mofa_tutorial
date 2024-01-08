@@ -31,7 +31,7 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
-
+cell_corr=TRUE
 #if (split){
 #  N_FACTORS=8
 #}
@@ -42,7 +42,7 @@ VISIT=c('BL');
 
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL','V08');
-VISIT=c('V08');
+VISIT=c('V06');
 
 
 
@@ -250,6 +250,9 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+
+
 
 
 

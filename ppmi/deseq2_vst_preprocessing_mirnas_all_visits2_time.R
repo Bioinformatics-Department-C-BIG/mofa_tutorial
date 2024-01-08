@@ -32,7 +32,7 @@ combined<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
 
-process_mirnas=TRUE
+process_mirnas=FALSE
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
@@ -40,6 +40,7 @@ process_mirnas=TRUE
 VISIT='V08'
 VISIT=c('BL','V08')
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT='V06'
 
 
         print(VISIT)

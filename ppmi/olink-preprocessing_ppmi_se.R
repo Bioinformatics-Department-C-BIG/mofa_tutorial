@@ -166,7 +166,7 @@ write.csv2(vsn_mat,paste0(output_files,p_params_out, '_vsn.csv'), row.names=TRUE
 
 
 
-for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3, 0.9)){
+for (most_var in c(0.3, 0.9)){
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
     highly_variable_sign_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa_signif.csv')
 

@@ -127,17 +127,15 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
     }else{
       ## just use all data 
       mofa_multi_train=mofa_multi_to_use
-      
-    
-    
-    
+
     }
   
     MOFAobject=create_mofa(mofa_multi_train)
-    #if (length(VISIT)>1){
-    #  MOFAobject <- create_mofa(mofa_multi_train, groups= mofa_multi_train$EVENT_ID)
-    ##  
-    #}
+    if (length(VISIT)>1){
+      # run mofa multi with event id as group
+      MOFAobject <- create_mofa(mofa_multi_train, groups= mofa_multi_train$EVENT_ID)
+      
+    }
     
     
     dir.create(outdir, showWarnings = FALSE)
@@ -237,7 +235,7 @@ for (N_FACTORS in c(15)){
 
 
 
-  #MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
+  MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
   
   
   
@@ -248,15 +246,19 @@ for (N_FACTORS in c(15)){
 ## attach some extra clinical variables 
 sel_sam=MOFA2::samples_names(MOFAobject)
 length(sel_sam)
+MOFA2::samples_metadata(MOFAobject)$group
 meta_merged_ord=fetch_metadata_by_patient_visit(samples_metadata(MOFAobject)$PATNO_EVENT_ID)
 length(meta_merged_ord$PATNO)
 meta_merged_ord<-as.data.frame(meta_merged_ord)
 meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID # MOFA needs a sample vector 
+meta_merged_ord$group=MOFA2::samples_metadata(MOFAobject)$group # MOFA needs a sample vector 
+
 #meta_merged_ord$sample=meta_merged_ord$PATNO_EVENT_ID
 dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
 
 
 

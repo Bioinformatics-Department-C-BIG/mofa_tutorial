@@ -121,23 +121,18 @@ raw_counts_all<-pre_process_proteomics(proteomics)
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 
-
-cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
-##### filter here by visits
-se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
+##### filter here by visits and cohort
 
 se_filt<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
 se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
-
-
-cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
 
 ### TODO: save se filt here : with or without VISIT included..? 
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
 
-tmp<- assays(se_filt)[[1]]
+tmp<- assays
+.0.(se_filt)[[1]]
 dim(tmp)
 
 # Filter and normalize
@@ -145,13 +140,12 @@ dim(tmp)
 
 ### TODO: filter before normalization!!! 
 normalized_data<-justvsn(tmp)
-vsn::meanSdPlot(normalized_data)
+vsn::meanSdPlot(.normalized_data)
 
 
 
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
-# Check plot after vsn
-#View(normalized_data)
+....#View........normalized_data)
 
 
 vsn_mat<-normalized_data

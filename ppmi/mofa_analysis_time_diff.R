@@ -361,6 +361,7 @@ MOFAobject_gs<-MOFAobject
 ens_ids_full<- features_names(MOFAobject)$RNA
 ens_ids<-gsub('\\..*', '', ens_ids_full)
 features_names(MOFAobject_gs)$RNA<-get_symbols_vector(ens_ids)
+
 features_names(MOFAobject_gs)$RNA
 
 MOFAobject_gs2<-MOFAobject

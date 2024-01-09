@@ -139,12 +139,13 @@ g_extended_both_clusters
 #g_extended<-create_regulatory_net_backbone(rnas_sig_factor, mirnas_sig_factor)
 
 ### 
-g_extended_both_clusters<-create_regulatory_net_backbone_mirtar(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts)
+#g_extended_both_clusters<-create_regulatory_net_backbone_mirtar(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts)
 
 
 ### Now plot! 
 g_extended_both_clusters
 OPI_g_union<-g_extended_both_clusters
+OPI_g_union
 # TODO: give the layout 
 
 set.seed(123) 
@@ -243,7 +244,12 @@ V(g_fc_plot)$label.cex=2 # increase label size?
 V(g_fc_plot)$label.cex=plot_settings$label.cex # increase label size? 
 
 
-V(g_fc_plot)
+g_fc_plot
+graphics.off()
+dev.off()
+jpeg()
+plot(g_fc_plot)
+
 plot(g_fc_plot, 
 vertex.color=(adjustcolor(V(g_fc_plot)$color, alpha.f = 0.8 )), 
 vertex.size=V(g_fc_plot)$size,
@@ -251,6 +257,7 @@ vertex.frame.color=bd,
 vertex.frame.width=3,
  vertex.label.dist = 2, 
   layout = Coords)
+
 title(paste('Visit: ', VISIT_COMP, ', Cluster: ', mofa_cluster_id, ', Factor: ',
  sel_factor, top_fr  ),cex.main=3,col.main="green")
 

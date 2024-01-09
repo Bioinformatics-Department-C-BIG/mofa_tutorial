@@ -82,7 +82,7 @@ rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significa
 mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
 
-sel_factor=9; top_fr=0.05
+sel_factor=12; top_fr=0.2
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 top_fr_mirs=top_fr
@@ -160,9 +160,9 @@ set.seed(123)
 
 mofa_cluster_id
 
-rnas_V08_list[[2]]
+rnas_V08_list[[3]]
 
-mirnas_V08_list[[1]]
+mirnas_V08_list[[3]]
 # Unified plot: 
 g_fc_V08_list<-sapply(c(1,2,3), function(mofa_cluster_id){
   g_fc_V08_cl<-get_logFC_by_node(OPI_g_union, de_rnas=rnas_V08_list[[mofa_cluster_id]],  de_mirnas=mirnas_V08_list[[mofa_cluster_id]])
@@ -196,12 +196,12 @@ Coords <- layout_with_fr(OPI_g_union)# %>%
 ## Plot cluster 3 as specified by backbone coords 
 
 dir.create(paste0(outdir, '/networks/'))
-mofa_cluster_id=1
+mofa_cluster_id=3
 set.seed(123) 
-
+g_fc_V08_list
 g_fc_plot<-g_fc_V08_list[[mofa_cluster_id]];VISIT_PLOT = 'V08'
 
-g_fc_plot<-g_fc_V06_list[[mofa_cluster_id]];  VISIT_PLOT = 'V06'
+#g_fc_plot<-g_fc_V06_list[[mofa_cluster_id]];  VISIT_PLOT = 'V06'
 
 ## ADD border if significant 
 # create a vertor of border colours conditional on node type
@@ -286,6 +286,7 @@ bd <- ifelse(V(g_fc_plot)$significant, "yellow", NA)
 visNetwork(visnet$nodes, visnet$edges)%>% 
   visNodes(color = list(background = "blue", 
   border = "black"), borderWidth = 3)
+
 
 
 

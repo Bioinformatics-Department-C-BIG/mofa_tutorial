@@ -170,11 +170,26 @@ PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_m
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
 
 
+## subset group
+if (MOFAobject@dimensions$M>1){
+  MOFAobject_sel<-subset_groups(MOFAobject, sel_group)
+  MOFAobjectPD_sel<-subset_groups(MOFAobjectPD, sel_group)
+
+  met<-samples_metadata(MOFAobject_V08)
+}else{
+  MOFAobjectPD_sel = MOFAobjectPD
+  MOFAobject_sel = MOFAobject
+
+}
+
+
+
+
 
 # CORS PATIENTS ONLY #### 
 dir.create(paste0(outdir, '/covariates/'))
 
-stats<-apply(MOFAobjectPD@samples_metadata, 2,table )
+stats<-apply(MOFAobjectPD_sel@samples_metadata, 2,table )
 non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
 covariates_dir<-paste0(outdir, '/covariates/covariate_corelations_')
@@ -183,7 +198,7 @@ covars_f_pvalue<-paste0(covariates_dir, 'pvalue.csv' )
 covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
-
+ names(non_na_vars)
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd)){
   # Loading covariates from file
@@ -194,10 +209,10 @@ if (file.exists(covars_f_pearson_pd)){
   cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
   
 }else{
-  stats<-apply(MOFAobjectPD@samples_metadata, 2,table )
+  stats<-apply(MOFAobjectPD_sel@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
 
-  cors_both<-get_correlations(MOFAobjectPD, names(non_na_vars))
+  cors_both<-get_correlations(MOFAobjectPD_sel, names(non_na_vars))
   cors_pearson_pd = as.data.frame(cors_both[[2]]);  cors_all_pd = as.data.frame(cors_both[[1]])
 
 
@@ -205,9 +220,9 @@ if (file.exists(covars_f_pearson_pd)){
   write.csv2(cors_all_pd, covars_f_pvalue_pd )
 
 # CORS ALL SAMPLES 
-  stats<-apply(MOFAobject@samples_metadata, 2,table )
+  stats<-apply(MOFAobject_sel@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
-  cors_both<-get_correlations(MOFAobject, names(non_na_vars))
+  cors_both<-get_correlations(MOFAobject_sel, names(non_na_vars))
   cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
 
   write.csv2(cors_pearson,covars_f_pearson)
@@ -215,7 +230,7 @@ if (file.exists(covars_f_pearson_pd)){
 
 }
 
-
+cors_all_pd$NP2PT
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
 # corelate categorical covariates
@@ -238,11 +253,27 @@ all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP3
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 cors_all_pd$NP2PTOT_LOG
+all_diff_variables
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
+all_diff_in_cors
+all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
 cors_all_pd$NP2PTOT_LOG
-all_fs_diff<-as.data.frame(cors_all_pd[,all_diff_in_cors]>(-log10(0.05)))
-all_fs_diff_cor<-cors_all_pd[,all_diff_in_cors]
-all_fs_diff$NP2PTOT_LOG
+
+# get correlatins for selected vars 
+all_diff_in_cors
+correlate_factors_with_covariates
+cors_pd<-correlate_factors_with_covariates(MOFAobjectPD_sel, c('NP2PTOT_LOG'),return_data=TRUE , alpha=1  )
+cors_pd[, 'NP2PTOT_LOG']
+cors_both_clinical<-get_correlations(MOFAobjectPD, all_diff_in_cors)
+cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]])
+
+
+
+## choose if the clu
+all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
+all_fs_diff = all_fs_diff_all_time
+all_fs_diff[, 'NP2PTOT_LOG']
+
 #### RUN CLUSTERING ####
 library(DescTools)
 
@@ -347,7 +378,7 @@ if (cluster_samples_mofa){
 ###DO THE CLUSTERS HAVE DIFFERENT NP3? ####
 
 
-met<-samples_metadata(MOFAobjectPD)
+met<-samples_metadata(MOFAobjectPD_sel)
 
 
 #boxplot_by_cluster(met, y='PD_MED_USE', clust_name=clust_name )
@@ -357,7 +388,7 @@ met<-samples_metadata(MOFAobjectPD)
 
 
 # Object to hold renamed features - add to metadata..? 
-MOFAobject_gs<-MOFAobject
+MOFAobject_gs<-MOFAobject_sel
 ens_ids_full<- features_names(MOFAobject)$RNA
 ens_ids<-gsub('\\..*', '', ens_ids_full)
 features_names(MOFAobject_gs)$RNA<-get_symbols_vector(ens_ids)
@@ -399,22 +430,23 @@ sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 outdir
 graphics.off()
 
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:15 ),covariates = all_diff_variables_prog_conf)
+MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
+MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:15 ),covariates = all_diff_variables_prog_conf)
 
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
-                    labels_col=FALSE, MOFAobject=MOFAobjectPD )
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,
-            labels_col=TRUE, MOFAobject=MOFAobjectPD )
+            labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel )
+
 
 fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
-                 factors = sel_factors_conf,labels_col=TRUE, MOFAobject=MOFAobjectPD, res=300 )
+                 factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 graphics.off()
 
 
@@ -440,21 +472,21 @@ all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )
 # 2. scales + 3. imaging S
 vars_to_plot=all_diff_variables; 
 all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts, 'NP2PTOT_LOG')
-sm=MOFAobjectPD@samples_metadata
+sm=MOFAobjectPD_sel@samples_metadata
 sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
 
-all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD@samples_metadata)]
+all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD_sel@samples_metadata)]
 
 all_diff_variables_prog=unique(all_diff_variables_prog)
 all_diff_variables_prog
 #### Factors related to the longterm change in scale #####
 graphics.off()
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
-plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 
 
 ### ALSO PLOT DIFF VARS for the controls 
@@ -467,13 +499,13 @@ sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject )
+plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE, MOFAobject=MOFAobject )
+plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
@@ -482,22 +514,18 @@ all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog
 round(cors_pearson_pd[,all_diff_variables_prog_in_cors], digits=2)
 
 
-correlate_factors_with_covariates
 # Plot 1: some more non motor that we discovered
-samples_metadata(MOFAobject)$rigidity
-samples_metadata(MOFAobject)$NP2_TOT
-
 
 fname<-'factors_covariates_only_nonzero_broad_PD'
 MOFAobjectPD@samples_metadata$Lymphocytes....
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 fname<-'factors_covariates_only_nonzero_broad_PD'
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
+plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 fname<-'factors_covariates_only_nonzero_broad_cor_PD'
 
-plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD  )
+plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 
 

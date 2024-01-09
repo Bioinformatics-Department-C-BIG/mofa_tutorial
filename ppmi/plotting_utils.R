@@ -478,7 +478,7 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1){
   #'
   #' Create boxplot by cluster 
   #' 
@@ -523,9 +523,9 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   
     facet_wrap(~variable, scales='free',#, labeller=labeller(
       #variable=labeller_clinical
-      nrow=1)+
+      nrow=facet_rows)+
     geom_pwc( tip.length = 0,
-      method = "wilcox_test", label = "p.adj.signif")+   
+      method = "wilcox_test", label = "p.adj.signif", label.size = 2)+   
     scale_color_viridis_d(option="turbo")+
        scale_fill_viridis_d(option="turbo")+
   

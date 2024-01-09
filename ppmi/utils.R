@@ -961,17 +961,18 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
     
-    ggsave(paste0(results_file, '_gc_', node_label, '_',write_n, '.jpeg'), width=20, height=20)
+    ggsave(paste0(results_file, '_gc_', strsplit(node_label, '')[1], '_',write_n, '.jpeg'), width=20, height=20)
   }else{
     p1_net <- cnetplot(gse_x)
     show(p1_net)
-    ggsave(paste0(results_file, '_gc_', '_',write_n, '.jpeg'), width=12, height=12)
+    ggsave(paste0(results_file, 'gc', '.jpeg'), width=12, height=12)
 
     
   }
   
   
-  
+  node_label='all'
+  as.character(node_label)
   
   ####Visualize go terms as an undirected acyclic graph 0
   #if (!process_mirnas){

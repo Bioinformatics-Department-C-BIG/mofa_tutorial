@@ -70,7 +70,11 @@ cell_corr<-TRUE
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
-cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
+#cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
+cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+cluster_params_dir
+
 cd <- colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
@@ -248,14 +252,14 @@ order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
 ONT='BP'
 pvalueCutoff_sig=0.05
-enrich_params<-paste0(ONT, '_', order_by_metric_s)
+enrich_params<-paste0(ONT, order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))
 
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
+results_file_cluster
 
-
-for (cluster_id in c(1,2,3)){
+for (cluster_id in c(1:k_centers_m)){
   # run enrichment with the log2pval metric
   print(cluster_id) 
   deseq2ResDF = deseq_all_groups[[cluster_id]]
@@ -263,6 +267,7 @@ for (cluster_id in c(1,2,3)){
   names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
   gene_lists[[cluster_id]]<-gene_list1
+  results_file_cluster
 
   results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id)
   gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 , N_NET=10)

@@ -30,7 +30,14 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
         set.seed(60)
         clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD, centers=k_centers_m,
          factors=fact, rescale=rescale_option) # Cluster using kmeans
-        clust_ps<-clusters_x$cluster
+        clusters_x
+       # if (MOFAobject==1){
+        #  names(clusters_x)<-gsub('\\_.*', '', names(clusters_x))
+
+       # }
+
+        
+        clust_ps<-clusters_x;clust_ps
         MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
         MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
         # TODO: save labels
@@ -40,20 +47,24 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
 
 }}
 )
-
+all_clusts_mofa
 all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
 
 all_clusts_mofa_true_t<-do.call(cbind,all_clusts_mofa_true)
+dir.create(paste0(outdir,'/clustering/'))
 all_clusts_file<-paste0(outdir,'/clustering/all_clusts_mofa.csv')
-write.csv2(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE )
+
+write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
 
 # Attach clusters 
 ### Add all clusterings to mofa object 
 for (diff_var in names(all_clusts_mofa)){
-    MOFAobjectPD@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]]
+    print(diff_var)
+    MOFAobjectPD@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
     sm<-MOFAobject@samples_metadata
     clusters_ids<-all_clusts_mofa[[diff_var]]
-    MOFAobject@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO,names(clusters_ids ) )]
+    all_clusts_mofa[[diff_var]]
+    MOFAobject@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO_EVENT_ID,names(clusters_ids ) )]
     MOFAobject@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
     
 
@@ -88,33 +99,40 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
                      #'Usable_Bases_SCALE' #, 'AGE' 
 all_fs_diff[,'NP2PTOT_LOG']
 
+MOFAobject
+
+### Select group for plotting
 met<-samples_metadata(MOFAobject)
+sel_group=4
+if (MOFAobject@dimensions$M>1){
+  MOFAobject_V08<-subset_groups(MOFAobject, sel_group)
+  met<-samples_metadata(MOFAobject_V08)
+}
+
 y_clust="NP2PTOT_LOG"
 
+
+
+diff_variables
 
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
-  print(table(samples_metadata(MOFAobject)[, clust_name]))
-  
 
   if (clust_name %in% colnames(met)){
 
 
      # k centers might be different for each score 
-    k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+    k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
     cluster_params<-paste0(clust_name ,'/', k_centers,'/',rescale_option)
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
-    cluster_params_dir
-
     bn<-paste0(cluster_params_dir , y,  '.png') # need to fix to add y in every iteration in function
-     #   sapply(diff_variables_to_p_all, boxplot_by_cluster, met=met, clust_name=clust_name, bn=bn)
-
-    bn_all<-paste0(cluster_params_dir, '/all_vars' ,  '.png')
-    bn_all
+    bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
     diff_variables_to_p, width=10+length(diff_variables_to_p), bn=bn_all)
+
+
     }
   })
 
@@ -136,12 +154,15 @@ freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
 cluster_params_dir <- paste0(outdir,'/clustering/',clust_name ,'/', k_centers,'/',rescale_option );
 cluster_params_dir
-outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters' ,  '.png')
+outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group,  '.png')
 color_by = 'NP2PTOT_clust'
 
 MOFAobjectPD@samples_metadata$NP2PTOT
 # Plot clustering for scales 
-p <- plot_factors(MOFAobjectPD, 
+
+MOFAobjectPD_plot <-subset_groups(MOFAobjectPD, sel_group)
+
+p <- plot_factors(MOFAobjectPD_plot, 
              factors=which(all_fs_diff[,y]),
              color_by =color_by
 #             shape_by = color_by
@@ -172,7 +193,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD))
 clust_name
-col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
+col_data<-samples_metadata(MOFAobjectPD_plot)[c(diff_variables_to_p,clust_name, 'PATNO')]
 colnames(col_data)
 MOFAobjectPD@samples_metadata[, clust_name]
 col_data$rem
@@ -203,7 +224,7 @@ means_by_cluster_na$moca<-NULL
 graphics.off()
 jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
   pheatmap(means_by_cluster_na, 
-   labels_row= c(1,2,3),
+   labels_row= seq(1:k_centers_m),
   clustering_method = 'centroid',
   color = colorRampPalette(c("turquoise4", "white", "red"))(50))
 dev.off()

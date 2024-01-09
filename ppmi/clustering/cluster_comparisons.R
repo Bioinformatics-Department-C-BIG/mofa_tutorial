@@ -23,7 +23,7 @@ se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 ## 2. Run deseq 
 ## 3. enrichment 
 
-MOFAobject_clusts=MOFAobjectPD
+MOFAobject_clusts=MOFAobjectPD_plot # take it from the clusterig of the last visit only 
 
 
 ## SETUP the script parameters here ####
@@ -201,7 +201,7 @@ graphics.off()
 deseq_params
 deseq_all_groups[[2]]
 
-for (cluster_id in c(1,2,3)){
+for (cluster_id in c(1:k_centers_m)){
 
       # Take the original data and deseq results to plot a volcano 
       se_filt=se_filt_all[[cluster_id]]

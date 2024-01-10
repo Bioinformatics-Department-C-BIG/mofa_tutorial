@@ -793,9 +793,9 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8){
   ### GSE COMPARE ANALYSIS 
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=10, split=".sign") + facet_grid(.~.sign)
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
          dpi=250, width=12, height=10, 

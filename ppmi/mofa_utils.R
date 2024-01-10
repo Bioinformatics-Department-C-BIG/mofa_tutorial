@@ -232,7 +232,7 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE, 
   #' 
   #' 
   gn<-length(MOFA2::groups_names(MOFAobject))
-
+# g=1
       all_groups_clusters<-sapply(1:gn, function(g) {
         Z <- get_factors(MOFAobject)[[g]]
 
@@ -251,7 +251,10 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE, 
   return(groups_kmeans)
 }
 
-
+factors = c(3,9)
+colVars(Z1 )
+hist(Z1[,1])
+hist(Z1[,2])
 
 
 write_vars_output<-function(MOFAobject, vars_by_factor){

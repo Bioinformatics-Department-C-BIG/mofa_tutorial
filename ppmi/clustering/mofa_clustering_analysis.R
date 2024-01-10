@@ -13,8 +13,8 @@ library('factoextra')
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
-all_fs_diff$NP2PTOT_LOG
-rescale_option=FALSE
+
+rescale_option=TRUE
 diff_var='NP2PTOT_LOG'
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -32,7 +32,6 @@ all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-lo
 all_fs_diff = all_fs_diff_all_time
 all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12')]
 
-group_names(MOFAobject)
 
 ### Select group for plotting
 sel_group=4
@@ -115,7 +114,7 @@ MOFAobject_sel@samples_metadata[, 'NP2PTOT_LOG_clust']
 
 ### Boxplots by cluster 
 diff_variables=c('NP2PTOT_LOG')
-diff_variables=c('NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_V10')
+diff_variables=c('NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10')
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
@@ -168,7 +167,7 @@ y_clust="NP2PTOT_LOG"
 y_clust="NP2PTOT_diff_V13_V14"
 y_clust="updrs2_score_LOG_diff_V12"
 
-
+all_fs_diff$NP2PTOT_LOG_V10
 
 diff_variables
 facet_rows = 2
@@ -185,7 +184,6 @@ sapply(diff_variables, function(y_clust){
    # k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
     cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
-    print(cluster_params_dir)
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
@@ -350,6 +348,9 @@ samples_metadata(MOFAobject)[selected_covars2]
 
   
 }
+
+
+
 
 
 

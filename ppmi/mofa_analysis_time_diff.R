@@ -24,7 +24,7 @@ library('factoextra')
 
 
 #### Covariance of factors with metadata 
-source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
+#source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
@@ -168,10 +168,11 @@ if (add_clinical_clusters){
 #MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
 PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
-
+sel_group=4
+groups_names(MOFAobject)
 
 ## subset group
-if (MOFAobject@dimensions$M>1){
+if (length(groups_names(MOFAobject))>1){
   MOFAobject_sel<-subset_groups(MOFAobject, sel_group)
   MOFAobjectPD_sel<-subset_groups(MOFAobjectPD, sel_group)
 
@@ -230,7 +231,6 @@ if (file.exists(covars_f_pearson_pd)){
 
 }
 
-cors_all_pd$NP2PT
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
 # corelate categorical covariates
@@ -246,29 +246,28 @@ all_diff<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3TOT', 'updrs3_score', 'updrs2_score',
                      'updrs2_score_LOG', 'updrs3_score_LOG', 
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta')
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
+sm$NP2PTOT_LOG_V10
 
-cors_all_pd$NP2PTOT_LOG
-all_diff_variables
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
-all_diff_in_cors
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
-cors_all_pd$NP2PTOT_LOG
+
+
 
 # get correlatins for selected vars 
 all_diff_in_cors
 correlate_factors_with_covariates
 cors_pd<-correlate_factors_with_covariates(MOFAobjectPD_sel, c('NP2PTOT_LOG'),return_data=TRUE , alpha=1  )
 cors_pd[, 'NP2PTOT_LOG']
+
+
+
 cors_both_clinical<-get_correlations(MOFAobjectPD, all_diff_in_cors)
 cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]])
-
-
-
 ## choose if the clu
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
@@ -424,7 +423,7 @@ vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_f
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
                        'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
-                   'Neutrophils....', 'Lymphocytes....', 'Neutrophil.Lymphocyte')
+                    'Neutrophil.Lymphocyte')
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
 
 outdir
@@ -494,8 +493,9 @@ all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors)]
 all_cors_diff<-cors[, all_diff]
 sel_factors_diff<-which(rowSums(all_cors_diff)>0)
 all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
+cors
 sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
-
+sel_factors
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
@@ -505,7 +505,8 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE, MOFAobject=MOFAobject_sel )
+plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE,
+ MOFAobject=MOFAobject_sel, height = 580 )
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]

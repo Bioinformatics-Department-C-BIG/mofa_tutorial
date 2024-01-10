@@ -1,6 +1,7 @@
 
 
 source(paste0('ppmi/setup_os.R'))
+#source(paste0('ppmi/mofa_application_ppmi_all_visits.R'))
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
@@ -16,6 +17,7 @@ VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
 
 source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
+source(paste0(script_dir,'ppmi/utils.R'))
 
 
 
@@ -56,7 +58,7 @@ MOFAobject_clusts=MOFAobjectPD
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V06'; VISIT = 'V06'
+VISIT_COMP = 'V08'; VISIT = 'V08'
 #VISIT=c( 'V06',  'V08') ; VISIT_COMP=VISIT
 
 process_mirnas=FALSE ;
@@ -198,6 +200,20 @@ gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq
 
 
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -88,14 +88,14 @@ outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 
 ### setup deseq formula 
 
-formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'
-formula_deseq2 = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'
+formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
+formula_deseq2 = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 formula_deseq3<-'~PATNO+AGE_SCALED+SEX'
 if (cell_corr) {
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+Plate+COHORT'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
   
 }else{
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+COHORT'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 }
 
 formula_deseq2 = formula_deseq

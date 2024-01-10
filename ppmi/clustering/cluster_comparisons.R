@@ -23,7 +23,7 @@ se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 ## 2. Run deseq 
 ## 3. enrichment 
 
-MOFAobject_clusts=MOFAobjectPD_plot # take it from the clusterig of the last visit only 
+MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit only 
 
 
 ## SETUP the script parameters here ####
@@ -31,7 +31,7 @@ MOFAobject_clusts=MOFAobjectPD_plot # take it from the clusterig of the last vis
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP = 'V08'
-process_mirnas=FALSE 
+process_mirnas=TRUE 
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -58,7 +58,7 @@ clust_name=paste0(y_clust, '_clust')
 # 4. Enrichment analysis 
 
 
-MOFAobject_clusts<-MOFAobjectPD
+#MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 y_clust='NP2PTOT_LOG';
@@ -135,7 +135,7 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 deseq_params
 
-formula_deseq
+
 for (cluster_id in 1:3){
 
   ### 1. for each cluster, create se filt with controls, 
@@ -148,6 +148,7 @@ for (cluster_id in 1:3){
 ## filter for grouping here - it is not in the prerpocessing by default
 #se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
 
+formula_deseq
 
 for (cluster_id in 1:3){
 
@@ -327,6 +328,22 @@ gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq
 
 
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

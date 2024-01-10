@@ -84,7 +84,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  'NHY', 
                                  # 'SCAU5',
                                  # NON-MOTOR
-                                 'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
+                                 'moca','sft', 'VLTFRUIT', 'VLTVEG', 'PUTAMEN_R_V10', 
                                  # CSF BIOMARKERS 
                                  'abeta_LLOD', 'HVLTRDLY',
                                  #  'scopa', 
@@ -94,9 +94,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # not significant: 
                                  #  'ptau',    'ab_asyn', 
                                  'PDSTATE',  
-                                 'RBD_TOT', 
-                                 'td_pigd_old_on', 
-                                 'PD_MED_USE' , 
+                                                                  'PD_MED_USE' , 
                              #    'months', 
                                  'con_putamen_V10', 
                              'asyn' , 'CSFSAA', 
@@ -104,9 +102,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  
                                  ## WHICH factors have to do with the change in the scale
                                  # And the change in the datascan binding  in the future?
-                                 # THESE factors are the ones that we actually WANT 
-                                 'MCATOT', 
-                               #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                                 # THESE factors are the ones that we actually WANT                                #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                                  'SITE', 'Plate', 
                                  'Neutrophil.Score'
                                  

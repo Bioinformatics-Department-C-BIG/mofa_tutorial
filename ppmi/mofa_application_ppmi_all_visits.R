@@ -41,8 +41,8 @@ VISIT=c('BL');
 
 
 VISIT=c('BL','V08');
-VISIT=c('V08');
 VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('V08');
 
 cell_corr=TRUE
 

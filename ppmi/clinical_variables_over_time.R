@@ -162,7 +162,7 @@ df_plot
 
     clust_name<-paste0(clust_metric, '_clust')
 
-    cluster_params<-paste0(clust_name ,'/', k_centers,'/',rescale_option)
+    cluster_params<-paste0(clust_name ,'/', k_centers_m,'/',rescale_option)
     cluster_params
     fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
     plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V12', fname=fname, add_individual_lines=add_individual_lines)

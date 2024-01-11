@@ -16,6 +16,7 @@ k_centers_m=3
 
 rescale_option=TRUE
 diff_var='NP2PTOT_LOG'
+DIFF_VAR='NP2PTOT_LOG'
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
   MOFAobjectPD_cors<-subset_groups(MOFAobjectPD, sel_group_cors)
@@ -47,8 +48,6 @@ if (length(groups_names(MOFAobject))>1){
 
 }
 
-
-all_fs_diff$NP2PTOT_LOG
 
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
@@ -90,15 +89,16 @@ all_clusts_file<-paste0(outdir,'/clustering/all_clusts_mofa.csv')
 write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
   clusters_ids<-all_clusts_mofa[['NP2PTOT_LOG']]
   clusters_ids
-# Attach clusters 
-### Add all clusterings to mofa object 
-diff_var = 'NP2PTOT_LOG'
+
+
+
+
+
+
+
 for (diff_var in names(all_clusts_mofa)){
     print(diff_var)
     MOFAobjectPD_sel@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
-    
-    
-    #
     sm<-MOFAobject_sel@samples_metadata
     clusters_ids<-all_clusts_mofa[[diff_var]]
     clusters_ids
@@ -114,7 +114,7 @@ MOFAobject_sel@samples_metadata[, 'NP2PTOT_LOG_clust']
 
 ### Boxplots by cluster 
 diff_variables=c('NP2PTOT_LOG')
-diff_variables=c('NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10')
+diff_variables=c('NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10', 'moca')
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
@@ -148,15 +148,10 @@ met$NP2PTOT_V10
          # V10/12 -future scores 
          'NP2PTOT_V10',  'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
           #covars
-         'Neutrophil.Lymphocyte', 'AGE_SCALED'
+         'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca'
       #    'hvlt_immediaterecall_V12'
 
          )
-
-                     #'Usable_Bases_SCALE' #, 'AGE' 
-all_fs_diff[,'NP2PTOT_LOG']
-
-MOFAobject
 
 ### Select group for plotting
 met<-samples_metadata(MOFAobject_sel)
@@ -177,10 +172,8 @@ sapply(diff_variables, function(y_clust){
   ## check if there are clusters for this variable
 
   if (clust_name %in% colnames(met)){
-    # for each cluster 
+    # for each cluster create boxplot 
 
-
-     # k centers might be different for each score 
    # k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
     cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
@@ -196,9 +189,12 @@ sapply(diff_variables, function(y_clust){
 ### Variables in this script 
 # 1. Plot the clusters on the factor plot 
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
-y <- 'NP2PTOT_LOG' # cluster metric 
+
+y <- DIFF_VAR# cluster metric 
+DIFF_VAR
 color_by=paste0(y, '_clust')
 clust_metric<-y
+
 # Settings for each clustering 
 
 met<-met[!is.na(met[, clust_metric]),]
@@ -212,8 +208,7 @@ cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_opti
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
 
-outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group,  '.png')
-color_by = 'NP2PTOT_clust'
+outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group, y, '_', color_by, '.png')
 outfile_clusters
 # Plot clustering for scales 
 
@@ -225,7 +220,7 @@ p <- plot_factors(MOFAobjectPD_sel,
 )
 p
 ggsave(outfile_clusters, width = 4, height = 4 )
-
+dev.off()
 
 ## 2. Get the heatmap with the averages of all clusters 
 ## or show histograms of all clusters 
@@ -248,7 +243,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD_sel))
-clust_name
+
 col_data<-samples_metadata(MOFAobjectPD_sel)[c(diff_variables_to_p,clust_name, 'PATNO')]
 colnames(col_data)
 col_data$cluster<-col_data[, clust_name];
@@ -348,6 +343,16 @@ samples_metadata(MOFAobject)[selected_covars2]
 
   
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

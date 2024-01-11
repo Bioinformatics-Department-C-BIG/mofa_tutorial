@@ -251,10 +251,6 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE, 
   return(groups_kmeans)
 }
 
-factors = c(3,9)
-colVars(Z1 )
-hist(Z1[,1])
-hist(Z1[,2])
 
 
 write_vars_output<-function(MOFAobject, vars_by_factor){

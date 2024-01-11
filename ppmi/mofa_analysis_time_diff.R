@@ -547,10 +547,10 @@ MOFAobject_nams@samples_metadata$scopa
 
 imaging_variables_diff
 fname<-'factors_covariates_img_cor'
-plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='r',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
+plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='r',factors,labels_col=FALSE, MOFAobject=MOFAobject )
 
-fname<-'factors_covariates_img_pval'
-plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='log_pval',factors,labels_col=FALSE, MOFAobject=MOFAobject_nams )
+#fname<-'factors_covariates_img_pval'
+#plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='log_pval',factors,labels_col=FALSE, MOFAobject=MOFAobject )
 
 
 
@@ -590,7 +590,8 @@ views<-names(MOFAobject@dimensions$D)
 dir.create(paste0(outdir, '/top_weights/'))
 
 T=0.3
-
+MOFAobject@dimensions$M
+vps = MOFAobject@dimensions$M
 # TODO: save to zip file!
 for (i in seq(1,vps)){
   view=views[i]
@@ -786,12 +787,13 @@ summary(lmfit)
 
 ######## Specific correlations #########
 library(tidyverse)
-factor_cors<-paste0(format(x_cors[factors_to_plot], digits=2), collapse=',')
-factor_cors
+
   
 MOFAobject@samples_metadata$td_pigd
 
 factors_to_plot<-c(3,4)
+factor_cors<-paste0(format(x_cors[factors_to_plot], digits=2), collapse=',')
+factor_cors
 color_by='td_pigd'
 color_by='NP3GAIT'
 
@@ -835,7 +837,6 @@ plot_data_scatter_by_factor<-function(factor, color_by,MOFAobject_gs=MOFAobject)
 
 color_by='NP3_TOT';
 dir.create(paste0(outdir, '/scatter_plots/'))
-sel_factors_np3
 sapply(sel_factors, plot_data_scatter_by_factor, color_by=color_by, MOFAobject_gs=MOFAobjectPD)
 
 
@@ -858,62 +859,6 @@ rownames(mirdata_sel)
 mirdata_sel_t<-t(mirdata_sel)
 
 MOFAobject@samples_metadata$PDSTATE
-
-## Loop cl 
-CL='NP3_TOT'
-mirdata_sel_t<-data.frame(mirdata_sel_t, 
-                          COHORT=MOFAobject@samples_metadata$COHORT, 
-                          CL=MOFAobject@samples_metadata[, CL], 
-                          PDSTATE=MOFAobject@samples_metadata[, 'PDSTATE'])
-
-
-MOFAobject@samples_metadata$COHORT_DEFINITION
-colnames(mirdata_sel_t$hsa.miR.193b.3p)
-
-
-
-library('ggpmisc')
-
-mirdata_melt<-melt(mirdata_sel_t, id=c('PATNO', 'COHORT', 'CL', 'PDSTATE'))
-colnames(mirdata_melt)
-
-ggplot(mirdata_melt, aes_string(x='value', y='CL'))+
-  geom_point()+
-  geom_smooth(method=lm)+
-  
-  stat_fit_glance(method = 'lm',
-                  method.args = list(),
-                  geom = 'text',
-                  aes(label = paste("P-value = ", signif(..p.value.., digits = 4), sep = "")),
-                  label.x.npc = 'right', label.y.npc = 0.35, size = 3)
-
-  facet_wrap(~variable, scales='free_x')
-
-
-ggsave(paste0(outdir, '/trajectories/clinical/',view,CL, '.jpeg'  ), width=10,height=10, dpi=300)
-
-
-type(MOFAobject@samples_metadata$STAIAD3)
-
-## todo extract row and column for which positive cors are TRUE 
-#positive_cors_1<-pos_cors>0
-#which(positive_cors_1)
-
-#for (i in 1:length(positive_cors_1)){
-#  
-#}
-
-color_by='COHORT'
-MOFAobject@dimensions$K
-
-plot_factors(MOFAobject, 
-             factors =  c(1,4), 
-             color_by = color_by,
-             
-             show_missing = FALSE
-)
-
-color_by='COHORT'
 
 
 
@@ -948,20 +893,7 @@ for (ii in seq(1,fps)){
   
   
 }
-cors_pearson[,'COHORT']
-f1<-get_factors(MOFAobject,factors=1)
-f1<-as.data.frame(get_factors(MOFAobject,factors=1)['group1'])
 
-var_name='STAIAD22'
-yvar<-MOFAobject@samples_metadata[var_name]
-yvar_name<-'yvar'
-length(yvar)
-f1[yvar_name]<-yvar
-f1[,yvar_name]=as.numeric(f1[,yvar_name])
-ggplot(f1, aes_string(x='Factor1', y=yvar_name) )+ geom_point()
-
-
-# Factor 2 associates with proteomic Subtype 
 
 color_by<-'NHY';fs<-c(4,8)
 color_by<-'NP3TOT';fs<-c(1,4)
@@ -979,23 +911,6 @@ ggsave(paste0(outdir, 'plot_factor_variate_violin',fss,color_by,'.png'), width =
 
 #### plot 2 factors 
 ##### TODO: Plot only significant covariates  here
-
-color_by<-'NHY'
-fs<-c(4,8)
-
-color_by<-'NHY';fs<-c(1,8)
-color_by<-'NP3TOT';fs<-c(1,8)
-
-plot_factors(MOFAobject, 
-            factors = fs, 
-            color_by = color_by,
-            show_missing = FALSE
-)
-fss<-paste(fs,sep='_',collapse='-')
-FNAME<-paste0(outdir, 'plot_factors_variate_2D',fss,color_by,'.png')
-FNAME
-color_by
-ggsave(FNAME, width = 4, height=4, dpi=100)
 
 
 
@@ -1154,10 +1069,19 @@ views=names(MOFAobject@data)
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
+dim(cors_all_pd)
+cors_heatmap=cors_all_pd
+cors_all_pd[3, ]
 graphics.off()
-for (i in seq(1,vps)){
+
+    exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st')
+MOFAobject_hm=MOFAobjectPD
+
+ii=3
+for (i in seq(1,2)){
   for (ii in seq(1,fps)){
     print(paste('Modality', i, 'factor', ii))
+
     cluster_rows=TRUE;cluster_cols=TRUE
     
     
@@ -1171,13 +1095,13 @@ for (i in seq(1,vps)){
     main_t<-paste0('Factor ', ii, ', Variance = ',var_captured, '%')
     #log10(0.005) = 2.3
     #cor_T<- -log10(0.005); cor_p_T<-0.15
-    modality=names(MOFAobject@dimensions$D)[i]
-    if (names(MOFAobject@dimensions$D)[i]=='proteomics'){modality=paste(TISSUE, modality )  }
+    modality=names(MOFAobject_hm@dimensions$D)[i]
+    if (names(MOFAobject_hm@dimensions$D)[i]=='proteomics'){modality=paste(TISSUE, modality )  }
     main_t<-paste0('Factor ', ii, ', Mod ',modality, ', Variance = ',var_captured, '%')
     
     
     
-    ns<-dim(MOFAobject@samples_metadata)[1]
+    ns<-dim(MOFAobject_hm@samples_metadata)[1]
     if (run_mofa_complete){
       cor_T<-1.5; cor_p_T<-0.1
       
@@ -1185,37 +1109,29 @@ for (i in seq(1,vps)){
       cor_T<-2; cor_p_T<-0.1
       
     }
-    
-    abs(cors_pearson)>0.15
-    
-    rel_cors<-cors[ii,][cors[ii,]>cor_T &  abs(cors_pearson[ii,])>cor_p_T ]
-
+    rel_cors<-cors_heatmap[ii,][,cors_heatmap[ii,]>cor_T ]
+    rel_cors
     # sig holds the names only 
     cors_sig=names(rel_cors); cors_sig
     FT=0
     if (length(cors_sig)==0){
       cors_sig=c()
       
-    } else if (length(cors_sig)>10){
-      FT=10
+    } else if (length(cors_sig)>15){
+      FT=15
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
-      rel_cors_ordered<-rel_cors[order(-rel_cors)]
        rel_cors_ordered<-rel_cors[order(-rel_cors)][1:FT]
       #rel_cors_ordered<-rel_cors[order(-rel_cors)]
 
       cors_sig<-names(rel_cors_ordered)
     }
-    cors_sig
-    exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st')
-    #'OFFEXAMTM', 
-     #               'OFFEXAMDT', 'OFFPDMEDT', 'INFO')
+
     cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]; cors_sig
     cors_sig<-cors_sig[!grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|PAG_', cors_sig)]
     
     plot_heatmap_flag=TRUE
-    #MOFAobject_gs@samples_metadata[cors_sig][is.na(MOFAobject_gs@samples_metadata[cors_sig])]<-10^-6v
-    MOFAobject_gs@samples_metadata[,cors_sig]
-    MOFAobject_gs@samples_metadata[,cors_sig]
+    cors_sig<-cors_sig[cors_sig %in% colnames(MOFAobject_hm@samples_metadata)]
+    MOFAobject_hm@samples_metadata[,cors_sig]
     
     #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
 
@@ -1224,7 +1140,7 @@ for (i in seq(1,vps)){
     #which(cors_sig_non_na=='PDSTATE')
     #cors_sig_non_na=cors_sig_non_na[-3]
     if (length(cors_sig)>1){
-      cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_gs@samples_metadata[,cors_sig]),2,any )))
+      cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_hm@samples_metadata[,cors_sig]),2,any )))
       
     }else{
       cors_sig_non_na=cors_sig 
@@ -1243,7 +1159,7 @@ for (i in seq(1,vps)){
                   FT, 'den_', denoise, groups, '.jpeg')
 
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
-    p<-plot_data_heatmap(MOFAobject_gs, 
+    p<-plot_data_heatmap(MOFAobject_hm, 
                          view = views[i], 
                          factor =  ii,  
                          features = nfs,

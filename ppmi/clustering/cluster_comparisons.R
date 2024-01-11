@@ -31,7 +31,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP = 'V08'
-process_mirnas=TRUE 
+process_mirnas=FALSE 
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -48,7 +48,7 @@ se_clusters
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
-y_clust='NP2PTOT_LOG'
+y_clust='moca'
 clust_name=paste0(y_clust, '_clust')
 
 ## Outputs 
@@ -61,7 +61,7 @@ clust_name=paste0(y_clust, '_clust')
 #MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
-y_clust='NP2PTOT_LOG';
+y_clust='moca';
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
 cell_corr<-TRUE
@@ -135,13 +135,14 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 deseq_params
 
-
+# TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
 
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
   print(paste('cluster:',cluster_id))
+
   #de_file
   se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 }
@@ -149,17 +150,19 @@ for (cluster_id in 1:3){
 #se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
 
 formula_deseq
+se_filt_all
 
-for (cluster_id in 1:3){
+clusters_indices= list(c(1,2,3), 1,2,3)
+for (cluster_id in clusters_indices){
 
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
   print(paste('cluster:',cluster_id))
-  #cluster_id=1
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id , '.csv')
+  cluster_id_index=paste0(cluster_id, collapse='_')
+  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
   #de_file
-  se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
+  se_filt_all[[cluster_id_index]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
 
    if (file.exists(de_file)){
@@ -170,19 +173,18 @@ for (cluster_id in 1:3){
 
   }else{
     # else run the deseq with the design formula specified 
-        deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id]], formula_deseq, min.count=min.count)
+        deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id_index]], formula_deseq, min.count=min.count)
 
-        deseq_all_groups[[cluster_id]]<-deseq2ResDF
+        deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
         if (!process_mirnas){
           # get symbols for RNA only 
           deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
   }
-  deseq_all_groups[[cluster_id]]<-deseq2ResDF
-  deseq_all[[cluster_id]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
+  deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
+  deseq_all[[cluster_id_index]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
-deseq_all[[3]]$GENE_SYMBOL
 # Save and load # Rrename ens id.*
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <- paste0('SG', 1:length(deseq_all_names))
@@ -203,29 +205,29 @@ graphics.off()
 
 
 # TODO: venn before and after correction 
-deseq_params
-deseq_all_groups[[2]]
 
-for (cluster_id in c(1:k_centers_m)){
+for (cluster_id in clusters_indices){
 
       # Take the original data and deseq results to plot a volcano 
-      se_filt=se_filt_all[[cluster_id]]
+      print(paste('cluster:',cluster_id))
+      cluster_id_index=paste0(cluster_id, collapse='_')
+      se_filt=se_filt_all[[cluster_id_index]]
 
-      deseq2ResDF=deseq_all_groups[[cluster_id]]
+      deseq2ResDF=deseq_all_groups[[cluster_id_index]]
       deseq2ResDF$log2FoldChange
       #deseq2ResDF$GENE_SYMBOL
       deseq2ResDF$padj
 
-      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id), xlim=c(-1.1,1.1),
+      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id_index), xlim=c(-1.1,1.1),
       lab=deseq2ResDF$GENE_SYMBOL)
       pvol
       fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_COMP,'.jpeg')
-      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id, '.jpeg')
+      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_index, '.jpeg')
 
       pvol
       ggsave(fname,pvol, width=9,height=12, dpi=300)
 }
-fname
+
 
 #### 2. Venn from significant in top of factor
 
@@ -260,17 +262,19 @@ enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
 results_file_cluster
 
-for (cluster_id in c(1:k_centers_m)){
+for (cluster_id in clusters_indices){
   # run enrichment with the log2pval metric
   print(cluster_id) 
-  deseq2ResDF = deseq_all_groups[[cluster_id]]
+
+  cluster_id_index=paste0(cluster_id, collapse='_')
+  deseq2ResDF = deseq_all_groups[[cluster_id_index]]
   gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
-  gene_lists[[cluster_id]]<-gene_list1
+  gene_lists[[cluster_id_index]]<-gene_list1
   results_file_cluster
 
-  results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id)
+  results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
   gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 , N_NET=10)
 
   # TODO: try also  the other tool 
@@ -291,7 +295,7 @@ gse_compare<-compareCluster(geneClusters = list(G1=gene_lists[[clust_pair[1]]],G
 
 ### RUN SCRIPT compare
 
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60)
+plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
 
 
 

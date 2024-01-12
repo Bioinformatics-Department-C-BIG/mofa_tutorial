@@ -1,4 +1,4 @@
-#install.packages("BiocManager", repos = "http://cran.us.r-project.org")
+install.packages("BiocManager", repos = "http://cran.us.r-project.org")
 install.packages('devtools')
 
 
@@ -10,6 +10,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager", version(16))
 remove.packages('BiocManager')
 BiocManager::install("MOFA2")
+BiocManager::install("MOFAdata")
 
 BiocManager::install('Org.Mm.eg.db')
 #remove.packages('MOFA2')
@@ -83,12 +84,13 @@ if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
 
-#BiocManager::install("MOFAdata")'
+BiocManager::install("MOFAdata")
+BiocManager::install("MOFA")
 
 #remove.packages('MOFA2')
 
 #To use the latest features of MOFA you can install the software from GitHub:
-devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
+#devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
 #If you do so, you have to manually install the Python dependencies using pip (from the Unix terminal). Importantly, this has to be done before the R installation.
 
 #pip install mofapy2
@@ -105,6 +107,7 @@ BiocManager::install('rbioapi')
 BiocManager::install('clusterProfiler')
 BiocManager::install('DOSE')
 install.packages('europepmc')
+BiocManager::install('tidyverse')
 
 
 BiocManager::install('GOfuncR')
@@ -124,3 +127,33 @@ remotes::install_github("jmw86069/jamenrich")
 
 
 BiocManager::install('WGCNA')
+BiocManager::install('OmnipathR', force=TRUE)
+BiocManager::install('dnet')
+BiocManager::install('sgof')
+BiocManager::install('factoextra')
+BiocManager::install('GOfuncR')
+
+BiocManager::install('VennDiagram')
+
+BiocManager::install('reshape')
+
+BiocManager::install('randomForest')
+BiocManager::install('DescTools')
+
+install.packages('caret')
+install.packages('tibble')
+suppressPackageStartupMessages(library(randomForest))
+
+
+
+BiocManager::install("vsn")
+BiocManager::install('GGally')
+
+
+
+## install timeOmics
+BiocManager::install('timeOmics')
+BiocManager::install('propr')
+
+
+

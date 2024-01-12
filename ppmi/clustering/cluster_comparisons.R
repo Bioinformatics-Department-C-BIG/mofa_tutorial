@@ -30,8 +30,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP = 'V08'
-process_mirnas=FALSE 
+process_mirnas= TRUE
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -61,7 +60,6 @@ clust_name=paste0(y_clust, '_clust')
 #MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
-y_clust='moca';
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
 cell_corr<-TRUE
@@ -118,10 +116,10 @@ cluster_id=1
 #param <- SnowParam(workers = 6, type = "MPI")
 
 
-deseq_all <- vector("list", length = 3) # holds the significant gene/mirs ids only for each cluster
-deseq_all_names<-vector("list", length = 3)
-gene_lists<-vector("list", length = 3)
-gse_all<-vector("list", length = 3)
+deseq_all <- vector("list", length = 0) # holds the significant gene/mirs ids only for each cluster
+deseq_all_names<-vector("list", length = 0)
+gene_lists<-vector("list", length = 0)
+gse_all<-vector("list", length = 0)
 
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
@@ -152,13 +150,14 @@ for (cluster_id in 1:3){
 formula_deseq
 se_filt_all
 
-clusters_indices= list(c(1,2,3), 1,2,3)
+clusters_indices= list( '1','2','3', c(1,2,3))
+clusters_indices
 for (cluster_id in clusters_indices){
 
   ### 1. for each cluster, create se filt with controls, 
   ### 2. run deseq 
   ### 3. get significant per cluster 
-  print(paste('cluster:',cluster_id))
+  #print(paste('cluster:',cluster_id))
   cluster_id_index=paste0(cluster_id, collapse='_')
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
   #de_file
@@ -167,7 +166,6 @@ for (cluster_id in clusters_indices){
 
    if (file.exists(de_file)){
   #if (FALSE)
-
     # if de file exists load it - unfiltered de results file
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
@@ -182,20 +180,23 @@ for (cluster_id in clusters_indices){
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
   }
+  print(cluster_id_index)
   deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
   deseq_all[[cluster_id_index]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
+
+
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
-names(deseq_all_names) <- paste0('SG', 1:length(deseq_all_names))
+names(deseq_all_names) <-names(deseq_all)
 
 
 
 
 #### 1. Venn from significant 
-
+length(deseq_all_names)
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,
-                    main =paste0( ' DE molecules for each molecular cluster' ))
+            main =paste0( ' DE molecules for each molecular cluster' ))
 
 graphics.off()
  # TODO: 
@@ -263,7 +264,7 @@ enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 results_file_cluster
 
 for (cluster_id in clusters_indices){
-  # run enrichment with the log2pval metric
+  # run enrichment with the log2foldchange metric
   print(cluster_id) 
 
   cluster_id_index=paste0(cluster_id, collapse='_')
@@ -271,30 +272,37 @@ for (cluster_id in clusters_indices){
   gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
-  gene_lists[[cluster_id_index]]<-gene_list1
-  results_file_cluster
+  gene_lists[[cluster_id_index]]<-gene_list1 # load the gene lists separately for cluster compare 
 
   results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
-  gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, N_EMAP=30 , N_NET=10)
+  gse_file<-paste0(results_file_cluster, '.Rds')
+  if (!file.exists(gse_file)){
+      gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
+      N_EMAP=30 , N_NET=10)
+      saveRDS(gse1,gse_file )
 
-  # TODO: try also  the other tool 
-
+  }
 }
 
 
-
+# Run cluster compare by cluster - it does not need the separate files only the gene lists 
 clust_pair<-c(1,2,3)
 clust_pair_s=paste0(clust_pair, collapse='_')
 clust_pair_s
-gse_compare<-compareCluster(geneClusters = list(G1=gene_lists[[clust_pair[1]]],G2=gene_lists[[clust_pair[2]]], G3=gene_lists[[clust_pair[3]]] ), 
+geneClusters = list(G1=gene_lists[[clust_pair[1]]],
+                            G2=gene_lists[[clust_pair[2]]],  # nolint
+                            G3=gene_lists[[clust_pair[3]]])
+geneClusters=gene_lists
+gene_lists
+gse_compare<-compareCluster(geneClusters = geneClusters , 
                             fun = "gseGO", 
                             OrgDb='org.Hs.eg.db', 
-                            ont=ONT, 
-                            keyType = 'ENSEMBL') 
+                          ont=ONT, 
+                          keyType = 'ENSEMBL') 
 
 
 ### RUN SCRIPT compare
-
+names(geneClusters)                  
 plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
 
 
@@ -323,6 +331,8 @@ deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){
 dir.create(paste0(deseq_params_all, '/enr/'))
 enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
 
+
+## Compare the three clusters for one visit 
 enrich_compare_path
 gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq_all_times[[2]],T3=deseq_all_times[[3]] ), 
                             fun = "gseGO", 

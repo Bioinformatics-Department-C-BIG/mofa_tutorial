@@ -648,7 +648,9 @@ require(DOSE)
 library('enrichplot')
 
 
-
+#deseq2ResDF
+#results_file_cluster
+#N_DOT=20, N_EMAP=30 , N_NET=10)
 
 run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15){
   #'
@@ -678,12 +680,10 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
   #' 
   #'
 
-  #pvalueCutoff=1
-  # gse_full
-  # N_DOT=15
+  #pvalueCutoff=1; gse_full; N_DOT=15;results_file=results_file_cluster;
+    #results_file
 
- # results_file=results_file_cluster
-  #results_file
+
   gse_full <- clusterProfiler::gseGO(gene_list, 
                                      ont=ONT, 
                                      keyType = 'ENSEMBL', 
@@ -694,14 +694,12 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
   gse = write_filter_gse_results(gse_full, results_file, pvalueCutoff)
   
   gse = dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
- 
-  # supply a cut gene list to avoid to many 
-  
-  gene_list_cut<-c(head(gene_list, 20), tail(gene_list, 20))
+    if  (dim(gse)[1]>2 ){
+      # check if the enrichment returned more than one resulting paths before plotting!
 
-
-  enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
-      run_ORA=FALSE, geneList = gene_list)
+      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
+          run_ORA=FALSE, geneList = gene_list)
+    }
   
   return(gse)
 }
@@ -856,6 +854,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   # because it does not make sense if we dont rank by logFC
   # or in the mofa case where we rank by importance in factor 
    # N_DOT=100
+ 
   dp<-clusterProfiler::dotplot(gse, showCategory=N_DOT, 
               font.size=15
   )
@@ -956,8 +955,9 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     show(p2_net)
     #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
-    
-    ggsave(paste0(results_file, '_gc_', strsplit(node_label, '')[1], '_',write_n, '.jpeg'), width=20, height=20)
+    unlist(strsplit('all', '',1))[[1]]
+
+    ggsave(paste0(results_file, '_gc_', unlist(strsplit(node_label, ''))[[1]], '_',write_n, '.jpeg'), width=20, height=20)
   }else{
     p1_net <- cnetplot(gse_x)
     show(p1_net)

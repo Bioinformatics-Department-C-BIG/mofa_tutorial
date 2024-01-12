@@ -145,10 +145,13 @@ met$NP2PTOT_V10
          'NP2PTOT',  'scopa', 'sft', 
           # for cognition#'moca',# 'hvlt_immediaterecall',  # current 
          #baseline
-         'NP2PTOT_BL',         
+        # 'NP2PTOT_BL',     
+        paste0(DIFF_VAR,'_BL'),     
          # V10/12 -future scores 
-         'NP2PTOT_V10',  'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
+        # 'NP2PTOT_V10', 
+        # 'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
          paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'), 
+         'MCATOT_V14',
           #covars
          'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca'
       #    'hvlt_immediaterecall_V12'
@@ -215,9 +218,10 @@ outfile_clusters
 # Plot clustering for scales 
 
 
-p <- plot_factors(MOFAobjectPD_sel, 
+p <- MOFA2::plot_factors(MOFAobjectPD_sel, 
              factors=which(all_fs_diff[,y]),
              color_by =color_by
+            # alpha=0.7
 #             shape_by = color_by
 )
 p
@@ -226,18 +230,35 @@ dev.off()
 
 ## 2. Get the heatmap with the averages of all clusters 
 ## or show histograms of all clusters 
-cors_all_pd[, 'NP2PTOT_LOG']
+
 
 ### Means by group 
 library(dplyr)
-sm$NP2PTOT_LOG_V10
+sm1=MOFAobject_clusts@samples_metadata
+sm1_pd<-sm1[sm1[, 'COHORT']==1,]
+counts_moca<-sm1_pd[, c( 'MCATOT', 'MCATOT_V16', 'moca_clust')]
+is.na(counts_moca)
+
+counts_moca%>%arrange(moca_clust)%>%
+filter(!is.na(MCATOT_V16)) %>%
+filter(moca_clust==2) %>%
+summarize(median=mean(MCATOT, na.rm=TRUE))
+
+
+
+counts_moca%>%arrange(moca_clust)%>%
+group_by(moca_clust)%>%
+  dplyr::summarize(count_na = sum(is.na(MCATOT_V16)), n = n(), perc=count_na/n)
+
+
+diff_variables_to_p=c(diff_variables_to_p, 'nfl_serum')
 diff_variables_to_p
-diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
-                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
-                      'upsit', 'VLTFRUIT', 'sft', 
-                      'stai_state', 'stai_trait', 
-                      'AGE_SCALED', 'Neutrophil.Lymphocyte', 
-                       'nfl_serum')
+#diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
+#                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
+#                      'upsit', 'VLTFRUIT', 'sft', 
+#                      'stai_state', 'stai_trait', 
+#                      'AGE_SCALED', 'Neutrophil.Lymphocyte', 
+#                       'nfl_serum')
                       # nfl serum is the other way round why?
                       # Also check if the neutrophil: lymphocyte is higher in more severe patients 
                       # is cluster 3 with higher neutrophils more severe in the longterm or less?  
@@ -245,6 +266,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD_sel))
+clust_name=paste0(DIFF_VAR, '_clust')
 
 col_data<-samples_metadata(MOFAobjectPD_sel)[c(diff_variables_to_p,clust_name, 'PATNO')]
 colnames(col_data)
@@ -257,21 +279,25 @@ col_data$nfl_serum<-as.numeric(col_data$nfl_serum)
 library(dplyr)
 col_data_t<-tibble(col_data)
 #means_by_cluster %>% group_indices()
-means_by_cluster <- col_data %>% 
+colnames(col_data)
+means_by_cluster <- col_data_t %>% 
       dplyr::select(-PATNO) %>%
       group_by(cluster) %>%
       mutate_if(is.character, as.numeric) %>%
   summarise_each(funs(median(., na.rm = TRUE)))%>%
-  scale() %>% as.data.frame() %>% select(-cluster) %>% 
+  scale() %>% as.data.frame() %>% dplyr::select(-cluster) %>% 
   as.data.frame()
 rownames(means_by_cluster)<-means_by_cluster$cluster
 
 
 # TODO: adjust clustering method to get the correct roder
+# reverse the moca scores because the severe is low
 means_by_cluster_na<-means_by_cluster[,colSums(!is.na(means_by_cluster))>0]
 dim(means_by_cluster_na)
-means_by_cluster_na$moca_rev<- (-means_by_cluster_na$moca) # reverse moca
-means_by_cluster_na$moca<-NULL
+mc_scores<-grep('MC|moca|sft',colnames(means_by_cluster_na))
+means_by_cluster_na[,mc_scores]=-means_by_cluster_na[,mc_scores]
+colnames(means_by_cluster_na)[mc_scores] = paste0(colnames(means_by_cluster_na)[mc_scores] , '_reverse')
+
 graphics.off()
 jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
   pheatmap(means_by_cluster_na, 

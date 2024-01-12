@@ -10,7 +10,11 @@ source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 # source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
+
+
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
+VISIT_COMP = 'BL'
+
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 

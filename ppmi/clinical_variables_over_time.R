@@ -32,6 +32,7 @@ combined_bl_log_sel$PDMEDYN_V14
 
 # 1. Select the patients eg. by mofa groups 
 df_to_attach<-combined_bl_log_sel
+
 for (diff_var in names(all_clusts_mofa)){
 
         if (!is.null(all_clusts_mofa[[diff_var]])){
@@ -56,27 +57,20 @@ df_plot<-combined_bl_log_sel
 ## fetch grouping from MOFA 
 
 df_plot_2k<-df_plot
+
+
+df_plot
 PDSTATE_SEL=NULL
 
 y='updrs2_score'
 add_individual_lines=FALSE
 add_boxplots<-FALSE
-df_plot_2k<-df_plot
 to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT','NP3_TOT', 'MCA_TOT', 'SCAU_TOT', 
            'con_putamen', 'rigidity', 'td_pigd_old', 'RBD_TOT', 'NP1_TOT', 'AGE_AT_VISIT', 'Outcome', 'NP4_TOT' , 'scopa')
-
-
+y='updrs2_score'
   
-  ### TODO: check that only the variables with highest visit exist
-
-  ## either loop through or melt 
-  #df_plot_2k[df_plot_2k[,y]grouping]
   
-  y='updrs2_score'
-  
-  df_plot_2k=df_plot
-  
-    lv='V13_V14';   
+lv='V13_V14';   
 
   
   plot_clinical_trajectory<-function(y, clust_name, df_plot_2k=df_plot, lv='V12', fname=fname, add_individual_lines=FALSE){
@@ -156,20 +150,21 @@ to_plot<-c('NP2PTOT','updrs2_score','updrs3_score','NP2PTOT', 'NP3TOT' ,'NP2_TOT
     
     }
     
-    add_individual_lines=TRUE
+add_individual_lines=TRUE
 to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca')
 clust_metric='moca'
-clust_metric='updrs2_score_LOG'
+clust_metric='NP2PTPT_LOG'
 
 all_fs_diff$updrs2_score_LOG
+df_plot
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
   for (y in to_plot){
 
     clust_name<-paste0(clust_metric, '_clust')
 
-    cluster_params<-paste0(clust_name ,'/', k_centers,'/',rescale_option)
+    cluster_params<-paste0(clust_name ,'/', k_centers_m,'/',rescale_option)
     cluster_params
-    fname=paste0(outdir, cluster_params, '/trajectories/clinical/trajectory_','_', y,'_','_lv_' , lv_to_plot)
+    fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
     plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V12', fname=fname, add_individual_lines=add_individual_lines)
   }
 

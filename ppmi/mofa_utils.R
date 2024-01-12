@@ -217,30 +217,39 @@ groups_from_mofa_factors<-function(patnos, MOFAobject_clusts, y_clust ){
 }
 
 
-
+#centers=3
 
 ###### CLUSTERS #### 
-cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE ){
+
+
+#rescale=TRUE
+cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE, group=FALSE ){
   ###
   #' Cluster patients in a mofa object using the specified factors
-  #' @param factors which factors to use for the clustering  
+  #' @param factors which factors to use for the clustering
   #' @return clusters_by_patno
   #' @
   #' 
   #' 
+  gn<-length(MOFA2::groups_names(MOFAobject))
+# g=1
+      all_groups_clusters<-sapply(1:gn, function(g) {
+        Z <- get_factors(MOFAobject)[[g]]
+
+        Z1 <- Z[,factors]
+        if (rescale){
+          Z1=scale(Z1)
+        }
+        groups_kmeans<-kmeans(Z1, centers=centers)
+        return(groups_kmeans$cluster)
+      }
+      )
   
-  Z <- get_factors(MOFAobject)[[1]]
-  Z1<-Z[,factors]
-  if (rescale){
-    Z1=scale(Z1)
-  }
-  groups_kmeans<-kmeans(Z1, centers=centers)
-  names(groups_kmeans$cluster)<-gsub('\\_.*', '', names(groups_kmeans$cluster))
-  
-  return(groups_kmeans)  
+   groups_kmeans<-unlist( all_groups_clusters)
+
+
+  return(groups_kmeans)
 }
-
-
 
 
 
@@ -353,6 +362,27 @@ boxplot_by_cluster<-function(met, clust_name, y, bn){
 #selected_covars=all_diff_variables_prog_conf
 #MOFAobject_to_plot=MOFAobjectPD
 #labels_col=FALSE
+
+#selected_covars=all_diff_variables_prog_conf;
+#factors = sel_factors_conf
+#labels_col=TRUE
+#height=1000
+#res=200
+# MOFAobject_to_plot=MOFAobjectPD_sel
+
+
+get_labels<-function(selected_covars, labels_col=FALSE){
+  # re-label selected clinical variables 
+  if (labels_col){
+    labels_col_plot<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
+    labels_col_plot[is.na(labels_col_plot)]<-selected_covars[is.na(labels_col_plot)]
+  }else{
+    labels_col_plot=selected_covars
+  }
+  return(labels_col_plot)
+}
+
+
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
                            MOFAobject_to_plot=MOFAobject, res=200){
   
@@ -365,30 +395,23 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
   sd_na<-c(is.na(sds)|sds==0)
   
-  print(selected_covars)
   # then check that the sd is not NA
   selected_covars=selected_covars[ !(sd_na) ]
-  
-  if (labels_col){
-    labels_col<-mt_kv$V2[match(selected_covars,mt_kv$V1)]
-    labels_col[is.na(labels_col)]<-selected_covars[is.na(labels_col)]
-  }else{
-    labels_col=selected_covars
-  }
+
 
   # remove if there are at least non-na values
   selected_covars = selected_covars[colSums(!is.na(MOFAobject_to_plot@samples_metadata[, selected_covars]))>3]
   
  P2_data<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , plot = plot,
-                                        labels_col=labels_col, 
+                                        labels_col=get_labels(selected_covars, labels_col = TRUE), 
                                         factors = factors, 
                                         cluster_cols=TRUE, 
                                         return_data = TRUE)
 
-# keep only what is >0
-selected_covars = selected_covars[colSums(P2_data)>0]
-
+  # keep only what is >0
+  selected_covars = selected_covars[colSums(P2_data)>0]
+  #plot='log_pval'
 
   
   jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
@@ -398,13 +421,11 @@ selected_covars = selected_covars[colSums(P2_data)>0]
   P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , 
                                         plot = plot,
-                                        labels_col=labels_col, 
+                                        labels_col=get_labels(selected_covars, labels_col = TRUE), 
                                         factors = factors, 
                                         cluster_cols=TRUE)
 
 
-
-  
   dev.off()
   
   

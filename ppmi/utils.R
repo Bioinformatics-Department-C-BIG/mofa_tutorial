@@ -84,7 +84,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  'NHY', 
                                  # 'SCAU5',
                                  # NON-MOTOR
-                                 'moca','sft', 'VLTFRUIT','MCAVFNUM', 'hvlt_immediaterecall', 'VLTVEG', 'PUTAMEN_R_V10', 
+                                 'moca','sft', 'VLTFRUIT', 'VLTVEG', 'PUTAMEN_R_V10', 
                                  # CSF BIOMARKERS 
                                  'abeta_LLOD', 'HVLTRDLY',
                                  #  'scopa', 
@@ -94,9 +94,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # not significant: 
                                  #  'ptau',    'ab_asyn', 
                                  'PDSTATE',  
-                                 'RBD_TOT', 
-                                 'td_pigd_old_on', 
-                                 'PD_MED_USE' , 
+                                                                  'PD_MED_USE' , 
                              #    'months', 
                                  'con_putamen_V10', 
                              'asyn' , 'CSFSAA', 
@@ -104,9 +102,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  
                                  ## WHICH factors have to do with the change in the scale
                                  # And the change in the datascan binding  in the future?
-                                 # THESE factors are the ones that we actually WANT 
-                                 'MCATOT', 
-                               #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
+                                 # THESE factors are the ones that we actually WANT                                #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                                  'SITE', 'Plate', 
                                  'Neutrophil.Score'
                                  
@@ -797,9 +793,9 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8){
   ### GSE COMPARE ANALYSIS 
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=10, split=".sign") + facet_grid(.~.sign)
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
          dpi=250, width=12, height=10, 
@@ -961,17 +957,18 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
     
-    ggsave(paste0(results_file, '_gc_', node_label, '_',write_n, '.jpeg'), width=20, height=20)
+    ggsave(paste0(results_file, '_gc_', strsplit(node_label, '')[1], '_',write_n, '.jpeg'), width=20, height=20)
   }else{
     p1_net <- cnetplot(gse_x)
     show(p1_net)
-    ggsave(paste0(results_file, '_gc_', '_',write_n, '.jpeg'), width=12, height=12)
+    ggsave(paste0(results_file, 'gc', '.jpeg'), width=12, height=12)
 
     
   }
   
   
-  
+  node_label='all'
+  as.character(node_label)
   
   ####Visualize go terms as an undirected acyclic graph 0
   #if (!process_mirnas){

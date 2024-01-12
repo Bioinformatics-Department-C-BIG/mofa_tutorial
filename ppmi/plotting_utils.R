@@ -478,7 +478,7 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1){
   #'
   #' Create boxplot by cluster 
   #' 
@@ -523,9 +523,9 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   
     facet_wrap(~variable, scales='free',#, labeller=labeller(
       #variable=labeller_clinical
-      nrow=1)+
+      nrow=facet_rows)+
     geom_pwc( tip.length = 0,
-      method = "wilcox_test", label = "p.adj.signif")+   
+      method = "wilcox_test", label = "p.adj.signif", label.size = 2)+   
     scale_color_viridis_d(option="turbo")+
        scale_fill_viridis_d(option="turbo")+
   
@@ -533,12 +533,13 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
     
   labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
-         caption = paste0( '\n', 'factors: ',factors, freqs,
+         caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
                           #paste_med, ',\t',
-                          paste_sex, ',\t',
+                          paste_sex, ' '
                           #paste_state,  ',\n',
-                          paste_tdpigd, ',\t',
-                          paste_nhy), 
+                          # paste_tdpigd,' '
+                          #paste_nhy
+                          ), 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
     theme(text =element_text(size=15), axis.title.y=element_blank())+

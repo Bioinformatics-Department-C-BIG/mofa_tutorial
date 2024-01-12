@@ -24,7 +24,7 @@ library('factoextra')
 
 
 #### Covariance of factors with metadata 
-source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
+#source(paste0(script_dir,'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
@@ -222,7 +222,7 @@ if (file.exists(covars_f_pearson_pd)){
 covariates=c('SITE', 'Plate', 'NHY', 'NP2PTOT_LOG', 'AGE_SCALED', 'SEX', 
              'Usable.Bases....', 'updrs2_score',  'scopa')
 
-correlate_factors_with_covariates_categ(MOFAobjectPD, covariates=covariates)
+#correlate_factors_with_covariates_categ(MOFAobjectPD, covariates=covariates)
 sel_factors_pd_np3<-which(cors_all_pd[,c('NP3TOT_LOG' )]>(-log10(0.05)))
 
 

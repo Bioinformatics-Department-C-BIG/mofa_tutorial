@@ -31,8 +31,8 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
         clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD, centers=k_centers_m,
          factors=fact, rescale=rescale_option) # Cluster using kmeans
         clust_ps<-clusters_x$cluster
-        MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
-        MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
+       # MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
+       #MOFAobjectPD@samples_metadata[, xname] = as.factor(clust_ps)
         # TODO: save labels
 
         #write.csv()

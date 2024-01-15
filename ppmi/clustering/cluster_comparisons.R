@@ -30,7 +30,8 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-process_mirnas= TRUE
+#VISIT_COMP='V08'
+process_mirnas= FALSE
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -47,7 +48,7 @@ se_clusters
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
-y_clust='moca'
+y_clust='scopa'
 clust_name=paste0(y_clust, '_clust')
 
 ## Outputs 
@@ -69,7 +70,7 @@ se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAob
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), '/rcf_', as.numeric(remove_cell_factors )) 
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 cluster_params_dir
 
@@ -124,7 +125,7 @@ gse_all<-vector("list", length = 0)
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
-
+cluster_params_dir
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr))
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr),  '/',VISIT_COMP)
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr)))
@@ -261,92 +262,96 @@ dir.create(paste0(deseq_params, '/enr/'))
 
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
-results_file_cluster
+process_mirnas
+# run enrichment only for RNAs 
+if (!process_mirnas){
 
-for (cluster_id in clusters_indices){
-  # run enrichment with the log2foldchange metric
-  print(cluster_id) 
 
-  cluster_id_index=paste0(cluster_id, collapse='_')
-  deseq2ResDF = deseq_all_groups[[cluster_id_index]]
-  gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
-  names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
+  for (cluster_id in clusters_indices){
+      # run enrichment with the log2foldchange metric
+      print(cluster_id) 
 
-  gene_lists[[cluster_id_index]]<-gene_list1 # load the gene lists separately for cluster compare 
+      cluster_id_index=paste0(cluster_id, collapse='_')
+      deseq2ResDF = deseq_all_groups[[cluster_id_index]]
+      gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
+      names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
-  results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
-  gse_file<-paste0(results_file_cluster, '.Rds')
-  if (!file.exists(gse_file)){
-      gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
-      N_EMAP=30 , N_NET=10)
-      saveRDS(gse1,gse_file )
+      gene_lists[[cluster_id_index]]<-gene_list1 # load the gene lists separately for cluster compare 
 
-  }
+      results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
+      gse_file<-paste0(results_file_cluster, '.Rds')
+      if (!file.exists(gse_file)){
+          gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
+          N_EMAP=30 , N_NET=10)
+          saveRDS(gse1,gse_file )
+
+      }
+    }
+
+
+    # Run cluster compare by cluster - it does not need the separate files only the gene lists 
+    clust_pair<-c(1,2,3)
+    clust_pair_s=paste0(clust_pair, collapse='_')
+    clust_pair_s
+    geneClusters = list(G1=gene_lists[[clust_pair[1]]],
+                                G2=gene_lists[[clust_pair[2]]],  # nolint
+                                G3=gene_lists[[clust_pair[3]]])
+    geneClusters=gene_lists
+    gene_lists
+    gse_compare<-compareCluster(geneClusters = geneClusters , 
+                                fun = "gseGO", 
+                                OrgDb='org.Hs.eg.db', 
+                              ont=ONT, 
+                              keyType = 'ENSEMBL') 
+
+
+    ### RUN SCRIPT compare
+    names(geneClusters)                  
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
+
+
+
+
+    ### Cluster compare by visit ### 
+    # 1. 
+    #    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
+
+    cluster_id=3
+    deseq_all_times<-vector("list", length = 3)
+    deseq_all_times
+
+
+    deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){
+      deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' , prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
+      
+      gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
+      names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
+
+
+      return(gene_list1)
+      }
+    )
+
+    dir.create(paste0(deseq_params_all, '/enr/'))
+    enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+
+
+    ## Compare the three clusters for one visit 
+    enrich_compare_path
+    gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq_all_times[[2]],T3=deseq_all_times[[3]] ), 
+                                fun = "gseGO", 
+                                OrgDb='org.Hs.eg.db', 
+                                ont=ONT, 
+                                keyType = 'ENSEMBL') 
+
+
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+
+
+
+
+
 }
-
-
-# Run cluster compare by cluster - it does not need the separate files only the gene lists 
-clust_pair<-c(1,2,3)
-clust_pair_s=paste0(clust_pair, collapse='_')
-clust_pair_s
-geneClusters = list(G1=gene_lists[[clust_pair[1]]],
-                            G2=gene_lists[[clust_pair[2]]],  # nolint
-                            G3=gene_lists[[clust_pair[3]]])
-geneClusters=gene_lists
-gene_lists
-gse_compare<-compareCluster(geneClusters = geneClusters , 
-                            fun = "gseGO", 
-                            OrgDb='org.Hs.eg.db', 
-                          ont=ONT, 
-                          keyType = 'ENSEMBL') 
-
-
-### RUN SCRIPT compare
-names(geneClusters)                  
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
-
-
-
-
-### Cluster compare by visit ### 
-# 1. 
-#    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
-
-cluster_id=3
-deseq_all_times<-vector("list", length = 3)
-deseq_all_times
-
-
-deseq_all_times<-sapply( c('V04', 'V06', 'V08'), function(VISIT){
-  deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' , prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
-  
-  gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
-  names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
-
-
-  return(gene_list1)
-  }
-)
-
-dir.create(paste0(deseq_params_all, '/enr/'))
-enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
-
-
-## Compare the three clusters for one visit 
-enrich_compare_path
-gse_compare<-compareCluster(geneClusters = list(T1=deseq_all_times[[1]],T2=deseq_all_times[[2]],T3=deseq_all_times[[3]] ), 
-                            fun = "gseGO", 
-                            OrgDb='org.Hs.eg.db', 
-                            ont=ONT, 
-                            keyType = 'ENSEMBL') 
-
-
-plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
-
-
-
-
-
 
 
 

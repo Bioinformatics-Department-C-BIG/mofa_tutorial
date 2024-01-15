@@ -84,23 +84,24 @@ visualize_net<-function(visnet, net_name='net'){
 }
 
 library('OmnipathR')
-create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor ){
+create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor, resources =c( "SIGNOR", "STRING_talklr" )){
   #'
   #' @param rnas_sig_factor significant de rnas
   #' @param mirnas_sig_factor
   #' take de rnas sig
   #' take de mirnas sign
   #' Load their interactions c
-
-
+#
     ### Start loading dbs interactions, mirnas, mirtarges
         
       ## Until the DoRothEA issue gets fixed we have this here:
       interactions_string <-
-          import_omnipath_interactions(resources=c("SIGNOR", "STRING_talklr", "ORegAnno", "DoRothEA"))
+          import_omnipath_interactions(resources=resources)
 
+
+      # These will be used for the intermediates
       interactions_dor <- import_transcriptional_interactions(
-          resources = c("ORegAnno", "DoRothEA", "SIGNOR", "STRING_talklr" )
+          resources = resources
       )
 
 

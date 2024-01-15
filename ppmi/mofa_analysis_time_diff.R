@@ -1194,22 +1194,7 @@ for (i in seq(1,2)){
   
 }
 
-views[3]
 
-p<-plot_data_heatmap(MOFAobject_gs, 
-                     view = views[3], 
-                     factor =  ii,  
-                     features = nfs,
-                     denoise = FALSE,
-                     cluster_rows = cluster_rows, 
-                     cluster_cols = cluster_cols,
-                     show_rownames = TRUE, show_colnames = TRUE,
-                     scale = "row",
-                     annotation_samples = cors_sig_non_na,
-                     main=main_t
-                     
-                     
-)
 
 
 

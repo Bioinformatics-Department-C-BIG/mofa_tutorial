@@ -54,7 +54,8 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
-                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes')
+                         'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 'RIN', 
+                         'Uniquely.mapped')
                    #      diff_vars)
 #'DYSKIRAT')
 

@@ -489,7 +489,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   clust_metric<-gsub('_clust', '', clust_name)
   
  # labeller_clinical2=labeller_clinical[diff_variables_to_p]
-  
+
+  as.numeric(met[,clust_metric])
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
   print(paste('Using subset of  ', dim(met)[1], ' patients'))

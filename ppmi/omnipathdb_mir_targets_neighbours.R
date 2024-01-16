@@ -21,11 +21,11 @@ VISIT_COMP<-'V08'
 as.numeric(cell_corr)
 cell_corr=TRUE
 outdir
+clust_name='moca_clust'
 
+remove_cell_factors=FALSE
 
-
-
-cluster_params_to_load<-paste0('/clustering/',clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+cluster_params_to_load<-paste0('/clustering/',clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
 cluster_params_to_load
 
 load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, cell_corr_state = FALSE, prefix='rnas_' ){
@@ -138,6 +138,7 @@ rnas_sig_factor<-rnas_sig_visit %>% dplyr::filter(GENE_SYMBOL %in% top_genes_fac
 
 ## compare clust 1,2
 
+
 mirnas_sig_factor_V08_list<-lapply(mirnas_sig_V08_list, function(df){
   return( df %>%  dplyr::filter(GENE_SYMBOL %in% top_mirnas_factor8))
 })
@@ -149,12 +150,29 @@ rnas_sig_factor_V08_list<-lapply(rnas_sig_V08_list, function(df){
 ## input: 
 ## de_rnas: union of all
 ## de_mirnas: union of all clusters 
-rnas_sig_factor_V08_list
-rnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), rnas_sig_factor_V08_list)
-mirnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), mirnas_sig_factor_V08_list)
+mofa_filter=FALSE; 
+if (mofa_filter){
+  rnas_sig_list = rnas_sig_factor_V08_list
+  mirnas_sig_list = mirnas_sig_factor_V08_list
+}else{
+ rnas_sig_list = rnas_sig_V08_list
+  mirnas_sig_list = mirnas_sig_V08_list
+  top_fr=1*2 # helps in plotting...
+
+}
+
+names(rnas_sig_list)
+rnas_sig_list[[4]]
+
+rnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), rnas_sig_list)
+mirnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), mirnas_sig_list)
 
 mirnas_sig_factor_all_clusts$GENE_SYMBOL
-g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts)
+resources = c(  "STRING_talklr" , 'SIGNOR', 'DoRothEA')
+
+g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts, resources = resources)
+# choose the backbone to be the union or intersection
+g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_list[[4]], mirnas_sig_list[[4]],resources = resources)
 
 g_extended_both_clusters
 
@@ -217,7 +235,8 @@ Coords <- layout_with_fr(OPI_g_union)# %>%
 
 ## Plot cluster 3 as specified by backbone coords 
 
-dir.create(paste0(outdir,cluster_params_to_load, '/nets/'))
+dir.create(paste0(outdir,cluster_params_to_load, '/nets/mf_', as.numeric(mofa_filter), '/'), recursive = TRUE)
+
 mofa_cluster_id=1
 set.seed(123) 
 g_fc_V08_list
@@ -235,13 +254,19 @@ g_fc_V08_list
         vertex.size.factor=1 
       )
 
+filter_significant = TRUE
+V(g_fc_plot)$significant
+V(g_fc_plot)$significant 
+delete_vertices(g_fc_plot, !(V(g_fc_plot)$significant))
+g_fc_plot
 
 
+# TODO: choose backbone to be from the intersection or run with all 3...? 
 for (mofa_cluster_id in c(1,2,3,'1_2_3')){
 
 
       g_fc_plot<-g_fc_V08_list[[mofa_cluster_id]];VISIT_PLOT = 'V08'
-
+ 
     # g_fc_plot<-g_fc_V06_list[[mofa_cluster_id]];  VISIT_PLOT = 'V06'
 
       ## ADD border if significant 
@@ -249,8 +274,7 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
 
       #V(g_fc_V06_list[[mofa_cluster_id]])$FC
 
-
-
+ 
       #round(cbind(V(g_fc_V08_list[[mofa_cluster_id]])$FC,V(g_fc_V06_list[[mofa_cluster_id]])$FC), digits=2)
 
       sig_names<-V(g_fc_plot)$name[V(g_fc_plot)$significant]
@@ -264,7 +288,7 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
 
       ### IGRAPH TO SAVE 
       net_name=paste0('mirs_genes_',VISIT_PLOT,'_', mofa_cluster_id, '_f',sel_factor,top_fr )
-      net_file=paste0(paste0(outdir,cluster_params_to_load,  '/nets/') , net_name)
+      net_file=paste0(paste0(outdir,cluster_params_to_load,  '/nets/mf_', as.numeric(mofa_filter)) ,'/' , net_name)
       V(g_fc_plot)$frame.color<-bd
       V(g_fc_plot)$label.cex=plot_settings$label.cex # increase label size? 
 
@@ -284,7 +308,9 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
       vertex.label.dist = 2, 
         layout = Coords)
 
-      title(paste('Visit: ', VISIT_PLOT, ', Cluster: ', mofa_cluster_id, ', Factor: ',
+      title(paste(  'Resources: ', paste(as.character(resources), collapse=', '),'\n', 
+      'Visit: ', VISIT_PLOT, ', Cluster: ', mofa_cluster_id, 
+      ', \nMOFA filter', mofa_filter, ', Factor: ',
       sel_factor,', top: ', top_fr  ),cex.main=1)
 
       #ggsave(paste0(net_file, '.png'))
@@ -305,6 +331,9 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
 
 
 }
+
+
+
 
 
 

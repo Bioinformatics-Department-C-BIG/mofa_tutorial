@@ -6,12 +6,16 @@
 source(paste0(script_dir, '/ppmi/utils.R'))
 
 process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
+
+
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
 se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
-se_mirs
-head(assay(se_mirs))
-head(assay(se_mirs_norm))
+
+
+
+hist(head(assay(se_mirs),10)[10:50])
+hist(head(assay(se_mirs_norm),10)[10:50])
 
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
@@ -30,8 +34,8 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-#VISIT_COMP='V08'
-process_mirnas= FALSE
+VISIT_COMP='V08'
+process_mirnas= TRUE
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -49,6 +53,7 @@ se_clusters
 # Set the outdirectory 
 
 y_clust='scopa'
+y_clust=DIFF_VAR
 clust_name=paste0(y_clust, '_clust')
 
 ## Outputs 
@@ -70,7 +75,7 @@ se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAob
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), '/rcf_', as.numeric(remove_cell_factors )) 
+cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_', as.numeric(remove_cell_factors )) 
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 cluster_params_dir
 
@@ -81,21 +86,7 @@ se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 
 
-# todo move to config
-add_med='LEDD_scaled'
-add_med='PDMEDYN'
-add_med=FALSE
-if (add_med=='PDMEDYN'){
-  formula_deseq = '~AGE_SCALED+SEX+PDMEDYN+kmeans_grouping'
-  
-}else if(add_med=='LEDD_scaled') {
-  formula_deseq = '~AGE_SCALED+SEX+LEDD_scaled+kmeans_grouping'
-}else{
-  formula_deseq = '~AGE_SCALED+SEX+SITE+kmeans_grouping'
-  formula_deseq = '~AGE_SCALED+SEX+Plate+kmeans_grouping'
-  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
-}
-formula_deseq
+
 # TODO: include corrected for cell counts  and uncorrected formula
 #if (process_mirnas){
   # TODO: try site? and lymphocytes too? 
@@ -103,15 +94,26 @@ formula_deseq
 
 #  cell_corr = FALSE # ensure they are always in the same folder c0
 # apply this both for mirs and rnas 
-if (cell_corr) {
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+Plate+kmeans_grouping'
+
+if (process_mirnas){
+    formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping' # remove plate as well 
+  if (cell_corr) {
+    formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+  }
+}else {
+  if (cell_corr) {
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+kmeans_grouping'
 
 }else{
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Plate+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'
 
 
 }
-formula_deseq
+}
+
+
+
+print(paste('formula: ', formula_deseq))
 cluster_id=1
 
 #param <- SnowParam(workers = 6, type = "MPI")
@@ -125,14 +127,14 @@ gse_all<-vector("list", length = 0)
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
-cluster_params_dir
+
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr))
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr),  '/',VISIT_COMP)
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr)))
 dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
-deseq_params
+
 
 # TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
@@ -352,6 +354,7 @@ if (!process_mirnas){
 
 
 }
+
 
 
 

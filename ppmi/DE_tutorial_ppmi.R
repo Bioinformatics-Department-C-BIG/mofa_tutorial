@@ -28,7 +28,7 @@ source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 
-
+#BiocManager::install('rmdformats')
 ##### START HERE WITH PROTEOMICS 
 ## TODO: SAVE AND LOAD 
 # se_filt and vsn mat 
@@ -56,13 +56,14 @@ SEX=se_filt$SEX
 COHORT
 
 dim(se_filt)
-formula_deseq2
+
 AGE_AT_VISIT=AGE
+AGE
 formula_deseq_test<-'~AGE_AT_VISIT+SEX+COHORT'
 design <- model.matrix(as.formula(formula_deseq_test) )
 design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
 
-
+colnames(protein_matrix)
 fit <- lmFit(protein_matrix, design = design)
 fit.cont <- eBayes(fit, trend=TRUE)
 

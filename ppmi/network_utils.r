@@ -3,7 +3,7 @@
 ## graph utils
 
 
-rnas_V08$mofa_sign
+
 #g<-OPI_g_de_mirs_de_genes_targets
 
 get_logFC_by_node<-function(g, de_rnas, de_mirnas){
@@ -84,7 +84,9 @@ visualize_net<-function(visnet, net_name='net'){
 }
 
 library('OmnipathR')
-create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor, resources =c( "SIGNOR", "STRING_talklr" )){
+create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor, resources =c( "SIGNOR", "STRING_talklr" ), 
+gene_mir_resources = c( "miRTarBase", "TransmiR"),
+add_gg_interactions=FALSE){
   #'
   #' @param rnas_sig_factor significant de rnas
   #' @param mirnas_sig_factor
@@ -110,8 +112,9 @@ create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor, res
 
       ## ----mirnatarget--------------------------------------------------------------------------------------------
       ## We query and store the interactions into a dataframe
+      #gene_mir_resources = c("miR2Disease", "miRDeathDB", "miRTarBase", "TransmiR")
       interactions_mirs <-
-        import_mirnatarget_interactions(resources = c("miR2Disease", "miRDeathDB", "miRTarBase", "TransmiR"))
+        import_mirnatarget_interactions(resources = gene_mir_resources)
 
       ## 1. interactions_mirs- obtain its genes 
       ## 2. filter by genes that have a de target OR are DE themselves 
@@ -149,18 +152,31 @@ create_regulatory_net_backbone<-function(rnas_sig_factor, mirnas_sig_factor, res
       g_targets<-interaction_graph(interactions_of_mirtargets_tar_is_de)
       
       ############# Add also gene-gene interactions that are not in the graph already ###
+      # add gene interactiosn that are not DE? 
+      interactions_dor_target_genes<-rbind(interactions_dor %>%
+          dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) ,
+           interactions_dor %>%
+          dplyr::filter( source_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL )) )
 
+      
       interactions_dor_target_genes<-interactions_dor %>%
-          dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) %>%
+          dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) %>% 
           dplyr::filter( source_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL )) 
 
 
       dim(interactions_dor_target_genes)
-      g_genes_inter<-interaction_graph(interactions_dor_target_genes)
-
+      g_genes_inter<-interaction_graph(interactions_dor_target_genes) # interactions of target genes only!! 
+      #g_genes_inter<-interaction_graph(interactions_dor)
 
       g_extended<-union(g_mirs_targets_filt, g_targets) # mir-gene-gene interactions
-      #g_extended<-union(g_extended, g_genes_inter) ## add gene-gene interactions
+
+      if (add_gg_interactions){
+          g_extended<-union(g_extended, g_genes_inter) ## add gene-gene interactions
+
+      }
+
+     
+     
 
       return(g_extended)
 

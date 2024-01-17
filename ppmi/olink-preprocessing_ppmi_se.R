@@ -132,8 +132,7 @@ sample_info<-DataFrame(Sample=Sample)
 
 
 tmp<- assays
-.0.(se_filt)[[1]]
-dim(tmp)
+
 
 # Filter and normalize
 ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'

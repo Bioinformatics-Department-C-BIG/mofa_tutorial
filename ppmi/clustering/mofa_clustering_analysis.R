@@ -12,6 +12,7 @@ library('factoextra')
 
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
+remove_cell_factors = TRUE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 
 rescale_option=TRUE
@@ -50,19 +51,24 @@ if (length(groups_names(MOFAobject))>1){
   met<-samples_metadata(MOFAobject)
 
 }
+cors<-as.data.frame(cors)
 
 cors$Neutrophil.Score;cors$Neutrophil.Lymphocyte; cors$Lymphocytes....
 cors_all_pd$Neutrophil.Score;cors_all_pd$Neutrophil.Lymphocyte
 # Remove factors that have to do with site, plate, 
 c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)), which(cors$`SITE`>-log10(0.05)), which(cors$`Plate`>-log10(0.05)) )
 
-fact_neutro_pd<-c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)),  which(cors$Plate>-log10(0.05)), 
-                          which(cors$SITE>-log10(0.05)) )
-fact_neutro_pd
-#fact_neutro_pd<-c((which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)), 
+
+fact_neutro_pd<-c((which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)))
    #                             which(cors_all_pd$SITE>-log10(0.05)))  
+
+
+fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)),  which(cors$Plate>-log10(0.05)), 
+                      which(cors$RIN>-log10(0.05)), which(cors$`Uniquely.mapped....`>-log10(0.05)
+                      #which(cors$`Uniquely.mapped....`>-log10(0.05))
+                        ))
 fact_neutro_pd
-remove_cell_factors = TRUE
+
 
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
@@ -75,6 +81,8 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
           fact<-fact[!(fact %in% fact_neutro_pd)]
 
         }
+
+
         print(paste(diff_var,paste(fact, collapse=', ')))
         xname = paste0(diff_var, '_clust')
       if (length(fact) > 0){
@@ -169,7 +177,7 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
          # V10/12 -future scores 
         # 'NP2PTOT_V10', 
         # 'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
-         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'), 
+         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'),  paste0('sft_V12'), 
          'MCATOT_V14',
           #covars
          'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca'
@@ -187,7 +195,7 @@ y_clust="NP2PTOT_LOG"
 y_clust="NP2PTOT_diff_V13_V14"
 y_clust="updrs2_score_LOG_diff_V12"
 y_clust=DIFF_VAR
-y_clust='scopa'
+y_clust
 all_fs_diff$NP2PTOT_LOG_V10
 
 diff_variables
@@ -207,7 +215,8 @@ sapply(diff_variables, function(y_clust){
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
-    diff_variables_to_p, width=5+length(diff_variables_to_p)/facet_rows , bn=bn_all, facet_rows = facet_rows)
+    diff_variables_to_p, width=5+length(diff_variables_to_p)/facet_rows , bn=bn_all, facet_rows = facet_rows, 
+    text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
 
 
     }else{

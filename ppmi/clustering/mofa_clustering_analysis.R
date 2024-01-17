@@ -59,15 +59,22 @@ cors_all_pd$Neutrophil.Score;cors_all_pd$Neutrophil.Lymphocyte
 c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)), which(cors$`SITE`>-log10(0.05)), which(cors$`Plate`>-log10(0.05)) )
 
 
-fact_neutro_pd<-c((which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)))
-   #                             which(cors_all_pd$SITE>-log10(0.05)))  
+fact_neutro_pd<-c(  (which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)),  which(cors_all_pd$Plate>-log10(0.05)), 
+                      which(cors_all_pd$RIN>-log10(0.05)), which(cors_all_pd$`Uniquely.mapped....`>-log10(0.05)),
+                       which(cors_all_pd$Usable_bases_SCALE>-log10(0.05))
+                      #which(cors$`Uniquely.mapped....`>-log10(0.05))
+                        )
 
+fact_neutro_pd
 
 fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)),  which(cors$Plate>-log10(0.05)), 
-                      which(cors$RIN>-log10(0.05)), which(cors$`Uniquely.mapped....`>-log10(0.05)
+                      which(cors$RIN>-log10(0.05)), which(cors$Usable_bases_SCALE>-log10(0.05)))
                       #which(cors$`Uniquely.mapped....`>-log10(0.05))
-                        ))
+                        
+fact_neutro_pd <-c(fact_neutro_pd, 8)
 fact_neutro_pd
+DIFF_VAR
+    
 
 
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
@@ -76,11 +83,8 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #' 
   #' 
 
-        fact <- which(all_fs_diff[,diff_var])
-        if (remove_cell_factors){
-          fact<-fact[!(fact %in% fact_neutro_pd)]
-
-        }
+        fact <- get_factors_for_metric(diff_var)
+    
 
 
         print(paste(diff_var,paste(fact, collapse=', ')))
@@ -106,6 +110,9 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
 
 }}
 )
+
+
+
 all_clusts_mofa$NP2PTOT_LOG
 all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
 
@@ -125,7 +132,6 @@ write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
 
 
 for (diff_var in names(all_clusts_mofa)){
-    print(diff_var)
     MOFAobjectPD_sel@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
     sm<-MOFAobject_sel@samples_metadata
     clusters_ids<-all_clusts_mofa[[diff_var]]
@@ -202,6 +208,21 @@ diff_variables
 clust_name
 facet_rows = 2
 
+
+get_factors_for_metric<-function(diff_var){
+
+  # get associated factors, remove the ones related to confounding
+  fact <- which(all_fs_diff[,diff_var])
+
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
+
+        }
+       
+        return(fact)
+        }
+
+
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
@@ -210,8 +231,13 @@ sapply(diff_variables, function(y_clust){
     # for each cluster create boxplot 
 
    # k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
-    cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
+    fact=get_factors_for_metric(y_clust)
+
+    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,

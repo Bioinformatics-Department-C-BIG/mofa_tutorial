@@ -95,10 +95,11 @@ se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 #  cell_corr = FALSE # ensure they are always in the same folder c0
 # apply this both for mirs and rnas 
 
+
 if (process_mirnas){
     formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping' # remove plate as well 
   if (cell_corr) {
-    formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
+    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+SITE+kmeans_grouping'
   }
 }else {
   if (cell_corr) {

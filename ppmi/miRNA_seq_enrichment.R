@@ -12,12 +12,6 @@ library(ggplot2)
 
 
 
-
-
-order_by_metric<-'abslog2pval'
-order_by_metric<-'abslog2pval'
-order_by_metric<-'log2pval'
-order_by_metric<-'abslog2pval'
 order_by_metric<-'log2pval'
 order_by_metric<-'log2FoldChange'
 
@@ -96,8 +90,10 @@ gene_list_cut
 
 gsea_results_fname<-paste0(mir_results_file,'_mieaa_res.csv' )
 pvalueCutoff=1
-
-
+mirs=gsub( '\\.','-', selected_mirs)
+mirs=gsub( '\\.','-', de_group_vs_control_and_time2)
+mirs
+test_type='ORA'
 if (file.exists(gsea_results_fname)){
   ### Load enrichment results if available
   mieaa_all_gsea<-read.csv(gsea_results_fname, header=TRUE)
@@ -114,10 +110,26 @@ if (file.exists(gsea_results_fname)){
   )
 
 
-  ### write to file to load next time 
   write.csv(mieaa_all_gsea, gsea_results_fname, row.names = FALSE)
   
 }
+
+colnames(mieaa_all_gsea)<-make.names(  colnames(mieaa_all_gsea))
+mieaa_all_gsea_sig<-mieaa_all_gsea %>%
+  dplyr::filter(Category %in%c('GO Biological process (miRPathDB)')) %>%
+    dplyr::filter(P.adjusted<0.05)
+
+mieaa_all_gsea_sig$Subcategory
+View(mieaa_all_gsea_sig)
+
+mieaa_targets<-mieaa_all_gsea %>%
+  dplyr::filter(Category %in%c('Target genes (miRTarBase)')) %>%
+  dplyr::filter(P.adjusted<0.05)
+
+View(mieaa_targets)
+### write to file to load next time 
+
+### TODO: CREATE FUNCTION OF ENRICHMENT 
 ### FROM HERE ONWARDS RUN MOFA 
 ## TODO: MAKE THIS A FUNCTION that takes in arguments of mieaa_all_gsea and mir_results_file 
 process_mofa=FALSE

@@ -20,22 +20,17 @@ library(ggplot2)
 library("vsn")
 library("data.table")
 library("SummarizedExperiment")
-#script_dir<-dirname(rstudioapi::getSourceEditorContext()$path)
-
 
 #### TODO: SAVE SE FILT SO WE CAN RELOAD in the next script 
 
-if (!require("pacman")) install.packages("pacman")
-#pacman::p_load(dplyr,tidyr,DESeq2,edgeR,limma,ComplexHeatmap,EnhancedVolcano,tibble,fgsea,stringr,org.Hs.eg.db)
-#source(paste0(script_dir,'/../bladder_cancer/preprocessing.R'))
+#if (!require("pacman")) install.packages("pacman")
 source(paste0(script_dir,'ppmi/utils.R'))
-
 output_1=paste0(data_dir,'ppmi/plots/proteomics/')
 outdir_orig<-paste0(data_dir,'ppmi/plots/')
 output_files<-paste0(data_dir,'ppmi/output/')
 
 
-metadata_output<-paste0(output_files, 'combined.csv')
+metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
@@ -43,7 +38,7 @@ combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 
 
-metadata_output<-paste0(output_files, 'combined.csv')
+metadata_output<-paste0(output_files, 'combined_log.csv')
 combined<-read.csv2(metadata_output)
 
 
@@ -57,13 +52,6 @@ source(paste0(script_dir, 'ppmi/config.R' ))
 
 param_str<-paste0(TOP_PN)
 
-
-run_vsn
-NORMALIZED
-
-output_files
-p_params_in
-TISSUE
 if (NORMALIZED){
   in_file_original<-paste0(output_files, 'proteomics_', p_params_in,  '_no_log.csv')
   # if we dont run vsn we want to take the log values 
@@ -133,62 +121,49 @@ raw_counts_all<-pre_process_proteomics(proteomics)
 proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined)
 dim(proteomics_se)
 
-
-cbind(proteomics_se$COHORT_DEFINITION,proteomics_se$COHORT  )
-##### filter here by visits
-se_filt<-proteomics_se[,(proteomics_se$EVENT_ID %in% VISIT & proteomics_se$COHORT %in% sel_coh )]
+##### filter here by visits and cohort
 
 se_filt<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
-
-
-cbind(se_filt$COHORT_DEFINITION,se_filt$COHORT  )
+se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
 
 ### TODO: save se filt here : with or without VISIT included..? 
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
 
-tmp<- assays(se_filt)[[1]]
-dim(tmp)
+tmp<- assays
+
 
 # Filter and normalize
 ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
-#normalized_data1<-assays(normalize_vsn(se_filt))[[1]]
-#normalized_data1<-normalize_vsn(se_filt)
-#meanSdPlot(normalized_data1)
-#vsn_mat<-assays(normalized_data1)[[1]]
 
-#ggsave(paste0(output_1,'meansd_normalize_vsn_', p_params_out,'.png' ))
-
-#normalized_data<-varianceStabilizingTransformation(tmp  )
 ### TODO: filter before normalization!!! 
 normalized_data<-justvsn(tmp)
-vsn::meanSdPlot(normalized_data)
+vsn::meanSdPlot(.normalized_data)
 
 
 
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
-# Check plot after vsn
-#View(normalized_data)
+....#View........normalized_data)
 
 
 vsn_mat<-normalized_data
-
+head(vsn_mat)
 # Select the top most variable proteins
 ## TODO: fix the bug in selectMostVariable
-TOP_PN
-for (most_var in c(0.05, 0.1,0.15,0.2,0.25,0.3, 0.9,0.75,0.5)){
-     # TODO: IF YOU CHANGE THIS MAKE SURE TO CHANGE THE ONE IN MOFA 
-    #p_params<- paste0(VISIT_S, '_',TISSUE, '_', TOP_PN, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-   most_var
-    p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', most_var, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+
+p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+
+write.csv2(vsn_mat,paste0(output_files,p_params_out, '_vsn.csv'), row.names=TRUE)
+
+
+
+
+for (most_var in c(0.3, 0.9)){
     highly_variable_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa.csv')
-  
-  
+    highly_variable_sign_proteins_outfile<-paste0(output_files, p_params_out , '_highly_variable_proteins_mofa_signif.csv')
+
     highly_variable_proteins_mofa=selectMostVariable(vsn_mat, most_var)
-    
-    write.csv(highly_variable_proteins_mofa,highly_variable_proteins_outfile)
-    print(dim(highly_variable_proteins_mofa))
 }
 png(paste0(output_1,'hist_high_var_', p_params_out,'.png' ))
 hist(highly_variable_proteins_mofa)
@@ -211,6 +186,7 @@ colnames(highly_variable_proteins_mofa)
 ##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
 datalist=list( vsn_mat, se_filt)
 saveRDS(datalist,prot_vsn_se_filt_file)
+meanSdPlot(vsn_mat)
 
 
 

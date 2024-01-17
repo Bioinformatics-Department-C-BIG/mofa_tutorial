@@ -17,6 +17,7 @@ if (Sys.info()['sysname']=='Darwin'){
   setwd(os_dir)
   data_dir<-os_dir
   script_dir<-'/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/../'
+  setwd(script_dir)
   
 }else if (Sys.info()['sysname']=='Linux'){
   setwd('/data8TB/efiath/git/mofa_tutorial/')

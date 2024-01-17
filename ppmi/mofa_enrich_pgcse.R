@@ -1,6 +1,9 @@
 
-library('MOFAdata')
+#library('MOFAdata')
+
+library('MOFA2')
 utils::data(reactomeGS)
+
 
 head((reactomeGS))
 
@@ -8,27 +11,42 @@ head((reactomeGS))
 ## load res.positive to be used in the next script
 res.positive$feature.sets
 res=res.positive
-res.positive
+res.positive$pval.adj
+
+
 write_enrich<-function(res, sign_mode){
   #' 
   #'' @res res.negative result from mofa enrichment 
   #'
   #'
-  #'
-      results_enrich<-res$pval.adj
-      all_fs_merged2<-reshape::melt(results_enrich)
-      all_fs_merged2_pval<-reshape::melt(res$pval )
-      all_fs_merged2_pval2<-merge(all_fs_merged2,all_fs_merged2_pval , by=c('X1', 'X2'))
-      #all_fs_merged2<-all_fs_merged2[all_fs_merged2$value<T,]
-      all_fs_merged2_pval2<-all_fs_merged2_pval2[with(all_fs_merged2_pval2, order(X2, value.x)),]# order 
-      colnames(all_fs_merged2_pval2)<-c('Description', 'Factor', 'p.adjust', 'pvalue')
+  #'res$pval.adj
+      res$pval.adj=as.data.frame(res$pval.adj)   ;
+      results_enrich<-as.data.frame(sapply(res$pval.adj, as.numeric));
+      results_enrich$Description=rownames(res$pval.adj); 
+      all_fs_merged2<-reshape::melt(results_enrich, id.vars = 'Description');
+      
+      res$pval=as.data.frame(res$pval) 
+      res_enrich_pval=as.data.frame(sapply(res$pval, as.numeric))
+      res_enrich_pval$Description=rownames(res$pval);
+      
+      all_fs_merged2_pval<-reshape::melt(res_enrich_pval, id.vars = 'Description');
+      all_fs_merged2_pval2=cbind(all_fs_merged2, all_fs_merged2_pval$value)
+      #rownames(all_fs_merged2_pval2)=rownames(all_fs_merged2_pval);
+      
+      #all_fs_merged2_pval2<-merge(all_fs_merged2,all_fs_merged2_pval , by=c('variable', 'value'))
+
+      rownames(all_fs_merged2_pval2)
+      all_fs_merged2_pval2<-all_fs_merged2_pval2[with(all_fs_merged2_pval2, order(variable, value)),]# order 
+     colnames(all_fs_merged2_pval2)<-c('Description', 'Factor', 'p.adjust', 'pvalue')
+      #colnames(all_fs_merged2_pval2)<-c('Factor', 'p.adjust', 'pvalue')
       
       neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
                        mode, '_enrichment', sign_mode)
-      write.csv(format(all_fs_merged2_pval2, digits=3),paste0(neg_file,  '.csv' ))
+      
+      write.csv(format(all_fs_merged2_pval2, digits=3),paste0(neg_file,  '.csv' ), row.names = TRUE)
       all_fs_merged2_pval2_sig=all_fs_merged2_pval2[ all_fs_merged2_pval2$p.adjust<T,]
       write.csv(format(all_fs_merged2_pval2_sig, digits=3),paste0(neg_file, '_', T,  '.csv' ))
-      return(all_fs_merged2_pval2)
+      
 }
 
 
@@ -83,11 +101,14 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
                                          sign = "positive"
           )
           
-          
-          res_negative_df<-write_enrich(res.negative, sign_mode='negative')
+          mode='negative'
+          res_negative_df<-write_enrich(res.negative, sign_mode=mode)
           saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
-          res_positive_df<-write_enrich(res.positive, sign_mode='positive')
+
+          mode='positive'
+
+          res_positive_df<-write_enrich(res.positive, sign_mode=mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
             by=c('Description','Factor' ))
@@ -96,7 +117,7 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           write.csv(res_merged, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
   }
   
-  
+  head(res.positive$feature.statistics)
   
   
   
@@ -141,19 +162,32 @@ plot_enrichment_heatmap(res.positive$sigPathways,
 
 jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
 
+
+#res.negative %>% 
+#  dplyr::filter(pval.adj<0.05)
 plot_enrichment_heatmap(res.negative, 
-                        alpha=0.5, cap=0.00000000005 
+                        alpha=0.00000000004, cap=0.00000000005 
 )
 
-
 dev.off()
-#ggsave(paste0(outdir,'Enrichment_heatmap_negative','.png'), width = 9, height=4, dpi=120)
 
 
-F3<-res.positive$pval.adj[,'Factor3']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:20]
 
-F3<-res.negative$pval.adj[,'Factor6']
-SIG<-F3[F3<0.05]
-SIG[order(SIG)][1:10]
+
+###### turn to enrichment result to plot 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

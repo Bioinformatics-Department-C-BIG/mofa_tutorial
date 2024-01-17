@@ -108,8 +108,9 @@ get_combined_pvalue=function(merged_paths, pmethod='stouffer', weights_Var=c(1,1
     ## apply benjamini-holberg
     #length(which(merged_paths_fish$fish	<0.05))
     
-    merged_paths_fish$fish<-BH(merged_paths_fish$fish, alpha = 0.05)$Adjusted.pvalues	
-
+    # seems like there is a bug in this it gives back the reverse
+   # merged_paths_fish$fish<-BH(merged_paths_fish$fish, alpha = 0.05)$Adjusted.pvalues	
+    merged_paths_fish$fish<-p.adjust(merged_paths_fish$fish, method = 'BH', n = length(merged_paths_fish$fish))
   }
 
   
@@ -453,22 +454,7 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 
 use_mofa=TRUE
-library('RColorBrewer')
-create_venn<-function(venn_list, fname_venn, main){
-  
-  #######
-  #' @param 
-  #'
-  #'
-  myCol2 <- brewer.pal(length(venn_list), "Pastel2")[1:length(venn_list)]
-  venn.diagram(venn_list,
-               # Circles
-               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
-               filename =fname_venn, 
-               main=main,
-               
-               output=FALSE)
-}
+
 
 
 

@@ -32,14 +32,36 @@ merged_targets_onlyde<-merged_targets[merged_targets$target_ensembl %in% rowname
 merged_targets_onlyde<-merged_targets[merged_targets$target_ensembl %in% de_ids,]
 
 
+
+
+mieaa_targets_de_rnas$Subcategory
+dcast(mieaa_targets_de_rnas$miRNAs.precursors,  )
+
+
 merged_targets_el<-merged_targets_onlyde[, c('mature_mirna_id', 'symbol', 'cor')]
 
+# definitions 
+# 1. de mirs
+# 2. de genes 
+de_mirs<-mirnas_V08_cl1
+de_mirs<-mirnas_V08_cl1
+mirna_targets_el<-merged_targets_el
+de_rnas_all<-rnas_V08_cl1$GENE_SYMBOL
 
-g<-graph_from_edgelist(as.matrix(merged_targets_el[,c(1,2)]), directed = TRUE)
+
+############
+
+g<-graph_from_edgelist(as.matrix(mirna_targets_el[,c(1,2)]), directed = TRUE)
+g<-graph_from_edgelist(as.matrix(mirna_targets), directed = TRUE)
+
 #E(g)$weight <- merged_targets_onlyde[,'cor']
 g$layout <- layout_with_kk
-dev.off()
+
 p<-plot.igraph(g )
+
+
+
+
 
 
 ggsave(paste0(outdir_s_mirnas, '/mirna_rna_net.svg'), plot=last_plot())
@@ -49,6 +71,7 @@ ggsave(paste0(outdir_s_mirnas, '/mirna_rna_net.svg'), plot=last_plot())
 
 ##### 
 mst<-g
+
 mst.communities <- edge.betweenness.community(mst, weights=NULL, directed=FALSE)
 mst.clustering <- make_clusters(mst, membership=mst.communities$membership)
 V(mst)$color <- mst.communities$membership + 1
@@ -102,10 +125,11 @@ plot(
 
 dev.off()
 plot(
-  mst.clustering, mst,
+ # mst.clustering,
+  mst,
   layout=layout.fruchterman.reingold,
   edge.curved=TRUE,
-  vertex.size=abs(vSizes)*25,
+  #vertex.size=abs(vSizes)*25,
   vertex.label.dist=-0.5,
   vertex.label.color="black",
   
@@ -115,7 +139,10 @@ plot(
   edge.arrow.mode=0,
   main="RNA-MIRNA anticorelated targets")
 
+
 ggsave(paste0(outdir_s_mirnas, '/mirna_rna_net.svg'), plot=last_plot())
+
+
 
 library(visNetwork)
 library(htmlwidgets)

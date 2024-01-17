@@ -28,7 +28,7 @@ source(paste0(script_dir,'ppmi/utils.R'))
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 
-
+#BiocManager::install('rmdformats')
 ##### START HERE WITH PROTEOMICS 
 ## TODO: SAVE AND LOAD 
 # se_filt and vsn mat 
@@ -56,23 +56,15 @@ SEX=se_filt$SEX
 COHORT
 
 dim(se_filt)
-formula_deseq2
+
 AGE_AT_VISIT=AGE
+AGE
 formula_deseq_test<-'~AGE_AT_VISIT+SEX+COHORT'
 design <- model.matrix(as.formula(formula_deseq_test) )
 design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
-design <- model.matrix(~COHORT )
-design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
 
-
+colnames(protein_matrix)
 fit <- lmFit(protein_matrix, design = design)
-
-#cont.matrix <- makeContrasts(B.NPS3vsNPS1=groupNPS1  - groupNPS3 ,levels=design)
-#cont.matrix <- makeContrasts(pd_control=2-1,levels=design)
-
-#fit.cont <- contrasts.fit(fit, cont.matrix)
-#fit.cont <- eBayes(fit.cont, trend=TRUE)
-
 fit.cont <- eBayes(fit, trend=TRUE)
 
 summa.fit <- decideTests(fit.cont)
@@ -348,6 +340,19 @@ log2fol_T_overall<-0.1
 padj_T_overall<-.05
 results_de_signif<-mark_significant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
                             padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
+
+
+log2fol_T_mofa<-0
+padj_T_mofa<-.05
+signif_proteins_mofa<-mark_significant(results_de,padj_T = padj_T_mofa, log2fol_T = log2fol_T_mofa, 
+                                    padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
+
+signif_proteins_mofa_ids<-rownames(signif_proteins_mofa %>%
+                            dplyr::filter(significant =='Significant'))
+
+
+highly_variable_sign_proteins_mofa<-highly_variable_proteins_mofa[rownames(highly_variable_proteins_mofa) %in%  signif_proteins_mofa_ids,]
+
 
 results_de_signif$abslog2pval
 

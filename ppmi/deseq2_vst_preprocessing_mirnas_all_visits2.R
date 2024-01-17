@@ -18,7 +18,9 @@ library("SummarizedExperiment")
 library(data.table)
 library(dplyr)
 library(rbioapi)
+library(BiocParallel)
 
+process_mirnas=TRUE
 
 ## Output directory
 # output_de=paste0(output_1, 'gene')
@@ -31,18 +33,25 @@ metadata_output<-paste0(output_files, 'combined.csv')
 combined<-read.csv2(metadata_output)
 metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output)
+#combined_bl_log$Plate
 
-process_mirnas=FALSE
+#combined_bl_log$np2
 ### Perform deseq for each visit (timepoint separately)
 #for (VISIT in c('V08', 'BL')){
 
 # tTODOl: FOR BL MATCH THE V08 SAMPLES!! DO
+VISIT=c('BL','V08')
 VISIT='V08'
-for (VISIT in c(c('V08'))){
 
-  
+VISIT=c('BL',  'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
+VISIT=c('V08')
+
+#for (VISIT in list( list('V08', 'BL')) ){
+
+        print(VISIT)
         filter_common=TRUE
-
+        same_samples=FALSE
         source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
         
         
@@ -50,7 +59,9 @@ for (VISIT in c(c('V08'))){
         # TODO: input all the visits 
         # MOVE ALL this to a configuration file!! 
         #### Remove low expression 
-        
+       # if (process_mirnas==TRUE){
+      #    input_file=input_file_mirs
+      #  }
         
         se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
         
@@ -70,11 +81,23 @@ for (VISIT in c(c('V08'))){
         se_filt<-filter_se(se, VISIT, sel_coh)
         se_filt<-filter_se(se, VISIT, sel_coh, sel_ps)
         
-        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh,sel_ps)
-        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh,sel_ps)
+        se_filt_V08<-filter_se(se, VISIT='V08', sel_coh, sel_ps)
+        se_filt_V04<-filter_se(se, VISIT='V04', sel_coh, sel_ps)
+        se_filt_V06<-filter_se(se, VISIT='V06', sel_coh, sel_ps)
+        se_filt_BL<-filter_se(se, VISIT='BL', sel_coh, sel_ps)
+        se_filt_V04<-se_filt_V04[,!(is.na(se_filt_V04$SEX))]
+        
         
         dim(se_filt)
+
         common=intersect(se_filt_V08$PATNO,se_filt_BL$PATNO )
+        if (same_samples){
+          common=Reduce(intersect, list(se_filt_V08$PATNO,se_filt_BL$PATNO , se_filt_V04$PATNO, se_filt_V06$PATNO))
+          
+        }
+        
+        
+        
         if (filter_common){
           se_filt<-se_filt[,se_filt$PATNO %in% common]
         }
@@ -84,23 +107,14 @@ for (VISIT in c(c('V08'))){
         
        
         
-        se_filt<-filter_se_byExpr(se_filt)
         
         ### TODO: ADD FILTER COMMON AS PARAM TO SAVE IN THE DIRECTORY IN CONFIG!!! 
         
         
         
-        ### OUTPUT THE FILTERED se_filt 
-        ind<-which(is.na(se_filt$AGE_AT_VISIT))
-        se_filt[,ind]$AGE_AT_VISIT<-get_age_at_visit(colData(se_filt[,ind]))
-        
-        ## Turn to factors for deseq
-        se_filt$SEX<-as.factor(se_filt$SEX)
-        se_filt$AGE_AT_VISIT<-scale(se_filt$AGE_AT_VISIT)
-        
-        ## these are almost the same so it is okay to scale AGE earlier 
-        hist(se_filt$AGE_AT_VISIT)
-        hist(se_filt$AGE_SCALED)
+        se_filt<-preprocess_se_deseq2(se_filt)
+        # TODO: remove the batch effect from all visits before separating to each visit 
+        #se_filt_corrected<-se_remove_batch_effect(se_filt)
         
         
         ### Perform the appropriate test depending on what you want as prediction variable
@@ -108,12 +122,22 @@ for (VISIT in c(c('V08'))){
           
           if (length(VISIT)>1){
             print('Two cohorts and visits detected, running deseq and vsd with design formula')
+             
+           
+            if (same_samples){
+              se_filt = se_filt[, se_filt$COHORT==2]
+              
+              
+              formula_deseq = '~PATNO+EVENT_ID'
+              
+            }
             
             ddsSE <- DESeqDataSet(se_filt, 
                                   design = as.formula(formula_deseq))
             ddsSE<-estimateSizeFactors(ddsSE)
             
             vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
+            
             
             
             
@@ -143,7 +167,10 @@ for (VISIT in c(c('V08'))){
           
         }
         
-        deseq2Data <- DESeq(ddsSE)
+        
+      
+        
+        deseq2Data <- DESeq(ddsSE, parallel = TRUE)
         ### Contrast disease-control: parkinsons = 1, control = 2 
         se_filt$COHORT_DEFINITION; se_filt$COHORT
         if (4 %in% sel_coh){
@@ -232,9 +259,118 @@ for (VISIT in c(c('V08'))){
           
         }
   
+
+        
+### REMOVE BATCH EFFECT : 1. unwanted variation, 2. site 3. plate 
+        
+        # TODO: create function 
+
+
+
+
+se_remove_batch_effect<-function(se_filt, batch_var){
   
+          #'
+          #'
+          #' @param name remove batch effect 
+          #'
+          #'
+          
+          
+          as.data.frame(colData(se_filt)[, c('Plate', 'PATNO_EVENT_ID')])
+          
   
-  
-  
-}
+     
+          se_filt_qc<-se_filt[, !is.na(se_filt$Plate) & !is.na(se_filt$COHORT)]
+          
+         # batch1 = colData(se_filt_qc)[, 'Plate']
+          batch= colData(se_filt_qc)[, 'Plate']
+          remove_plate<-names(table(batch)[table(batch)<2]) # remove sequencing plates where only one sample was available 
+          cohorts= colData(se_filt_qc)[, 'COHORT'] 
+
+          se_filt_qc<-se_filt_qc[,!(se_filt_qc$Plate %in% remove_plate)    ]
+          batch<- factor(batch[!(batch%in%remove_plate)   ])
+          table(batch)
+          
+          cohorts= colData(se_filt_qc)[, 'COHORT']
+          length(cohorts)
+          length(batch) 
+          dim(se_filt_qc)
+         # se_filt_edit<-preprocess_se_deseq2(se_filt_qc)
+          
+          ddsSE <- DESeqDataSet(se_filt_qc, 
+                                design = as.formula('~AGE_AT_VISIT+SEX+SITE'))
+          ddsSE<-estimateSizeFactors(ddsSE)
+          
+          
+          ## vsd and correct the vsd 
+         # vsd <- varianceStabilizingTransformation(ddsSE)
+          y=assay(vsd)
+          dim(as.matrix(y))
+          
+          
+          ### EITHER log and correct the log
+          y_log=log2(assay(ddsSE)+1)
+          
+          table(batch)
+          
+          ## combat remove batch correction 
+          adjusted_counts <- ComBat_seq(as.matrix(y_log), batch=batch, group=cohorts)
+          se_filt_combat<-se_filt_qc
+          assay(se_filt_combat)<-adjusted_counts
+          
+          y2 <- removeBatchEffect(as.matrix(y), batch = batch )
+          
+          y_log_corrected=removeBatchEffect(as.matrix(y_log), batch)
+          
+          
+          par(mfrow=c(2,1))
+          boxplot(as.data.frame(y[,seq(1,length(batch),2)]),main="Original")
+          boxplot(as.data.frame(y2[,seq(1,length(batch),2)]),main="Batch corrected")
+          
+          
+          
+          par(mfrow=c(2,1))
+          boxplot(as.data.frame(y_log[,seq(1,length(batch),2)]),main="Original")
+          boxplot(as.data.frame(y_log_corrected[,seq(1,length(batch),2)]),main="Batch corrected")
+          y2_unlog_corrected<-round(2^y_log_corrected, digits = 0)
+         
+          se_filt_corrected<-se_filt
+          assay(se_filt_corrected)<-y2_unlog_corrected
+          assay(se_filt_corrected)<-adjusted_counts
+          
+          
+          y2_unlog<-2^y2
+          
+          dim(y2_unlog)
+          dim(assay(se_filt))
+          head(assay(se_filt))[,1:5]
+          options(digits=10)
+          print(head(y2_unlog_corrected)[,1:5], quote = FALSE)   
+          
+          
+          
+          
+          
+          
+          return(se_filt_corrected)
+          
+          
+          
+          
+        }
+      
+#BiocManager::install('sva')
+
+library('sva')
+
+formula_deseq
+se_filt_corrected<-se_remove_batch_effect(se_filt, design = design, covariates = svobj$sv)
+BiocManager::install('sva')
+
+
+
+
+
+
 

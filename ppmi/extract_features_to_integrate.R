@@ -1,4 +1,7 @@
 
+
+
+
 # TODO: extract all visits at once, then separate them later on for your analysus
 library(dplyr)
 library(data.table)
@@ -10,7 +13,6 @@ source(paste0('ppmi/setup_os.R'))
 
 
 
-rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
 
 output_files='ppmi/output/'
 
@@ -18,18 +20,27 @@ output_files='ppmi/output/'
 VISIT='V08'
 VISIT='BL'
 Visits<-c('BL', 'V04', 'V06', 'V08')
+#rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
+#gz1<-gzfile(paste('ppmi/ppmi_data/rnaseq/', 'rnas.gz'), 'w')
+#write.csv2(rnas, gz1)
+#close(gz1)
+
+### rnas_fname includes the merged counts for all patients for all visits that I merged together on the server
+rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
 
 getwd()
 for (VISIT in Visits){
-  rnas<-read.csv2(paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv'), sep = ',')
+  #' 
+  #'
+  #'
+  rnas<-read.csv2(rnas_fname, sep = ',')
+  #rnas<-read.csv2(gzfile(gz1))
   rownames(rnas)<-rnas$Geneid
   rnas$Geneid<-NULL
   rnas_BL<-select(rnas,contains(VISIT))
-  
   ### Split the names to extract patient number
   names_split<- strsplit(names(rnas_BL),split='\\.')
   names_split_df<-do.call(rbind, names_split);names_split_df
-  #PATNO<-sapply(names_split, '[[', 2)
   PATNO<-names_split_df[,2]
   length(unique(PATNO))
   
@@ -64,12 +75,36 @@ rna_all_visits_list<-sapply(Visits,
 # bind all visits for all patients together with underscore PATNO_VISIT
 rna_all_visits<-do.call(cbind,rna_all_visits_list )
 
-write.csv2(rna_all_visits, paste0(output_files, 'rnas_all_visits.csv'), row.names = TRUE)
+rnas_all_visits_fname<-paste0(output_files, 'rnas_all_visits.csv.gz')
+
+# save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
+gz1 <- gzfile(rnas_all_visits_fname, "w")
+write.csv2(rna_all_visits, gz1, row.names = TRUE)
+close(gz1)
+
+
+
+
+
+#write.csv2(rna_all_visits, paste0(output_files, 'rnas_all_visits.csv'), row.names = TRUE)
+
 
 
 #### Read in the mirnas 
-mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv', sep = '\t')
-mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
+# Load both the unormalized and the normalized and save to separate files 
+# Input to mofa- normalized
+# Input to deseq - not normalized..?
+#mirnas_rpmmm<-read.csv2('ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_raw.csv/std_quantification_raw_mirna.final_ids.csv', sep = '\t')
+#mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits.csv.gz')
+
+
+
+
+
+mirnas_rpmmm<-read.csv2(paste0(data_dir,'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
+mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
+
+
 
 names<-colnames(mirnas_rpmmm)[-1]
 
@@ -128,15 +163,10 @@ length(unique(colnames(mirnas_df))); length(PATNO_VISIT)
 rownames(mirnas_df)<-mirnas_rpmmm$miRNA; head(rownames(mirnas_df)); head(mirnas_df)
 
 
-### TODO: which are the duplicates? can we delete them? 
-length((mirnas_df))
-tail(colnames(mirnas_df))
-rownames(mirnas_df)
-dim(mirnas_df)
-length(colnames(rna_all_visits)); 
-length(unique(colnames(rna_all_visits)))
-write.csv2(mirnas_df, paste0(output_files, 'mirnas_all_visits.csv'), row.names = TRUE)
-
+# save all visits together in a zipped file to be used in deseq2_vst_preprocessing file 
+gz1 <- gzfile(mirnas_all_visits_fname, "w")
+write.csv2(mirnas_df, gz1, row.names = TRUE)
+close(gz1)
 
 
 library(tidyr)
@@ -200,8 +230,7 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   all_frames2<-do.call(rbind, all_frames)
 
   ppmi_prot=all_frames2
-  length(unique(all_frames2$PATNO))
-  length(unique(all_frames2$ASSAY))
+
   ### remove PPMI- suffix from PATNO column 
   ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
   print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
@@ -222,27 +251,40 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   prot_bl_matrix<-as.data.frame(subset(prot_bl,
                                        select=-c( update_stamp, OLINKID, UNIPROT,
                                                   PANEL, PLATEID)))
+  
   ## Extract QC pass only 
     prot_bl_matrix
   prot_bl_matrix_QC<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
-  if (length(prot_bl_matrix_QC==0)){
+  if (length(prot_bl_matrix_QC)==0){
     prot_bl_matrix_QC<-prot_bl_matrix
     
   }
+  table(prot_bl_matrix_QC$QC_WARNING)
   hist(log10(prot_bl_matrix[,pv]))
   
   
   
   ## Reshape: Make a wide matrix with patient in columns 
-  prot_bl_tbl<-as.data.table(prot_bl_matrix)
-  NROW(unique(prot_bl_tbl$PATNO))
+  prot_bl_tbl<-as.data.table(prot_bl_matrix_QC)
   prot_bl_tbl$PATNO_EVENT_ID<-paste0(prot_bl_tbl$PATNO,'_',prot_bl_tbl$EVENT_ID)
 
+  
+  #### prot_bl_tb duplicates wgt
+  
+  ### TODO: FIXED IN 17/10/2023: REDO THE PROTEINS in mofa runs
+ # prot_bl_tbl<-as.data.frame(prot_bl_tbl)
+  pair_keys<-prot_bl_tbl[, c( 'PATNO_EVENT_ID', 'ASSAY')] 
+  dups<-prot_bl_tbl[duplicated(pair_keys),]$PATNO_EVENT_ID[1:100]
+  
+  head(prot_bl_tbl[prot_bl_tbl$PATNO_EVENT_ID %in% dups, ]%>%
+    arrange(PATNO_EVENT_ID, ASSAY))
+  #### duplicates are averaged..... 
   prot_bl_wide<-data.table::dcast(prot_bl_tbl,  ASSAY ~ PATNO_EVENT_ID,
                                   value.var =pv, fun.aggregate = mean)
   
   length(colnames(prot_bl_wide)); length(unique(colnames(prot_bl_wide)))
   
+
   prot_bl_wide<-as.data.frame(prot_bl_wide)
   rownames(prot_bl_wide)<-prot_bl_wide$ASSAY
   prot_bl_wide$ASSAY<-NULL
@@ -269,6 +311,99 @@ dev.off()
 
 
 combined[match(colnames(prot_bl_wide), combined$PATNO_EVENT_ID),]$COHORT_DEFINITION
+
+
+
+
+###### Biospecimen
+
+
+biospecimen_f<-paste0(data_dir,'ppmi/ppmi_data/biospecimen/Current_Biospecimen_Analysis_Results_17Oct2023.csv')
+
+biospecimen<-read.csv(biospecimen_f)
+biospecimen_matrix<-as.data.frame(subset(biospecimen,
+                                     select=-c( update_stamp, PI_NAME, PI_INSTITUTION, RUNDATE, PROJECTID)))
+
+biospecimen_matrix<-as.data.frame(subset(biospecimen,
+                                         select=-c( update_stamp, PI_NAME, PI_INSTITUTION, RUNDATE)))
+
+## Reshape: Make a wide matrix with patient in columns 
+
+biospecimen_tbl<-as.data.table(biospecimen_matrix)
+biospecimen_tbl$PATNO_EVENT_ID<-paste0(biospecimen_tbl$PATNO,'_',biospecimen_tbl$CLINICAL_EVENT)
+
+
+biospecimen_tbl_filt<-biospecimen_tbl %>%
+  dplyr::filter(!UNITS %in% c('stdev', 'Stdev'))
+
+
+dups<-biospecimen_tbl_filt[duplicated(biospecimen_tbl_filt[,c('TESTNAME', 'PATNO_EVENT_ID')]),'PATNO_EVENT_ID']$PATNO_EVENT_ID
+
+
+biospecimen_tbl_filt[biospecimen_tbl_filt$PATNO_EVENT_ID%in%dups,]%>%
+  arrange(PATNO_EVENT_ID)
+
+### ALPHA SYN: 124
+#project_id=207; units='MedianMaxRFU (RFU)'; fun.aggregate=mean
+# 
+project_id=124
+table(biospecimen_tbl_filt[biospecimen_tbl_filt$PROJECTID==project_id, ])
+
+biospecimen_saa<-biospecimen_tbl_filt[biospecimen_tbl_filt$PROJECTID==project_id ,]
+table(biospecimen_saa$TESTNAME)
+table(biospecimen_saa$UNITS)
+#biospecimen_saa<-biospecimen_saa[biospecimen_saa$UNITS=='qualitative' ,]
+biospecimen_saa<-biospecimen_saa[biospecimen_saa$UNITS==units ,]
+
+
+
+dups<-biospecimen_saa[duplicated(biospecimen_saa[,c('TESTNAME','TYPE', 'PATNO_EVENT_ID')]),]$PATNO_EVENT_ID
+dups
+
+biospecimen_saa$PATNO_EVENT_ID %in% dups
+#View(biospecimen_saa[biospecimen_saa$PATNO_EVENT_ID %in% dups,]%>%
+#  arrange(PATNO_EVENT_ID, TESTNAME))
+
+#biospecimen_saa$TESTVALUE[tolower(biospecimen_saa$TESTVALUE)=='not detected']<-0
+
+table(biospecimen_saa$TESTNAME)
+
+
+# with row id it keeps the duplicaes in separate columns 
+
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), PATNO_EVENT_ID+TYPE+TESTNAME+UNITS ~ rowid(PATNO_EVENT_ID) , 
+                            value.var = c("TESTVALUE"))
+
+
+biospecimen_saa_wide[, c(1,2,3)]
+##  observe and then decide what to do with duplicates --> eg. average
+#'MedianMaxRFU (RFU)'  : NUMERIC therefore --> average 
+#' for qualitative take the most frequent 
+biospecimen_saa$TESTVALUE=as.numeric(biospecimen_saa$TESTVALUE)
+
+
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), PATNO_EVENT_ID+TYPE+TESTNAME ~ rowid(PATNO_EVENT_ID) , 
+                            value.var = c("TESTVALUE"), fun.aggregate = mean, na.rm=TRUE)
+
+
+biospecimen_saa_wide
+table(biospecimen_tbl_filt$TYPE)
+
+biospecimen_saa_wide<-dcast(setDT(biospecimen_saa), TESTNAME+TYPE ~ PATNO_EVENT_ID , 
+                            value.var = c("TESTVALUE"),  fun.aggregate = mean)
+
+
+colnames(biospecimen_saa_wide) %in% samples_metadata(MOFAobject)$PATNO_EVENT_ID
+
+
+
+
+
+
+
+
+
+
 
 
 

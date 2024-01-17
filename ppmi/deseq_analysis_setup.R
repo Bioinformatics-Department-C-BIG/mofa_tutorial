@@ -28,7 +28,7 @@ source(paste0(script_dir, 'ppmi/utils.R'))
 
 # BETTER TO NOT RUN THESE SETTINGS AGAIN IF YOU HAVE RUN PREPROCESSING
 #VISIT='V08'
-process_mirnas=FALSE
+#process_mirnas=TRUE
 
 
 source(paste0(script_dir, 'ppmi/config.R'))
@@ -40,7 +40,6 @@ print(deseq_file)
 
 datalist=loadRDS(deseq_file)
 ddsSE=datalist[[1]]
-
 vsd=datalist[[2]]
 se_filt=datalist[[3]]
 deseq2Results=datalist[[4]]

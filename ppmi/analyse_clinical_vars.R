@@ -3,10 +3,14 @@
 source(paste0(script_dir,'ppmi/extract_metadata.R'))
 
 library(dplyr)
-options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX
+library(ggplot2)
 
-metadata_output<-paste0(output_files, 'combined_', VISIT,  '.csv')
-combined_bl<-read.csv2(metadata_output)
+source(paste0(script_dir, '/ppmi/extract_metadata.R'))
+# deseq2 vst 
+#source(paste0(script_dir, 'ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+
+library(data.table)
+options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 combined<-read.csv2(metadata_output_all)
@@ -16,31 +20,13 @@ combined$COHORT_DEFINITION
 
 combined[which(combined$NHY==101),]$NHY<-NA
 
-combined$gn
-clipping_values<-function(x){
-  #'
-  #'
-  #' @param 
-  #'
-  higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
-  non_zero_min=min(x[which(x>0)], na.rm = TRUE)
-  
-  lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
-  lower_val
-  higher_val
-  x[which(x<lower_val)]=as.numeric(lower_val)
-  
-  x[which(x>higher_val)]=as.numeric(higher_val)
-  return(x)
-  
-}
+
+
+
+
 #### 
-library(ggplot2)
-combined_choose<-combined[combined$COHORT %in% c(1,2,4),]
 combined_choose<-combined[combined$COHORT %in% c(1,2) & combined$INEXPAGE %in% c('INEXPD', 'INEXHC', 'INEXSNCA', 'INEXLRRK2'),]
 
-combined$INEXPAGE
 group_by_var<-'INEXPAGE'
 ggplot(combined_choose)+
   geom_density(aes_string(x='AGE_AT_VISIT', fill=group_by_var,
@@ -54,40 +40,76 @@ ggplot(combined)+
 
 
 
-library(ggplot2)
+
+
+
 
 graphics.off()
 
 ### Create new variables from the averages 
 ## scopa does not have a total - maybe just add scopa total ? 
+### TODO: scopa total needs to be updated : 
+# For questions 1-21 (SCAU1 - SCAU21), add 3 points for each response of “9.” 
+# For questions 22-25 (SCAU22 - SCAU25), add 0 points for each response of “9.” 
+
 # because the average is the same as np3total
 get_totals<-function(combined,sub_pattern, sub_pattern_detect=NULL ){
   #' groups and averages specific columns 
   #' TODO somehwte it is considering NAs as zeros CHECK 
   #' @param sub_pattern
-    if (is.null(sub_pattern_detect)){
+  #' 
+  #' 
+  #sub_pattern='MCA'
+  
+  if (is.null(sub_pattern_detect)){
+    # definitely works for scau check others 
+      #sub_pattern_detect=paste0(sub_pattern,'[1-9]$|', sub_pattern,'[1-9][1-9]$|', sub_pattern,'[1-9][1-9]$')  #For testing
       sub_pattern_detect=paste0(sub_pattern,'[1-9]|', sub_pattern,'[A-Z]')  #For testing
       
     }
-    #sub_pattern='SCAU[1-9]'
+  
+  
   
     df<-combined[ , grepl( sub_pattern_detect, colnames( combined ) )
                           & !grepl('TOT',  colnames( combined ) ) ]
 
     df<-as.data.frame(apply(df, 2, as.numeric))
-    df
-    ind <- rowSums(is.na(df)) == ncol(df)
+    
+    #df
+    colnames(df)
+    ### If the measure is scopa add 3 if ==9 or 0 for question 22-25
+    if (sub_pattern=='SCAU'){
+      df=df[, !colnames(df) %in% c('SCAU26A', 'SCAU26AT', 'SCAU26B', 'SCAU26BT', 'SCAU26C', 'SCAU26CT', 'SCAU26D', 'SCAU26DT')]
+      cols0<-c('SCAU22','SCAU23','SCAU24','SCAU25')
+      df1<-df[, colnames(df) %in% cols0]
+      df2<-df[, !(colnames(df) %in% cols0)]
+      df1[df1==9]<-0
+      df2[df2==9]<-3
+      df<-cbind(df2, df1)      
 
+      
+      
+    } 
+    
+    
+    
+
+    
+    # Sum for each patient 
+    ind <- rowSums(is.na(df)) == ncol(df)
     df$sca_tot<-rowSums(df, na.rm = TRUE)
     # If all rows are NA then replace zero sum by NA
     #TODO: or do not run in the first place
     df$sca_tot[ind]<-NA 
-    #combined$PATNO = as.factor(combined$PATNO )
+    
+    
     return(df$sca_tot)
 
 }
 
-##### CHOOSE HERE WHAT TO LOG
+
+
+
 
 log_totals<-function(combined, sub_patterns_all){
   #''
@@ -96,6 +118,8 @@ log_totals<-function(combined, sub_patterns_all){
   
   df<-combined[ , grepl( sub_patterns_all, colnames( combined ) )
                 & grepl('_TOT',  colnames( combined ) ) ]
+  
+  
   df=data.frame(df)
   df=df[sapply(df, is.numeric)]
   df_log=data.frame(sapply(df, function(x) log2(x+1)))
@@ -106,6 +130,68 @@ log_totals<-function(combined, sub_patterns_all){
 ### Up to here is the function to log specific patterns ####
 
 
+ ppmi_pigd<-function(combined){
+   
+   tremor<-c('NP2TRMR', 'NP3PTRMR', 'NP3PTRML', 'NP3KTRMR', 'NP3KTRML', 'NP3RTARU', 'NP3RTALU', 'NP3RTARL', 'NP3RTALL', 'NP3RTALJ', 'NP3RTCON')
+   pigd<-c('NP2WALK', 'NP2FREZ', 'NP3GAIT', 'NP3FRZGT', 'NP3PSTBL')
+   
+   tremor_sums=rowMeans(combined[,tremor], na.rm=TRUE)
+   pigd_sums<-rowMeans(combined[,pigd], na.rm=TRUE)
+   
+   TD_PIGD<-tremor_sums/pigd_sums
+   TD_PIGD[pigd_sums==0]<-0
+   
+   length(TD_PIGD)
+   combined$TD<-tremor_sums
+   combined$PIGD<-pigd_sums
+   
+   combined$td_pigd_old_on
+   
+   combined$TD_PIGD_ratio<-TD_PIGD
+   if (TD_PIGD>1.15 | TD){
+     combined$TD_PIGD<-'TD'
+   }
+   
+   combined$TD_PIGD[combined$TD_PIGD_ratio> 1.15 | (combined$TD>0 & combined$PIGD==0)]<-'TD'
+   combined$TD_PIGD[combined$TD_PIGD_ratio<=0.9]<-'PIGD'
+   combined$TD_PIGD[combined$TD_PIGD_ratio>0.9 & combined$TD_PIGD_ratio<1.3 ]<-'In'
+   
+     
+     
+   combined$TD_PIGD
+   table(combined[combined$EVENT_ID=='V06', c('td_pigd_old','TD_PIGD')])
+   
+  
+}
+
+ppmi_rbdsq<-function(combined){
+ add1<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
+  'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
+  'DRMFIGHT', 'DRMUMV','DRMOBJFL',
+  'MVAWAKEN', 'DRMREMEM', 'SLPDSTRB', 
+  'STROKE', 'HETRA', 'PARKISM', 'RLS',
+  'NARCLPSY', 'DEPRS', 'EPILEPSY',
+  'CNSOTH')
+ add1=paste0(add1, '_rbd')
+ add1 %in% colnames(combined)
+  
+  rbdsq<-rowSums(combined[,add1])
+  combined$rbdsq<-rbdsq
+  curated_total$rem
+  combined$rbd
+  #combined[, c('RBD_TOT', 'rbdsq', 'rem')]
+  
+  return(rbdsq)
+  
+}
+
+
+combined$rbdsq<-ppmi_rbdsq(combined)
+##### Get clinvar changes over time ####
+
+
+
+
 library(stringr)
 
 
@@ -114,9 +200,15 @@ library(stringr)
 
 
 # REM SLEEP BEHAVIOR 
-#
-add_rbd=c('PTCGBOTH',	'DRMVIVID',	'DRMAGRAC',	'DRMNOCTB',	'SLPLMBMV',	'SLPINJUR',	'DRMVERBL',	'DRMFIGHT',	'DRMUMV'	,
-          'DRMOBJFL','MVAWAKEN',	'DRMREMEM',	'SLPDSTRB',	'STROKE',	'HETRA'	,'PARKISM',	'RLS'	,'NARCLPSY',	'DEPRS',	'EPILEPSY',	'BRNINFM'	,'CNSOTH')
+## FIXED 
+
+add_rbd<-c( 'DRMVIVID', 'DRMAGRAC', 'DRMNOCTB',
+         'SLPLMBMV', 'SLPINJUR', 'DRMVERBL',
+         'DRMFIGHT', 'DRMUMV','DRMOBJFL',
+         'MVAWAKEN', 'DRMREMEM', 'SLPDSTRB', 
+         'STROKE', 'HETRA', 'PARKISM', 'RLS',
+         'NARCLPSY', 'DEPRS', 'EPILEPSY',
+         'CNSOTH')
 sub_pattern_detect=add_rbd
 sub_patterns_rbd<-paste(add_rbd, collapse='|')
 rbd_tot<-get_totals(combined=combined, sub_pattern = 'null', sub_pattern_detect = sub_patterns_rbd)
@@ -129,16 +221,17 @@ combined$RBD_TOT
 
 
 ### TODO: STAIAD SHOULD NOT BE ADDED since some of the variables have reverse health outcome 
-sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'NP4', 'ESS')
+sub_patterns=c( 'SCAU', 'STAIAD', 'NP3','NP1', 'NP2', 'NP4', 'ESS', 'MCA')
 # 1. ADD THE TOTALS TO THE  METADATA  
 avs<-sapply(sub_patterns,get_totals, combined=combined)
 colnames(avs)<-paste0(colnames(avs), '_TOT')
 
 
 
-
 ### TODO: FIX THIS HERE IT CREATES PROBLEM IF  I keep adding and there are duplicates
 combined<-cbind(combined,avs)
+# add scopa before 
+combined$scopa_tot<-combined$SCAU_TOT
 
 
 ## SUBPATTERNS TO LOG 
@@ -150,50 +243,150 @@ sub_patterns_all<-paste(sub_patterns_2, collapse='|')
 ### from now on work on new vars!! 
 
 
+
+
+
+#df<-combined[, log_vars]
+log_df<-function(df){
+  
+  df=data.frame(df)
+  df=data.frame(apply(df,2, as.numeric))
+  df_log=data.frame(sapply(df, function(x) log2(x+1)))
+  
+  return(df_log)
+}
+
 ## LOG only the TOTALS !! 
 #'
 #'
+combined$updrs2_score
+log_vars<-c('NP3TOT', 'NP2PTOT', 'MCATOT', 'updrs2_score', 'updrs_totscore', 'updrs_totscore_on','updrs2_score', 'updrs3_score', 
+            'updrs3_score_on','scopa', 'moca')
+df_log2=log_df(combined[, log_vars])
+colnames(df_log2)<-paste0(colnames(df_log2),'_LOG')
+df_log2$updrs2_score_LOG
+
 
 df_log<-log_totals(combined,sub_patterns_all = sub_patterns_all)
-combined_new<-mutate(combined, df_log)
+
+colnames(df_log)<-paste0(colnames(df_log),'_LOG')
+df_log<-cbind(df_log, df_log2)
+
+combined_new<-cbind(combined, df_log)
+
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
+combined_new$updrs2_score_LOG
+
+
+combined_new
+
+#### ADD FUTURE VISIT #####
+
+
+### attach future data 
+
+
+
+# TODO: also add the outcome total: 
+#img_var='NP3_TOT'
+## here draw from the original..? 
+
+clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT", 'NP3TOT_LOG', 'NP2PTOT_LOG', 'updrs3_score', 'updrs2_score', 
+                   'updrs3_score_on', 'updrs2_score_LOG',
+                   'updrs3_score_LOG', 'updrs3_score_on_LOG' )
+selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
+
+
+cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variables 
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
+c(cols_fut_visit, selected_future_vars) %in% colnames(combined_new)
+combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
+
+
+#imaging_variables_diff
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
+combined_future_V12<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
+
+
+clinical_scales %in% colnames(combined_new)
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V14');
+combined_future_V14<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V13');
+combined_future_V13<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars];
+
+
+
+
+# choose what is available here? 
+patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V16')
+combined_future_V16<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,selected_future_vars]
+combined_future_V16$SCAU_TOT
+
+
+
+patno_event_ids_BL<-paste0(combined_new$PATNO, '_', 'BL')
+combined_BL<- fetch_metadata_by_patient_visit(patno_event_ids_BL,  combined=combined_new)[,cols_fut_visit]
+combined_BL_all<- fetch_metadata_by_patient_visit(patno_event_ids_BL, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)]
+combined_BL_all$updrs3_score
+
+
+
+# takes a while
+# rename and column_bind<
+
+# shall we scale before diff??????? 
+# scale by patient though? 
+colnames(combined_future_V10)<-paste0(colnames(combined_future_V10), '_V10') # imaging available 
+colnames(combined_future_V12)<-paste0(colnames(combined_future_V12), '_V12') # curated available
+colnames(combined_future_V16)<-paste0(colnames(combined_future_V16), '_V16')# other variables available
+colnames(combined_future_V14)<-paste0(colnames(combined_future_V14), '_V14')# other variables available
+colnames(combined_future_V13)<-paste0(colnames(combined_future_V13), '_V13')# other variables available
+
+
+
+colnames(combined_BL)<-paste0(colnames(combined_BL), '_BL')# other variables available
+colnames(combined_BL_all)<-paste0(colnames(combined_BL_all), '_BL')# other variables available
+
+
+
+combined_new<-cbind(combined_new,combined_future_V10 )
+combined_new<-cbind(combined_new,combined_future_V12 )
+combined_new<-cbind(combined_new,combined_future_V16 )
+combined_new<-cbind(combined_new,combined_future_V14 )
+combined_new<-cbind(combined_new,combined_future_V13 )
+
+combined_new<-cbind(combined_new,combined_BL_all )
+
+#combined_new$NP3_
+
+write.csv2(combined_new,metadata_output_all, row.names = FALSE)
+#combined_bl_log<-combined_new
+
+
+curated_mofa<-combined_new %>%
+  dplyr::filter(EVENT_ID%in%'V18')# %>%
+ #dplyr::filter(PATNO %in% sm$PATNO)
+curated_mofa
+# TODO: make a function to add the scaling by COHORT! 
+
+
+
+
+
 
 
 
 
 
 sel_sam<-MOFAobject@samples_metadata$PATNO_EVENT_ID
-
-combined_filt<-combined[combined$PATNO_EVENT_ID %in% sel_sam,]
-
+sel_pats<-MOFAobject@samples_metadata$PATNO
 
 
+combined_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 
-df_clipped<-data.frame(apply(df,2, clipping_values))
-### We choose df_log in the end 
-
-df_log_clipped=data.frame(sapply(df_clipped, function(x) log2(x)))
-df_log_clipped_after<-data.frame(apply(df_log,2, clipping_values))
-
-
-  
-x=df_log[,1]  
-apply(df, 2, function(x) {plot(hist(x))})
-df[,1]
-hist(df[,1])
-hist(df_log[,1])
-hist(df_log[,'RBD_TOT'])
-
-shapiro.test(df_log[,5][1:100])
-shapiro.test(df_log_clipped[,5][1:100])
-
-hist(df_log_clipped[,1])
-hist(df_log_clipped_after[,1])
-
-x=df[,5]
-
-
-
+# 1. Filter by mofa patients 
+combined_filt<-combined_new[combined_new$PATNO %in% sel_pats,]
+#combined_filt=combined_new
 #### ATTEMPT TO SELECT SAMPLES BECAUSE OF PERCENTILES THAT WE DID NOT USE 
 df_log_sel=df_log[combined$PATNO_EVENT_ID %in% sel_sam,]
 
@@ -207,36 +400,35 @@ hist(as.matrix(df_log_sel))
 
 
 
-# just for plotting
+
+
+## just for plotting: filter samples that we want to plot over time and normalize 
+
 combined_new_filt<-combined_new[combined_new$PATNO_EVENT_ID %in% sel_sam,]
 
-combined_new$RBD_TOT
 
-  dim(combined_new)
+
+##################### CLINICAL CHANGES #####################################
   
-  write.csv2(combined_new,metadata_output_all, row.names = FALSE)
-  
-  hist(log2(combined_new$stai_state))
-  
-
-
-
+  #################### 
+  # TODO: create function 
 #combined %>% 
 
+  #concatenate a patient into one row to add 
   
 
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU')
+  library(dplyr)
+  library(data.table)
 
-#
 
-# postural instability gait disorder dominant
+  
+  
+######################################################
+
+
+
 #### Create averages 
 ##
-
-
-
-
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
 
 
 
@@ -247,7 +439,20 @@ scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STA
 i=2
 graphics.off()
 common_samples=common #### loaded from deseq2_vst_preprocessing script 
-combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
+combined_p<-combined[combined$PATNO_EVENT_ID %in% common_samples, ]
+
+scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT', 'STAIAD_TOT')
+
+
+
+
+####### 
+
+
+
+
+
+
 
 #### Histograms to check the distributions of the clinical variables before and after processing 
 for (i in 1:length(scales_in_stage)){
@@ -287,7 +492,6 @@ for (i in 1:length(scales_in_stage)){
 }
 
 
-scales_in_stage<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAIAD')
 
 
 
@@ -330,38 +534,56 @@ average_if_not_na<-function(df){
 
 #scaled$average=rowMeans(as.data.frame(scaled), na.rm=TRUE)
 
-combined$STAGE_AV<-average_if_not_na(scaled)
-combined$STAGE_LOG_AV<-average_if_not_na(as.data.frame(scaled_log))
-combined$STAGE_LOG_SCALE_AV<-average_if_not_na(as.data.frame(scaled_log_sc))
-
-
-hist(combined$STAGE_AV)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################################
+#### skip the above and analyse from file? #####
 ###### Now filter by relevant patients to make the plots 
-### First filter by combined_filt\
 
 
-combined_filt<-combined[combined$PATNO_EVENT_ID %in% common_samples[1:100], ]
+### First filter by combined_filt
 
-combined_filt<-combined
+metadata_output<-paste0(output_files, 'combined_log.csv') 
+combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
+
+
+#combined_filt<-combined_new[combined_new$PATNO %in% sel_pats, ]
+combined_filt<-combined_bl_log[combined_bl_log$PATNO %in% sel_pats, ]
+
 # inspect patients
 #View(combined_filt[combined_filt$PATNO=='3710',])
 
 
 table(combined_filt$PAG_NAME_M3)
-combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
 
-
-combined_filt$line_group
-combined_filt$COHORT_DEFINITION
-
-combined_filt$NHY
-# FILTER OUT non visits
+# FILTER OUT non visits and 'R*' - also do this before all the 
 combined_filt<-combined_filt[grepl('V',combined_filt$EVENT_ID  ) | grepl('BL',combined_filt$EVENT_ID  ), ]
 
-combined_filt$NHY
 combined_filt=as.data.frame(combined_filt)
 
 
@@ -371,15 +593,26 @@ PS_101<-combined[which(combined$NHY==101),]
 dim(PS_101[,c('COHORT_DEFINITION','NHY' )])
 
 # REMOVE OUTLIERS FOR plot consistency
+
+
+
 combined_filt<-combined_filt %>% 
-            filter(NHY!=101) %>%
-            filter(PAG_NAME_M3=='NUPDRS3')
+  dplyr::filter(NHY!=101)
+#  filter(PAG_NAME_M3 %in% c('NUPDRS3', 'NUPDRS3A'))
+
+# NUPDRS3A: post dose 
 
 
-#View(combined_filt[combined_filt$PATNO=='3710',])
 
 
 
+
+check_dups<-function(combined_to_plot){
+  V08_measures<-unique(combined_to_plot[combined_to_plot$EVENT_ID=='V08', c("PATNO","PDSTATE","EVENT_ID", "PD_MED_USE", "NHY_ON", "COHORT")]);
+  dup_pats<-V08_measures[(duplicated(V08_measures$PATNO)),]$PATNO
+  print(dup_pats)
+  return(dup_pats)
+}
 
 
 
@@ -390,7 +623,7 @@ x='EVENT_ID'
 shape='PAG_NAME_M3'
 
 #time points
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
+scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU_TOT')
 
 
 tps<-read.csv(paste0('ppmi/ppmi_data/','visit_tps.csv'), sep=',')
@@ -403,92 +636,387 @@ tps[,1]<-gsub(' ','', tps[,1] )
 ##  
 inds<-match(combined_filt$EVENT_ID, as.character( tps[,1]))
 combined_filt$months<-as.numeric(tps[inds,2])
-x='months'
-combined$INEX
-combined_to_plot<-combined_filt%>% select(c( y, x, group,
+combined$EVENT_ID
+x='EVENT_ID'
+
+
+## Leparates the specific record for each aptient
+combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+combined_filt$line_group = with(combined_filt,paste(PATNO,PAG_NAME_M3,PDSTATE, sep='_' ))
+
+
+
+combined_filt$SCAU
+combined_to_plot<-combined_filt %>% dplyr::select(c( y, x, group,
                                              scales, 'line_group', 'PATNO' , 'PAG_NAME_M3',
                                 'AGE_AT_VISIT', 'COHORT_DEFINITION', 
                                 'INEXPAGE', 'PDSTATE', 'PAG_NAME_M4'))
-combined_filt$PD
-combined_filt$COHORT_DEFINITION
-combined_to_plot$COHORT_DEFINITION
+
+
+x='months'
+combined$INEX
+#combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
+
+combined_filt$upsit
 fw<-'COHORT_DEFINITION'
 
 combined_filt$line_group
 ### create an average of all clin vars 
 
 
-combined_filt[combined_filt$COHORT==4,]$STAGE_LOG_SCALE_AV
 group
 y='STAGE_LOG_AV'
 colour_by<-'PAG_NAME_M4'
 colour_by<-'PAG_NAME_M3'
 colour_by<-'PDSTATE'
 
+scales<-c('NP1_TOT','NP2_TOT' , 'NP3_TOT', 'NP4_TOT', 'NHY', 'SCAU_TOT', 'PD_MED_USE', 'NP3TOT')
+scales<-c( 'NP3_TOT', 'NP2_TOT' )
 
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
-scales<-c('NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'SCAU', 'STAGE_AV')
 
-scales<-c( 'STAGE_AV', 'STAGE_LOG_AV', 'STAGE_LOG_SCALE_AV')
-y='STAGE_AV'
+y='NP1_TOT'
 formula_1<-as.formula('~COHORT_DEFINITION')
 formula_1<-as.formula('~INEXPAGE')
 formula_1<-as.formula('~PDSTATE')
 
 
 combined_filt$PAG_NAME_M3
+combined_to_plot<-combined_filt
+
 combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c('INEXHC', 'INEXPD'),]
+combined_to_plot<-combined_to_plot[combined_to_plot$INEXPAGE %in% c( 'INEXPD'),]
 
-for (y in scales){
+combined_to_plot$tau_LLOD
 
-  p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
-  geom_point(aes_string(y=y,color=colour_by, shape=shape))+
-    geom_line(aes_string(y=y,color=colour_by, group=group))+
+
+#### sLIDES:  get numbers of unique patients and unique records of medicated/unmedicated at each visit 
+sel_pats
+SEL_VIS<-'V17'
+PATS<-combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PDMEDYN')]
+last_visit_patients<-unique(PATS$PATNO)
+unique(PATS) %>%
+  group_by(PDMEDYN) %>%
+  count()
+
+
+
+PATS<-combined_to_plot[combined_to_plot$EVENT_ID==SEL_VIS, c('PATNO', 'PDMEDYN', 'PDSTATE')]
+unique(PATS) %>%
+  group_by(PDSTATE) %>%
+  count()
+
+
+table(as.data.frame(PATS)[, c('PDMEDYN')])
+
+
+
+
+# ensure same samples
+## keep pairs - actually could not find any pairs 
+combined_to_plot_med<-combined_to_plot[combined_to_plot$PDMEDYN==1,]
+
+pat_dups<-check_dups(combined_to_plot)
+
+V08_measures_paired<-combined_to_plot[combined_to_plot$EVENT_ID=='V08' & combined_to_plot$PATNO %in% pat_dups,]
+
+
+### IF I FILTER BY PAIRED SAMPLES THEN distributions are NOT normal AND i cannot apply ANOVA 
+V08_measures_paired$PDSTATE=as.factor(V08_measures_paired$PDSTATE)
+# density plots 
+V08_measures_paired_A<-V08_measures_paired[!(V08_measures_paired$PAG_NAME_M3 %in% 'NUPDRS3A'& V08_measures_paired$PDSTATE %in% c('OFF')) , ]
+
+combined_to_plot$PDSTATE
+
+
+library(dplyr)
+df.shapiro_test <- combined_to_plot %>%
+  #filter(PAG_NAME_M3%in% 'NUPDRS3' )%>%
+  dplyr::filter(PDSTATE%in% c('ON', 'OFF')) %>%
+ # filter(PDSTATE %in% 'OFF' )%>%
+  mutate(log_np3 = NP3TOT) %>%
+  group_by(EVENT_ID) %>%
+  nest() %>%
+  mutate(t_res =  map(data, ~check_normal(.x) ))
+  
+
+combined_to_plot$PDSTATE=as.factor(combined_to_plot$PDSTATE)
+
+df.shapiro_ttest <- combined_to_plot %>%
+  #filter(PAG_NAME_M3%in% 'NUPDRS3' )%>%
+  filter(PDSTATE%in% c('ON', 'OFF')) %>%
+  # filter(PDSTATE %in% 'OFF' )%>%
+  mutate(log_np3 = NP3TOT) %>%
+  group_by(EVENT_ID) %>%
+  filter(n() >= 10)%>%
+  nest(-EVENT_ID) %>%
+  mutate(log_np3_avg = map(data, ~t.test(NP3TOT~PDSTATE, .x)$p.value))
+
+
+### RESULTS ON OFF STATE IS IMPORTANT ie. there is a difference ..!!!!
+### Check the results and trust only for which they are normal 
+t_test_per_visit<-cbind(unlist(df.shapiro_ttest$EVENT_ID),unlist(df.shapiro_ttest$log_np3_avg<0.05))
+t_test_per_visit
+data=combined_to_plot[combined_to_plot$EVENT_ID%in%'V08',]
+
+
+
+
+
+  check_normal<-function(data){
+    
+    
+    gg<-data %>%  
+      filter(PDSTATE%in% c('ON', 'OFF')) %>%
+      
+      group_by(PDSTATE) %>%
+      filter(n() >= 3)%>%
+      mutate(N_Samples = n()) %>%
+      nest() %>%
+      mutate(Shapiro =  map(data, ~ shapiro.test(.x$NP3TOT)$p.value>0.05))
+    
+    print(paste('SHAPIRO ',table(data$EVENT_ID), gg$Shapiro))
+    # if all normal: 
+    if (dim(gg)[1]>2 & all(as.logical(gg$Shapiro))){
+      print('check' )
+      t_res<-t.test(data$NP3TOT, data$PDSTATE)
+      return(t_res)
+      
+      
+    }
+  }
+  
+
+p<-ggplot(V08_measures_paired,aes(x=log(NP3_TOT), fill=PDSTATE))+
+  geom_density(aes(fill=PDSTATE), alpha=0.5)+
+  facet_wrap('~PAG_NAME_M3')
+
+p
+
+
+### ALL THE CONFOUNDERS: PAG_NAME: NUPDRS3 or 3a (POST DOSE)
+### PDMEDYN
+## Attempt to predict measures from visit and PD state- is it relevant? 
+combined_to_plot %>%
+  group_by(PATNO, EVENT_ID) %>%
+  mutate(n = n()) %>%
+  dplyr::filter(n == 2) %>%
+  ungroup() %>%
+  select(-PATNO, -n)
+
+
+stats_np3<-combined_to_plot %>% 
+  group_by(PATNO, EVENT_ID, PDSTATE ) %>%
+  dplyr::filter(EVENT_ID=='V08')%>%
+  arrange(PATNO, EVENT_ID)%>%
+  summarise(mean=mean(NP3_TOT), sd=sd(NP3_TOT))%>%
+  as.data.frame()
+
+
+stats_np3
+ft<-lm(data = combined_to_plot_med, formula = 'NP3_TOT~PDSTATE+EVENT_ID',)
+coefficients(summary(ft))
+
+
+### keep the pairs only 
+formula_1<-as.formula('~PAG_NAME_M3')
+
+formula_1<-as.formula('~PDMEDYN')
+formula_1<-as.formula('~PD_MED_USE')
+formula_1<-as.formula('~PDSTATE')
+
+
+########## PLOTS FOR SPECIFIC PATIENTS OVER TIME ######################
+#######################################################################
+
+### RENAME after we remove the 'R*' VISITS
+
+combined_to_plot$months<-unlist(EVENT_MAP[combined_to_plot$EVENT_ID], use.names = FALSE)
+
+combined_to_plot_med_only<-combined_to_plot[!is.na(combined_to_plot$PD_MED_USE), ]
+#### TODO: PLOT SCALES USING SEPARATE GROUPS OF PATIENTS !!! 
+## TODO: CGHECK FUTURE 
+## TODO: check numbers of patients with molecular data available at future scales 
+ scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT', 'moca')
+
+
+NROW(unique(combined_to_plot[combined_to_plot$EVENT_ID=='V14','PATNO']))
+
+# TODO: create another filter: plot patients that we have until V14? OR V16 ? TO understand trends 
+last_visit_patients 
+EVENT_MAP[SEL_VIS]
+# 
+
+x='months'
+combined_to_plot_last_visit=combined_to_plot[combined_to_plot$PATNO %in% last_visit_patients & (combined_to_plot$months <= EVENT_MAP[SEL_VIS]), ]
+#combined_to_plot_last_visit<-combined_to_plot_last_visit[combined_to_plot_last_visit$NP3_TOT_LOG<9,]
+
+combined_to_plot_last_visit$months
+
+
+combined_to_plot[,c('scopa', 'scopa_tot', 'PATNO', 'PDSTATE', 'REC_ID_SC')]
+
+combined_to_plot_final=combined_to_plot_last_visit
+table(combined_to_plot_final$CSFSAA)
+
+
+
+### check duplicates 
+
+
+
+
+
+
+y='NP3_TOT'
+plot_clinvars_by_patient<-function(combined_to_plot_final,x, y, colour_by, shape, facet_var=NULL, line_group='line_group' ){
+  #'
+  #' @paramcombined_to_plot_final
+  #' @x :variable in the x axis--> time
+  #' @y : metadata 
+  #'
+  #'
+  #'
+  
+  # TODO: define the line group here? group by record id? 
+  # for scopa tot we do not have 
+  
+  
+  # TODO: pagname m3 does not apply to oteher scales 
+  #shape= 
+  # fixes error: Error: data must be uniquely named but has duplicate columns
+  #5
+  
+  WIDTH=6
+  HEIGHT=3
+  
+  
+ # combined_to_plot_final<-combined_to_plot_final %>% 
+#    dplyr::filter(NP3_TOT<500)
+  combined_to_plot_final<-combined_to_plot_final%>%
+    dplyr::filter(!!as.symbol(y) != '.') %>%
+    as.data.frame()
+
+    colnames(combined_to_plot_final) <- make.unique(names(combined_to_plot_final))
+
+  
+  
+  ### MAKE Numeric to remove dots!
+  combined_to_plot_final[, colour_by] = as.factor(combined_to_plot_final[, colour_by])
+  combined_to_plot_final[, x]=as.factor(combined_to_plot_final[, x])
+  combined_to_plot_final[, y]<-as.numeric(combined_to_plot_final[, y])
+  #combined_to_plot_final[, y]<-clip_outliers(combined_to_plot_final[, y], x_times = 5, lower=FALSE)
+  combined_to_plot_final[, y]<-clip_outliers(as.data.frame(combined_to_plot_final[, y]))
+  
+  
+  if (y=='urate'){
+    combined_to_plot_final<-combined_to_plot_final%>%
+      dplyr::filter(!!as.symbol(y) >100) %>%
+      as.data.frame()
+    
+  }
+  
+  
+  p<-ggplot(combined_to_plot_final, aes_string( x=x, color=colour_by, group=line_group))+
+    geom_point(aes_string(y=y,color=colour_by, shape=shape))+
+    geom_line(aes_string(y=y,color=colour_by, group=line_group),size=0.5, alpha=0.5 )+
     guides( shape='none', group='none')#+
   
-  
-  
-  p
-  #theme(legend.position="none")
-      #theme(legend.position="bottom", legend.text=element_text(size=2))+
-    #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
-          
-  p+facet_wrap(formula_1, nrow = 4)
-  p
-  ggsave(paste0(outdir_orig,'metadata/lines_',paste0(formula_1, collapse=''),group, colour_by, y,'.jpeg' ), width=10, height=7)
-  
-  
-  
-  p<-ggplot(combined_to_plot, aes_string( x=x, color=colour_by, group='line_group'))+
-    geom_point(aes_string(y=y,color=group, shape=shape))+
-    #geom_line(aes_string(y=y,col=group, group=group)) +
-    #geom_boxplot(aes_string(x=x, y=y))+
-    geom_violin(aes_string(x=x, y=y, color=x))+
+  if (!is.null(facet_var) ){
+    height=HEIGHT*2
+    formula_1=paste0('~', facet_var)
     
-    theme(legend.position="none")
+    p+facet_wrap(formula_1, nrow = 4)
+    p 
+    
+  }else{
+    height=HEIGHT
+  }
+ 
+  ggsave(paste0(outdir_orig,'metadata/lines_',SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=height)
+
+  
+  p<-ggplot(combined_to_plot_final, aes_string( x=x,y=y))+
+    geom_boxplot(aes_string(x=x, fill=colour_by))
+  
+  
   p
-  #theme(legend.position="bottom", legend.text=element_text(size=2))+
-  #theme(plot.margin=unit(c(-0.5, 1, 10, 0.5), units="line"))
-  
-  p+facet_wrap(formula_1, nrow = 4)
-  ggsave(paste0(outdir_orig,'metadata/box_',paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
-  
-  
-  
+
+  ggsave(paste0(outdir_orig,'metadata/box_', SEL_VIS, paste0(facet_var, collapse=''),group,'_', colour_by,'_', y,'.jpeg' ), width=WIDTH, height=HEIGHT)
+  # ggsave(paste0(outdir_orig,'metadata/violin_', SEL_VIS, paste0(formula_1, collapse=''), y,'.jpeg' ), width=10, height=7)
+}
+
+
+
+scales<-c('NP1_TOT', 'NP3_TOT', 'NP2_TOT', 'NP1_TOT', 'NP1RTOT','NP2PTOT' , 'NP3TOT', 'NP4TOT', 'NHY', 'NP2_TOT_LOG', 'NP3_TOT_LOG')
+
+# , 'NHY', 'td_pigd' --> get counts for these ones at every time point eg. counts of 2, counts of 3 and plot those
+colour_by='PD_MED_USE'
+facet_var='PDSTATE'
+colour_by='PDSTATE'
+
+
+for (y in scales){
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by=colour_by, shape=shape, facet_var = facet_var  )
+
+}
+
+# scales not taken at off and on
+combined_to_plot_final
+colour_by='PDMEDYN'
+
+combined_to_plot_final$upsit_pctl
+facet_var='COHORT'
+combined_to_plot_final[, c('PATNO','PDMEDYN', 'MCA_TOT', 'upsit_pctl')]
+scales<-c( 'SCAU_TOT', 'scopa_tot', 'MCA_TOT', 'bjlot', 'moca', 'upsit', 'MSEADLG', 'ESS_TOT')
+scales<-c( 'stai' , 'stai_state', 'stai_trait', 'VLTANIM', 'gds', 'hvlt_immediaterecall', 'ess')
+
+for (y in scales){
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape, facet_var=NULL , line_group='PATNO')
   }
 
 graphics.off()
-  #geom_smooth(aes_string())
- # scale_y_continuous(limits = c(0, 7))
+combined_to_plot_final$ptau
 
 
 
-#### Create averages of all stages! 
-# 
 
-#### WHICH PRODROMAL ARE IN STAGE 3 
-table(combined_filt[combined_filt$COHORT==4, 'STAGE_AV'])
+combined_to_plot_final[,c('asyn', 'PATNO_EVENT_ID')]
+combined_to_plot_final$asyn<-as.numeric(combined_to_plot_final$asyn)
+  combined_to_plot_final$asyn
+shape
+#iMAGING
+combined_to_plot_final$CSFSAA
 
-combined_filt[combined_filt$COHORT==4 & combined_filt$STAGE_AV >1,]$PATNO
+# ADD upsit, semantic fluency 
+ 
+ # un==imaging
 
+scales=c('ptau', 'asyn', 'tau', 'abeta', 'tau', 'CSFSAA', 'nfl_csf', 'total_di_18_1_BMP', 'hemohi', 'urate')
+scales=c('DATSCAN_PUTAMEN_L', 'DATSCAN_CAUDATE_L', 'DATSCAN_CAUDATE_R', 'DATSCAN_PUTAMEN_R', 'ips_caudate', 'mean_caudate', 'mean_striatum', 
+         'con_caudate', 'con_putamen', 'con_striatum', 'lowput_ratio')
+combined_to_plot_final$DBSYN
+facet_var=NULL
+#facet_var='DBSYN'
+
+combined_to_plot_final[, scales]
+for (y in scales){
+  plot_clinvars_by_patient(combined_to_plot_final,x, y, colour_by, shape, facet_var = facet_var, line_group='PATNO' )
+}
+
+graphics.off()
+
+combined_to_plot_final[combined_to_plot_final$EVENT_ID=='V16', 'mean_striatum']
+
+combined_to_plot_final
+##
+
+curated_v1[curated_v1$EVENT_ID=='V12', 'mean_striatum']
+curated_v2[curated_v2$EVENT_ID=='V16', 'mean_striatum']
+as.numeric(curated_v2[curated_v2$EVENT_ID=='V08', 'urate'])
+as.numeric(curated_v1[curated_v1$EVENT_ID=='V08', 'urate'])
+
+as.numeric(combined_to_plot_final[combined_to_plot_final$EVENT_ID=='V08', 'urate'])
+
+curated_v1$urate
+curated_v2$mean_striatum
 

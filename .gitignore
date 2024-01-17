@@ -14,6 +14,8 @@
 *.png
 ./*.jpeg
 
+
+
 # Session Data files
 .RData
 .RDataTmp
@@ -32,6 +34,14 @@ plots/barplot_byGroupobjective_method.png
 review/output/*
 output/*
 
+ppmi/.tmp.driveupload/*
+network_files/*
+networks/mirna-rna_files/*
+
+
+mirna-rna_files/*
+omnipathr-log/*
+ppmi/tutorials/xmwas/xmwas*
 
 bladder_cancer/Enrichment/*
 */plots/*
@@ -410,3 +420,17 @@ review/output/tools_objectives_latex.txt
 review/output/data_diseases.txt
 *.hdf5
 ppmi/.tmp.driveupload/59621
+ppmi/plotting_utils_2.R
+*.gml
+*.gz
+*.bmp
+ppmi/.tmp.driveupload/76004
+ppmi/.tmp.driveupload/76004
+ppmi/.tmp.driveupload/62253
+ppmi/.tmp.driveupload/59643
+ppmi/.tmp.driveupload/59633
+ppmi/.tmp.driveupload/59629
+ppmi/.tmp.driveupload/59621
+ppmi/.tmp.driveupload/104402
+ppmi/.tmp.driveupload/104400
+ppmi/.tmp.driveupload/104400

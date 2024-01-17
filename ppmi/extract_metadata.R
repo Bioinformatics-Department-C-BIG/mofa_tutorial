@@ -4,7 +4,7 @@
 # 1. Subject characteristics 
 library(data.table)
 
-input_data<-('ppmi/ppmi_data/')
+input_data<-paste0(data_dir,'/ppmi/ppmi_data/')
 output_files<-'ppmi/output/'
 source('ppmi/utils.R')
 #all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
@@ -43,9 +43,10 @@ clinical<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/
 demographics<-read.csv(paste0(input_data, 'characteristics/_Subject_Characteristics/Demographics.csv'))
 
 
-dim(characteristics)
-characteristics<-merge(clinical, ps, by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
-dim(characteristics)
+
+
+othfeatpd<-read.csv(paste0(input_data, 'characteristics/Medical/Other_Clinical_Features.csv'))
+prodromal_history<-read.csv(paste0(input_data, 'characteristics/Medical/Prodromal_History.csv'))
 
 
 
@@ -63,31 +64,59 @@ motor_assess_III$ONEXAMDT
 
 ## cognition####
 
-non_motor<-read.csv(paste0('ppmi/ppmi_data/SCOPA-AUT.csv'))
-non_motor_moca<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
-non_motor_stait<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
-pr_outcome<-read.csv(paste0('ppmi/ppmi_data/patient_outcomes_predictions.csv'))
+non_motor<-read.csv(paste0(input_data,'SCOPA-AUT.csv'))
+non_motor_moca<-read.csv(paste0(input_data,'Non-motor_Assessments/Montreal_Cognitive_Assessment__MoCA_.csv'))
+non_motor_stait<-read.csv(paste0(input_data,'Non-motor_Assessments/State-Trait_Anxiety_Inventory.csv'))
+pr_outcome<-read.csv(paste0(input_data,'patient_outcomes_predictions.csv'))
 
 
 
 ### Sleepiness scale 
 
-olfactory<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/University_of_Pennsylvania_Smell_Identification_Test__UPSIT_.csv'))
-epworth<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Epworth_Sleepiness_Scale.csv'))
+olfactory<-read.csv(paste0(input_data,'Non-motor_Assessments/University_of_Pennsylvania_Smell_Identification_Test__UPSIT_.csv'))
+epworth<-read.csv(paste0(input_data,'Non-motor_Assessments/Epworth_Sleepiness_Scale.csv'))
 
-rbd<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
-dat<-read.csv(paste0('ppmi/ppmi_data/imaging/DaTSCAN/DaTScan_Analysis_23Jun2023.csv'))
-bent<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Benton_Judgement_of_Line_Orientation.csv'))
-ger<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Geriatric_Depression_Scale__Short_Version_.csv'))
-sem<-read.csv(paste0('ppmi/ppmi_data/Non-motor_Assessments/Modified_Semantic_Fluency.csv'))
-
-
-curated<-read.csv(paste0('ppmi/ppmi_data/curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+rbd<-read.csv(paste0(input_data,'Non-motor_Assessments/REM_Sleep_Behavior_Disorder_Questionnaire.csv'))
+dat<-read.csv(paste0(input_data,'imaging/DaTSCAN/DaTScan_Analysis_23Jun2023.csv'))
+bent<-read.csv(paste0(input_data,'Non-motor_Assessments/Benton_Judgement_of_Line_Orientation.csv'))
+ger<-read.csv(paste0(input_data,'Non-motor_Assessments/Geriatric_Depression_Scale__Short_Version_.csv'))
+sem<-read.csv(paste0(input_data,'Non-motor_Assessments/Modified_Semantic_Fluency.csv'))
 
 
-VISIT='BL'
+### add biospecimen 
 
 
+
+curated_v1<-read.csv(paste0(input_data,'curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+curated_v2<-read.csv(paste0(input_data,'curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
+## first bind the common columns 
+common_cols<-intersect(colnames(curated_v1), colnames(curated_v2))
+curated_total<-rbind(curated_v1[, common_cols],curated_v2[, common_cols])
+curated_v2_unique<-curated_v2[, (!(colnames(curated_v2) %in% common_cols))| colnames(curated_v2) %in%c('PATNO', 'EVENT_ID')  ]; 
+curated_v1_unique<-curated_v1[, (!(colnames(curated_v1) %in% common_cols))| colnames(curated_v1) %in%c('PATNO', 'EVENT_ID')  ]; 
+
+curated_total_new_cols<-merge(curated_total, curated_v2_unique, by=c('PATNO', 'EVENT_ID'), all=TRUE)
+curated_total_new_cols<-merge(curated_total_new_cols, curated_v1_unique, by=c('PATNO', 'EVENT_ID'), all=TRUE)
+
+colnames(curated_total_new_cols)
+
+
+
+## add rnaseq metadata
+rnaseq_meta<-read.csv(paste0(input_data, '/rnaseq/meta_data.11192021.csv'))
+rnaseq_meta$PATNO_EVENT_ID<-rnaseq_meta$PATNO.Visit
+
+rnaseq_meta_qc<-rnaseq_meta%>%
+  dplyr::filter( QC=='HighQC')
+
+
+#c1_filt<-curated_v1%>%
+#  dplyr::filter(EVENT_ID=='V08')%>%
+#  dplyr::filter(PATNO %in% sm$PATNO)%>%
+#  as.data.frame()
+
+#c1_filt$mean_striatum ### missing....
+  
 ### Eventually merge both by visit and patient
 ## These measures are per patient and event id
 
@@ -105,8 +134,11 @@ combined<-merge(combined, genetics,by=c('PATNO'),suffixes = c("", '_gen'), all=T
 
 
 ### cognition
+combined<-merge(combined, othfeatpd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_oth'),  all=TRUE)
+combined<-merge(combined, prodromal_history,by=c('PATNO','EVENT_ID'), suffixes = c("", '_prod'),  all=TRUE)
 
 combined<-merge(combined, non_motor_moca,by=c('PATNO','EVENT_ID'), suffixes = c("", '_moca'),  all=TRUE)
+
 combined<-merge(combined, non_motor_stait,by=c('PATNO','EVENT_ID'), suffixes = c("", '_st'),  all=TRUE)
 
 combined<-merge(combined, epworth,by=c('PATNO','EVENT_ID'), suffixes = c("", '_ep'),  all=TRUE)
@@ -115,7 +147,7 @@ colnames(rbd)[!colnames(rbd) %in% c('PATNO','EVENT_ID')]<-paste0(rbd_vals, '_rbd
 
 
 
-combined<-merge(combined, curated,by=c('PATNO','EVENT_ID'), suffixes = c("", '_cur'),  all=TRUE)
+combined<-merge(combined, curated_total_new_cols,by=c('PATNO','EVENT_ID'), suffixes = c("", '_cur'),  all=TRUE)
 
 combined<-merge(combined, rbd,by=c('PATNO','EVENT_ID'), suffixes = c("", '_rbd'),  all=TRUE)
 combined<-merge(combined, dat,by=c('PATNO','EVENT_ID'), suffixes = c("", '_dat'),  all=TRUE)
@@ -126,11 +158,9 @@ combined<-merge(combined, sem,by=c('PATNO','EVENT_ID'), suffixes = c("", '_sem')
 
 
 
-
 ## these measures are per patient 
 combined<-merge(combined, ps,by=c('PATNO'), suffixes = c("", '_ps'),  all=TRUE)
 combined<-merge(combined, pr_outcome,by=c('PATNO'), suffixes = c("", '_pr'),  all=TRUE)
-
 
 
 #which(!is.na(combined$Outcome))
@@ -145,52 +175,26 @@ combined[ind,'AGE' ]<-get_age_at_visit(combined[ind,])
 ## Turn to factors for deseq
 combined$SEX<-as.factor(combined$SEX)
 combined$AGE_SCALED<-scale(combined$AGE)
-
-
-combined$OFFPDMEDDT
-combined$INFODT_M1
-combined$OFFEXAMDT
-combined$HRPOSTMED ### hours since last dose 
-
-combined[,c('ONEXAM', 'OFFEXAM','PDMEDYN','ORIG_ENTRY_M3',  'INFODT_M3','NTEXAMDT',  'OFFEXAMDT' ,'OFFEXAMTM', 'OFFPDMEDDT', 'OFFPDMEDTM')]
-combined$PATNO
-rbd
-#demographics_2<-subset(demographics, select = -c(EVENT_ID))
-#combined<-merge(combined, demographics_2,by=c('PATNO'), suffixes = c('.xx', '.de') )
-
+combined$SCAU26CT<-tolower(combined$SCAU26CT)
+combined$SCAU26CT<-as.factor(combined$SCAU26CT)
 
 # filtering here only to produce separate files for each visit? 
 
 ## add demographics with suffix if common? 
 
 ### Add new features here
-
+colnames(rnaseq_meta)
 combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
-combined$AGE
+
+combined<-merge(combined, rnaseq_meta,by=c('PATNO_EVENT_ID'), suffixes = c("", '_rseq'),  all=TRUE)
+any(duplicated(rnaseq_meta_qc$PATNO_EVENT_ID))
 
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
-
+combined$Plate
 
 ### TODO: after this run the logs in analyse clinical vars 
 write.csv2(combined,metadata_output_all, row.names = FALSE)
 
-combined$COHORT_DEFINITION
-#View(combined[combined$PATNO=='4125',])
-combined$NHY
-
-
-# females would be NA
-
-MOFAobject@samples_metadata$PATNO
-
-demographics[which(demographics$PATNO==3386),]
-
-demographics$PATNO
-common
-
-combined$GBA_POS
-
-## add genetics
 
 
 

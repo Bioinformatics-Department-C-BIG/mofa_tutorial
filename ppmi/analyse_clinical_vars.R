@@ -1,6 +1,6 @@
 
-
-
+## Prerequisite files  ##
+source(paste0(script_dir,'ppmi/extract_metadata.R'))
 
 library(dplyr)
 options(rstudio.help.showDataPreview = FALSE) ## RSTUDIO BUG FIX

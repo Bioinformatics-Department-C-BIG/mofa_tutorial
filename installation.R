@@ -128,4 +128,17 @@ install.packages('igraph')
 
 install.packages("remotes")
 remotes::install_github("jmw86069/jamenrich")
+remotes::install_github("jmw86069/jamenrich/multienrichjam")
+
+#remotes::install_github("jmw86069/jamenrich")
+
+
+
+
+
+
+#### 
+
+
+install.packages('NMF')
 

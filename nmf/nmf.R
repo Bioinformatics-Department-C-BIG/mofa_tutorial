@@ -147,17 +147,19 @@ s<-featureScore(res)
 ## TUNING #### 
 # Print the cophonetic coefficient , the RSS curve to decide number of factors #
 
-estim.r <- nmf(x1, 2:6, nrun=3, seed=123456)
+estim.r <- nmf(x1, 3:7, nrun=2, seed=1234)
 plot(estim.r)
 
 
 ## plot also annotation datasets 
 #anndf<-as.data.frame(colData(x1_se)[, c('COHORT')]); rownames(anndf)=x1_se$PATNO
 
-consensusmap(estim.r, annCol=x1_se$COHORT, labCol=NA, labRow=NA)
 
 
-s
+p<-consensusmap(estim.r, annCol=x1_se$COHORT)
+ggsave('./consensus_map.jpeg', p)
+
+
 plot(estim.r)
 
 

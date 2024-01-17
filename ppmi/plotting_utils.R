@@ -478,7 +478,7 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1, text=''){
   #'
   #' Create boxplot by cluster 
   #' 
@@ -508,7 +508,6 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   k_centers
   ## Add kruskal wallis to the total plot and separately to each one 
   ## 
-
   factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
 
   
@@ -536,10 +535,10 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
          caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
                           #paste_med, ',\t',
-                          paste_sex, ' '
+                          paste_sex, ' ',
                           #paste_state,  ',\n',
                           # paste_tdpigd,' '
-                          #paste_nhy
+                          text
                           ), 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+

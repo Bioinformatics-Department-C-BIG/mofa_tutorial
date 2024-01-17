@@ -29,8 +29,8 @@ source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
 clinical_scales<-scale_vars_diff
-length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 
+scale(MOFAobject@samples_metadata$`Usable.Bases....`)
 MOFAobject@samples_metadata$Usable_Bases_SCALE<-scale(MOFAobject@samples_metadata$`Usable.Bases....`)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
@@ -416,12 +416,13 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
 }
 progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 progression_markers_conf<-c( 'abeta', 'sft' )
-clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa')
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
-                       'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte')
+                       'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
+                         'sft_V12')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
                     'Neutrophil.Lymphocyte')
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)

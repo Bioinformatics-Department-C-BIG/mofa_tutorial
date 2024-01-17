@@ -22,6 +22,7 @@ if (Sys.info()['sysname']=='Darwin'){
 }else if (Sys.info()['sysname']=='Linux'){
   setwd('/data8TB/efiath/git/mofa_tutorial/')
   data_dir<-'/data8TB/efiath/git/mofa_tutorial/'
+  script_dir<-'/data8TB/efiath/git/mofa_tutorial/'
   
 }else  {
   setwd('D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/')

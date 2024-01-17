@@ -10,6 +10,22 @@ library('factoextra')
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 # cluster samples here 
 
+
+
+get_factors_for_metric<-function(diff_var){
+
+  # get associated factors, remove the ones related to confounding
+  fact <- which(all_fs_diff[,diff_var])
+
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
+
+        }
+       
+        return(fact)
+        }
+
+
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
 remove_cell_factors = TRUE
@@ -34,9 +50,6 @@ cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
 all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12', 'moca')]
-
-all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12', 'moca')]
-all_fs_diff
 
 ### Select group for plotting
 sel_group=4
@@ -71,7 +84,7 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
                       which(cors$RIN>-log10(0.05)), which(cors$Usable_bases_SCALE>-log10(0.05)))
                       #which(cors$`Uniquely.mapped....`>-log10(0.05))
                         
-fact_neutro_pd <-c(fact_neutro_pd, 8)
+fact_neutro_pd <-c(fact_neutro_pd, 8,2)
 fact_neutro_pd
 DIFF_VAR
     
@@ -124,8 +137,6 @@ all_clusts_file<-paste0(outdir,'/clustering/all_clusts_mofa.csv')
 write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
   clusters_ids<-all_clusts_mofa[['NP2PTOT_LOG']]
   clusters_ids
-
-
 
 
 
@@ -209,18 +220,6 @@ clust_name
 facet_rows = 2
 
 
-get_factors_for_metric<-function(diff_var){
-
-  # get associated factors, remove the ones related to confounding
-  fact <- which(all_fs_diff[,diff_var])
-
-        if (remove_cell_factors){
-          fact<-fact[!(fact %in% fact_neutro_pd)]
-
-        }
-       
-        return(fact)
-        }
 
 
 sapply(diff_variables, function(y_clust){

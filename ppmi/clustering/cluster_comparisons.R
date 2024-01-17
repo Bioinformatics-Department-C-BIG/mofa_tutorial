@@ -35,7 +35,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP='V08'
-process_mirnas= TRUE
+process_mirnas= FALSE
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'

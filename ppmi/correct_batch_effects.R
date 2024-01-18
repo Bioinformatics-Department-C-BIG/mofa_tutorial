@@ -21,7 +21,7 @@ filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.c
 remove_genes<-filtered_genes$perc0.1
 
 
-cell_corr=TRUE
+cell_corr=FALSE
 prefix='rnas_'; process_mirnas<-FALSE;  
 #prefix='mirnas_'; process_mirnas<-TRUE;  
 if (cell_corr){
@@ -40,7 +40,7 @@ input_file_mirs_norm
 se_mirs_prenorm = load_se_all_visits(input_file = input_file_mirs_norm, combined=combined_bl_log)
 se_pr_mirs_prenorm<-preprocess_se_deseq2(se_mirs_prenorm, min.count = min.count) # scale and transform covariates used in preprocessing 
 
-
+input_file
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
 # TODO: here try also the tpm measures that are already normalized!! 
 se_pr <- preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 

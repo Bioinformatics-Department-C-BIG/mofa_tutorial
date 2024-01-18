@@ -13,8 +13,6 @@ BiocManager::install("MOFA2")
 BiocManager::install("MOFAdata")
 
 BiocManager::install('Org.Mm.eg.db')
-#remove.packages('MOFA2')
-
 
 install.packages(
   "ggplot2",
@@ -169,12 +167,28 @@ suppressPackageStartupMessages(library(randomForest))
 
 BiocManager::install("vsn")
 BiocManager::install('GGally')
-
+BiocManager::install("sva")
 
 
 ## install timeOmics
 BiocManager::install('timeOmics')
 BiocManager::install('propr')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

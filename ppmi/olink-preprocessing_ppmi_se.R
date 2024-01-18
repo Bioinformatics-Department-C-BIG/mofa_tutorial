@@ -130,16 +130,18 @@ se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
 Sample<-colnames(se_filt)
 sample_info<-DataFrame(Sample=Sample)
 
-
-tmp<- assays
+assays
+tmp<- assays(se_filt)[[1]]
 
 
 # Filter and normalize
 ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
 
 ### TODO: filter before normalization!!! 
+tmp
+
 normalized_data<-justvsn(tmp)
-vsn::meanSdPlot(.normalized_data)
+vsn::meanSdPlot(normalized_data)
 
 
 

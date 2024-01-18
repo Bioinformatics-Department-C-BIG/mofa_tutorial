@@ -394,7 +394,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
  ######
 
  imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
-                           'updrs2_score', 'updrs2_score_LOG', 'moca' )
+                           'updrs2_score', 'updrs2_score_LOG', 'moca' , 'scopa')
  scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
  
  
@@ -540,16 +540,14 @@ get_age_at_visit<-function(new){
 #                  units = "years")
 
 
-
-
-
 #### data specifc 
 get_symbols_vector<-function(ens ){
   #' @param ens ensemble ids to conver to symbols 
   #' @returns symbols_ordered the total 
   #'  
   #'  
-  
+  ens<-gsub('\\..*','', ens ) # remove if there is something after the dot 
+
   symbols <- mapIds(org.Hs.eg.db, keys = ens,
                     column = c('SYMBOL'), keytype = 'ENSEMBL')
   symbols <- symbols[!is.na(symbols)]

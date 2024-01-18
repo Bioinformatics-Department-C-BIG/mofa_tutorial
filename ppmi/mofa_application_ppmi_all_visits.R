@@ -58,7 +58,7 @@ source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
-
+#output_files
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
@@ -66,8 +66,9 @@ metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 
 
-combined_bl <- combined_all_original
+
 combined_bl <- combined_bl_log
+combined_bl_log$Usa
 
 combined_bl_log$RBD_TOT
 all(is.na(combined_bl_log$updrs2_score_BL))
@@ -202,7 +203,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 
 
 # n_factors best=15
-for (N_FACTORS in c(15)){
+for (N_FACTORS in c(20)){
   ## MOFA parameters, set directory 
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
@@ -259,6 +260,16 @@ dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
+
+sm<-samples_metadata(MOFAobject)
+## ADD estimated cell types
+estimations<-decon$proportions$nnls_ABIS_S1
+
+
+sm2<-cbind(samples_metadata(MOFAobject), estimations[match(sm$PATNO_EVENT_ID, rownames(estimations)),])
+corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )$p
+corr.test(sm2$T.Naive,sm2$Lymphocytes....  )
+samples_metadata(MOFAobject)<-as.data.frame(sm2)
 
 
 

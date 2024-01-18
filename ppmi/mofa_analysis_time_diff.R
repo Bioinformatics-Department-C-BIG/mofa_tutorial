@@ -385,7 +385,7 @@ met<-samples_metadata(MOFAobjectPD_sel)
 
 
 
-
+samples_metadata(MOFAobject_sel)$B.Cells
 # Object to hold renamed features - add to metadata..? 
 MOFAobject_gs<-MOFAobject_sel
 ens_ids_full<- features_names(MOFAobject)$RNA
@@ -431,13 +431,13 @@ outdir
 graphics.off()
 
 MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:15 ),covariates = all_diff_variables_prog_conf)
+MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(3,8,9 ),covariates = colnames(estimations))
 
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
                     labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,
+plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)),fname,plot,factors = sel_factors,
             labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel )
 
 

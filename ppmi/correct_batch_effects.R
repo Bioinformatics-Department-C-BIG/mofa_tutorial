@@ -21,7 +21,7 @@ filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.c
 remove_genes<-filtered_genes$perc0.1
 
 
-cell_corr=TRUE
+cell_corr=FALSE
 prefix='rnas_'; process_mirnas<-FALSE;  
 #prefix='mirnas_'; process_mirnas<-TRUE;  
 if (cell_corr){
@@ -79,7 +79,7 @@ if (file.exists(vst_cor_all_vis)){
 
     # TODO: turn into function to create the correction 
     if (NROW(assay(ddsSE)) > 1000){
-       vsd<-vst(ddsSE)# switched tot this because it is faster 
+       vsd<-vst(ddsSE)# switched to this function because it is  faster 
 
     }else{
       vsd<-varianceStabilizingTransformation(ddsSE,blind = FALSE)

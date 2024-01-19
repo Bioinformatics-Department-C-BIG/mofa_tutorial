@@ -262,14 +262,14 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 
 
 
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
   #'
   #' @param 
   # TODO: add plate and/OR site 
   # se_filt1 neutrophil counts, and usable bases
   
   #IF NEUTROPHILS IN DESIGN
-  if (cell_corr){
+  if (cell_corr_deseq){
     #se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
     se_filt<-se_filt[,!(is.na(se_filt$Neutrophil.Score))] ;dim(assay(se_filt))
     
@@ -1196,7 +1196,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
       print(paste(prefix, ' remove variance'))
       # we do not need the config here but double check that the right file is used.. 
 
-      vst_cor_all_vis_to_load<-paste0(output_files, prefix, 'cell_corr_', cell_corr, 'vst_cor') # 
+      vst_cor_all_vis_to_load<-paste0(output_files, prefix, 'cell_corr_', cell_corr_mofa, 'vst_cor') # 
       vsd_cor_l=loadRDS(vst_cor_all_vis_to_load) # load the corrected 
       
       ## filter for the specified visit 

@@ -68,7 +68,7 @@ deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
-cell_corr<-TRUE
+cell_corr_deseq<-TRUE
 
 # Obtain clustering from mofa
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
@@ -98,11 +98,11 @@ se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 if (process_mirnas){
     formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping' # remove plate as well 
-  if (cell_corr) {
+  if (cell_corr_deseq) {
     formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+SITE+kmeans_grouping'
   }
 }else {
-  if (cell_corr) {
+  if (cell_corr_deseq) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+kmeans_grouping'
 
 }else{
@@ -129,9 +129,9 @@ gse_all<-vector("list", length = 0)
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
 
-deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr))
-deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr),  '/',VISIT_COMP)
-dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr)))
+deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
+deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP)
+dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq)))
 dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 

@@ -22,7 +22,7 @@ remove_genes<-filtered_genes$perc0.1
 
 
 cell_corr=FALSE
-prefix='rnas_'; process_mirnas<-FALSE;  
+prefix='mirnas_'; process_mirnas<-TRUE;  
 #prefix='mirnas_'; process_mirnas<-TRUE;  
 if (cell_corr){
     to_remove_covars<-c('Usable_Bases_SCALE', 'Plate', 'Neutrophil.Score')

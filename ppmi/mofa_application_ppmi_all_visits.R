@@ -31,7 +31,7 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
-cell_corr=TRUE
+cell_corr_mofa=TRUE
 #if (split){
 #  N_FACTORS=8
 #}
@@ -44,7 +44,7 @@ VISIT=c('BL','V08');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('V08');
 
-cell_corr=TRUE
+
 
 
 run_vsn=TRUE
@@ -209,7 +209,7 @@ for (N_FACTORS in c(20)){
   mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr))
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa))
   
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir

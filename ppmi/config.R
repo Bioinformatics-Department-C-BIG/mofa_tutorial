@@ -92,7 +92,7 @@ outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 formula_deseq2 = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 formula_deseq3<-'~PATNO+AGE_SCALED+SEX'
-if (cell_corr) {
+if (cell_corr_deseq) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
   
 }else{
@@ -135,7 +135,7 @@ input_file_mirs_norm<-input_file_mirs
 se_file<-paste0(output_files, prefix,  'all_visits')
 vsn_out_file<-paste0(output_files, param_str, '_vsn.csv')
 vst_all_vis<-paste0(output_files, param_str, '_vst')
-vst_cor_all_vis<-paste0(output_files, prefix, 'cell_corr_', cell_corr, 'vst_cor')  ## this is either filtered for rnas or full for mirnas  
+vst_cor_all_vis<-paste0(output_files, prefix, 'cell_corr_', cell_corr_mofa, 'vst_cor')  ## this is either filtered for rnas or full for mirnas  
 vst_cor_all_vis
 
 

@@ -21,10 +21,10 @@ filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.c
 remove_genes<-filtered_genes$perc0.1
 
 
-cell_corr=FALSE
+cell_corr_mofa=FALSE
 prefix='mirnas_'; process_mirnas<-TRUE;  
-#prefix='mirnas_'; process_mirnas<-TRUE;  
-if (cell_corr){
+prefix='rnas_'; process_mirnas<-FALSE;  
+if (cell_corr_mofa){
     to_remove_covars<-c('Usable_Bases_SCALE', 'Plate', 'Neutrophil.Score')
 
 }else{
@@ -108,7 +108,7 @@ if (file.exists(vst_cor_all_vis)){
       vsd_cor<-vsd_cor_filt
       
       assay_r<-gsub( '\\..*','' ,rownames(assay(vsd_cor)))
-      vsd_cor<-se_filt[assay_r %in% intersect(assay_r, remaining_genes),]
+      vsd_cor<-vsd_cor[assay_r %in% intersect(assay_r, remaining_genes),]
 
 
 

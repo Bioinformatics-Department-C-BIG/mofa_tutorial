@@ -31,7 +31,8 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
-cell_corr_mofa=TRUE
+cell_corr_mofa=FALSE
+cell_corr_deseq=TRUE
 #if (split){
 #  N_FACTORS=8
 #}
@@ -203,7 +204,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 
 
 # n_factors best=15
-for (N_FACTORS in c(20)){
+for (N_FACTORS in c(25)){
   ## MOFA parameters, set directory 
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
@@ -262,14 +263,44 @@ samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
 
 
 sm<-samples_metadata(MOFAobject)
-## ADD estimated cell types
-estimations<-decon$proportions$nnls_ABIS_S1
 
+
+## ADD estimated cell types
+get_decon_methods()
+estimations<-decon$proportions$nnls_ABIS_S0
+
+colnames(estimations)
 
 sm2<-cbind(samples_metadata(MOFAobject), estimations[match(sm$PATNO_EVENT_ID, rownames(estimations)),])
-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )$p
-corr.test(sm2$T.Naive,sm2$Lymphocytes....  )
+
+
+colnames(estimations) %in% colnames(samples_metadata(MOFAobject))
 samples_metadata(MOFAobject)<-as.data.frame(sm2)
+
+
+
+## tests 
+cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
+cors_real$r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

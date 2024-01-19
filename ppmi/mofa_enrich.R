@@ -100,7 +100,7 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 sel_factors_to_enrich<-sel_factors
 sel_factors_to_enrich=1:15
 sel_factors_to_enrich<-sel_factors
-sel_factors_to_enrich=1:15
+sel_factors_to_enrich=15:25
 #BiocManager::install("fgsea")
 
 

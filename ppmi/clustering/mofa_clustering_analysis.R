@@ -28,12 +28,13 @@ get_factors_for_metric<-function(diff_var){
 
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
-remove_cell_factors = TRUE
+remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 
 rescale_option=TRUE
 diff_var='NP2PTOT_LOG'
 DIFF_VAR='moca'
+DIFF_VAR='NP2PTOT_LOG'
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -185,6 +186,32 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
 
          )
 
+
+# 1. get the factors 
+cors_all_pd<-as.data.frame(cors_all_pd)
+get_covariates_cells<-function(y_clust, thresh=0){
+  # get the cell types that corelated with the metric
+  #' 
+  #' @thresh: -log10pvalue
+  fact=get_factors_for_metric(y_clust)
+  colnames(estimations)[!colnames(estimations) %in% colnames(cors_all_pd)]
+  
+  cell_types<-c(colnames(estimations), measured_cells)[c(colnames(estimations), measured_cells) %in% colnames(cors_all_pd) ]
+  
+  c(colnames(estimations), measured_cells)
+
+  clust_variates<-cors_all_pd[fact, cell_types]
+  clust_variates
+  variates_to_p<-names(which(colSums(clust_variates)>thresh))
+  variates_to_p
+  return(variates_to_p)
+}
+
+get_covariates_cells('NP2PTOT_LOG')
+
+
+paste0(DIFF_VAR,'_BL')
+
  diff_variables_to_p=c( 
          'NP2PTOT',  'scopa', 'sft', 
           # for cognition#'moca',# 'hvlt_immediaterecall',  # current 
@@ -208,9 +235,6 @@ sel_group=4
 
 
 y_clust="NP2PTOT_LOG"
-
-y_clust="NP2PTOT_diff_V13_V14"
-y_clust="updrs2_score_LOG_diff_V12"
 y_clust=DIFF_VAR
 y_clust
 all_fs_diff$NP2PTOT_LOG_V10
@@ -228,10 +252,8 @@ sapply(diff_variables, function(y_clust){
 
   if (clust_name %in% colnames(met)){
     # for each cluster create boxplot 
-
-   # k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+    variates_to_p<-get_covariates_cells(y_clust, thresh=8)
     fact=get_factors_for_metric(y_clust)
-
     fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
@@ -240,7 +262,7 @@ sapply(diff_variables, function(y_clust){
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
-    diff_variables_to_p, width=5+length(diff_variables_to_p)/facet_rows , bn=bn_all, facet_rows = facet_rows, 
+    c(diff_variables_to_p, variates_to_p), width=8+length(c(diff_variables_to_p,variates_to_p))/facet_rows , bn=bn_all, facet_rows = facet_rows, 
     text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
 
 
@@ -268,7 +290,11 @@ freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 
 #k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
 
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors),'rcf_',as.numeric(remove_cell_factors ) )
+fact=get_factors_for_metric(y_clust)
+
+fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors),'rcf_',as.numeric(remove_cell_factors ) )
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
 

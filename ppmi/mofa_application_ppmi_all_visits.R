@@ -28,6 +28,9 @@ source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
 
+decon<-loadRDS(paste0(output_files, '/decon.RDS'))
+
+
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
@@ -267,7 +270,7 @@ sm<-samples_metadata(MOFAobject)
 
 ## ADD estimated cell types
 get_decon_methods()
-estimations<-decon$proportions$nnls_ABIS_S0
+estimations<-decon$proportions$qprogwc_ABIS_S0
 
 colnames(estimations)
 

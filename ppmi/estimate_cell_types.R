@@ -2,6 +2,7 @@
 # https://bioconductor.org/packages/devel/bioc/vignettes/granulator/inst/doc/granulator.html
 # estimation of cell types with granulator using rna seq 
 
+#BiocManager::install('granulator')
 library(granulator)
 # load datasets for deconvolution of PBMC RNA-seq data
 load_ABIS()
@@ -53,37 +54,51 @@ rownames(bulkRNAseq)<-get_symbols_vector(rownames(bulkRNAseq))
 decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[1:4])
 
 
-estimated<-decon$proportions$nnls_ABIS_S0
-colnames(estimated)
-max(decon$proportions$nnls_ABIS_S0)
-
-# plot cell type proportions for svr model on ABIS_S0 reference profile
-plot_proportions(deconvoluted = decon, method = 'nnls', signature = 'ABIS_S3')
-# plot cell type proportions
-plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
-
-ground_truth<-as.data.frame(colData(se_rnas))
-
-ground_truth$PATNO_EVENT_ID
-match(rownames(estimated),ground_truth$PATNO_EVENT_ID )
+qprog_ABIS_S0
 
 
-match(ground_truth$PATNO_EVENT_ID , rownames(estimated))
-
-
-estim_matched<-estimated[match(ground_truth$PATNO_EVENT_ID , rownames(estimated)),]
-
-estim_matched$Neutrophils.LD
-
-sm<-samples_metadata(MOFAobject)
-se_rnas$Neutrophil.Score
 
 library('psych')
-corr.test(cbind(estim_matched$Neutrophils.LD, ground_truth$`Neutrophils....`))
+
+### apply to the estimated 
+names(decon$proportions)
+for (estimated in decon$proportions ){
+
+      #estimated<-decon$proportions$nnls_ABIS_S0
+      colnames(estimated)
+      max(decon$proportions$nnls_ABIS_S0)
+
+      # plot cell type proportions for svr model on ABIS_S0 reference profile
+      plot_proportions(deconvoluted = decon, method = 'nnls', signature = 'ABIS_S3')
+      # plot cell type proportions
+      plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
+
+      ground_truth<-as.data.frame(colData(se_rnas))
+
+      ground_truth$PATNO_EVENT_ID
+      match(rownames(estimated),ground_truth$PATNO_EVENT_ID )
 
 
-corr.test(estim_matched$Neutrophils.LD, ground_truth$`Neutrophils....`)$r
-corr.test(estim_matched$Neutrophils.LD, ground_truth$`Neutrophils....`)$p
+      match(ground_truth$PATNO_EVENT_ID , rownames(estimated))
+
+
+      estim_matched<-estimated[match(ground_truth$PATNO_EVENT_ID , rownames(estimated)),]
+
+      estim_matched$Neutrophils.LD
+
+      se_rnas$Neutrophil.Score
+
+      cor_neu<-corr.test(estim_matched$Neutrophils.LD, ground_truth$`Neutrophils....`)
+      
+      corr.test(estim_matched$Neutrophils.LD, ground_truth$`Neutrophils....`)$p
+      print(paste(cor_neu$r, cor_neu$p))
+
+}
+
+sm<-samples_metadata(MOFAobject)
+
+
+
 
 corr.test(estim_matched$Neutrophils.LD, ground_truth$Neutrophil.Score)$r
 corr.test(estim_matched$Neutrophils.LD, ground_truth$Neutrophil.Score)$p.adj
@@ -131,7 +146,9 @@ fit_lm
 plot(y ~ x)
 
 #correlate_factors_with_covariates
-(sm[variates_to_p])
+sm[variates_to_p]
+variates_to_p_cors<-c(variates_to_p, 'Multimapped....', 'Uniquely.mapped....', 'SITE', 'RIN.value', 
+    'Usable_bases_SCALE')
 cor <- psych::corr.test(sm[variates_to_p], sm[variates_to_p], method = "pearson", 
         adjust = "BH")
 stat<-cor$r

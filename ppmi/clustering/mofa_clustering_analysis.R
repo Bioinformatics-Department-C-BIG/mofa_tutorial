@@ -17,6 +17,7 @@ k_centers_m=3
 rescale_option=TRUE
 diff_var='NP2PTOT_LOG'
 DIFF_VAR='moca'
+DIFF_VAR='moca'
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -56,9 +57,20 @@ cors_all_pd$Neutrophil.Score;cors_all_pd$Neutrophil.Lymphocyte
 # Remove factors that have to do with site, plate, 
 c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)), which(cors$`SITE`>-log10(0.05)), which(cors$`Plate`>-log10(0.05)) )
 
+cors$Usable_Bases_SCALE
+cors$Uniquely.mapped
 fact_neutro_pd<-c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)),  which(cors$Plate>-log10(0.05)), 
-                          which(cors$SITE>-log10(0.05)) )
+                           which(cors$Usable_Bases_SCALE>-log10(0.05)) ,
+                         which(cors$RIN>-log10(0.05)), 
+                           which(cors$Uniquely.mapped>-log10(0.05))  )
+
+fact_neutro_pd<-c( which(cors$Plate>-log10(0.05)), 
+                          which(cors$SITE>-log10(0.05)), which(cors$Usable_Bases_SCALE>-log10(0.05)) ,
+                         which(cors$RIN>-log10(0.05)), 
+                           which(cors$Uniquely.mapped>-log10(0.05))  )
+
 fact_neutro_pd
+unique(fact_neutro_pd)
 #fact_neutro_pd<-c((which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)), 
    #                             which(cors_all_pd$SITE>-log10(0.05)))  
 fact_neutro_pd
@@ -135,7 +147,7 @@ MOFAobject_sel@samples_metadata[, 'NP2PTOT_LOG_clust']
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 
 diff_variables=c('NP2PTOT_LOG')
-diff_variables=c('scopa', 'moca', 'NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10', 'moca')
+diff_variables=c('scopa', 'moca','sft', 'moca_V12', 'sft_V12', 'NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10', 'moca')
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )

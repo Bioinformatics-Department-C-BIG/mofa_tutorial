@@ -13,7 +13,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-VISIT_COMP = 'BL'
+VISIT_COMP = 'V08'
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 

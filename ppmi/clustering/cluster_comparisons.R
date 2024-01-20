@@ -30,7 +30,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-#VISIT_COMP='V08'
+VISIT_COMP='V08'
 process_mirnas= FALSE
 if (process_mirnas){
   se_sel = se_mirs
@@ -48,7 +48,7 @@ se_clusters
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
-y_clust='scopa'
+y_clust=DIFF_VAR
 clust_name=paste0(y_clust, '_clust')
 
 ## Outputs 
@@ -70,7 +70,7 @@ se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAob
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), '/rcf_', as.numeric(remove_cell_factors )) 
+cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_', as.numeric(remove_cell_factors )) 
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 cluster_params_dir
 

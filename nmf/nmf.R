@@ -181,6 +181,23 @@ if (run_tuning){
 }
 
 
+estim.r <- nmf(x1, 3:7, nrun=2, seed=1234)
+plot(estim.r)
+
+
+## plot also annotation datasets 
+#anndf<-as.data.frame(colData(x1_se)[, c('COHORT')]); rownames(anndf)=x1_se$PATNO
+
+
+
+p<-consensusmap(estim.r, annCol=x1_se$COHORT)
+ggsave('./consensus_map.jpeg', p)
+
+
+plot(estim.r)
+
+
+
 
 
 

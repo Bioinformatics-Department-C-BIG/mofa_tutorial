@@ -31,7 +31,8 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
-cell_corr=TRUE
+cell_corr_mofa=FALSE
+cell_corr_deseq=TRUE
 #if (split){
 #  N_FACTORS=8
 #}
@@ -44,7 +45,7 @@ VISIT=c('BL','V08');
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('V08');
 
-cell_corr=TRUE
+
 
 
 run_vsn=TRUE
@@ -58,7 +59,7 @@ source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
-
+#output_files
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
 combined_all_original<-read.csv2(metadata_output)
@@ -66,8 +67,9 @@ metadata_output<-paste0(output_files, 'combined_log.csv')
 combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 
 
-combined_bl <- combined_all_original
+
 combined_bl <- combined_bl_log
+combined_bl_log$Usa
 
 combined_bl_log$RBD_TOT
 all(is.na(combined_bl_log$updrs2_score_BL))
@@ -202,13 +204,13 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 
 
 # n_factors best=15
-for (N_FACTORS in c(15)){
+for (N_FACTORS in c(25)){
   ## MOFA parameters, set directory 
   #'
   mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
   out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr))
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa))
   
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
@@ -258,6 +260,46 @@ dim(samples_metadata(MOFAobject))
 dim(as.data.frame(meta_merged_ord))
 #MOFAobject@samples_metadata=as.data.frame(meta_merged_ord)
 samples_metadata(MOFAobject)<-as.data.frame(meta_merged_ord)
+
+
+sm<-samples_metadata(MOFAobject)
+
+
+## ADD estimated cell types
+get_decon_methods()
+estimations<-decon$proportions$nnls_ABIS_S0
+
+colnames(estimations)
+
+sm2<-cbind(samples_metadata(MOFAobject), estimations[match(sm$PATNO_EVENT_ID, rownames(estimations)),])
+
+
+colnames(estimations) %in% colnames(samples_metadata(MOFAobject))
+samples_metadata(MOFAobject)<-as.data.frame(sm2)
+
+
+
+## tests 
+cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
+cors_real$r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

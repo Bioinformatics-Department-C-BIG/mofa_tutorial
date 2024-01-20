@@ -105,7 +105,9 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # And the change in the datascan binding  in the future?
                                  # THESE factors are the ones that we actually WANT                                #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                                  'SITE', 'Plate', 
-                                 'Neutrophil.Score'
+                                 'Neutrophil.Score', 
+                                 
+                                'RIN.Value', 'Multimapped....', 'Uniquely.mapped....'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  
@@ -262,14 +264,14 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 
 
 
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10){
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
   #'
   #' @param 
   # TODO: add plate and/OR site 
   # se_filt1 neutrophil counts, and usable bases
   
   #IF NEUTROPHILS IN DESIGN
-  if (cell_corr){
+  if (cell_corr_deseq){
     #se_filt<-se_filt[,!(is.na(se_filt$`Neutrophils....`))] ;dim(assay(se_filt))
     se_filt<-se_filt[,!(is.na(se_filt$Neutrophil.Score))] ;dim(assay(se_filt))
     
@@ -394,7 +396,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
  ######
 
  imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
-                           'updrs2_score', 'updrs2_score_LOG', 'moca' )
+                           'updrs2_score', 'updrs2_score_LOG', 'moca' , 'scopa')
  scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
  
  
@@ -540,16 +542,14 @@ get_age_at_visit<-function(new){
 #                  units = "years")
 
 
-
-
-
 #### data specifc 
 get_symbols_vector<-function(ens ){
   #' @param ens ensemble ids to conver to symbols 
   #' @returns symbols_ordered the total 
   #'  
   #'  
-  
+  ens<-gsub('\\..*','', ens ) # remove if there is something after the dot 
+
   symbols <- mapIds(org.Hs.eg.db, keys = ens,
                     column = c('SYMBOL'), keytype = 'ENSEMBL')
   symbols <- symbols[!is.na(symbols)]
@@ -1198,7 +1198,7 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
       print(paste(prefix, ' remove variance'))
       # we do not need the config here but double check that the right file is used.. 
 
-      vst_cor_all_vis_to_load<-paste0(output_files, prefix, 'cell_corr_', cell_corr, 'vst_cor') # 
+      vst_cor_all_vis_to_load<-paste0(output_files, prefix, 'cell_corr_', cell_corr_mofa, 'vst_cor') # 
       vsd_cor_l=loadRDS(vst_cor_all_vis_to_load) # load the corrected 
       
       ## filter for the specified visit 

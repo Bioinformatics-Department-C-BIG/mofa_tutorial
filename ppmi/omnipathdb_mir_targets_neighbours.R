@@ -20,10 +20,10 @@ mofa_cluster_id<-1
 VISIT_COMP<-'V08'
 as.numeric(cell_corr)
 cell_corr=TRUE
-outdir
+print(outdir )
 clust_name='moca_clust'
-
-remove_cell_factors=FALSE
+#k_centers_m=3; rescale_option=TRUE; sel_group_cors = FALSE
+#remove_cell_factors=FALSE
 
 cluster_params_to_load<-paste0('/clustering/',clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
 cluster_params_to_load
@@ -43,20 +43,34 @@ load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, cell_corr_s
     return(rnas_visit )
 
 }
+output_files
 
-rnas_V08<-load_de_by_visit_and_cluster(VISIT_COMP, mofa_cluster_id,   cell_corr_state = cell_corr )
-rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
+load_proteins_by_visit<-function(mofa_cluster_id=1,VISIT_COMP){
+  proteins_visit<-read.csv(paste0(data_dir, '/ppmi/plots/single/','proteomics_',VISIT_COMP,'_Plasma_norm_Tvsn_T_coh_1-2_INEXPDAGE_AT_VISIT+SEX+COHORT/', 'significant0.05_0.1.csv'))
+}
+
+
+
+# proteins_V08
+
+
 
 
 clust_ids<-c(1,2,3, '1_2_3')
+clust_ids<-c('1')
+clust_ids<-c(1,2,3, '1_2_3')
+
 rnas_V08_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V08', cell_corr=cell_corr, prefix= 'rnas_') # holds all clusters 
 rnas_sig_V08_list<-lapply(rnas_V08_list, function(df){ return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
+
+
 names(rnas_V08_list)<-clust_ids
 names(rnas_sig_V08_list)<-clust_ids
+proteins_V08_list<-lapply(clust_ids,load_proteins_by_visit, VISIT_COMP='V08')
 
+rnas_sig_V08_list
 
-length(rnas_V08_list)
-load_all_times=TRUE
+load_all_times=FALSE
 if (load_all_times){
   rnas_V06_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V06', cell_corr=cell_corr, prefix= 'rnas_') # holds all clusters 
   rnas_sig_V06_list<-lapply(rnas_V06_list, function(df){ return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
@@ -103,7 +117,7 @@ rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significa
 mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
 
-sel_factor=8; top_fr=1
+sel_factor=8; top_fr=0.4
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 top_fr_mirs=top_fr
@@ -150,7 +164,7 @@ rnas_sig_factor_V08_list<-lapply(rnas_sig_V08_list, function(df){
 ## input: 
 ## de_rnas: union of all
 ## de_mirnas: union of all clusters 
-mofa_filter=FALSE; 
+mofa_filter=TRUE; 
 if (mofa_filter){
   rnas_sig_list = rnas_sig_factor_V08_list
   mirnas_sig_list = mirnas_sig_factor_V08_list
@@ -162,20 +176,37 @@ if (mofa_filter){
 }
 
 names(rnas_sig_list)
-rnas_sig_list[[4]]
 
 rnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), rnas_sig_list)
 mirnas_sig_factor_all_clusts<-Reduce(function(x, y) merge(x, y, all=TRUE), mirnas_sig_list)
 
 mirnas_sig_factor_all_clusts$GENE_SYMBOL
-resources = c(  "STRING_talklr" , 'SIGNOR', 'DoRothEA')
+resources = c(  "STRING_talklr", 'SIGNOR')
+ gene_mir_resources = c("miRTarBase", "TransmiR")
+add_gg_interactions = TRUE
 
 g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts, resources = resources)
+colnames(rnas_sig_list[[1]] )
+proteins_V08_list[[1]]
+colnames(proteins_V08_list[[1]])[2] = 'log2FoldChange' # rename to align with rna columns
+proteins_V08_list[[1]]$GENE_SYMBOL=proteins_V08_list[[1]]$X
+proteins_V08_list[[1]]$mofa_sign = proteins_V08_list[[1]]$sign_lfc
 # choose the backbone to be the union or intersection
-g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_list[[4]], mirnas_sig_list[[4]],resources = resources)
+rnas_sig_list[[1]]$type='gene'
+proteins_V08_list[[1]]$type='protein'
 
-g_extended_both_clusters
 
+rnas_proteins_sig_list<-rbind(rnas_sig_list[[1]][c('log2FoldChange', 'GENE_SYMBOL', 'mofa_sign', 'type')], proteins_V08_list[[1]][c('log2FoldChange', 'GENE_SYMBOL', 'mofa_sign', 'type')] )
+rnas_proteins_sig_list
+
+g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_list[[1]], mirnas_sig_list[[1]],resources = resources, 
+                                                        gene_mir_resources =  gene_mir_resources ,
+                                                        add_gg_interactions=add_gg_interactions)
+
+
+g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_factor_all_clusts, mirnas_sig_factor_all_clusts,resources = resources, 
+                                                        gene_mir_resources =  gene_mir_resources ,
+                                                        add_gg_interactions=add_gg_interactions)
 
 
 ### Now plot! 
@@ -197,7 +228,7 @@ set.seed(123)
 
 
 # Unified plot: 
-g_fc_V08_list<-sapply(c(1,2,3,'1_2_3'), function(mofa_cluster_id){
+g_fc_V08_list<-sapply(clust_ids, function(mofa_cluster_id){
   g_fc_V08_cl<-get_logFC_by_node(OPI_g_union, de_rnas=rnas_V08_list[[mofa_cluster_id]],  de_mirnas=mirnas_V08_list[[mofa_cluster_id]])
   return(g_fc_V08_cl)
 
@@ -207,14 +238,13 @@ g_fc_V08_list<-sapply(c(1,2,3,'1_2_3'), function(mofa_cluster_id){
 names(g_fc_V08_list)<-clust_ids
 
 if (load_all_times){
-  g_fc_V06_list<-sapply(c(1,2,3,'1_2_3'), function(mofa_cluster_id){
+  g_fc_V06_list<-sapply(clust_ids, function(mofa_cluster_id){
   g_fc_V06_cl<-get_logFC_by_node(OPI_g_union, de_rnas=rnas_V06_list[[mofa_cluster_id]],  de_mirnas=mirnas_V06_list[[mofa_cluster_id]])
   return(g_fc_V06_cl)
 
 })
 }
 
-names(g_fc_V06_list)<-clust_ids
 
 OPI_g_union
 
@@ -239,7 +269,6 @@ dir.create(paste0(outdir,cluster_params_to_load, '/nets/mf_', as.numeric(mofa_fi
 
 mofa_cluster_id=1
 set.seed(123) 
-g_fc_V08_list
 
 # Plot each cluster on the backbone 
 
@@ -254,15 +283,14 @@ g_fc_V08_list
         vertex.size.factor=1 
       )
 
-filter_significant = TRUE
-V(g_fc_plot)$significant
-V(g_fc_plot)$significant 
-delete_vertices(g_fc_plot, !(V(g_fc_plot)$significant))
-g_fc_plot
 
 
 # TODO: choose backbone to be from the intersection or run with all 3...? 
-for (mofa_cluster_id in c(1,2,3,'1_2_3')){
+
+
+
+
+for (mofa_cluster_id in clust_ids){
 
 
       g_fc_plot<-g_fc_V08_list[[mofa_cluster_id]];VISIT_PLOT = 'V08'
@@ -287,13 +315,12 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
       V(g_fc_plot)$size<-V(g_fc_plot)$size*plot_settings$vertex.size.factor
 
       ### IGRAPH TO SAVE 
-      net_name=paste0('mirs_genes_',VISIT_PLOT,'_', mofa_cluster_id, '_f',sel_factor,top_fr )
+      net_name=paste0('mirs_genes_',VISIT_PLOT,'_', mofa_cluster_id, '_f',sel_factor,top_fr, 'gg_', as.numeric(add_gg_interactions ))
       net_file=paste0(paste0(outdir,cluster_params_to_load,  '/nets/mf_', as.numeric(mofa_filter)) ,'/' , net_name)
       V(g_fc_plot)$frame.color<-bd
       V(g_fc_plot)$label.cex=plot_settings$label.cex # increase label size? 
 
 
-      g_fc_plot
       graphics.off()
 
 
@@ -302,14 +329,18 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
       plot(g_fc_plot, 
       vertex.color=(adjustcolor(V(g_fc_plot)$color, alpha.f = 0.8 )), 
       vertex.size=V(g_fc_plot)$size,
-      #vertex.shape=ifelse(grepl('miR|hsa-let-',V(g_fc_plot)$name ), 'rectangle', 'circle' ),
+     # vertex.shape=ifelse(grepl('miR|hsa-let-',V(g_fc_plot)$name ), 'rectangle', 'circle' ),
+     # vertex.shape=ifelse(V(g_fc_plot)$type=='protein' , 'rectangle', 'circle' ),
+
       vertex.frame.color=bd,
       vertex.frame.width=3,
-      vertex.label.dist = 2, 
+      vertex.label.dist = 1.5, 
         layout = Coords)
 
       title(paste(  'Resources: ', paste(as.character(resources), collapse=', '),'\n', 
-      'Visit: ', VISIT_PLOT, ', Cluster: ', mofa_cluster_id, 
+       paste(as.character(gene_mir_resources), collapse=', '),'\n', 
+      'gene-gene ints:', add_gg_interactions, 
+      ', Visit: ', VISIT_PLOT, ', Cluster: ', mofa_cluster_id, 
       ', \nMOFA filter', mofa_filter, ', Factor: ',
       sel_factor,', top: ', top_fr  ),cex.main=1)
 
@@ -337,7 +368,12 @@ for (mofa_cluster_id in c(1,2,3,'1_2_3')){
 
 
 
+all_sig<-do.call(cbind,lapply(g_fc_V08_list,function(g_fc_plot){as.numeric(V(g_fc_plot)$significant) }))
 
+all_sig<-as.data.frame(all_sig)
+rownames(all_sig)<-V(g_fc_plot)$name
+all_sig
+write.csv(all_sig,paste0(net_file, '.csv'))
 
 
 

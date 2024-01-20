@@ -29,8 +29,8 @@ source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
 clinical_scales<-scale_vars_diff
-length(MOFAobject@samples_metadata$PATNO_EVENT_ID)
 
+scale(MOFAobject@samples_metadata$`Usable.Bases....`)
 MOFAobject@samples_metadata$Usable_Bases_SCALE<-scale(MOFAobject@samples_metadata$`Usable.Bases....`)
 samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAobject)$SCAU26CT))
 #samples_metadata(MOFAobject)$months<-unlist(EVENT_MAP[samples_metadata(MOFAobject)$EVENT_ID], use.names = FALSE)
@@ -167,7 +167,12 @@ if (add_clinical_clusters){
 
 #MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
 PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
+
+HC_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Healthy Control']
+HC_samples_only
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
+MOFAobjectHC <- subset_samples(MOFAobject, samples=HC_samples_only)
+
 sel_group=4
 groups_names(MOFAobject)
 
@@ -224,7 +229,7 @@ if (file.exists(covars_f_pearson_pd)){
   stats<-apply(MOFAobject_sel@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
   cors_both<-get_correlations(MOFAobject_sel, names(non_na_vars))
-  cors_pearson=cors_both[[2]]; cors=cors_both[[1]]; cors_all=cors_both[[1]]
+  cors_pearson=as.data.frame(cors_both[[2]]); cors=as.data.frame(cors_both[[1]]); cors_all=cors_both[[1]]
 
   write.csv2(cors_pearson,covars_f_pearson)
   write.csv2(cors,covars_f_pvalue)
@@ -232,7 +237,7 @@ if (file.exists(covars_f_pearson_pd)){
 }
 
 
-################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
+################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES  ####
 # corelate categorical covariates
 covariates=c('SITE', 'Plate', 'NHY', 'NP2PTOT_LOG', 'AGE_SCALED', 'SEX', 
              'Usable.Bases....', 'updrs2_score',  'scopa')
@@ -308,7 +313,8 @@ set.seed(123)
 set.seed(1239)
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
-Z_scaled<-apply(as.data.frame(Z), 2, scale);
+as.data.frame(Z)
+#Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
 Z_scaled<-Z
 graphics.off()
@@ -385,7 +391,7 @@ met<-samples_metadata(MOFAobjectPD_sel)
 
 
 
-
+samples_metadata(MOFAobject_sel)$B.Cells
 # Object to hold renamed features - add to metadata..? 
 MOFAobject_gs<-MOFAobject_sel
 ens_ids_full<- features_names(MOFAobject)$RNA
@@ -414,32 +420,63 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
   return(sel_factors)
   
 }
+measured_cells<-c('Neutrophils....', 'Lymphocytes....', 'Neutrophil.Score')
+
 progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 progression_markers_conf<-c( 'abeta', 'sft' )
-clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa')
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
-                       'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte')
+                       'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
+                         'sft_V12', c(colnames(estimations),measured_cells), 
+                         'Multimapped....', 'Uniquely.mapped....')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
-                    'Neutrophil.Lymphocyte')
+                    'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
-
+sm$Uniquely.mapped....
 outdir
 graphics.off()
+N_FACTORS
+colnames(estimations)
+#MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
+#MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:N_FACTORS ),covariates = colnames(estimations))
 
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:15 ),covariates = all_diff_variables_prog_conf)
+fname<-'factors_covariates_cells_PD'
+N_FACTORS[-c(6)]
+plot_covars_mofa(selected_covars = c(colnames(estimations),'NP2PTOT_LOG','moca', 'NP2PTOT_LOG_V10', measured_cells),fname,plot,factors=c(1:N_FACTORS)[-c(6)],
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel, alpha=0.05 )
+
+
+
+fname<-'factors_covariates_cells_PD_cor'
+plot_covars_mofa(selected_covars = c(colnames(estimations),'NP2PTOT_LOG','moca', measured_cells),fname,plot='r',factors=1:N_FACTORS,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
+
+fname<-'factors_covariates_cells'
+plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells),fname,plot,factors=1:20,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobject )
+                    
+fname<-'factors_covariates_cells_HC'
+plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells, 'Multimapped....', 'Uniquely.mapped....', 'Usable_bases_SCALE'),fname,plot,factors=1:20,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectHC , alpha=0.01)
+
+colnames(estimations)
+colnames(estimations) %in% colnames(cors_all_pd)
+colnames(estimations) %in% colnames(cors_all_pd)
+
 
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
                     labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_PD_np3'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors,
+plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)),fname,plot,factors = sel_factors,
             labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel )
 
 
+
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca'))
 fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
@@ -450,6 +487,8 @@ graphics.off()
 
 
 
+cors_estim<-cors_all_pd[c(23), colnames(estimations)]
+colnames(cors_estim)[cors_estim>0]
 
 
 
@@ -476,7 +515,7 @@ sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
 
 all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD_sel@samples_metadata)]
 
-all_diff_variables_prog=unique(all_diff_variables_prog)
+all_diff_variables_prog=unique(all_diff_variables_prog, c(colnames(estimations),measured_cells))
 all_diff_variables_prog
 #### Factors related to the longterm change in scale #####
 graphics.off()
@@ -506,7 +545,7 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 
 fname<-'factors_covariates_only_nonzero_strict'
 plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE,
- MOFAobject=MOFAobject_sel, height = 580 )
+ MOFAobject=MOFAobject_sel, height = 580*sel_factors )
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
@@ -1340,132 +1379,6 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 ## Prediction of clinical subgroups 
 ## Predict the EORTC.risk
 
-
-library('tibble')
-library('caret')
-# packages <- c('dplyr', 'ggplot2', 'caret', 'party')
-packages <- c('dplyr', 'ggplot2', 'caret')
-
-invisible(lapply(packages, library, character.only = TRUE))
-
-
-# Prepare data
-df <- as.data.frame(get_factors(MOFAobject, factors=1:15)[[1]])
-df <- as.data.frame(get_factors(MOFAobject, factors=sel_factors)[[1]])
-
-
-
-
-
-# Do predictions with the factors 
-# Train the model for eortc.risk
-
-# Use the pricnipal components 
-# Train-validation split #
-# Cross-Validation ####
-
-
-df$y <- as.factor(MOFAobject@samples_metadata$NHY)
-
-df$y<- as.factor(MOFAobject@samples_metadata$COHORT)
-df_age <- cbind(df,MOFAobject@samples_metadata[, c('AGE_SCALED', 'SEX')])
-
-
-
-## Set seed for reproducibility
-set.seed(123)
-
-## Define repeated cross validation with 5 folds and three repeats
-repeat_cv <- trainControl(method='repeatedcv', number=5, repeats=3)
-train_index <- createDataPartition(y=df$y, p=0.7, list=FALSE)
-
-val_folds<-createFolds(df$y, k = 10, list = TRUE, returnTrain = TRUE)
-val_folds#
-
-
-## TODO: issues : there is class imbalance 
-# TODO: issues 
-res<-sapply(val_folds, cross_val_score, df=df)
-res_age<-sapply(val_folds, cross_val_score, df=df_age)
-
-
-
-
-
-
-
-
-
-
-
-#########
-
-
-
-
-
-model.COHORT <- randomForest(COHORT ~ ., data=training_set, ntree=10)
-MOFAobject@samples_metadata$COHORT.pred <- stats::predict(model.COHORT, df)
-
-# Assess performance 
-predicted<-as.factor(MOFAobject@samples_metadata$COHORT.pred)
-actual = MOFAobject@samples_metadata$COHORT
-confusion_mat = as.matrix(table(actual, predicted )) 
-
-
-
-
-print(confusion_mat)
-
-
-N_FACTORS
-## Show "importance" of variables: higher value mean more important:
-round(importance(model.COHORT), 2)
-#install.packages('randomForest')
-
-# Prepare data
-# Predict EORTC.risk with factor 1,2 only!
-high_weights=get_weights()
-df <- as.data.frame(get_factors(MOFAobject, factors=c(2,3,4,6))[[1]])
-df_genes<-as.data.frame(get_weights(MOFAobject, factors=c(2,3,4,6)) )
-
-# Train the model for IGHV
-y_predict='CONCOHORT_DEFINITION'
-df$y <- as.factor(MOFAobject@samples_metadata[,y_predict])
-model.y <- randomForest(y ~ .,data= df, ntree=10)
-df$y <- NULL # important 
-
-
-# Do predictions
-MOFAobject@samples_metadata$y.pred <- stats::predict(model.y, df)
-MOFAobject@samples_metadata$y.pred
-
-# Assess performance 
-predicted<-MOFAobject@samples_metadata$y.pred
-actual <-as.factor(MOFAobject@samples_metadata[,y_predict])
-confusion_mat = as.matrix(table(actual, predicted )) 
-
-print(confusion_mat)
-View(confusion_mat)
-round(importance(model.y), 2)
-
-
-#install.packages('GGally')
-library('GGally')
-### Plot predictions
-p <- plot_factors(MOFAobject, 
-                  factors = c(2,3,4,6), 
-                  color_by = "CONCOHORT_DEFINITION",
-                  shape_by = "CONCOHORT_DEFINITION",
-                  dot_size = 2.5,
-                  show_missing = T
-)
-
-
-show(p)
-dev.off()
-cbind(MOFAobject@samples_metadata$sample,MOFAobject@samples_metadata$COHORT_DEFINITION)
-MOFAobject@samples_metadata[MOFAobject@samples_metadata$PATNO=='3156',]
 
 
 

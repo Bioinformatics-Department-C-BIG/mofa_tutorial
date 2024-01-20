@@ -13,8 +13,6 @@ BiocManager::install("MOFA2")
 BiocManager::install("MOFAdata")
 
 BiocManager::install('Org.Mm.eg.db')
-#remove.packages('MOFA2')
-
 
 install.packages(
   "ggplot2",
@@ -75,6 +73,10 @@ install.packages('tidyverse')
 install.packages('UpSetR')
 
 #### MOFA
+BiocManager::install('MOFAdata')
+BiocManager::install('MOFA2')
+
+
 
 #BiocManager::install('MultiAssayExperiment')
 install.packages("remotes")
@@ -115,6 +117,10 @@ BiocManager::install('ensembldb')
 BiocManager::install('org.Hs.eg.db')
 
 
+
+### MIXOMICS
+
+BiocManager::install(c("mixOmics"))
 install.packages('visNetwork')
 install.packages('igraph')
 
@@ -123,6 +129,19 @@ install.packages('igraph')
 
 install.packages("remotes")
 remotes::install_github("jmw86069/jamenrich")
+remotes::install_github("jmw86069/jamenrich/multienrichjam")
+
+#remotes::install_github("jmw86069/jamenrich")
+
+
+
+
+
+
+#### 
+
+
+install.packages('NMF')
 
 
 
@@ -148,12 +167,28 @@ suppressPackageStartupMessages(library(randomForest))
 
 BiocManager::install("vsn")
 BiocManager::install('GGally')
-
+BiocManager::install("sva")
 
 
 ## install timeOmics
 BiocManager::install('timeOmics')
 BiocManager::install('propr')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

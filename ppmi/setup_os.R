@@ -19,7 +19,12 @@ if (Sys.info()['sysname']=='Darwin'){
   script_dir<-'/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/../'
   setwd(script_dir)
   
-}else{
+}else if (Sys.info()['sysname']=='Linux'){
+  setwd('/data8TB/efiath/git/mofa_tutorial/')
+  data_dir<-'/data8TB/efiath/git/mofa_tutorial/'
+  script_dir<-'/data8TB/efiath/git/mofa_tutorial/'
+  
+}else  {
   setwd('D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/')
   data_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
   script_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'

@@ -1,6 +1,6 @@
 
-
-
+## Prerequisite files  ##
+source(paste0(script_dir,'ppmi/extract_metadata.R'))
 
 library(dplyr)
 library(ggplot2)

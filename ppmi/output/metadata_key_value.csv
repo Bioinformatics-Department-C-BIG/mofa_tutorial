@@ -1,0 +1,49 @@
+rigidity,rigidity
+COHORT',Disease_status'
+'AGE',                   'AGE'
+'SEX',                   'SEX'
+'NP1RTOT','MDS-UPDRS1'
+'NP2PTOT','MDS-UPDRS2'
+'NP3TOT','MDS-UPDRS3'
+'NP4TOT','MDS-UPDRS4'
+updrs3_score,MDS-UPDRS3 (OFF)
+'updrs3_score_on',MDS-UPDRS3 (ON)
+updrs2_score,MDS-UPDRS2
+updrs_score',MDS-UPDRS
+'NP1_TOT','MDS1_log'
+'NP2_TOT',MDS-UPDRS2_t
+'NP3_TOT',MDS-UPDRS3_t'
+'NP4_TOT','MDS4_log'
+'NHY',                   'Hoehn & Yahr'
+'NP3BRADY','MDS3-BRADY'
+'NP3RIGN','MDS3-RIGN'
+'SCAU5',                   'SC-CONSTIP'
+'MCATOT',                    'MCA-cognit-tot'
+'MCAVFNUM' ,                   'MCA-verb fluency'
+'MCACLCKH',                   'MCA-visuoconstruct'
+'cogstate',                    'cogstate'
+'sft' ,                    'SEM fluency'
+'VLTFRUIT' ,                    'SEM-FL-FRUIT'
+'ptau',                   'ptau'
+'abeta',                   'abeta' 
+'ess_cat' ,                   'EPWORTH sleep cat' 
+'HVLTRDLY',                   'HOP VERB LEARNING-recall'
+'PDSTATE',                   'PDSTATE'
+'NP3RTCON','MDS3-REST TREMOR'
+'stai_state',                    'STAI_STATE'
+'stai_trait'  ,                    'STAI_TRAIT'
+'STAIAD26',                    'STAI-FEEL RESTED'
+'NP1ANXS',                    'MDSI-anxious'
+'NP3GAIT','MDS3-GAIT'
+'SCAU7',                   'SC-fec incont'
+'NP3SPCH','MDS3-speech prob'
+'NP3RISNG','MDS3-rising'
+'NP2EAT','MDS2-eat'
+'NP3RTARU','MDS3-TREMOR'
+'RBD_TOT' ,                    'RBD_TOT'
+'con_putamen' ,putamen
+'td_pigd_old_on',                   'TD/PIGD dominant'
+PD_MED_USE' ,                    'Medication use'
+moca,MoCa
+scopa,SCOPA
+AGE,Age

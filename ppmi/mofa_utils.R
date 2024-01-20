@@ -384,7 +384,7 @@ get_labels<-function(selected_covars, labels_col=FALSE){
 
 
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
-                           MOFAobject_to_plot=MOFAobject, res=200){
+                           MOFAobject_to_plot=MOFAobject, res=200, alpha=0.05){
   
   # filter if some do not exist in the colnames of metadata
   #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
@@ -407,7 +407,8 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
                                         labels_col=get_labels(selected_covars, labels_col = TRUE), 
                                         factors = factors, 
                                         cluster_cols=TRUE, 
-                                        return_data = TRUE)
+                                        return_data = TRUE, 
+                                        alpha=alpha)
 
   # keep only what is >0
   selected_covars = selected_covars[colSums(P2_data)>0]
@@ -423,7 +424,8 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
                                         plot = plot,
                                         labels_col=get_labels(selected_covars, labels_col = TRUE), 
                                         factors = factors, 
-                                        cluster_cols=TRUE)
+                                        cluster_cols=TRUE, 
+                                        alpha=alpha)
 
 
   dev.off()

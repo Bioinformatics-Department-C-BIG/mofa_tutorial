@@ -21,10 +21,10 @@ filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.c
 remove_genes<-filtered_genes$perc0.1
 
 
-cell_corr=TRUE
+cell_corr_mofa=FALSE
+prefix='mirnas_'; process_mirnas<-TRUE;  
 prefix='rnas_'; process_mirnas<-FALSE;  
-#prefix='mirnas_'; process_mirnas<-TRUE;  
-if (cell_corr){
+if (cell_corr_mofa){
     to_remove_covars<-c('Usable_Bases_SCALE', 'Plate', 'Neutrophil.Score')
 
 }else{
@@ -40,7 +40,7 @@ input_file_mirs_norm
 se_mirs_prenorm = load_se_all_visits(input_file = input_file_mirs_norm, combined=combined_bl_log)
 se_pr_mirs_prenorm<-preprocess_se_deseq2(se_mirs_prenorm, min.count = min.count) # scale and transform covariates used in preprocessing 
 
-
+input_file
 se=load_se_all_visits(input_file = input_file, combined=combined_bl_log)
 # TODO: here try also the tpm measures that are already normalized!! 
 se_pr <- preprocess_se_deseq2(se, min.count = 20) # scale and transform covariates used in preprocessing 
@@ -79,7 +79,7 @@ if (file.exists(vst_cor_all_vis)){
 
     # TODO: turn into function to create the correction 
     if (NROW(assay(ddsSE)) > 1000){
-       vsd<-vst(ddsSE)# switched tot this because it is faster 
+       vsd<-vst(ddsSE)# switched to this function because it is  faster 
 
     }else{
       vsd<-varianceStabilizingTransformation(ddsSE,blind = FALSE)
@@ -108,7 +108,7 @@ if (file.exists(vst_cor_all_vis)){
       vsd_cor<-vsd_cor_filt
       
       assay_r<-gsub( '\\..*','' ,rownames(assay(vsd_cor)))
-      vsd_cor<-se_filt[assay_r %in% intersect(assay_r, remaining_genes),]
+      vsd_cor<-vsd_cor[assay_r %in% intersect(assay_r, remaining_genes),]
 
 
 

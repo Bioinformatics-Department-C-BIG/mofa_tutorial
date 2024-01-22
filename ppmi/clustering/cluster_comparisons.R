@@ -52,7 +52,6 @@ se_clusters
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
-y_clust='scopa'
 y_clust=DIFF_VAR
 clust_name=paste0(y_clust, '_clust')
 
@@ -81,6 +80,9 @@ cluster_params_dir
 
 cd <- colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
+
+
+
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 
@@ -92,8 +94,24 @@ se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
   # TODO: try site? and lymphocytes too? 
 #  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
-#  cell_corr = FALSE # ensure they are always in the same folder c0
 # apply this both for mirs and rnas 
+y_clust
+variates_to_p<-get_covariates_cells(y_clust, thresh=0)
+variates_to_correct<-variates_to_p[!variates_to_p %in% c('Lymphocytes....', 'Neutrophils....', 'Neutrophil.Score')]
+variates_to_correct_s<-paste(variates_to_correct, collapse='+')
+
+variates_to_correct_s
+colData(se_clusters)$PATNO_EVENT_ID
+
+estimations_matched
+if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
+  # if cols not inside 
+  # scale
+  estimations_matched<-scale(estimations[match(colData(se_clusters)$PATNO_EVENT_ID, rownames(estimations)),])
+  colData(se_clusters)<-cbind(colData(se_clusters),estimations_matched  )
+
+}
+
 
 
 if (process_mirnas){
@@ -104,6 +122,7 @@ if (process_mirnas){
 }else {
   if (cell_corr_deseq) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+kmeans_grouping'
+  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+kmeans_grouping')
 
 }else{
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'

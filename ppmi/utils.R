@@ -105,7 +105,9 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
                                  # And the change in the datascan binding  in the future?
                                  # THESE factors are the ones that we actually WANT                                #  'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                                  'SITE', 'Plate', 
-                                 'Neutrophil.Score'
+                                 'Neutrophil.Score', 
+                                 
+                                'RIN.Value', 'Multimapped....', 'Uniquely.mapped....'
                                  
                                  #'MCA_TOT_diff_V16', 
                                  

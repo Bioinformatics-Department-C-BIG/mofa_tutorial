@@ -167,7 +167,12 @@ if (add_clinical_clusters){
 
 #MOFAobjectBL <- subset_groups(MOFAobject, groups = 1)
 PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
+
+HC_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Healthy Control']
+HC_samples_only
 MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
+MOFAobjectHC <- subset_samples(MOFAobject, samples=HC_samples_only)
+
 sel_group=4
 groups_names(MOFAobject)
 
@@ -200,8 +205,9 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
  names(non_na_vars)
+ force_cors=FALSE
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
-if (file.exists(covars_f_pearson_pd)){
+if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file
   print('Load covariates from file')
   cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
@@ -232,7 +238,7 @@ if (file.exists(covars_f_pearson_pd)){
 }
 
 
-################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES 
+################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES  ####
 # corelate categorical covariates
 covariates=c('SITE', 'Plate', 'NHY', 'NP2PTOT_LOG', 'AGE_SCALED', 'SEX', 
              'Usable.Bases....', 'updrs2_score',  'scopa')
@@ -308,7 +314,8 @@ set.seed(123)
 set.seed(1239)
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
-Z_scaled<-apply(as.data.frame(Z), 2, scale);
+as.data.frame(Z)
+#Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
 Z_scaled<-Z
 graphics.off()
@@ -414,6 +421,8 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
   return(sel_factors)
   
 }
+measured_cells<-c('Neutrophils....', 'Lymphocytes....', 'Neutrophil.Score')
+
 progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
 progression_markers_conf<-c( 'abeta', 'sft' )
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12')
@@ -422,16 +431,42 @@ MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
 all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 'PDMEDYN', 'SITE', 'Plate',  'NP2PTOT_LOG', 'Usable_Bases_SCALE', 
                        'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
-                         'sft_V12')
+                         'sft_V12', c(colnames(estimations),measured_cells), 
+                         'Multimapped....', 'Uniquely.mapped....')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
-                    'Neutrophil.Lymphocyte')
+                    'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
-
+sm$Uniquely.mapped....
 outdir
 graphics.off()
+N_FACTORS
+colnames(estimations)
+#MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
+#MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(1:N_FACTORS ),covariates = colnames(estimations))
 
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD_sel, factors=c(1:6,8:15 ),covariates = all_diff_variables_prog_conf)
-MOFA2::correlate_factors_with_covariates(MOFAobjectPD, factors=c(3,8,9 ),covariates = colnames(estimations))
+fname<-'factors_covariates_cells_PD'
+N_FACTORS[-c(6)]
+plot_covars_mofa(selected_covars = c(colnames(estimations),'NP2PTOT_LOG','moca', 'NP2PTOT_LOG_V10', measured_cells),fname,plot,factors=c(1:N_FACTORS)[-c(6)],
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel, alpha=0.05 )
+
+
+
+fname<-'factors_covariates_cells_PD_cor'
+plot_covars_mofa(selected_covars = c(colnames(estimations),'NP2PTOT_LOG','moca', measured_cells),fname,plot='r',factors=1:N_FACTORS,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
+
+fname<-'factors_covariates_cells'
+plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells),fname,plot,factors=1:20,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobject )
+                    
+fname<-'factors_covariates_cells_HC'
+plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells, 'Multimapped....', 'Uniquely.mapped....', 'Usable_bases_SCALE'),fname,plot,factors=1:20,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectHC , alpha=0.01)
+
+colnames(estimations)
+colnames(estimations) %in% colnames(cors_all_pd)
+colnames(estimations) %in% colnames(cors_all_pd)
+
 
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
@@ -441,6 +476,8 @@ plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)
             labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel )
 
 
+
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca'))
 fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
@@ -451,6 +488,8 @@ graphics.off()
 
 
 
+cors_estim<-cors_all_pd[c(23), colnames(estimations)]
+colnames(cors_estim)[cors_estim>0]
 
 
 
@@ -477,7 +516,7 @@ sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
 
 all_diff_variables_prog<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(MOFAobjectPD_sel@samples_metadata)]
 
-all_diff_variables_prog=unique(all_diff_variables_prog)
+all_diff_variables_prog=unique(all_diff_variables_prog, c(colnames(estimations),measured_cells))
 all_diff_variables_prog
 #### Factors related to the longterm change in scale #####
 graphics.off()
@@ -495,8 +534,11 @@ all_cors_diff<-cors[, all_diff]
 sel_factors_diff<-which(rowSums(all_cors_diff)>0)
 all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
 cors
-sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
-sel_factors
+
+
+## For this analysis 
+sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
+
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
@@ -506,8 +548,8 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE,
- MOFAobject=MOFAobject_sel, height = 580 )
+plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors_coh,labels_col=TRUE,
+ MOFAobject=MOFAobject_sel, height = 580*sel_factors_coh )
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
@@ -747,20 +789,7 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
                       ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
               
               }
-              ### you can also add a variable if it is also related to these two factors? 
-              #shape_by='NHY'
-              #shape_by='AGE_AT_VISIT'
-              #fs
-              #pf=plot_factors(MOFAobject, 
-             #              factors = fs, 
-            #               color_by=color_by,
-            #                shape_by= shape_by,
-            #               show_missing = FALSE
-            #  )
-            #  pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
-            #  
-            #  FNAME<-paste0(outdir,'/factor_plots/group/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
-            #    ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
+             
       }
 }
 graphics.off()
@@ -1340,3 +1369,8 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 ## Prediction of clinical subgroups 
 ## Predict the EORTC.risk
+
+
+
+
+

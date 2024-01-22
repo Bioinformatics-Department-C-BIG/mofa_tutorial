@@ -808,7 +808,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' ), plot=emap_comp,
-         dpi=300, width=10, height=10, units='in')
+         dpi=200, width=10, height=10, units='in')
   
 
 
@@ -881,7 +881,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   ggsave(paste0(results_file, '_dot', N_DOT, '.jpeg'), 
          plot=dp, width=width, height=N_DOT*0.5, 
-         dpi = 300)
+         dpi = 200)
   
   if (!(process_mirnas) & !(run_ORA)){
     
@@ -906,7 +906,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   if (is.numeric(N_EMAP)){write_n=N_EMAP}
   ggsave(paste0(results_file, '_emap_', write_n,  '.jpeg'), width=9, height=9, 
-         dpi = 300)
+         dpi = 200)
   
   
   #### Ridge plot: NES shows what is at the bottom of the list
@@ -1007,7 +1007,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     #write_n='test'
     #N_TREE=10
     ggsave(paste0(results_file, '_cp_',N_TREE, '.jpeg'),
-           width=10, height=0.5*log(N_TREE)+3, dpi=300)
+           width=10, height=0.5*log(N_TREE)+3, dpi=200)
     #
     
   }

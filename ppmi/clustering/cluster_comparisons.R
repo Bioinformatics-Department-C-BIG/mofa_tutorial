@@ -34,8 +34,10 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP='V08'
+VISIT_COMP='V06'
 process_mirnas= FALSE
+cell_corr_deseq<-TRUE
+
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -52,9 +54,12 @@ se_clusters
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
-y_clust='scopa'
+#y_clust='scopa'
+DIFF_VAR='NP2PTOT_LOG'
 y_clust=DIFF_VAR
+
 clust_name=paste0(y_clust, '_clust')
+
 
 ## Outputs 
 # 1. DE files 
@@ -68,14 +73,16 @@ deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
-cell_corr_deseq<-TRUE
 
 # Obtain clustering from mofa
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_', as.numeric(remove_cell_factors )) 
+
+fact<-get_factors_for_metric(DIFF_VAR); fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 cluster_params_dir
 
@@ -87,7 +94,7 @@ colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 
-
+get_factors_for_metric('moca')
 
 
 # TODO: include corrected for cell counts  and uncorrected formula
@@ -113,20 +120,28 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 
 }
 
+# SITE is not required because it is probably explained 
+#Error in checkFullRank(modelMatrix) : 
+##  the model matrix is not full rank, so the model cannot be fit as specified.
+##  One or more variables or interaction terms in the design formula are linear
+##  combinations of the others and must be removed
+
 
 
 if (process_mirnas){
-    formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping' # remove plate as well 
+    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
   if (cell_corr_deseq) {
-    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+SITE+kmeans_grouping'
+    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+    formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+
   }
 }else {
   if (cell_corr_deseq) {
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+kmeans_grouping'
-  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+kmeans_grouping')
+  #formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
 }else{
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'
+  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 
 
 }
@@ -156,7 +171,7 @@ dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
 
-
+deseq_params
 # TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
 
@@ -176,6 +191,10 @@ se_filt_all
 
 clusters_indices= list( '1','2','3', c(1,2,3))
 clusters_indices
+
+
+dir.create(deseq_params, recursive = TRUE)
+
 for (cluster_id in clusters_indices){
 
   ### 1. for each cluster, create se filt with controls, 
@@ -220,7 +239,7 @@ names(deseq_all_names) <-names(deseq_all)
 #### 1. Venn from significant 
 length(deseq_all_names)
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,
-            main =paste0( ' DE molecules for each molecular cluster' ))
+            main =paste0( ' DE molecules for each molecular cluster' ), )
 
 graphics.off()
  # TODO: 
@@ -368,7 +387,7 @@ if (!process_mirnas){
                                 keyType = 'ENSEMBL') 
 
 
-    plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80)
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80, N_DOT=5)
 
 
 

@@ -205,8 +205,9 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
  names(non_na_vars)
+ force_cors=FALSE
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
-if (file.exists(covars_f_pearson_pd)){
+if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file
   print('Load covariates from file')
   cors_pearson_pd<-read.csv2(covars_f_pearson_pd, row.names=1)
@@ -533,8 +534,11 @@ all_cors_diff<-cors[, all_diff]
 sel_factors_diff<-which(rowSums(all_cors_diff)>0)
 all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
 cors
-sel_factors<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
-sel_factors
+
+
+## For this analysis 
+sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
+
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
@@ -544,8 +548,8 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors 
 
 
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors,labels_col=TRUE,
- MOFAobject=MOFAobject_sel, height = 580*sel_factors )
+plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors_coh,labels_col=TRUE,
+ MOFAobject=MOFAobject_sel, height = 580*sel_factors_coh )
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
@@ -785,20 +789,7 @@ for (i in 1:dim(positive_cors_to_plot)[2]){
                       ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
               
               }
-              ### you can also add a variable if it is also related to these two factors? 
-              #shape_by='NHY'
-              #shape_by='AGE_AT_VISIT'
-              #fs
-              #pf=plot_factors(MOFAobject, 
-             #              factors = fs, 
-            #               color_by=color_by,
-            #                shape_by= shape_by,
-            #               show_missing = FALSE
-            #  )
-            #  pf=pf+labs(caption=paste0('log10pval = ',factor_cors))
-            #  
-            #  FNAME<-paste0(outdir,'/factor_plots/group/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'_',shape_by, x_cor_t,'.png')
-            #    ggsave(FNAME,plot=pf, width = 4, height=4, dpi=100)
+             
       }
 }
 graphics.off()

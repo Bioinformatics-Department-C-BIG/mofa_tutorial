@@ -10,25 +10,8 @@ library('factoextra')
 # Cluster samples in the factor space using factors 1 to 3 and K=2 clusters 
 # cluster samples here 
 
-
-
-get_factors_for_metric<-function(diff_var){
-
-  # get associated factors, remove the ones related to confounding
-  fact <- which(all_fs_diff[,diff_var])
-
-        if (remove_cell_factors){
-          fact<-fact[!(fact %in% fact_neutro_pd)]
-
-        }
-       
-        return(fact)
-        }
-
-
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
-remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 rescale_option=TRUE
 #diff_var='NP2PTOT_LOG'
@@ -51,6 +34,9 @@ all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-lo
 all_fs_diff = all_fs_diff_all_time
 all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12', 'moca')]
 
+all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12', 'moca')]
+all_fs_diff
+
 ### Select group for plotting
 sel_group=4
 if (length(groups_names(MOFAobject))>1){
@@ -64,19 +50,23 @@ if (length(groups_names(MOFAobject))>1){
   met<-samples_metadata(MOFAobject)
 
 }
-cors<-as.data.frame(cors)
 
 cors$Neutrophil.Score;cors$Neutrophil.Lymphocyte; cors$Lymphocytes....
 cors_all_pd$Neutrophil.Score;cors_all_pd$Neutrophil.Lymphocyte
 # Remove factors that have to do with site, plate, 
 c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)), which(cors$`SITE`>-log10(0.05)), which(cors$`Plate`>-log10(0.05)) )
 
+cors$Usable_Bases_SCALE
+cors$Uniquely.mapped
+fact_neutro_pd<-c((which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Neutrophils....`>-log10(0.05)),  which(cors$Plate>-log10(0.05)), 
+                           which(cors$Usable_Bases_SCALE>-log10(0.05)) ,
+                         which(cors$RIN>-log10(0.05)), 
+                           which(cors$Uniquely.mapped>-log10(0.05))  )
 
-fact_neutro_pd<-c(  (which(cors_all_pd$`Lymphocytes....`>-log10(0.05))), which(cors_all_pd$`Neutrophils....`>-log10(0.05)),  which(cors_all_pd$Plate>-log10(0.05)), 
-                      which(cors_all_pd$RIN>-log10(0.05)), which(cors_all_pd$`Uniquely.mapped....`>-log10(0.05)),
-                       which(cors_all_pd$Usable_bases_SCALE>-log10(0.05))
-                      #which(cors$`Uniquely.mapped....`>-log10(0.05))
-                        )
+fact_neutro_pd<-c( which(cors$Plate>-log10(0.05)), 
+                          which(cors$SITE>-log10(0.05)), which(cors$Usable_Bases_SCALE>-log10(0.05)) ,
+                         which(cors$RIN>-log10(0.05)), 
+                           which(cors$Uniquely.mapped>-log10(0.05))  )
 
 fact_neutro_pd
 
@@ -97,10 +87,11 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #' 
   #' 
 
-        fact <- get_factors_for_metric(diff_var)
-    
+        fact <- which(all_fs_diff[,diff_var])
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
 
-
+        }
         print(paste(diff_var,paste(fact, collapse=', ')))
         xname = paste0(diff_var, '_clust')
       if (length(fact) > 0){
@@ -124,9 +115,6 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
 
 }}
 )
-
-
-
 all_clusts_mofa$NP2PTOT_LOG
 all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
 
@@ -143,7 +131,10 @@ write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
 
 
 
+
+
 for (diff_var in names(all_clusts_mofa)){
+    print(diff_var)
     MOFAobjectPD_sel@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
     sm<-MOFAobject_sel@samples_metadata
     clusters_ids<-all_clusts_mofa[[diff_var]]
@@ -161,7 +152,7 @@ MOFAobject_sel@samples_metadata[, 'NP2PTOT_LOG_clust']
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 
 diff_variables=c('NP2PTOT_LOG')
-diff_variables=c('scopa', 'moca', 'NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10', 'moca')
+diff_variables=c('scopa', 'moca','sft', 'moca_V12', 'sft_V12', 'NP2PTOT_LOG','NP2PTOT_diff_V13_V14', 'updrs2_score_LOG_diff_V12', 'NP2PTOT_LOG_V10', 'moca')
 
 diff_variables_to_p=c('NP2PTOT', 'scopa', 'updrs3_score')#, 'AGE' )
 diff_variables_to_p=c('updrs2_score', 'scopa', 'updrs3_score')#, 'AGE' )
@@ -186,32 +177,6 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
 
          )
 
-
-# 1. get the factors 
-cors_all_pd<-as.data.frame(cors_all_pd)
-get_covariates_cells<-function(y_clust, thresh=0){
-  # get the cell types that corelated with the metric
-  #' 
-  #' @thresh: -log10pvalue
-  fact=get_factors_for_metric(y_clust)
-  colnames(estimations)[!colnames(estimations) %in% colnames(cors_all_pd)]
-  
-  cell_types<-c(colnames(estimations), measured_cells)[c(colnames(estimations), measured_cells) %in% colnames(cors_all_pd) ]
-  
-  c(colnames(estimations), measured_cells)
-
-  clust_variates<-cors_all_pd[fact, cell_types]
-  clust_variates
-  variates_to_p<-names(which(colSums(clust_variates)>thresh))
-  variates_to_p
-  return(variates_to_p)
-}
-
-get_covariates_cells('NP2PTOT_LOG')
-
-
-paste0(DIFF_VAR,'_BL')
-
  diff_variables_to_p=c( 
          'NP2PTOT',  'scopa', 'sft', 
           # for cognition#'moca',# 'hvlt_immediaterecall',  # current 
@@ -221,7 +186,7 @@ paste0(DIFF_VAR,'_BL')
          # V10/12 -future scores 
         # 'NP2PTOT_V10', 
         # 'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
-         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'),  paste0('sft_V12'), 
+         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'), 
          'MCATOT_V14',
           #covars
          'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca'
@@ -235,16 +200,16 @@ sel_group=4
 
 
 y_clust="NP2PTOT_LOG"
+
+y_clust="NP2PTOT_diff_V13_V14"
+y_clust="updrs2_score_LOG_diff_V12"
 y_clust=DIFF_VAR
-y_clust
+y_clust='scopa'
 all_fs_diff$NP2PTOT_LOG_V10
 
 diff_variables
 clust_name
 facet_rows = 2
-
-
-
 
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
@@ -258,12 +223,10 @@ sapply(diff_variables, function(y_clust){
 #  'rcf_',as.numeric(remove_cell_factors )
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
-
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
-    c(diff_variables_to_p, variates_to_p), width=8+length(c(diff_variables_to_p,variates_to_p))/facet_rows , bn=bn_all, facet_rows = facet_rows, 
-    text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
+    diff_variables_to_p, width=5+length(diff_variables_to_p)/facet_rows , bn=bn_all, facet_rows = facet_rows)
 
 
     }else{

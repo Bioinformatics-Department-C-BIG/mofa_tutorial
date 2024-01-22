@@ -31,7 +31,7 @@ source(paste0(script_dir, 'ppmi/predict_utils.R'))
 split=FALSE
 run_rna_mirna=FALSE
 run_validation=FALSE
-cell_corr_mofa=TRUE
+cell_corr_mofa=FALSE
 #if (split){
 #  N_FACTORS=8
 #}

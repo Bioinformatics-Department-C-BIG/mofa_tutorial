@@ -264,7 +264,6 @@ sm<-samples_metadata(MOFAobject)
 
 
 ## ADD estimated cell types
-get_decon_methods()
 estimations<-decon$proportions$qprogwc_ABIS_S0
 
 colnames(estimations)

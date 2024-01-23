@@ -19,22 +19,24 @@ mofa_cluster_id<-1
 # and the backbone visit - should be latest and all other to use that 
 VISIT_COMP<-'V08'
 as.numeric(cell_corr)
-cell_corr=TRUE
+cell_corr_deseq=TRUE
 print(outdir )
 clust_name='moca_clust'
 #k_centers_m=3; rescale_option=TRUE; sel_group_cors = FALSE
 #remove_cell_factors=FALSE
 
-cluster_params_to_load<-paste0('/clustering/',clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
+fact<-get_factors_for_metric(DIFF_VAR)
+fact_s<-paste0(fact, collapse='_')
+cluster_params_to_load<-paste0('/clustering/',fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
 cluster_params_to_load
 
-load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, cell_corr_state = FALSE, prefix='rnas_' ){
+load_de_by_visit_and_cluster<-function(VISIT_COMP , mofa_cluster_id, cell_corr_deseq = TRUE, prefix='rnas_' ){
      #'
      #' @param VISIT_COMP
      #' @param mofa_cluster_id   
     #' @param cell_corr   
 
-    rnas_visit<-read.csv(paste0(outdir, cluster_params_to_load, '/de_c', as.numeric(cell_corr_state), '/' , VISIT_COMP ,  '/', prefix,  'de_cluster_', mofa_cluster_id, '.csv'))
+    rnas_visit<-read.csv(paste0(outdir, cluster_params_to_load, '/de_c', as.numeric(cell_corr_deseq), '/' , VISIT_COMP ,  '/', prefix,  'de_cluster_', mofa_cluster_id, '.csv'))
 
     if (prefix == 'mirnas_'){
       rnas_visit$GENE_SYMBOL<-rnas_visit$X 
@@ -60,7 +62,7 @@ clust_ids<-c(1,2,3, '1_2_3')
 clust_ids<-c('1')
 clust_ids<-c(1,2,3, '1_2_3')
 
-rnas_V08_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V08', cell_corr=cell_corr, prefix= 'rnas_') # holds all clusters 
+rnas_V08_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V08', cell_corr_deseq=cell_corr_deseq, prefix= 'rnas_') # holds all clusters 
 rnas_sig_V08_list<-lapply(rnas_V08_list, function(df){ return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
 
 
@@ -72,11 +74,11 @@ rnas_sig_V08_list
 
 load_all_times=FALSE
 if (load_all_times){
-  rnas_V06_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V06', cell_corr=cell_corr, prefix= 'rnas_') # holds all clusters 
+  rnas_V06_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V06', cell_corr_deseq=cell_corr_deseq, prefix= 'rnas_') # holds all clusters 
   rnas_sig_V06_list<-lapply(rnas_V06_list, function(df){ return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
   names(rnas_V06_list)<-clust_ids
 
-  mirnas_V06_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V06', cell_corr=cell_corr, prefix= 'mirnas_')
+  mirnas_V06_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP='V06', cell_corr_deseq=cell_corr_deseq, prefix= 'mirnas_')
   mirnas_sig_V06_list<-lapply(mirnas_V06_list, function(df){  return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
   names(mirnas_V06_list)<-clust_ids
 
@@ -89,7 +91,7 @@ if (load_all_times){
 
 
 ## load mirs
-mirnas_V08_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP=VISIT_COMP, cell_corr=cell_corr, prefix= 'mirnas_')
+mirnas_V08_list<-lapply(clust_ids, load_de_by_visit_and_cluster, VISIT_COMP=VISIT_COMP, cell_corr_deseq=cell_corr_deseq, prefix= 'mirnas_')
 mirnas_sig_V08_list<-lapply(mirnas_V08_list, function(df){  return(df%>% dplyr::filter(mofa_sign == 'Significant'))})
 
 names(mirnas_V08_list)<-clust_ids
@@ -117,7 +119,14 @@ rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significa
 mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
 
-sel_factor=8; top_fr=0.4
+sel_factor=23; 
+if (cell_corr_deseq){
+  top_fr=0.15 # FACTOR 11
+  top_fr=0.05
+  
+  }else{
+top_fr=0.05
+  }
 top_genes_factor8<-gsub('\\..*','',select_top_bottom_perc(MOFAobject, 'RNA',  factors=sel_factor, top_fr = top_fr))
 top_genes_factor8<-get_symbols_vector(top_genes_factor8)
 top_fr_mirs=top_fr
@@ -199,6 +208,7 @@ proteins_V08_list[[1]]$type='protein'
 rnas_proteins_sig_list<-rbind(rnas_sig_list[[1]][c('log2FoldChange', 'GENE_SYMBOL', 'mofa_sign', 'type')], proteins_V08_list[[1]][c('log2FoldChange', 'GENE_SYMBOL', 'mofa_sign', 'type')] )
 rnas_proteins_sig_list
 
+ # TODO: move OMNIPATH query to file earlier do not rerun 
 g_extended_both_clusters<-create_regulatory_net_backbone(rnas_sig_list[[1]], mirnas_sig_list[[1]],resources = resources, 
                                                         gene_mir_resources =  gene_mir_resources ,
                                                         add_gg_interactions=add_gg_interactions)
@@ -288,7 +298,13 @@ set.seed(123)
 # TODO: choose backbone to be from the intersection or run with all 3...? 
 
 
+height_offset = 4
+width_offset = 3
+hw_multiplier = 0.8
+vertex.frame.width = 1 # size of outline that marks significance 
+vertex.label.dist = 1.5
 
+dir.create(paste0(outdir,cluster_params_to_load, '/de_c',as.numeric(cell_corr_deseq), '/nets/', 'mf_', as.numeric(mofa_filter) ,'/' ), recursive=TRUE)
 
 for (mofa_cluster_id in clust_ids){
 
@@ -316,7 +332,7 @@ for (mofa_cluster_id in clust_ids){
 
       ### IGRAPH TO SAVE 
       net_name=paste0('mirs_genes_',VISIT_PLOT,'_', mofa_cluster_id, '_f',sel_factor,top_fr, 'gg_', as.numeric(add_gg_interactions ))
-      net_file=paste0(paste0(outdir,cluster_params_to_load,  '/nets/mf_', as.numeric(mofa_filter)) ,'/' , net_name)
+      net_file=paste0(paste0(outdir,cluster_params_to_load, '/de_c',as.numeric(cell_corr_deseq), '/nets/mf_', as.numeric(mofa_filter)) ,'/' , net_name)
       V(g_fc_plot)$frame.color<-bd
       V(g_fc_plot)$label.cex=plot_settings$label.cex # increase label size? 
 
@@ -324,7 +340,8 @@ for (mofa_cluster_id in clust_ids){
       graphics.off()
 
 
-      height=5+log(length(g_fc_plot))*log(top_fr+1)*1.7;width=3+log(length(g_fc_plot))*log(top_fr+1)*1.7; # Set size based on 
+      height=height_offset+log2(length(g_fc_plot))*hw_multiplier;
+      width=width_offset+log2(length(g_fc_plot))*hw_multiplier; # Set size based on 
       png(paste0(net_file, '.png'), res=200, units='in', height=height, width=width)
       plot(g_fc_plot, 
       vertex.color=(adjustcolor(V(g_fc_plot)$color, alpha.f = 0.8 )), 
@@ -333,8 +350,8 @@ for (mofa_cluster_id in clust_ids){
      # vertex.shape=ifelse(V(g_fc_plot)$type=='protein' , 'rectangle', 'circle' ),
 
       vertex.frame.color=bd,
-      vertex.frame.width=3,
-      vertex.label.dist = 1.5, 
+      vertex.frame.width=vertex.frame.width,
+      vertex.label.dist =vertex.label.dist, 
         layout = Coords)
 
       title(paste(  'Resources: ', paste(as.character(resources), collapse=', '),'\n', 

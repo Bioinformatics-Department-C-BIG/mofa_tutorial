@@ -33,7 +33,7 @@ remove_cell_factors = FALSE
 rescale_option=TRUE
 #diff_var='NP2PTOT_LOG'
 #DIFF_VAR='moca'
-#DIFF_VAR='NP2PTOT_LOG'
+DIFF_VAR='NP2PTOT_LOG'
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -218,12 +218,13 @@ paste0(DIFF_VAR,'_BL')
         # 'NP2PTOT_BL',     
         paste0(DIFF_VAR,'_BL'),     
          # V10/12 -future scores 
-        # 'NP2PTOT_V10', 
         # 'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
-         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'),  paste0('sft_V12'), 
-         'MCATOT_V14',
+#         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'),  paste0('sft_V12'), 
+        'NP2PTOT_V10', 'NP2PTOT_V12','sft_V12',
+        # 'MCATOT_V14',
           #covars
-         'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca'
+         'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca',
+         'duration'
       #    'hvlt_immediaterecall_V12'
 
          )
@@ -235,15 +236,12 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-y_clust
-all_fs_diff$NP2PTOT_LOG_V10
-
 diff_variables
 clust_name
 facet_rows = 2
 
 
-
+## BOXPLOTS 
 
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
@@ -367,7 +365,7 @@ dim(means_by_cluster_na)
 mc_scores<-grep('MC|moca|sft',colnames(means_by_cluster_na))
 means_by_cluster_na[,mc_scores]=-means_by_cluster_na[,mc_scores]
 colnames(means_by_cluster_na)[mc_scores] = paste0(colnames(means_by_cluster_na)[mc_scores] , '_reverse')
-
+outfile_cl_heatmap
 graphics.off()
 jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
 
@@ -442,3 +440,9 @@ samples_metadata(MOFAobject)[selected_covars2]
 
   
 }
+
+sm$duration
+
+
+
+

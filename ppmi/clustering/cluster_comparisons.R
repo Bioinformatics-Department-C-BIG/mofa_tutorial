@@ -35,7 +35,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP='V08'
-process_mirnas= FALSE
+process_mirnas= TRUE
 if (process_mirnas){
   se_sel = se_mirs
   prefix='mirnas_'
@@ -67,14 +67,18 @@ deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
-cell_corr_deseq<-TRUE
+cell_corr_deseq<-FALSE
 
 # Obtain clustering from mofa
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-cluster_params<-paste0(clust_name ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_', as.numeric(remove_cell_factors )) 
+
+fact=get_factors_for_metric(y_clust)
+fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_', as.numeric(remove_cell_factors )) 
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 cluster_params_dir
 
@@ -102,11 +106,11 @@ variates_to_correct_s<-paste(variates_to_correct, collapse='+')
 
 variates_to_correct_s
 colData(se_clusters)$PATNO_EVENT_ID
+colnames(estimations)%in% colnames(colData(se_clusters))
 
-estimations_matched
 if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
-  # if cols not inside 
-  # scale
+  # if cols of estimated cells not inside add them
+  # should probably add in the metadata
   estimations_matched<-scale(estimations[match(colData(se_clusters)$PATNO_EVENT_ID, rownames(estimations)),])
   colData(se_clusters)<-cbind(colData(se_clusters),estimations_matched  )
 
@@ -115,14 +119,14 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 
 
 if (process_mirnas){
-    formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping' # remove plate as well 
+    formula_deseq = '~AGE_SCALED+Plate+Usable_Bases_SCALE+SEX+SITE+kmeans_grouping' # remove plate as well 
   if (cell_corr_deseq) {
-    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+SITE+kmeans_grouping'
+  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'SITE+kmeans_grouping')
   }
 }else {
   if (cell_corr_deseq) {
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+kmeans_grouping'
-  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+kmeans_grouping')
+  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'SITE+kmeans_grouping')
 
 }else{
   formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+kmeans_grouping'

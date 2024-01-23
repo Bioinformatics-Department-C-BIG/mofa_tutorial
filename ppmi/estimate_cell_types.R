@@ -147,9 +147,13 @@ plot(y ~ x)
 
 #correlate_factors_with_covariates
 sm[variates_to_p]
-variates_to_p_cors<-c(variates_to_p, 'Multimapped....', 'Uniquely.mapped....', 'SITE', 'RIN.value', 
-    'Usable_bases_SCALE')
-cor <- psych::corr.test(sm[variates_to_p], sm[variates_to_p], method = "pearson", 
+variates_to_p<-colnames(estimations)
+variates_to_p_cors<-c(variates_to_p, 'Multimapped....', 'Uniquely.mapped....',  'RIN.Value', 
+    'Usable_Bases_SCALE')
+
+   variates_to_p_cors %in%  colnames(sm)
+ sm[variates_to_p_cors]==0
+cor <- psych::corr.test(sm[variates_to_p_cors], sm[variates_to_p_cors], method = "pearson", 
         adjust = "BH")
 stat<-cor$r
 stat

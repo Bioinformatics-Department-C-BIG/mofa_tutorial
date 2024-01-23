@@ -17,10 +17,13 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 
 library(MOFA2)
 library(tidyverse)
+library(psych)
 
 library(data.table)
 library(ggplot2)
 library(ggpubr)
+library(R.filesets)
+
 library(dplyr)
 library('MultiAssayExperiment')
 source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
@@ -28,7 +31,6 @@ source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir, 'ppmi/predict_utils.R'))
 
 
-decon<-loadRDS(paste0(output_files, '/decon.RDS'))
 
 
 split=FALSE
@@ -76,9 +78,8 @@ combined_bl_log$Usa
 
 combined_bl_log$RBD_TOT
 all(is.na(combined_bl_log$updrs2_score_BL))
+decon<-loadRDS(paste0(output_files, '/decon.RDS'))
 
-#combined_all_original[combined_all_original$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
-#combined_bl_log[combined_bl_log$PATNO_EVENT_ID %in% sel_sam, ]$CONCOHORT
 
 scale_views=TRUE
 
@@ -119,11 +120,9 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
       outdir=paste0(outdir, '_ns_', ns)
       
       if (complete.cases(mofa_multi_test)){
-        
+        # 
     
         MOFAobject_test=create_mofa(mofa_multi_test)
-        
-        
         
       }
       
@@ -236,10 +235,6 @@ for (N_FACTORS in c(25)){
     mofa_multi_to_use=mofa_multi
   }
 
-  assays(mofa_multi_to_use)[[3]]
-
-
-
   MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
   
   
@@ -285,6 +280,9 @@ samples_metadata(MOFAobject)<-as.data.frame(sm2)
 ## tests 
 cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
 cors_real$r
+
+
+
 
 
 

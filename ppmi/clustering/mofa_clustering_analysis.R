@@ -30,11 +30,10 @@ get_factors_for_metric<-function(diff_var){
 k_centers_m=3
 remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
-
 rescale_option=TRUE
-diff_var='NP2PTOT_LOG'
-DIFF_VAR='moca'
-DIFF_VAR='NP2PTOT_LOG'
+#diff_var='NP2PTOT_LOG'
+#DIFF_VAR='moca'
+#DIFF_VAR='NP2PTOT_LOG'
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -85,9 +84,10 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
                       #which(cors$`Uniquely.mapped....`>-log10(0.05))
                         
 fact_neutro_pd <-c(fact_neutro_pd, 8,2)
-fact_neutro_pd
+fact_neutro_pd<-c(2)
 DIFF_VAR
     
+get_factors_for_metric(DIFF_VAR)
 
 
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
@@ -254,8 +254,8 @@ sapply(diff_variables, function(y_clust){
     variates_to_p<-get_covariates_cells(y_clust, thresh=8)
     fact=get_factors_for_metric(y_clust)
     fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
-
-    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors), 'rcf_',as.numeric(remove_cell_factors ))
+#  'rcf_',as.numeric(remove_cell_factors )
+    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
@@ -293,7 +293,7 @@ fact=get_factors_for_metric(y_clust)
 
 fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
-cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors),'rcf_',as.numeric(remove_cell_factors ) )
+cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
 
@@ -370,6 +370,7 @@ colnames(means_by_cluster_na)[mc_scores] = paste0(colnames(means_by_cluster_na)[
 
 graphics.off()
 jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
+
   pheatmap(means_by_cluster_na, 
    labels_row= seq(1:k_centers_m),
   clustering_method = 'centroid',

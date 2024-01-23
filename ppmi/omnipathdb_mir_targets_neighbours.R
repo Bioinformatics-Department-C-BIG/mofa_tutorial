@@ -119,10 +119,10 @@ rnas_top<-rnas_visit %>%arrange(padj) %>%  dplyr::filter(mofa_sign == 'Significa
 mirnas_top<-mirnas_visit %>%arrange(padj) %>% dplyr::filter(mofa_sign == 'Significant') %>% as.data.frame
 
 
-sel_factor=23; 
+sel_factor=2; 
 if (cell_corr_deseq){
   top_fr=0.15 # FACTOR 11
-  top_fr=0.05
+  top_fr=0.11
   
   }else{
 top_fr=0.05

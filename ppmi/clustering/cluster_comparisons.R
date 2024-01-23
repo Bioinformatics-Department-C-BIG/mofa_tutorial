@@ -34,7 +34,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP='V06'
+VISIT_COMP='V08'
 process_mirnas= FALSE
 cell_corr_deseq<-TRUE
 
@@ -126,26 +126,32 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 ##  One or more variables or interaction terms in the design formula are linear
 ##  combinations of the others and must be removed
 
+get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
 
+if (length(variates_to_correct_s)>1){
+  variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
+}
 
-if (process_mirnas){
-    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
-  if (cell_corr_deseq) {
-    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
-    formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+    if (process_mirnas){
+        formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
+      if (cell_corr_deseq) {
+        formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+        formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-  }
-}else {
-  if (cell_corr_deseq) {
-  #formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
-  formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+      }
+    }else {
+      if (cell_corr_deseq) {
+      #formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+      formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-}else{
-  formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
+    }else{
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
 
 
 }
 }
+}
+formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
 
 
 
@@ -171,7 +177,7 @@ dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
 
-deseq_params
+se_filt_al
 # TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
 
@@ -194,7 +200,7 @@ clusters_indices
 
 
 dir.create(deseq_params, recursive = TRUE)
-
+se_filt_all[[cluster_id_index]]$COHORT
 for (cluster_id in clusters_indices){
 
   ### 1. for each cluster, create se filt with controls, 
@@ -228,7 +234,8 @@ for (cluster_id in clusters_indices){
   deseq_all[[cluster_id_index]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
-
+deseq2ResDF$padj
+deseq_all['1_2_3']
 
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
@@ -238,6 +245,7 @@ names(deseq_all_names) <-names(deseq_all)
 
 #### 1. Venn from significant 
 length(deseq_all_names)
+deseq_all_names
 create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,
             main =paste0( ' DE molecules for each molecular cluster' ), )
 

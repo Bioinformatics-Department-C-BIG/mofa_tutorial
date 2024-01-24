@@ -214,7 +214,7 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   cors_all_pd<-read.csv2(covars_f_pvalue_pd, row.names=1)
   cors<-read.csv2(covars_f_pvalue, row.names=1)
   cors_pearson<-read.csv2(covars_f_pearson, row.names=1)
-  
+  cors_pearson
 }else{
   stats<-apply(MOFAobjectPD_sel@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
@@ -230,6 +230,7 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   stats<-apply(MOFAobject_sel@samples_metadata, 2,table )
   non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
   cors_both<-get_correlations(MOFAobject_sel, names(non_na_vars))
+  cors_both[[2]]
   cors_pearson=as.data.frame(cors_both[[2]]); cors=as.data.frame(cors_both[[1]]); cors_all=cors_both[[1]]
 
   write.csv2(cors_pearson,covars_f_pearson)
@@ -275,6 +276,8 @@ cors_pd[, 'NP2PTOT_LOG']
 cors_both_clinical<-get_correlations(MOFAobjectPD, all_diff_in_cors)
 cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]])
 ## choose if the clu
+
+
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
 all_fs_diff[, 'NP2PTOT_LOG']
@@ -435,7 +438,10 @@ all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 
                          'Multimapped....', 'Uniquely.mapped....')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
                     'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
-sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf)
+
+all_diff_variables_prog_conf_only_clinical<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG')
+   
+sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf_only_clinical)
 sm$Uniquely.mapped....
 outdir
 graphics.off()
@@ -475,11 +481,16 @@ fname<-'factors_covariates_only_nonzero_strict_PD_np3'
 plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)),fname,plot,factors = sel_factors,
             labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel )
 
-
+plot='log_pval'
 
 sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca'))
-fname<-'factors_covariates_only_nonzero_strict_PD_np3_conference'
+fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
+                 factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
+
+
+fname<-'factors_covariates_strict_PD_conference_clinical'
+plot_covars_mofa(selected_covars=all_diff_variables_prog_conf_only_clinical,fname,plot='log_pval',
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
@@ -542,19 +553,25 @@ sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
 plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
-fname<-'factors_covariates_only_nonzero_strict_cor_diff'
-plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
+fname<-'factors_covariates_only_nonzero_strict_cor'
 
+samples_metadata(MOFAobject_sel)$COHORT<-as.numeric(samples_metadata(MOFAobject_sel)$COHORT)
+plot_covars_mofa(selected_covars=c(colnames(estimations), 'COHORT'),fname,plot='r',factors = sel_factors_coh,
+labels_col=TRUE, MOFAobject=MOFAobject_sel )
 
+cors_all
+cors[, 'COHORT']
 fname<-'factors_covariates_only_nonzero_strict'
-plot_covars_mofa(selected_covars=c(selected_covars2_progression, 'COHORT'),fname,plot,factors=sel_factors_coh,labels_col=TRUE,
+selected_covars2_progression
+plot_covars_mofa(selected_covars=c(colnames(estimations), 'COHORT'),fname,plot,factors=sel_factors_coh,labels_col=FALSE,
  MOFAobject=MOFAobject_sel, height = 580*sel_factors_coh )
+ 
 
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
 
 
-round(cors_pearson_pd[,all_diff_variables_prog_in_cors], digits=2)
+
 
 
 # Plot 1: some more non motor that we discovered
@@ -678,7 +695,7 @@ for (i in seq(1,vps)){
     #### print only the views with high variance in factor  
     view=views[i]
     factor=ii
-    print(view, factor)
+    print(paste(view, factor))
     all_weights<-MOFA2::get_weights(MOFAobject_gs,views = view, factors=factor, 
                             as.data.frame =TRUE)
     
@@ -710,10 +727,11 @@ graphics.off()
   #1. Collate in a list  - order significant
   #2. Stack the lists - 
   
+colnames(estimations)
+  cors[, 'Monocytes.NC.I']
 
-  
-  
-  
+cors_pearson[, 'Monocytes.NC.I']  
+  cors_pearson
   
   
 ### wHICH VARIABLES correlate with which factors 
@@ -1109,7 +1127,7 @@ MOFAobject_hm=MOFAobjectPD
 ii=3
 for (i in seq(1,2)){
   for (ii in seq(1,fps)){
-    print(paste('Modality', i, 'factor', ii))
+    #print(paste('Modality', i, 'factor', ii))
 
     cluster_rows=TRUE;cluster_cols=TRUE
     
@@ -1145,11 +1163,12 @@ for (i in seq(1,2)){
     FT=0
     if (length(cors_sig)==0){
       cors_sig=c()
-      
+      rel_cors
     } else if (length(cors_sig)>15){
       FT=15
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
-       rel_cors_ordered<-rel_cors[order(-rel_cors)][1:FT]
+      order(-as.matrix(rel_cors))
+       rel_cors_ordered<-rel_cors[ order(-as.matrix(rel_cors)),][1:FT]
       #rel_cors_ordered<-rel_cors[order(-rel_cors)]
 
       cors_sig<-names(rel_cors_ordered)
@@ -1338,36 +1357,7 @@ ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
 
 
 
-#### Now make predictions
-### 
 
-
-
-####
-##### 5. GENE SET ENRICHMENT! #####
-## AND reactome gsa enrichment!!
-
-
-###### GSEA 
-
-#BiocManager::install('AnnotationHub')
-
-#source('enrichment.R')
-  
-#library(AnnotationHub)
-
-
-
-
-
-
-
-##### Make predictions 
-## Here we select the top factors associated with the clinical variable of interest. 
-## then we can choose the top variables of those factors 
-
-## Prediction of clinical subgroups 
-## Predict the EORTC.risk
 
 
 

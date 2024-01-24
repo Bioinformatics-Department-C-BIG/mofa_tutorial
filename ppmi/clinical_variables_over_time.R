@@ -3,16 +3,26 @@
 #1. extract the diff variables and remove the diff
 to_plot<-c(scale_vars_diff)
 all_event_ids_p<-c('BL','V04','V06','V08','V10','V12','V14','V16', 'V18')
+all_event_ids_p<-c('BL','V08','V10','V12','V14','V16', 'V18')
+
+## metadata to select PATNOs FROM 
 sm=MOFAobject@samples_metadata
-### obtain all patient event ids to get one row per patient!! 
+sm=MOFAobject@samples_metadata
+sm_sel=sm
+sm_sel=combined_bl_log
+sm=MOFAobject@samples_metadata
+
+### obtain all patient event ids to get one row per patient! 
 patno_event_ids = sapply(all_event_ids_p, function(event_id){
-                  return(paste0(sm$PATNO,'_', event_id ))
+                  return(paste0(sm_sel$PATNO,'_', event_id ))
 })
   
 patno_event_ids=unlist(patno_event_ids)
 # select data for the requested patiennts 
 #combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids ) # todo - filter selection on or off 
+
+
 curated_mofa<-combined_bl_log_sel %>%
   dplyr::filter(EVENT_ID=='V14') %>%
  dplyr::filter(PATNO %in% sm$PATNO)
@@ -25,6 +35,8 @@ combined_bl_log_sel$months <-as.numeric( mapvalues(combined_bl_log_sel$EVENT_ID,
 lv_to_plot='V12'
 combined_bl_log_sel$PDMEDYN_V14
 
+estimations_matched_all_combined<-estimations[match(combined_bl_log_sel$PATNO_EVENT_ID, rownames(estimations) ),]
+combined_bl_log_sel<-cbind(combined_bl_log_sel,estimations_matched_all_combined)
 
 
 ########## Now we obtained the longitudinal input for these patients ####
@@ -33,6 +45,7 @@ combined_bl_log_sel$PDMEDYN_V14
 # 1. Select the patients eg. by mofa groups 
 df_to_attach<-combined_bl_log_sel
 
+
 for (diff_var in names(all_clusts_mofa)){
 
         if (!is.null(all_clusts_mofa[[diff_var]])){
@@ -40,16 +53,16 @@ for (diff_var in names(all_clusts_mofa)){
         clust_name = paste0(diff_var, '_clust')
          #print(clust_name)
         clusters_ids<-all_clusts_mofa[[diff_var]]
-        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names(clusters_ids ) )]
+        names_patnos<-gsub('\\_.*','',rownames(clusters_ids))
+        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names_patnos )]
         
         df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
-        print(df_to_attach[,clust_name])
+       # print(df_to_attach[,clust_name])
         }
 }
 
 combined_bl_log_sel<-df_to_attach
 
-#combined_bl_log_common$grouping<-factor(ifelse(as.logical(combined_bl_log_common$Z1_grouping), 'HighFactor', 'LowFactor'))
 combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
 combined_bl_log_sel$month=factor(combined_bl_log_sel$months)
 
@@ -57,7 +70,9 @@ df_plot<-combined_bl_log_sel
 ## fetch grouping from MOFA 
 
 df_plot_2k<-df_plot
+df_plot_2k$COHORT
 
+df_plot_2k$NP2PTOT_LOG_clust
 
 df_plot
 PDSTATE_SEL=NULL
@@ -72,8 +87,30 @@ y='updrs2_score'
   
 lv='V13_V14';   
 
+  lv_to_plot = 'V08'
+  clust_name='COHORT_DEFINITION'
+    clust_name='INEXPAGE'
   
-  plot_clinical_trajectory<-function(y, clust_name, df_plot_2k=df_plot, lv='V12', fname=fname, add_individual_lines=FALSE){
+  df_plot_2k$PATNO
+
+
+to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
+for (y in  to_plot){
+  print(y)
+  df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
+  df_plot_2k =df_plot_2k[df_plot_2k$INEXPAGE %in% c(sel_subcoh, 'INEXHC'),]
+
+  fname=paste0(outdir,'/trajectories/', clust_name, '_',  y, lv_to_plot  )
+  plot_clinical_trajectory(y, clust_name, df_plot_2k, lv='V12', fname, add_boxplots = TRUE, pal='turbo' )
+
+}
+
+df_plot_2k$NP2PTOT_LOG_clust
+
+
+
+  plot_clinical_trajectory<-function(y, clust_name, df_plot_2k=df_plot, lv='V12', fname=fname, 
+  add_individual_lines=FALSE, add_boxplots=FALSE, pal='turbo'){
     #'
     #' Plot the clinical value trajectory over time, until the last visit defined for each subgroup
     #' takes the clinival score, the last visit, and the cluster ids 
@@ -81,17 +118,26 @@ lv='V13_V14';
     #' @param y
     #' TODO: adjust the function to take grouping as a variable either from molecular or from clinical clusters
     #'  Created parameters: clust_name, grouping variable,
-
+    #' 
 
     df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP[lv_to_plot],]
+    df_plot_2k$PATNO %in% samples_metadata(MOFAobject)$PATNO
+
     
     if (clust_name %in% colnames(df_plot_2k)){
       print(clust_name)
+
+
       df_plot_2k[, 'grouping']<-as.factor(df_plot_2k[, clust_name])
       y_pl=y
       ### filter inside the function because for each subfilter other data is missing !! 
       df_plot_2k=df_plot_2k[!is.na(df_plot_2k$EVENT_ID),]
       df_plot_2k=df_plot_2k[!is.na(df_plot_2k[,clust_name]),]
+      df_plot_2k=df_plot_2k[!df_plot_2k[,clust_name]=='',] # not empty
+      
+
+      table(df_plot_2k[,clust_name])
+
       df_plot_2k[,y]=as.numeric( df_plot_2k[,y])
       df_lv<-df_plot_2k[df_plot_2k$EVENT_ID==lv_to_plot,]
     
@@ -104,36 +150,47 @@ lv='V13_V14';
       nums<-paste0('n=', paste0(nums_plyr$count, collapse = ', '))
     
 
-
+#df_plot_2k$B.Memory
+   # y='B.Memory'
       p<-ggplot(data = df_plot_2k, aes_string(x = 'month', y = y,
-                fill='grouping',group='grouping',colour='grouping')) + 
-        stat_summary(geom = "errorbar", fun.data = median_IQR, 
-                     position=position_dodge(0.8), alpha=0.9)+
-        stat_summary(fun = median, position=position_dodge(width=0), 
+                fill='grouping',group='grouping',colour='grouping'))+
+                 stat_summary(fun = median, position=position_dodge(width=0), 
                      geom = "line", size = 1, alpha=0.7, lty='dashed', aes_string(colour='grouping')) 
-      
-      p
+
       #  geom_point(position='jitter', size=0.2)  
       # p
       #  stat_summary(fun = median_IQR, position=position_dodge(width=0), 
       #                   geom = "pointrange", size = 1, alpha=0.9) 
       
+
+      
       if (add_individual_lines){
         p<-p+ geom_line(aes_string(x = 'month', y = y, 
                                    group='PATNO', colour='grouping' ),size=0.2, alpha=0.6)
       }
-      
       if (add_boxplots){
         
         # p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
-        p<-p+geom_boxplot(aes_string(x='month', fill='grouping', group=NULL ),lwd=0.5, alpha=0.7)
+        p<-p+geom_boxplot(aes_string(x='month', fill='grouping', group=NULL ),lwd=0.2, alpha=0.7, 
+        outlier.shape = NA)+
+        scale_y_continuous(expand = expansion(mult = c(0.05, 0.005)))
+        p<-p+ geom_pwc( tip.length = 0,
+            method = "wilcox_test", label = "p.adj.signif", label.size = 1,
+              bracket.nudge.y = -0.1)
         p
+      }else{
+         p<-p+
+        stat_summary(geom = "errorbar", fun.data = median_IQR, # only add errorbar ifno box plot 
+                    position=position_dodge(0.8), alpha=0.9)
+       
+      
+      p
       }
 
       y_name=ifelse( (y %in% mt_kv[,1]), mt_kv[mt_kv[,1]==y,2], y)
       
-      p<-p+scale_color_viridis_d(option='turbo')+
-        scale_fill_viridis_d(option='turbo')+
+      p<-p+scale_color_viridis_d(option=pal)+
+        scale_fill_viridis_d(option=pal)+
         guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
         
         
@@ -143,36 +200,57 @@ lv='V13_V14';
 
       p
       warnings()
+      
+
+
+      width=1+log(1+as.numeric(gsub('V','',lv_to_plot)))*log(length(unique(df_plot_2k$grouping)))
+      height=3
+
       ggsave(paste0(fname,  '.jpeg'), 
-             width=5, height=3, dpi=300)
+             width=width, height=height, dpi=300)
       
     }
     
     }
     
-add_individual_lines=TRUE
+add_individual_lines=FALSE
+sm$T.CD4.Naive
 to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca')
+to_plot=c( 'Lymphocytes....', 'Neutrophils....', 'T.CD4.Naive', 'B.memory')
+to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
+
 clust_metric='moca'
-clust_metric='NP2PTPT_LOG'
+clust_metric='NP2PTOT_LOG'
+clust_metric='NP2PTOT_LOG'
 
 all_fs_diff$updrs2_score_LOG
 df_plot
+cluster_params
+cluster_params_dir
+outdir
+
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
   for (y in to_plot){
 
     clust_name<-paste0(clust_metric, '_clust')
+    clust_name
+    fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
+    cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
 
-    cluster_params<-paste0(clust_name ,'/', k_centers_m,'/',rescale_option)
-    cluster_params
     fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
-    plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V12', fname=fname, add_individual_lines=add_individual_lines)
+    print(fname)
+    plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
+     add_individual_lines=add_individual_lines, 
+    add_boxplots = TRUE)
+  
+  
   }
 
-  
+  graphics.off()
     
 
   
-
+fname
 
 
 #### ###################
@@ -181,5 +259,8 @@ df_plot
 ## CLUSTER TRAJECTORIES ####
 y='NP2PTOT'
 get_clinical_clusters(y)
+
+
+
 
 

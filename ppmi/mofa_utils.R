@@ -381,8 +381,8 @@ get_labels<-function(selected_covars, labels_col=FALSE){
   }
   return(labels_col_plot)
 }
-
-
+#selected_covars = c('COHORT', 'CONCOHORT')
+#MOFAobject_to_plot  = MOFAobject_sel
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
                            MOFAobject_to_plot=MOFAobject, res=200, alpha=0.05){
   
@@ -398,10 +398,10 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   # then check that the sd is not NA
   selected_covars=selected_covars[ !(sd_na) ]
 
-
   # remove if there are at least non-na values
   selected_covars = selected_covars[colSums(!is.na(MOFAobject_to_plot@samples_metadata[, selected_covars]))>3]
-  
+
+
  P2_data<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , plot = plot,
                                         labels_col=get_labels(selected_covars, labels_col = TRUE), 
@@ -413,11 +413,10 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   # keep only what is >0
   selected_covars = selected_covars[colSums(P2_data)>0]
   #plot='log_pval'
-
   
   jpeg(paste0(outdir,'/', fname,'.jpeg'), width = 1000+length(selected_covars)*20, height=height, res=res
          )
-
+#factors=sel_factors_coh
   # check which have zero corelation? 
   P2<-correlate_factors_with_covariates(MOFAobject_to_plot,
                                         covariates =selected_covars , 
@@ -432,3 +431,4 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   
   
 }
+

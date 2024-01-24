@@ -217,7 +217,12 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   se_filt$SITE<-as.factor(se_filt$SITE)
   se_filt$Plate<-as.factor(se_filt$Plate); dim(assay(se_filt))
   
-  
+  if ('Neutrophils.LD' %in% colnames(colData(se_filt))){
+    colData(se_filt)[, colnames(estimations)]<-scale(colData(se_filt)[, colnames(estimations)])
+  }
+
+
+
   #se_filt$COHORT[ which(is.na(se_filt$COHORT))]<-'Unknown'
   se_filt<-se_filt[ , !is.na(se_filt$Neutrophil.Score)]
 

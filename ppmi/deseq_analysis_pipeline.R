@@ -6,9 +6,11 @@ source(paste0('ppmi/setup_os.R'))
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
 ### disconnect from mofa and other scripts 
+metadata_output<-paste0(output_files, 'combined_log.csv') 
+combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
 
-VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
-VISIT=c('BL','V04', 'V06',  'V08');cell_corr = FALSE
+VISIT=c('BL','V04', 'V06',  'V08');cell_corr_deseq = FALSE
+VISIT=c('BL','V04', 'V06',  'V08');cell_corr_deseq = FALSE
 
 # Pipeline steps 
 # 1. run deseq  - with and without correction for cell types
@@ -29,6 +31,14 @@ library(org.Hs.eg.db)
 #BiocManager::install('org.Hs.eg.db')
 
 
+estimations_matched_all_combined<-estimations[match(combined_bl_log$PATNO_EVENT_ID, rownames(estimations) ),]
+combined_bl_log<-cbind(combined_bl_log,estimations_matched_all_combined)
+
+combined_bl_log$Neutrophils.LD
+# Decide which cell types to correct for 
+# Try all at first??? 
+
+print(colnames(estimations_matched))
 
 ### FIRST LOAD required files  ####
 process_mirnas = TRUE;
@@ -62,9 +72,9 @@ VISIT_COMP = 'V08'; VISIT = 'V08'
 #VISIT=c( 'V06',  'V08') ; VISIT_COMP=VISIT
 
 process_mirnas=FALSE ;
-cell_corr=FALSE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr0<-outdir_s
+cell_corr_deseq=FALSE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr0<-outdir_s
 
-cell_corr=TRUE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr1<-outdir_s
+cell_corr_deseq=TRUE; source(paste0(script_dir,'ppmi/config.R')); outdir_s_corr1<-outdir_s
 
 #cell_corr=FALSE
 
@@ -78,9 +88,29 @@ if (process_mirnas){
   prefix='rnas_'; view='RNA'
 }
 
+se_rnas$Neutrophils.LD
+
 se_filt<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
 table(se_filt$EVENT_ID);table(se_filt$INEXPAGE);table(se_filt$COHORT);
 
+se_rnas$Neutrophils.LD
+colnames(estimations_matched) %in% colnames(colData(se_filt))
+colData(se_filt)[,colnames(estimations_matched)]
+colnames(estimations_matched)
+
+cell_types_se<-colData(se_rnas)[,colnames(estimations_matched)]
+
+var_gt0<-sapply(cell_types_se, var)>0
+sapply(cell_types_se, var)
+
+cell_types_cohort<-corr.test(sapply(cell_types_se, as.numeric), as.numeric(se_rnas$COHORT ))
+cell_types_cohort$r
+rownames(cell_types_cohort$r)
+rownames(cell_types_cohort$p)[cell_types_cohort$p<0.05]
+significant_de<-rownames(cell_types_cohort$p)[cell_types_cohort$p<0.05]
+
+significant_de<-significant_de[!is.na(significant_de)]
+significant_de
 ### Decide on the parameters settings 
 ## Deseq here
 # Set the outdirectory 
@@ -89,10 +119,13 @@ table(se_filt$EVENT_ID);table(se_filt$INEXPAGE);table(se_filt$COHORT);
 # 2. Venns 
 # 3. Volcano plot
 # 4. Enrichment analysis 
-de_file
+
 de_file = paste0(outdir_s, '/results_df.csv')
+
+
+ formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, significant_de)
+formula_deseq
 #min.count = 10
-(file.exists(de_file))
 if (file.exists(de_file)){
   
   
@@ -108,6 +141,8 @@ if (file.exists(de_file)){
   }
   write.csv(deseq2ResDF, de_file, row.names=TRUE)
 }
+
+deseq2ResDF$mofa_sign
 
 deseq_all_combined<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 deseq_all_names_combined<- gsub('\\..*', '',rownames(deseq_all_combined)) # remove the dots from ensembl names 

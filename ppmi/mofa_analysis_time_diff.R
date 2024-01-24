@@ -486,9 +486,11 @@ fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 graphics.off()
 
-
-
-cors_estim<-cors_all_pd[c(23), colnames(estimations)]
+estim_cors<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
+estim_cors
+cors_all_pd
+cors_estim<-cors_all_pd[c(23),  estim_cors]
+cors_estim
 colnames(cors_estim)[cors_estim>0]
 
 
@@ -499,10 +501,6 @@ colnames(cors_estim)[cors_estim>0]
 
 ########################## NEW LOGIC GET ONLY FACTORS WITH DIFF IN V16 ##############
 ############# AFTER WE ADDED THIS TO MOFA
-
-
-
-
 
 
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
@@ -532,6 +530,7 @@ plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',fac
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors)]
 all_cors_diff<-cors[, all_diff]
 sel_factors_diff<-which(rowSums(all_cors_diff)>0)
+all_diff_variables_prog
 all_diff_variables_prog<-c(all_diff_variables, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE')
 cors
 
@@ -542,9 +541,9 @@ sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
+plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_diff'
-plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
+plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 
 
 fname<-'factors_covariates_only_nonzero_strict'

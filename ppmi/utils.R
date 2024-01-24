@@ -1809,8 +1809,8 @@ create_venn<-function(venn_list, fname_venn, main){
                lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
                filename =fname_venn, 
                main=main,
-               
-               output=FALSE)
+                imagetype="png" ,
+               output=TRUE)
 }
 
 

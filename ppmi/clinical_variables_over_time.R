@@ -6,11 +6,18 @@ all_event_ids_p<-c('BL','V04','V06','V08','V10','V12','V14','V16', 'V18')
 all_event_ids_p<-c('BL','V08','V10','V12','V14','V16', 'V18')
 
 ## metadata to select PATNOs FROM 
-sm=MOFAobject@samples_metadata
-sm=MOFAobject@samples_metadata
+
+mofa_filter<-TRUE
+if (mofa_filter){
+  sm=MOFAobject@samples_metadata
+}else{
+  sm=combined_bl_log
+}
+
+
 sm_sel=sm
-sm_sel=combined_bl_log
-sm=MOFAobject@samples_metadata
+
+
 
 ### obtain all patient event ids to get one row per patient! 
 patno_event_ids = sapply(all_event_ids_p, function(event_id){
@@ -94,18 +101,7 @@ lv='V13_V14';
   df_plot_2k$PATNO
 
 
-to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
-for (y in  to_plot){
-  print(y)
-  df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
-  df_plot_2k =df_plot_2k[df_plot_2k$INEXPAGE %in% c(sel_subcoh, 'INEXHC'),]
 
-  fname=paste0(outdir,'/trajectories/', clust_name, '_',  y, lv_to_plot  )
-  plot_clinical_trajectory(y, clust_name, df_plot_2k, lv='V12', fname, add_boxplots = TRUE, pal='turbo' )
-
-}
-
-df_plot_2k$NP2PTOT_LOG_clust
 
 
 
@@ -172,11 +168,11 @@ df_plot_2k$NP2PTOT_LOG_clust
         
         # p<-p+geom_violin(aes_string(x='VISIT', fill='grouping', group=NULL ), alpha=0.8)
         p<-p+geom_boxplot(aes_string(x='month', fill='grouping', group=NULL ),lwd=0.2, alpha=0.7, 
-        outlier.shape = NA)+
-        scale_y_continuous(expand = expansion(mult = c(0.05, 0.005)))
+        outlier.shape = NA)
+        #scale_y_continuous(expand = expansion(mult = c(0.05, 0.005)))
         p<-p+ geom_pwc( tip.length = 0,
-            method = "wilcox_test", label = "p.adj.signif", label.size = 1,
-              bracket.nudge.y = -0.1)
+            method = "wilcox_test", label = "p.adj.signif", label.size = 2,
+              bracket.nudge.y = -0.3)
         p
       }else{
          p<-p+
@@ -213,15 +209,40 @@ df_plot_2k$NP2PTOT_LOG_clust
     
     }
     
+
+## Plot cell types by COHORT 
+
+to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
+for (y in  to_plot){
+  print(y)
+  df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
+  df_plot_2k =df_plot_2k[df_plot_2k$INEXPAGE %in% c(sel_subcoh, 'INEXHC'),]
+
+  fname=paste0(outdir,'/trajectories/', clust_name, '_',  y, lv_to_plot  )
+  plot_clinical_trajectory(y, clust_name, df_plot_2k, lv='V12', fname, add_boxplots = TRUE, pal='turbo' )
+
+}
+
+df_plot_2k$NP2PTOT_LOG_clust
+
+
+
+## Plot cell types by Cluster! 
 add_individual_lines=FALSE
 sm$T.CD4.Naive
 to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca')
 to_plot=c( 'Lymphocytes....', 'Neutrophils....', 'T.CD4.Naive', 'B.memory')
-to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 
+lv_to_plot = 'V08'
+to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
+lv_to_plot = 'V14'
+
+to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
+
+
+clust_metric='NP2PTOT_LOG'
+clust_metric='NP2PTOT_LOG'
 clust_metric='moca'
-clust_metric='NP2PTOT_LOG'
-clust_metric='NP2PTOT_LOG'
 
 all_fs_diff$updrs2_score_LOG
 df_plot
@@ -259,6 +280,23 @@ fname
 ## CLUSTER TRAJECTORIES ####
 y='NP2PTOT'
 get_clinical_clusters(y)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -56,6 +56,7 @@ se_clusters
 
 #y_clust='scopa'
 DIFF_VAR='NP2PTOT_LOG'
+DIFF_VAR='moca'
 y_clust=DIFF_VAR
 
 clust_name=paste0(y_clust, '_clust')
@@ -177,7 +178,7 @@ dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
 
-se_filt_al
+
 # TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
 
@@ -199,8 +200,7 @@ clusters_indices= list( '1','2','3', c(1,2,3))
 clusters_indices
 
 
-dir.create(deseq_params, recursive = TRUE)
-se_filt_all[[cluster_id_index]]$COHORT
+#dir.create(deseq_params, recursive = TRUE)
 for (cluster_id in clusters_indices){
 
   ### 1. for each cluster, create se filt with controls, 
@@ -209,6 +209,8 @@ for (cluster_id in clusters_indices){
   #print(paste('cluster:',cluster_id))
   cluster_id_index=paste0(cluster_id, collapse='_')
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
+  de_params_file<-paste0(deseq_params, '/', prefix, formula_deseq)
+   ~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+B.Memory+B.Naive+Basophils.LD+Monocytes.C+Neutrophils.LD+NK+T.CD4.Memory+T.CD4.Naive+T.CD8.Memory+T.CD8.Naive+T.gd.non.Vd2+COHORT
   #de_file
   se_filt_all[[cluster_id_index]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
@@ -228,6 +230,10 @@ for (cluster_id in clusters_indices){
           deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
+        file.create(de_params_file)
+
+        # Also write the parameters of deseq
+
   }
   print(cluster_id_index)
   deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
@@ -245,8 +251,8 @@ names(deseq_all_names) <-names(deseq_all)
 
 #### 1. Venn from significant 
 length(deseq_all_names)
-deseq_all_names
-create_venn(venn_list = deseq_all_names, fname_venn =fname_venn,
+head(deseq_all_names,3)
+create_venn(venn_list = head(deseq_all_names,3), fname_venn =fname_venn,
             main =paste0( ' DE molecules for each molecular cluster' ) )
 
 graphics.off()
@@ -314,9 +320,12 @@ enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
 process_mirnas
 # run enrichment only for RNAs 
+
+
 if (!process_mirnas){
 
-
+gse_all_clusters=list()
+clusters_indices=c('1', '2', '3')
   for (cluster_id in clusters_indices){
       # run enrichment with the log2foldchange metric
       print(cluster_id) 
@@ -330,13 +339,35 @@ if (!process_mirnas){
 
       results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
       gse_file<-paste0(results_file_cluster, '.Rds')
+
       if (!file.exists(gse_file)){
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
           N_EMAP=30 , N_NET=10)
           saveRDS(gse1,gse_file )
 
+      }else{
+        gse_all_clusters[[cluster_id]]<- loadRDS(gse_file )
       }
     }
+
+
+
+gse1<-gse_all_clusters[[1]]
+gse1
+ gse1@result$ID[gse1@result$p.adjust<0.05]
+  gse1@result
+#[gse1@result$p.adjust<0.05]
+
+
+gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
+fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
+
+gse_sig_all_clusters
+create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
+main =paste0( ' DE pathways for each molecular cluster' ) )
+
+
+gene_lists
 
 
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
@@ -354,7 +385,7 @@ if (!process_mirnas){
                               ont=ONT, 
                               keyType = 'ENSEMBL') 
 
-
+gse_compare
     ### RUN SCRIPT compare
     names(geneClusters)                  
     plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
@@ -402,6 +433,8 @@ if (!process_mirnas){
 
 
 }
+
+
 
 
 

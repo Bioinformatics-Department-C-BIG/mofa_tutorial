@@ -32,8 +32,10 @@ remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 rescale_option=TRUE
 #diff_var='NP2PTOT_LOG'
-#DIFF_VAR='moca'
+
 DIFF_VAR='NP2PTOT_LOG'
+DIFF_VAR='moca'
+
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){
@@ -172,14 +174,16 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       
 
 
-other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
+#other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
 other_metrics[rowSums(other_metrics)>0,]
+
+sm$SEX_
 diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
          #baseline
-         'NP2PTOT_BL',         
+        # 'NP2PTOT_BL',         
          # V10/12 -future scores 
-         'NP2PTOT_V10',  'VLTFRUIT_V10', 'scopa_V10',
+       #  'NP2PTOT_V10',  'VLTFRUIT_V10', 'scopa_V10',
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'
 
@@ -212,18 +216,18 @@ get_covariates_cells('NP2PTOT_LOG')
 paste0(DIFF_VAR,'_BL')
 
  diff_variables_to_p=c( 
-         'NP2PTOT',  'scopa', 'sft', 
+         'NP2PTOT',  'scopa', 'sft',  'moca',
           # for cognition#'moca',# 'hvlt_immediaterecall',  # current 
          #baseline
         # 'NP2PTOT_BL',     
-        paste0(DIFF_VAR,'_BL'),     
+     #   paste0(DIFF_VAR,'_BL'),     
          # V10/12 -future scores 
         # 'VLTFRUIT_V10', 'scopa_V10', # 'moca_V12',
 #         paste0(DIFF_VAR,'_V10'), paste0(DIFF_VAR,'_V12'),  paste0('sft_V12'), 
-        'NP2PTOT_V10', 'NP2PTOT_V12','sft_V12',
+       # 'NP2PTOT_V10', 'NP2PTOT_V12','sft_V12',
         # 'MCATOT_V14',
           #covars
-         'Neutrophil.Lymphocyte', 'AGE_SCALED', 'moca',
+         'Neutrophil.Lymphocyte', 'AGE_SCALED',
          'duration'
       #    'hvlt_immediaterecall_V12'
 
@@ -272,7 +276,7 @@ sapply(diff_variables, function(y_clust){
 ### Variables in this script 
 # 1. Plot the clusters on the factor plot 
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
-DIFF_VAR
+DIFF_VAR='NP2PTOT_LOG'
 y <- DIFF_VAR# cluster metric 
 DIFF_VAR
 color_by=paste0(y, '_clust')
@@ -347,14 +351,16 @@ col_data$nfl_serum<-as.numeric(col_data$nfl_serum)
 library(dplyr)
 col_data_t<-tibble(col_data)
 #means_by_cluster %>% group_indices()
-colnames(col_data)
+colnames(col_data)[-1]
+diff_variables_to_p
 means_by_cluster <- col_data_t %>% 
       dplyr::select(-PATNO) %>%
       group_by(cluster) %>%
       mutate_if(is.character, as.numeric) %>%
-  summarise_each(funs(median(., na.rm = TRUE)))%>%
+  summarise_all( funs(median(., na.rm = TRUE)))%>%
   scale() %>% as.data.frame() %>% dplyr::select(-cluster) %>% 
   as.data.frame()
+
 rownames(means_by_cluster)<-means_by_cluster$cluster
 
 

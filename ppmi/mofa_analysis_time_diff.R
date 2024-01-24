@@ -438,7 +438,8 @@ all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 
                          'Multimapped....', 'Uniquely.mapped....')
 all_diff_variables_prog_conf<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
                     'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
-
+progression_markers_conf
+clinical_scales_conf
 all_diff_variables_prog_conf_only_clinical<-c(progression_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG')
    
 sel_factors_conf<-get_factors_for_scales(all_diff_variables_prog_conf_only_clinical)
@@ -483,12 +484,13 @@ plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)
 
 plot='log_pval'
 
-sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca'))
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa'))
+sel_factors_conf
 fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
 
-
+sel_factors_conf
 fname<-'factors_covariates_strict_PD_conference_clinical'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf_only_clinical,fname,plot='log_pval',
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
@@ -559,8 +561,6 @@ samples_metadata(MOFAobject_sel)$COHORT<-as.numeric(samples_metadata(MOFAobject_
 plot_covars_mofa(selected_covars=c(colnames(estimations), 'COHORT'),fname,plot='r',factors = sel_factors_coh,
 labels_col=TRUE, MOFAobject=MOFAobject_sel )
 
-cors_all
-cors[, 'COHORT']
 fname<-'factors_covariates_only_nonzero_strict'
 selected_covars2_progression
 plot_covars_mofa(selected_covars=c(colnames(estimations), 'COHORT'),fname,plot,factors=sel_factors_coh,labels_col=FALSE,
@@ -728,10 +728,8 @@ graphics.off()
   #2. Stack the lists - 
   
 colnames(estimations)
-  cors[, 'Monocytes.NC.I']
 
-cors_pearson[, 'Monocytes.NC.I']  
-  cors_pearson
+
   
   
 ### wHICH VARIABLES correlate with which factors 

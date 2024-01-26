@@ -139,11 +139,14 @@ if (length(variates_to_correct_s)>1){
       if (cell_corr_deseq) {
         formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
         formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
 
       }
     }else {
       if (cell_corr_deseq) {
       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+
      # formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
     }else{
@@ -153,6 +156,7 @@ if (length(variates_to_correct_s)>1){
 }
 }
 }
+estimations$
 formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
 
 
@@ -319,6 +323,7 @@ pvalueCutoff_sig=0.05
 enrich_params<-paste0(ONT, order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))
 
+deseq_params
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
 process_mirnas
@@ -355,10 +360,8 @@ clusters_indices=c('1', '2', '3')
 
 
 
-gse1<-gse_all_clusters[[1]]
-gse1
- gse1@result$ID[gse1@result$p.adjust<0.05]
-  gse1@result
+
+
 #[gse1@result$p.adjust<0.05]
 
 
@@ -370,7 +373,6 @@ create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
 main =paste0( ' DE pathways for each molecular cluster' ) )
 
 
-gene_lists
 
 
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
@@ -388,7 +390,7 @@ gene_lists
                               ont=ONT, 
                               keyType = 'ENSEMBL') 
 
-gse_compare
+
     ### RUN SCRIPT compare
     names(geneClusters)                  
     plot_enrich_compare(gse_compare,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 60, N_DOT=8)
@@ -436,6 +438,7 @@ gse_compare
 
 
 }
+
 
 
 

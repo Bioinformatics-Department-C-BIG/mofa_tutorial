@@ -475,7 +475,7 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 }
 
 
-
+sm$SEX
 
 
 boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1, text=''){

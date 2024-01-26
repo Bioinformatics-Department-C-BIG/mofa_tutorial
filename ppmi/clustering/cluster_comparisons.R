@@ -55,8 +55,9 @@ se_clusters
 # Set the outdirectory 
 
 #y_clust='scopa'
-DIFF_VAR='NP2PTOT_LOG'
 DIFF_VAR='moca'
+DIFF_VAR='NP2PTOT_LOG'
+
 y_clust=DIFF_VAR
 
 clust_name=paste0(y_clust, '_clust')
@@ -142,8 +143,8 @@ if (length(variates_to_correct_s)>1){
       }
     }else {
       if (cell_corr_deseq) {
-      #formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
-      formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
+     # formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
     }else{
       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
@@ -172,8 +173,8 @@ gse_all<-vector("list", length = 0)
 ### deseq_significant_all_groups: list to hold significant 
 
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
-deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP)
-dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq)))
+deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq, '/')
+dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq, '/'))
 dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
@@ -209,6 +210,8 @@ for (cluster_id in clusters_indices){
   #print(paste('cluster:',cluster_id))
   cluster_id_index=paste0(cluster_id, collapse='_')
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
+  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
+
   de_params_file<-paste0(deseq_params, '/', prefix, formula_deseq)
    ~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+B.Memory+B.Naive+Basophils.LD+Monocytes.C+Neutrophils.LD+NK+T.CD4.Memory+T.CD4.Naive+T.CD8.Memory+T.CD8.Naive+T.gd.non.Vd2+COHORT
   #de_file

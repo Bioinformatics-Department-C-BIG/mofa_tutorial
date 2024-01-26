@@ -379,6 +379,7 @@ jpeg(outfile_cl_heatmap, width=7, height=3, units='in', res=200)
    labels_row= seq(1:k_centers_m),
   clustering_method = 'centroid',
   color = colorRampPalette(c("turquoise4", "white", "red"))(50))
+
 dev.off()
 graphics.off()
 

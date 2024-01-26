@@ -51,10 +51,9 @@ rownames(bulkRNAseq)<-get_symbols_vector(rownames(bulkRNAseq))
 
 
 # deconvolute input data using all available methods by default
-decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[1:4])
+decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[4:6])
 
 
-qprog_ABIS_S0
 
 
 
@@ -97,8 +96,11 @@ for (estimated in decon$proportions ){
 
 sm<-samples_metadata(MOFAobject)
 
+estimated<-decon$proportions$qprogwc_ABIS_S0
 
+estim_matched<-estimated[match(ground_truth$PATNO_EVENT_ID , rownames(estimated)),]
 
+corr.test(estim_matched$Neutrophils.LD, ground_truth$Neutrophil.Score, )
 
 corr.test(estim_matched$Neutrophils.LD, ground_truth$Neutrophil.Score)$r
 corr.test(estim_matched$Neutrophils.LD, ground_truth$Neutrophil.Score)$p.adj
@@ -146,6 +148,12 @@ fit_lm
 plot(y ~ x)
 
 #correlate_factors_with_covariates
+# List median cell type estimation by disease control 
+
+# Correlate 
+# Estimate and check for correlations or significance between the two groups 
+covariates_to_p<-c('AGE', 'SEX', 'NP2PTOT', 'NHY', '')
+
 sm[variates_to_p]
 variates_to_p<-colnames(estimations)
 variates_to_p_cors<-c(variates_to_p, 'Multimapped....', 'Uniquely.mapped....',  'RIN.Value', 
@@ -162,20 +170,58 @@ stat
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 library(corrplot)
 M=cor(sm[variates_to_p])
 corrplot(sm[variates_to_p])
+sm2<-sm[!is.na(sm$COHORT),]
+# 1. apply shapiro
+# 2. Check normality 
+wil1<-wilcox.test(sm$Neutrophil.Score, sm$COHORT)
+wil1$p.value
+
+
+wilcox_cell_types<-apply(sm2[, c(colnames(estimations), 'Neutrophils....', 'Lymphocytes....')],2 ,
+function (x) {wilcox.test(x, sm2$COHORT)$p.value} )
+wilcox_cell_types
+
+
+variances_cells<-sm2[, c(colnames(estimations))] %>%
+    summarize_all(var, na.rm=TRUE) %>%
+    as.data.frame() %>% t() %>%
+    as.data.frame()
+
+    variances_cells
+write.csv(round(variances_cells, digits=2), paste0(outdir, '/cell_types/', 'variances.csv'))
+
+
+medians<-sm2[, c(colnames(estimations), 'COHORT', 'Neutrophils....', 'Neutrophil.Score')] %>%
+    group_by(COHORT) %>%
+    summarize_all(median, na.rm=TRUE) %>% t() %>%
+    as.data.frame() 
+
+    medians
+write.csv(round(medians, digits=3), paste0(outdir, '/cell_types/', 'medians.csv'))
+
+
+sm2$MAIT[sm2$COHORT==2]
+dir.create(paste0(outdir, '/cell_types/'))
+write.csv(wilcox_cell_types, paste0(outdir, '/cell_types/', 'wilcox_pd_hc.csv'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

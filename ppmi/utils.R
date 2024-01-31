@@ -223,9 +223,10 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   se_filt$SITE<-as.factor(se_filt$SITE)
   se_filt$Plate<-as.factor(se_filt$Plate); dim(assay(se_filt))
   
-  if ('Neutrophils.LD' %in% colnames(colData(se_filt))){
-    colData(se_filt)[, colnames(estimations)]<-scale(colData(se_filt)[, colnames(estimations)])
-  }
+  
+  estimations_types<-colnames(estimations)[colnames(estimations) %in% colnames(colData(se_filt))]
+  colData(se_filt)[, estimations_types]<-scale(colData(se_filt)[, estimations_types])
+  
 
 
 
@@ -274,7 +275,7 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 }
 
 
-
+se_filt<-se_clust
 deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
   #'
   #' @param 

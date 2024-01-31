@@ -154,8 +154,8 @@ for (diff_var in names(all_clusts_mofa)){
     MOFAobject_sel@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
 }
 
-
-MOFAobject_sel@samples_metadata[, 'NP2PTOT_LOG_clust']
+clust_name
+MOFAobject_sel@samples_metadata[, clust_name]
 
 
 
@@ -232,14 +232,22 @@ facet_rows = 2
 
 
 ## BOXPLOTS 
+met[, clust_name]
 
 sapply(diff_variables, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
 
+  print(clust_name)
+  met[, 'PATNO']
+  #clust_name %in% colnames(met)
   if (clust_name %in% colnames(met)){
     # for each cluster create boxplot 
     variates_to_p<-get_covariates_cells(y_clust, thresh=8)
+    variates_to_p = c('B.Naive', 'B.Memory', 'Basophils.LD', 'Monocytes.C', 'Neutrophils.LD', 'T.CD4.Memory', 'T.CD4.Naive', 'T.CD8.Memory', 
+    'T.CD8.Naive', 'Neutrophils....'  )
+    variates_to_p<-variates_to_p[variates_to_p%in% colnames(met)]
+
     fact=get_factors_for_metric(y_clust)
     fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 #  'rcf_',as.numeric(remove_cell_factors )
@@ -248,8 +256,9 @@ sapply(diff_variables, function(y_clust){
 
     bn_all<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,
-    c(diff_variables_to_p, variates_to_p), width=8+length(c(diff_variables_to_p,variates_to_p))/facet_rows , bn=bn_all, facet_rows = facet_rows, 
+    diff_variables_to_p<-diff_variables_to_p[diff_variables_to_p %in% colnames(met)] 
+
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p, variates_to_p), width=8+length(c(diff_variables_to_p,variates_to_p))/facet_rows , bn=bn_all, facet_rows = facet_rows, 
     text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
 
 

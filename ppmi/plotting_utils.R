@@ -475,7 +475,6 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 }
 
 
-sm$SEX
 
 
 boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1, text=''){
@@ -488,7 +487,6 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
   
- # labeller_clinical2=labeller_clinical[diff_variables_to_p]
 
   as.numeric(met[,clust_metric])
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
@@ -510,8 +508,9 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   ## 
   factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
 
-  
+  print(clust_name)
   met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
+
   met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
   met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )

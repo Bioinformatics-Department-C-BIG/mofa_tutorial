@@ -3,7 +3,17 @@
 # estimation of cell types with granulator using rna seq 
 
 #BiocManager::install('granulator')
+
 library(granulator)
+library(R.filesets)
+script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../../')
+script_dir
+cell_corr_deseq = TRUE
+#VISIT='V08'
+source(paste0('ppmi/setup_os.R'))
+#source(paste0(script_dir, 'ppmi/setup_os.R'))
+script_dir
+source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 # load datasets for deconvolution of PBMC RNA-seq data
 load_ABIS()
 
@@ -23,10 +33,10 @@ groundTruth_ABIS[1:5, 1:5]
 # create list if multiple signature matrices to test simultaneously
 sigList = list(
   ABIS_S0 = sigMatrix_ABIS_S0,
-  ABIS_S1 = sigMatrix_ABIS_S1, 
-  ABIS_S2 = sigMatrix_ABIS_S2, 
-  ABIS_S3 = sigMatrix_ABIS_S3)
-
+  ABIS_S1 = sigMatrix_ABIS_S1
+  #ABIS_S2 = sigMatrix_ABIS_S2, 
+  #ABIS_S3 = sigMatrix_ABIS_S3)
+)
 
 
   # plot signature matrix similarity matrices
@@ -49,10 +59,16 @@ bulkRNAseq<-se_rnas_cpm
 rownames(bulkRNAseq)
 rownames(bulkRNAseq)<-get_symbols_vector(rownames(bulkRNAseq))
 
+get_decon_methods()[4:7]
 
 # deconvolute input data using all available methods by default
-decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[4:6])
+decon_file<-paste0(output_files, '/decon.RDS')
+if (file.exists(decon_file)){
+  decon<-loadRDS(decon_file)}else{
+  decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[4:7])
 
+  saveRDS(decon, decon_file)
+}
 
 
 
@@ -68,7 +84,7 @@ for (estimated in decon$proportions ){
       max(decon$proportions$nnls_ABIS_S0)
 
       # plot cell type proportions for svr model on ABIS_S0 reference profile
-      plot_proportions(deconvoluted = decon, method = 'nnls', signature = 'ABIS_S3')
+    #  plot_proportions(deconvoluted = decon, method = 'nnls', signature = 'ABIS_S3')
       # plot cell type proportions
       plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
 
@@ -95,6 +111,9 @@ for (estimated in decon$proportions ){
 }
 
 sm<-samples_metadata(MOFAobject)
+sm<-samples_metadata(MOFAobject_clusts)
+
+
 
 estimated<-decon$proportions$qprogwc_ABIS_S0
 
@@ -129,23 +148,8 @@ colnames(estim_matched)[i]
 x=estim_matched[filt_samples,i]
 x
 
-
-
-
-
-
-x_covars$age
-x_covars$age_at_visit
 fit_lm<-lm(y~x_covars$age_at_visit+x_covars$SEX+x_covars$Usable.Bases....+x+x_covars$EVENT_ID+x)
 
-
-y
-#fit_lm<-glm(y~x_covars$age_at_visit+x_covars$SEX+x_covars$Usable.Bases....+x+x_covars$EVENT_ID+x,  family = "binomial")
-
-
-fit_lm
-
-plot(y ~ x)
 
 #correlate_factors_with_covariates
 # List median cell type estimation by disease control 
@@ -154,7 +158,6 @@ plot(y ~ x)
 # Estimate and check for correlations or significance between the two groups 
 covariates_to_p<-c('AGE', 'SEX', 'NP2PTOT', 'NHY', '')
 
-sm[variates_to_p]
 variates_to_p<-colnames(estimations)
 variates_to_p_cors<-c(variates_to_p, 'Multimapped....', 'Uniquely.mapped....',  'RIN.Value', 
     'Usable_Bases_SCALE')
@@ -201,6 +204,53 @@ medians<-sm2[, c(colnames(estimations), 'COHORT', 'Neutrophils....', 'Neutrophil
 
     medians
 write.csv(round(medians, digits=3), paste0(outdir, '/cell_types/', 'medians.csv'))
+IQRS<-sm2[, c(colnames(estimations), 'COHORT', 'Neutrophils....', 'Neutrophil.Score')] %>%
+    group_by(COHORT) %>%
+    summarize_all(IQR, na.rm=TRUE) %>% t() %>%
+    as.data.frame() 
+
+sm2$cky
+sm2<-samples_metadata(MOFAobject_sel)
+sm2$NP2PTOT_LOG_clust
+cell_type_df<-sm2[, c(colnames(estimations), 'COHORT', 'Neutrophils....', 'Neutrophil.Score', 'COHORT')]
+cell_type_df<-sm2[, c(colnames(estimations), 'Neutrophils....', 'Neutrophil.Score', 'NP2PTOT_LOG_clust')]
+cell_type_df<-sm2[, c(colnames(estimations),  'Neutrophils....', 'Neutrophil.Score','COHORT')]
+
+y_clust_cells = 'COHORT'
+cell_type_df<-cell_type_df[,!(colnames(cell_type_df) %in% c('Plasmablasts', 'T.gd.Vd2' ))]
+cell_type_df_long<-melt(cell_type_df, id.vars = c(y_clust_cells))
+colnames(cell_type_df_long)
+
+
+cell_type_df_long
+
+ggplot(cell_type_df_long, aes_string(group=y_clust_cells,, x='value') )+
+geom_density(aes(x = value, fill=NP2PTOT_LOG_clust), alpha=0.6)+
+ scale_fill_viridis_d(option='magma')+
+facet_wrap(.~variable, scales='free' )
+ggsave( paste0(outdir, '/cell_types/', 'hist_clusters.jpeg'))
+
+cell_type_df_long<-cell_type_df_long[!is.na(cell_type_df_long$COHORT),]
+
+
+
+
+cell_type_df_long$COHORT<-as.factor(cell_type_df_long$COHORT)
+
+
+
+ggplot(cell_type_df_long, aes_string( y='value' ,x=y_clust_cells))+
+geom_violin(aes_string(x = y_clust_cells,y='value', fill=y_clust_cells), alpha=0.9)+
+ scale_fill_viridis_d(option='magma')+
+ geom_pwc(aes_string(x=y_clust_cells, y='value'),method='wilcox_test', label = "p.adj.signif", 
+ label.size = 2 )+
+facet_wrap(.~variable, scales='free', nrow = 2 )
+
+ggsave( paste0(outdir, '/cell_types/', 'violin_clusters', y_clust_cells, '.jpeg'), 
+width=10, height=6)
+
+# check shapiro test 
+
 
 
 sm2$MAIT[sm2$COHORT==2]

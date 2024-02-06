@@ -154,8 +154,7 @@ for (diff_var in names(all_clusts_mofa)){
     MOFAobject_sel@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
 }
 
-clust_name
-MOFAobject_sel@samples_metadata[, clust_name]
+
 
 
 
@@ -179,10 +178,6 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 sm$SEX_
 diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
-         #baseline
-        # 'NP2PTOT_BL',         
-         # V10/12 -future scores 
-       #  'NP2PTOT_V10',  'VLTFRUIT_V10', 'scopa_V10',
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'
 

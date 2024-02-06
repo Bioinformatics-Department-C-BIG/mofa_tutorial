@@ -64,6 +64,9 @@ source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
+
+
+
 #output_files
 # metadata source 
 metadata_output<-paste0(output_files, 'combined.csv')
@@ -77,7 +80,6 @@ combined_bl <- combined_bl_log
 combined_bl_log$Usa
 
 combined_bl_log$RBD_TOT
-all(is.na(combined_bl_log$updrs2_score_BL))
 decon<-loadRDS(paste0(output_files, '/decon.RDS'))
 
 
@@ -203,7 +205,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
   
   
 }
-
+split
 
 # n_factors best=15
 for (N_FACTORS in c(25)){

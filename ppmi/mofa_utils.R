@@ -206,10 +206,12 @@ groups_from_mofa_factors<-function(patnos, MOFAobject_clusts, y_clust ){
   
   ### cluster by one factor 
   clust_name= paste0(y_clust, '_clust')
+  clust_name
   sm_pd<-MOFAobject_clusts@samples_metadata;
   groups_kmeans<-sm_pd[, clust_name]
   pats<-sm_pd$PATNO
   kmeans_matched<-groups_kmeans[match(patnos, pats )]
+  #kmeans_matched
   kmeans_grouping<-factor(kmeans_matched)
   kmeans_grouping
   return(kmeans_grouping)

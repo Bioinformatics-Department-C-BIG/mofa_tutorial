@@ -39,9 +39,9 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP='V08'
+VISIT_COMP='BL'
 process_mirnas= FALSE
-cell_corr_deseq<-TRUE
+cell_corr_deseq<-FALSE
 
 if (process_mirnas){
   se_sel = se_mirs
@@ -145,9 +145,12 @@ if (length(variates_to_correct_s)>1){
   variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
 }
 
-formula_deseq_format='all'
+formula_deseq_format<-'all'
+if (!cell_corr_deseq){
+  formula_deseq_format=''
+}
 
-
+formula_deseq_format
     if (process_mirnas){
         formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
       if (cell_corr_deseq) {
@@ -202,7 +205,7 @@ dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/'
 dir.create(deseq_params)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
-
+deseq_params
 
 # TODO: ensure thatthis is also run for all subjects together
 for (cluster_id in 1:3){
@@ -218,8 +221,7 @@ for (cluster_id in 1:3){
 ## filter for grouping here - it is not in the prerpocessing by default
 #se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
 
-formula_deseq
-se_filt_all
+
 
 clusters_indices= list( '1','2','3', c(1,2,3))
 clusters_indices
@@ -348,13 +350,11 @@ enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 process_mirnas
 # run enrichment only for RNAs 
 
-gse_all_clusters
 if (!process_mirnas){
 
 gse_all_clusters=list()
 clusters_indices=c('1', '2', '3')
 
-file.exists(gse_file)
   for (cluster_id in clusters_indices){
       # run enrichment with the log2foldchange metric
       print(cluster_id) 
@@ -379,8 +379,8 @@ file.exists(gse_file)
       }
     }
 
-
-length(gse_all_clusters)
+gse_file
+gse_all_clusters
 
 
 #[gse1@result$p.adjust<0.05]
@@ -428,7 +428,6 @@ if (!file.exists(gse_compare_file)){
     # 1. load all gene lists again
     #    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
-    cluster_id=3
   gse_compare_all_vis <-list()
 
     for (cluster_id in clusters_indices){
@@ -439,7 +438,7 @@ if (!file.exists(gse_compare_file)){
       deseq_all_times
 
 
-      deseq_all_times<-sapply( c('BL','V04', 'V06', 'V08'), function(VISIT){
+      deseq_all_times<-sapply( c( 'BL','V06', 'V08'), function(VISIT){
         deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
         
         gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
@@ -453,6 +452,7 @@ if (!file.exists(gse_compare_file)){
       dir.create(paste0(deseq_params_all, '/enr/'))
       enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
       if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
+     # if (TRUE){
 
       ## Compare the three clusters for one visit 
  
@@ -472,10 +472,8 @@ if (!file.exists(gse_compare_file)){
         gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
       }
   }
-vars_by_factor_all
 
-
-### LOADED ALL VISITS, ALL clusters
+### LOAD ALL VISITS, ALL clusters and compare unique and intersection 
 
 intersection_all_clusts=list()
 for (cluster_id in clusters_indices){
@@ -485,7 +483,7 @@ for (cluster_id in clusters_indices){
 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
       gse_compare_visit_res_t<-split(gse_compare_visit_res$Description,  gse_compare_visit_res$Cluster)
-      gse_compare_visit_res_t_sub<-gse_compare_visit_res_t[c(1,3,4)]
+      gse_compare_visit_res_t_sub<-gse_compare_visit_res_t[c(1,2,3)]
       intersection_clust<-Reduce( intersect,gse_compare_visit_res_t_sub)
       intersection_all_clusts[[cluster_id]]<-intersection_clust
 
@@ -501,8 +499,8 @@ for (cluster_id in clusters_indices){
 fname_venn=paste0(enrich_compare_path, 'time_all.png')
 create_venn(venn_list = intersection_all_clusts, fname_venn =fname_venn,main =paste0( 'Pathways by cluster' ))
 
-
-(intersection_all_clusts[[1]] %in% intersection_all_clusts[[3]])
+Reduce(intersect,intersection_all_clusts)
+(intersection_all_clusts[[1]] %in% intersection_all_clusts[[2]])
 
 unique_partitions<-VennDiagram::get.venn.partitions(intersection_all_clusts)
 
@@ -527,6 +525,7 @@ unique_partitions2<-unique_partitions[unique_partitions$data==2,]
 
 
 unique_partitions3
+unique_partitions2
 
 
 

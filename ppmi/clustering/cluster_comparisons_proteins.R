@@ -68,16 +68,6 @@ y_clust=DIFF_VAR
 clust_name=paste0(y_clust, '_clust')
 
 
-
-
-# MOFAobject_clusts<-MOFAobjectPD
-# Obtain clustering from mofa
-se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
-se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
-
-
-
-
 ## Outputs 
 # 1. DE files 
 # 2. Venns 
@@ -85,11 +75,15 @@ se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 # 4. Enrichment analysis 
 
 
+#MOFAobject_clusts<-MOFAobjectPD
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
 # Correct for blood cell proportions of neutrophils and lymphocytes 
 
+# Obtain clustering from mofa
+se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
+se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
 

@@ -12,7 +12,7 @@ library(sys)
 
 process_mirnas=FALSE
 
-VISIT='V06'
+VISIT='BL'
 source(paste0(script_dir, 'ppmi/config.R' ))
 source(paste0(script_dir,'ppmi/utils.R'))
 
@@ -30,71 +30,115 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 prot_vsn_se_filt_file
 datalist<-loadRDS(prot_vsn_se_filt_file)
 vsn_mat<-datalist[[1]]
-se_filt<-datalist[[2]]
+se_filt_proteins<-datalist[[2]]
 
 cohort_ids<-c(1,2)
 names(cohort_ids)=c('INEXPD', 'INEXHC')
 
-se_filt$COHORT_orig<-se_filt$COHORT
+se_filt_proteins$COHORT_orig<-se_filt_proteins$COHORT
 
+# fix the cohort
+if (any(is.na(se_filt_proteins$COHORT))){
 
-if (any(is.na(se_filt$COHORT))){
-
-  se_filt$COHORT<- cohort_ids[se_filt$INEXPAGE]
+  se_filt_proteins$COHORT<- cohort_ids[se_filt_proteins$INEXPAGE]
 
 }
-se_filt$COHORT
-tmp<- assays(se_filt)[[1]]
+tmp<- assays(se_filt_proteins)[[1]]
 
 
 if (run_vsn){
-  protein_matrix<-vsn_mat
+  protein_matrix_full<-vsn_mat
 }else{
-  protein_matrix<-tmp
+  protein_matrix_full<-tmp
   }
-nfeats<-dim(protein_matrix)[1]
+nfeats<-dim(protein_matrix_full)[1]
+
+se_clusters<-se_filt_proteins
 
 
-protein_matrix
+### attach mofa clusts to se
+# MOFAobject_clusts<-MOFAobjectPD
+# Obtain clustering from mofa
+se_clusters$COHORT
+se_clusters$PATNO
+sm$PATNO
+
+sm<-samples_metadata(MOFAobject_clusts)
+y_clust
+sm$NP2PTOT_LOG_clust
+patnos=se_clusters$PATNO
+se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
+#se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
+se_clusters$kmeans_grouping
+
+protein_matrices<-list()
+
+de_all_groups_proteins<-list()
+
+dim(protein_matrix)
+cluster_id
+se_cluster_ind
+# TODO: ensure thatthis is also run for all subjects together
+
+length(se_filt_all)
+
+for (cluster_id in 1:3){
+
+  se_clusters
+  se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id,'HC')
+  se_filt_all[[cluster_id]]<-se_clusters[,se_cluster_ind]
+  protein_matrices[[cluster_id]]<-protein_matrix_full[,se_cluster_ind ]
+
+}
+
+dim(protein_matrix)
+protein_matrix<-protein_matrices[[1]]
+se_filt_all[[1]]$COHORT
+
+cluster_params_dir
+
+for (cluster_id in 1:3){
+
+        outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT, '/' )
+        outdir_s_p
+        se_filt_clust<-se_filt_all[[cluster_id]]
+        protein_matrix<-protein_matrices[[cluster_id]]
+        results_de<-de_proteins_by_group(se_filt_clust, protein_matrix)
+        #results_de<-topTable(fit.cont, coef='COHORT' ) 
+        de_all_groups_proteins[[cluster_id]]<-results_de
+        #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
 
+    results_de
+    dir.create(outdir_s_p)
 
-results_de<-de_proteins_by_group(se_filt, protein_matrix)
-#results_de<-topTable(fit.cont, coef='COHORT' )
-results_de
-#FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
+    ns_full<-table(se_filt_clust$COHORT_DEFINITION)
+    ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
 
-
-
-
-dir.create(outdir_s_p)
-
-ns_full<-table(se_filt$COHORT_DEFINITION)
-ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
-
-# TODO: enhanced volcano
-library(EnhancedVolcano)
-ylim=max(-log10(results_de$adj.P.Val))+0.5
-ylim
-pvol<-EnhancedVolcano(results_de, 
-                lab = rownames(results_de),
-                x = 'logFC',
-                y = 'adj.P.Val', 
-                pCutoff = 10e-2,
-                FCcutoff = 0.5, 
-                ylim=c(0,ylim), 
-                title='', 
-                subtitle=ns
-)
-pvol
-prefix='prot_'
-fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,VISIT,'.jpeg')
-ggsave(fname,pvol, width=6,height=8, dpi=300)
-
+    # TODO: enhanced volcano
+    library(EnhancedVolcano)
+    ylim=max(-log10(results_de$adj.P.Val))+0.5
+    ylim
+    #results_de<-de_all_groups_proteins[[3]]
+    pvol<-EnhancedVolcano(results_de, 
+                    lab = rownames(results_de),
+                    x = 'logFC',
+                    y = 'adj.P.Val', 
+                    pCutoff = 10e-2,
+                    FCcutoff = 0.5, 
+                    ylim=c(0,ylim), 
+                    title='', 
+                    subtitle=ns
+    )
+    pvol
+    prefix='prot_'
+    fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,VISIT,'cl',cluster_id, '.jpeg')
+    ggsave(fname,pvol, width=6,height=8, dpi=300)
+}
 #ggsave(fname,pvol, width=6,height=8, dpi=300)
 
-
+prefix
 ## Create a p-adjusted
 ## how many total proteins?
 dim(vsn_mat)

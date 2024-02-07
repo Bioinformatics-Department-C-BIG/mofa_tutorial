@@ -110,14 +110,19 @@ variates_to_p<-get_covariates_cells(y_clust, thresh=0)
 variates_to_correct<-variates_to_p[!variates_to_p %in% c('Lymphocytes....', 'Neutrophils....', 'Neutrophil.Score')]
 variates_to_correct_s<-paste(variates_to_correct, collapse='+')
 
-variates_to_correct_s
-colData(se_clusters)$PATNO_EVENT_ID
-colnames(estimations)%in% colnames(colData(se_clusters))
+
+# add short? 
+# variates_to_correct_string
+
+
 
 if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
   # if cols of estimated cells not inside add them
   # should probably add in the metadata
-  estimations_matched<-scale(estimations[match(colData(se_clusters)$PATNO_EVENT_ID, rownames(estimations)),])
+  #estimations[match(colData(se_clusters)$PATNO_EVENT_ID, rownames(estimations)),]
+  colnames(estimations_matched)
+
+  estimations_matched<-estimations[match(colData(se_clusters)$PATNO_EVENT_ID, rownames(estimations)),]
   colData(se_clusters)<-cbind(colData(se_clusters),estimations_matched  )
 
 }
@@ -127,8 +132,11 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 ##  the model matrix is not full rank, so the model cannot be fit as specified.
 ##  One or more variables or interaction terms in the design formula are linear
 ##  combinations of the others and must be removed
+formula_deseq_format='n'
+formula_deseq_format='all'
 
 get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
+variates_to_correct
 
 if (length(variates_to_correct_s)>1){
   variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
@@ -137,17 +145,23 @@ if (length(variates_to_correct_s)>1){
     if (process_mirnas){
         formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
       if (cell_corr_deseq) {
-        formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
-        formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+
+        if ((formula_deseq_format)=='n'){
+          formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+        }else{
+          formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+
+        }       
 
       }
     }else {
       if (cell_corr_deseq) {
-      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophil.Score+COHORT'
-      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+       if ((formula_deseq_format)=='n'){
+          formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+        }else{
+          formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-     # formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+        }       
 
     }else{
       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
@@ -156,9 +170,9 @@ if (length(variates_to_correct_s)>1){
 }
 }
 }
-estimations$
-formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
 
+formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
+formula_deseq
 
 
 print(paste('formula: ', formula_deseq))
@@ -175,51 +189,34 @@ gse_all<-vector("list", length = 0)
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
-
+deseq_params_all
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
-deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq, '/')
-dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq, '/'))
-dir.create(deseq_params)
+deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', make.names(formula_deseq_format), '/')
+dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', make.names(formula_deseq_format), '/'))
+dir.create(deseq_params, recursive = TRUE)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
-
-
-
-# TODO: ensure thatthis is also run for all subjects together
-for (cluster_id in 1:3){
-
-  ### 1. for each cluster, create se filt with controls, 
-  ### 2. run deseq 
-  ### 3. get significant per cluster 
-  print(paste('cluster:',cluster_id))
-
-  #de_file
-  se_filt_all[[cluster_id]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
-}
-## filter for grouping here - it is not in the prerpocessing by default
-#se_filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
-
-formula_deseq
-se_filt_all
+deseq_params
 
 clusters_indices= list( '1','2','3', c(1,2,3))
-clusters_indices
+clusters_names<-c(1,2,3,'1_2_3')
 
+  se_filt_all<-lapply(clusters_indices, function(cluster_id){ 
+    se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]})
 
+names(se_filt_all)<-clusters_names
+names(se_filt_all)
+filt<-se_filt[,!(is.na(se_filt$kmeans_grouping))] 
+se_filt_all
+
+ make.names(formula_deseq)
+file.exists(de_file)
 #dir.create(deseq_params, recursive = TRUE)
-for (cluster_id in clusters_indices){
+for (cluster_id_index in clusters_names){
 
-  ### 1. for each cluster, create se filt with controls, 
-  ### 2. run deseq 
-  ### 3. get significant per cluster 
-  #print(paste('cluster:',cluster_id))
-  cluster_id_index=paste0(cluster_id, collapse='_')
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', paste0(cluster_id, collapse='_') , '.csv')
+  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id_index , '.csv')
 
-  de_params_file<-paste0(deseq_params, '/', prefix, formula_deseq)
-   ~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+B.Memory+B.Naive+Basophils.LD+Monocytes.C+Neutrophils.LD+NK+T.CD4.Memory+T.CD4.Naive+T.CD8.Memory+T.CD8.Naive+T.gd.non.Vd2+COHORT
+  de_params_file<-paste0(deseq_params, '/', prefix, make.names(formula_deseq))
   #de_file
-  se_filt_all[[cluster_id_index]]<-se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]
 
 
    if (file.exists(de_file)){
@@ -228,8 +225,10 @@ for (cluster_id in clusters_indices){
     deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
   }else{
+    
     # else run the deseq with the design formula specified 
-        deseq2ResDF = deseq_by_group(se_filt_all[[cluster_id_index]], formula_deseq, min.count=min.count)
+        se_clust<-se_filt_all[[cluster_id_index]]
+        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count)
 
         deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
         if (!process_mirnas){
@@ -242,18 +241,19 @@ for (cluster_id in clusters_indices){
         # Also write the parameters of deseq
 
   }
-  print(cluster_id_index)
+
+ 
+
   deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
   deseq_all[[cluster_id_index]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
-deseq2ResDF$padj
-deseq_all['1_2_3']
+
 
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
 
-
+deseq_all_names
 
 
 #### 1. Venn from significant 
@@ -270,7 +270,7 @@ graphics.off()
 
 
 # TODO: venn before and after correction 
-
+cluster_id_index
 for (cluster_id in clusters_indices){
 
       # Take the original data and deseq results to plot a volcano 
@@ -368,20 +368,16 @@ clusters_indices=c('1', '2', '3')
 gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
 fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 
-gse_sig_all_clusters
-create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
+if (length(gse_sig_all_clusters)>0){
+  create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
 main =paste0( ' DE pathways for each molecular cluster' ) )
+}
 
 
 
 
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
-    clust_pair<-c(1,2,3)
-    clust_pair_s=paste0(clust_pair, collapse='_')
-    clust_pair_s
-    geneClusters = list(G1=gene_lists[[clust_pair[1]]],
-                                G2=gene_lists[[clust_pair[2]]],  # nolint
-                                G3=gene_lists[[clust_pair[3]]])
+      
     geneClusters=gene_lists
     gene_lists
     gse_compare<-compareCluster(geneClusters = geneClusters , 
@@ -438,6 +434,8 @@ main =paste0( ' DE pathways for each molecular cluster' ) )
 
 
 }
+
+
 
 
 

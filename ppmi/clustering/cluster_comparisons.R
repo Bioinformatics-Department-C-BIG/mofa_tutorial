@@ -12,6 +12,11 @@ source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 if (!base::exists(quote(se_mirs))){
   se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
   se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
+if (!base::exists(quote(se_mirs))){
+  se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+  se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log); 
+
+}
 
 }
 
@@ -23,6 +28,10 @@ hist(head(assay(se_mirs_norm),10)[10:50])
 process_mirnas=FALSE
 source(paste0(script_dir, '/ppmi/config.R'))
 #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+if (!base::exists(quote(se_rnas))){
+
+  se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+}
 if (!base::exists(quote(se_rnas))){
 
   se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
@@ -40,7 +49,9 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 VISIT_COMP='BL'
+VISIT_COMP='BL'
 process_mirnas= FALSE
+cell_corr_deseq<-FALSE
 cell_corr_deseq<-FALSE
 
 if (process_mirnas){
@@ -66,6 +77,16 @@ DIFF_VAR='NP2PTOT_LOG'
 y_clust=DIFF_VAR
 
 clust_name=paste0(y_clust, '_clust')
+
+
+
+
+# MOFAobject_clusts<-MOFAobjectPD
+# Obtain clustering from mofa
+se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
+se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
+
+
 
 
 
@@ -152,6 +173,12 @@ if (length(variates_to_correct_s)>1){
   variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
 }
 
+formula_deseq_format<-'all'
+if (!cell_corr_deseq){
+  formula_deseq_format=''
+}
+
+formula_deseq_format
 formula_deseq_format<-'all'
 if (!cell_corr_deseq){
   formula_deseq_format=''
@@ -354,6 +381,7 @@ if (!process_mirnas){
 gse_all_clusters=list()
 clusters_indices=c('1', '2', '3')
 
+
   for (cluster_id in clusters_indices){
       # run enrichment with the log2foldchange metric
       print(cluster_id) 
@@ -380,6 +408,8 @@ clusters_indices=c('1', '2', '3')
 
 gse_file
 gse_all_clusters
+gse_file
+gse_all_clusters
 
 
 #[gse1@result$p.adjust<0.05]
@@ -395,7 +425,10 @@ main =paste0( ' DE pathways for each molecular cluster' ) )
 
 enrich_compare_path
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
+enrich_compare_path
+gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 
+if (!file.exists(gse_compare_file)){
 if (!file.exists(gse_compare_file)){
 
 
@@ -417,12 +450,25 @@ if (!file.exists(gse_compare_file)){
 }else{
     gse_compare<-loadRDS(gse_compare_file)
 }
+    saveRDS(gse_compare, gse_compare_file)
+}else{
+    gse_compare<-loadRDS(gse_compare_file)
+}
 
 
     ### Cluster compare by visit ### 
     # 1. load all gene lists again
+    # 1. load all gene lists again
     #    deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
 
+  gse_compare_all_vis <-list()
+
+    for (cluster_id in clusters_indices){
+
+      # cluster compare all visits together  
+    
+      deseq_all_times<-vector("list", length = 3)
+      deseq_all_times
   gse_compare_all_vis <-list()
 
     for (cluster_id in clusters_indices){
@@ -438,12 +484,24 @@ if (!file.exists(gse_compare_file)){
         
         gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
         names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
+      deseq_all_times<-sapply( c( 'BL','V06', 'V08'), function(VISIT){
+        deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
+        
+        gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
+        names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
 
         return(gene_list1)
         }
       )
+        return(gene_list1)
+        }
+      )
 
+      dir.create(paste0(deseq_params_all, '/enr/'))
+      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+      if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
+     # if (TRUE){
       dir.create(paste0(deseq_params_all, '/enr/'))
       enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
       if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
@@ -456,10 +514,79 @@ if (!file.exists(gse_compare_file)){
                                   OrgDb='org.Hs.eg.db', 
                                   ont=ONT, 
                                   keyType = 'ENSEMBL') 
+      ## Compare the three clusters for one visit 
+ 
+      gse_compare_visit<-compareCluster(geneClusters = deseq_all_times, 
+                                  fun = "gseGO", 
+                                  OrgDb='org.Hs.eg.db', 
+                                  ont=ONT, 
+                                  keyType = 'ENSEMBL') 
 
 
       plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80, N_DOT=5)
+      plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,clust_pair_s), N_EMAP = 80, N_DOT=5)
 
+      saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
+
+      gse_compare_all_vis[[cluster_id]]<-gse_compare_visit
+      }else{
+        gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
+      }
+  }
+
+### LOAD ALL VISITS, ALL clusters and compare unique and intersection 
+
+intersection_all_clusts=list()
+for (cluster_id in clusters_indices){
+
+      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+
+
+      gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
+      gse_compare_visit_res_t<-split(gse_compare_visit_res$Description,  gse_compare_visit_res$Cluster)
+      gse_compare_visit_res_t_sub<-gse_compare_visit_res_t[c(1,2,3)]
+      intersection_clust<-Reduce( intersect,gse_compare_visit_res_t_sub)
+      intersection_all_clusts[[cluster_id]]<-intersection_clust
+
+      fname_venn=paste0(enrich_compare_path, 'venn_clust.png')
+      create_venn(venn_list = gse_compare_visit_res_t_sub, fname_venn =fname_venn,main =paste0( 'Pathways by visit, cluster: ', cluster_id  ))
+
+
+
+}
+
+
+
+fname_venn=paste0(enrich_compare_path, 'time_all.png')
+create_venn(venn_list = intersection_all_clusts, fname_venn =fname_venn,main =paste0( 'Pathways by cluster' ))
+
+Reduce(intersect,intersection_all_clusts)
+(intersection_all_clusts[[1]] %in% intersection_all_clusts[[2]])
+
+unique_partitions<-VennDiagram::get.venn.partitions(intersection_all_clusts)
+
+unique_partitions
+
+}
+
+library(tidyverse)
+
+lists <- intersection_all_clusts
+
+unique_partitions<-data.frame(data = names(lists), number = matrix(lists)) %>%
+  tidyr::unnest(cols = c(number)) %>%
+  dplyr::distinct(number, .keep_all = TRUE) %>% as.data.frame()
+
+
+
+unique_partitions3<-unique_partitions[unique_partitions$data==3,]
+unique_partitions1<-unique_partitions[unique_partitions$data==1,]
+
+unique_partitions2<-unique_partitions[unique_partitions$data==2,]
+
+
+unique_partitions3
+unique_partitions2
       saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
 
       gse_compare_all_vis[[cluster_id]]<-gse_compare_visit

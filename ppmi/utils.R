@@ -275,7 +275,6 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 }
 
 
-se_filt<-se_clust
 deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
   #'
   #' @param 
@@ -1426,7 +1425,7 @@ clipping_values<-function(x){
   #' @param 
   #'
   higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
+  lower_quant<-quantile(x, 0.01, na.rm=TRUE)
   non_zero_min=min(x[which(x>0)], na.rm = TRUE)
   
   lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)

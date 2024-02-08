@@ -494,6 +494,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   print(paste('Using subset of  ', dim(met)[1], ' patients'))
   freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
   
+
+
   
   #### PROPORTIONS OF BINARY VARS
   tot_med<-as.matrix(table(met[,c(clust_name, "PDMEDYN")])); paste_med<-paste0('Med: ' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ))
@@ -508,16 +510,22 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   ## 
   factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
 
-  print(clust_name)
+
   met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
 
   met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
   met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
-  
-  p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
+#  num_log<-is.numeric(met_diff_val)
+
+  met_diff_val[,num_log]<-sapply(met_diff_val[,num_log], clipping_values)
+
+
+
+    p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
     geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
-                             fill=clust_name, y='value'), alpha=0.9)+
+                             fill=clust_name, y='value'), alpha=0.9, 
+                             outlier.shape = NA)+
 
   
     facet_wrap(~variable, scales='free',#, labeller=labeller(

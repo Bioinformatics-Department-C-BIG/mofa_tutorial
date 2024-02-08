@@ -10,6 +10,9 @@
 ./bladder_cancer/plots/*
 ./bladder_cancer/settings/*
 
+ppmi/output/rnas_cell_corr_FALSEvst_cor
+
+
 */*.png
 *.png
 ./*.jpeg

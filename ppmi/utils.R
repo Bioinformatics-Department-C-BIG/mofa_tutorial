@@ -1,4 +1,4 @@
-
+H_COMP
 library(DESeq2)
 library(edgeR)
 library(org.Hs.eg.db)
@@ -808,7 +808,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
-         dpi=250, width=12, height=10, 
+         dpi=250, width=12, height=16, 
   )
   
   # N_EMAP 
@@ -880,10 +880,10 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
     
   
-  if (isRStudio){
+
     show(dp)
     
-  }
+  
   
   
   

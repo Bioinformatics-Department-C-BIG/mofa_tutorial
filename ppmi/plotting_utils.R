@@ -541,7 +541,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
          caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
-                          #paste_med, ',\t',
+                          paste_med, ',  ',
                           paste_sex, ' ',
                           #paste_state,  ',\n',
                           # paste_tdpigd,' '

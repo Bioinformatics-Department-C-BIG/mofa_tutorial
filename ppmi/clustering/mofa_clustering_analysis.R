@@ -251,14 +251,16 @@ sapply(diff_variables, function(y_clust){
 
     diff_variables_to_p<-diff_variables_to_p[diff_variables_to_p %in% colnames(met)] 
 
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p, variates_to_p), width=8+length(c(diff_variables_to_p,variates_to_p))/facet_rows , bn=bn_all_fname, facet_rows = facet_rows, 
-    text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
+
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p), width=8+length(c(diff_variables_to_p))/facet_rows, 
+    height=1+2*facet_rows, bn=bn_all_fname, facet_rows = 1, 
+    text='')
 
 
     bn_all_fname<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'cell_types',  '.png')
     variates_to_p = colnames(estimations)[!colnames(estimations) %in% c('T.gd.Vd2',"Plasmablasts" , 'mDCs', 'Monocytes.NC.I' )] # TODO: check for zero variance to exclude 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=8+length(c(variates_to_p))/facet_rows , bn=bn_all_fname, facet_rows = facet_rows, 
-    text=paste('removed',paste0( unique(fact_neutro_pd),  collapse=', ')))
+    text='')
 
 
     }else{

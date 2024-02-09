@@ -39,8 +39,8 @@ clusters_indices=c('1','2','3')
       # Cluster compare for each cluster - compare the time points 
       dir.create(paste0(deseq_params_all, '/enr/'))
       enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
-    #  if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
-      if (TRUE){
+      if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
+     # if (TRUE){
 
       
             gse_compare_visit<-compareCluster(geneClusters = deseq_all_times, 
@@ -197,6 +197,48 @@ for (cluster_id in clusters_indices){
 
 
 ## is the intersection also in the unique of the union? 
+### PLOTTING 
+
+## gse
+## Plot the enrichment score for each cluster over time
+
+
+gse_clust_pathway=list()
+
+for (cluster_id in clusters_indices){
+    print(cluster_id)
+
+      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+
+
+      gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
+      # split by time
+      gse_compare_visit_res_t<-split(gse_compare_visit_res,  gse_compare_visit_res$Cluster) 
+
+      length(gse_compare_visit_res_t)
+
+      ## apply for each visit, take the enrichment score and plot it 
+    
+    gse_clust_pathway[[cluster_id]]<-lapply(gse_compare_visit_res_t, function(gse_clust){
+      return(gse_clust[grep('MHC', gse_clust$Description, ), cols])
+    })
+
+
+      
+
+
+
+
+}
+
+clust_id=3
+np<-dim(gse_clust_pathway[[clust_id]][[1]])[1]
+new<-do.call(rbind,gse_clust_pathway[[clust_id]][c(1,2)])
+new$VISIT<-c(rep('BL',np), rep('V08', np))
+new$VISIT
+
+ggplot(new,aes(x=VISIT, y=NES, group=Description))+
+    geom_line(aes(color=Description))
 
 
 

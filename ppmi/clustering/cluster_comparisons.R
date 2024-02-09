@@ -48,7 +48,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-VISIT_COMP='V08'
+#VISIT_COMP='V08'
 process_mirnas= FALSE
 cell_corr_deseq<-FALSE
 
@@ -386,20 +386,23 @@ clusters_indices=c('1', '2', '3')
       results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
       gse_file<-paste0(results_file_cluster, '.Rds')
 
+     # if (TRUE){
+
+
       if (!file.exists(gse_file)){
+
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
           N_EMAP=30 , N_NET=10)
           saveRDS(gse1,gse_file )
+        gse_all_clusters[[cluster_id]]<- gse1
 
       }else{
         gse_all_clusters[[cluster_id]]<- loadRDS(gse_file )
       }
     }
 
-gse_file
-gse_all_clusters
-gse_file
-gse_all_clusters
+
+
 
 
 #[gse1@result$p.adjust<0.05]
@@ -413,24 +416,25 @@ if (length(gse_sig_all_clusters)>0){
 main =paste0( ' DE pathways for each molecular cluster' ) )
 }
 
-enrich_compare_path
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 
 
 
 force=TRUE
+# Rerun them all together so that they are in one file for comparisons 
 if (!file.exists(gse_compare_file) | force){
 
 
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
-    # for each cluster 
+    # for each cluster for ONE time point 
     geneClusters=gene_lists
     gene_lists
     gse_compare<-compareCluster(geneClusters = geneClusters , 
                                 fun = "gseGO", 
                                 OrgDb='org.Hs.eg.db', 
                               ont=ONT, 
-                              keyType = 'ENSEMBL') 
+                              keyType = 'ENSEMBL', 
+                              pvalueCutoff=1) 
 
 
     ### RUN SCRIPT compare

@@ -1,4 +1,4 @@
-H_COMP
+
 library(DESeq2)
 library(edgeR)
 library(org.Hs.eg.db)
@@ -713,7 +713,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
           run_ORA=FALSE, geneList = gene_list)
     }
   
-  return(gse)
+  return(gse_full)
 }
 
 

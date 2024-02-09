@@ -518,7 +518,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
 #  num_log<-is.numeric(met_diff_val)
 
-  met_diff_val[,num_log]<-sapply(met_diff_val[,num_log], clipping_values)
+  #met_diff_val[,num_log]<-sapply(met_diff_val[,num_log], clipping_values)
 
 
 

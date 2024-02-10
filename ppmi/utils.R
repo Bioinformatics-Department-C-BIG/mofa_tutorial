@@ -275,7 +275,6 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 }
 
 
-se_filt<-se_clust
 deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
   #'
   #' @param 
@@ -329,6 +328,41 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   return(deseq2ResDF)
 }
 
+
+
+de_proteins_by_group<-function(se_filt, protein_matrix){
+
+     #'@param se_filt
+     #' 
+    
+    COHORT<-se_filt$COHORT
+    AGE=se_filt$AGE_SCALED
+    SEX=se_filt$SEX
+    se_filt$INEXPAGE
+
+    dim(se_filt)
+
+    AGE_AT_VISIT=AGE
+    
+    formula_deseq_test<-'~AGE_AT_VISIT+SEX+COHORT'
+
+    design <- model.matrix(as.formula(formula_deseq_test) )
+    design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
+
+    fit <- lmFit(protein_matrix, design = design)
+    fit.cont <- eBayes(fit, trend=TRUE)
+    fit.cont 
+    summa.fit <- decideTests(fit.cont)
+    
+    
+    print(colnames(fit.cont$design))
+    design_params<-colnames(fit.cont$design)
+    coh_design<-design_params[grep('COHORT', design_params)]
+
+    results_de<-topTable(fit.cont, number = nfeats, coef=coh_design)
+
+    return(results_de)  
+}
 
 #remove_genes
 
@@ -1807,7 +1841,7 @@ create_venn<-function(venn_list, fname_venn, main){
   myCol2 <- brewer.pal(length(venn_list), "Pastel2")[1:length(venn_list)]
   venn.diagram(venn_list,
                # Circles
-               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=1.5,
+               lwd = 2, lty = 'blank', fill = myCol2, cex=2.5,cat.cex=2.5,main.cex=2.5,
                filename =fname_venn, 
                main=main,
                 imagetype="png" ,

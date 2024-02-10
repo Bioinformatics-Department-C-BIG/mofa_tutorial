@@ -150,6 +150,8 @@ lv='V13_V14';
    # y='B.Memory'
       p<-ggplot(data = df_plot_2k, aes_string(x = 'month', y = y,
                 fill='grouping',group='grouping',colour='grouping'))+
+
+                
                  stat_summary(fun = median, position=position_dodge(width=0), 
                      geom = "line", size = 1, alpha=0.7, lty='dashed', aes_string(colour='grouping')) 
 

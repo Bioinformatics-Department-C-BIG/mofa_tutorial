@@ -748,7 +748,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
           run_ORA=FALSE, geneList = gene_list)
     }
   
-  return(gse)
+  return(gse_full)
 }
 
 
@@ -843,7 +843,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
-         dpi=250, width=12, height=10, 
+         dpi=250, width=12, height=16, 
   )
   
   # N_EMAP 
@@ -915,10 +915,10 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
     
   
-  if (isRStudio){
+
     show(dp)
     
-  }
+  
   
   
   
@@ -1460,7 +1460,7 @@ clipping_values<-function(x){
   #' @param 
   #'
   higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.02, na.rm=TRUE)
+  lower_quant<-quantile(x, 0.01, na.rm=TRUE)
   non_zero_min=min(x[which(x>0)], na.rm = TRUE)
   
   lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)

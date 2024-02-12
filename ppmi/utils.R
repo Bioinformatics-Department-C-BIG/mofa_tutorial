@@ -1480,7 +1480,8 @@ clip_outliers<-function(df1){
   #' @param 
   #'
   #'
-  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) {
+       quantile(x, prob, names=F, na.rm=TRUE) })
   
   for (i in 1:dim(df1)[1]){
     df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
@@ -1495,7 +1496,7 @@ clip_outliers<-function(df1){
 
 
 
-preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinvars_to_add=c()){
+preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinvars_to_add=c(), run_cpm=TRUE){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 
@@ -1511,7 +1512,13 @@ preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinv
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% sel_cohorts]
   se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
   # CPM or VSN? # cpm for plotting, vsn for 
-  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  if (run_cpm){
+     df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+
+  }else{
+     df_v<-assay(se_filt_V_pd)
+
+  }
   
   
   # VSN OPTION 
@@ -1585,7 +1592,10 @@ preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts, clinvars_to_
 
 
 
-create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_common=TRUE){
+
+#filter_se(se_filt_proteins, VISIT=c('BL', 'V04', 'V06', 'V08'),sel_coh,sel_ps)
+
+create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_common=TRUE, run_cpm=TRUE){
   #' create a merged dataframe that includes all visits together 
   #' use a function to help with memory limit 
   #' @param se 
@@ -1605,12 +1615,12 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_co
   
   
   ## DO NOT FILTER THE FEAT NAMES HERE 
-  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add )
-  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
-  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
-  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2 ), clinvars_to_add=clinvars_to_add)
+  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add,run_cpm=run_cpm )
+  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
+  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
+  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
   
-  ######### PLOT molecular markers 
+  ######### Plot molecular markers 
   ### MELT and MERGE 
   v8_melt<-reshape2::melt(v8_ens,id.vars=c(clinvars_to_add) )
   v6_melt<-reshape2::melt(v6_ens,id.vars=c(clinvars_to_add))

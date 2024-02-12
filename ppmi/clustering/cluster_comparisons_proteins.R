@@ -162,6 +162,9 @@ sapply(c('1','2','3'), function(x){
 
 
 
+
+
+
 #' @gse_compare_visit_res_t: holds all times for each cluster
 unique_timepoint<-list()
 sel_t<-'V08'
@@ -174,7 +177,7 @@ for (cluster_id in clusters_indices){
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
       # split by cluster 
       names(gse_compare_visit_res)
-      gse_compare_visit_res_t<-split(gse_compare_visit_res[c('Description', 'p.adjust')],  gse_compare_visit_res$Cluster) 
+      gse_compare_visit_res_t<-split(gse_compare_visit_res,  gse_compare_visit_res$Cluster) 
 
     unique_partitions_union_c<-unique_partitions[unique_partitions$data==cluster_id,]
 
@@ -205,6 +208,8 @@ for (cluster_id in clusters_indices){
 
 gse_clust_pathway=list()
 
+# Plot top_of_factor
+columns_to_parse = c('Description', 'p.adjust', 'NES')
 for (cluster_id in clusters_indices){
     print(cluster_id)
 
@@ -220,7 +225,7 @@ for (cluster_id in clusters_indices){
       ## apply for each visit, take the enrichment score and plot it 
     
     gse_clust_pathway[[cluster_id]]<-lapply(gse_compare_visit_res_t, function(gse_clust){
-      return(gse_clust[grep('MHC', gse_clust$Description, ), cols])
+      return(gse_clust[grep('kill|B cell', gse_clust$Description, ), columns_to_parse])
     })
 
 
@@ -231,13 +236,23 @@ for (cluster_id in clusters_indices){
 
 }
 
-clust_id=3
+gse_clust_pathway[[1]]
+
+clust_id=1
+
+
 np<-dim(gse_clust_pathway[[clust_id]][[1]])[1]
-new<-do.call(rbind,gse_clust_pathway[[clust_id]][c(1,2)])
-new$VISIT<-c(rep('BL',np), rep('V08', np))
+
+new<-do.call(rbind,gse_clust_pathway[[clust_id]])
+new$VISIT<-gsub('\\..*','',rownames(new) )
 new$VISIT
 
+
 ggplot(new,aes(x=VISIT, y=NES, group=Description))+
+    geom_line(aes(color=Description))
+
+
+ggplot(new,aes(x=VISIT, y=-log10(p.adjust), group=Description))+
     geom_line(aes(color=Description))
 
 

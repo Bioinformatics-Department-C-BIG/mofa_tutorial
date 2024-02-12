@@ -3,19 +3,19 @@
 library(org.Hs.eg.db)
 library(edgeR)
 source(paste0(script_dir, 'ppmi/utils.R'))
-source(paste0(script_dir, 'ppmi/time_utils.R'));  create_merged_melt()
+source(paste0(script_dir, 'ppmi/time_utils.R')); 
 source(paste0(script_dir, 'ppmi/plotting_utils.R'))
 source(paste0(script_dir, 'ppmi/mofa_utils.R'))
 
 #source(paste0(script_dir, 'ppmi/cluster_comparisons.R'))
 
 #get_de_features_by_group
-library('EnsDb.Hsapiens.v79')
+#library('EnsDb.Hsapiens.v79')
 ### TODO: run analyze clin vars to load clinvars for later times 
 
 
 factors_to_cluster_s<-paste0(c(which(all_fs_diff[,y_clust])), collapse='-')
-
+factors_to_cluster_s
 
 # load this only once..? 
 process_mirnas=TRUE;
@@ -25,7 +25,7 @@ se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log);
 
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 #se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-se_rnas=se_filt_corrected; # load the data after batch correction 
+#se_rnas=se_filt_corrected; # load the data after batch correction 
 # TODO: Correct also for neutrophils to see the trajectories?
 vsd_cor_l=loadRDS(vst_cor_all_vis)
 vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh = sel_coh, sel_sub_coh = sel_subcoh)
@@ -33,8 +33,12 @@ vsd_cor_filt<-filter_se(vsd_cor_l, VISIT = c('BL','V04', 'V06', 'V08'), sel_coh 
 se_rnas<-vsd_cor_filt
 
 # TODO: load proteins 
+VISIT=c('BL', 'V04', 'V06', 'V08')
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-
+prot_vsn_se_filt_file
+datalist<-loadRDS(prot_vsn_se_filt_file)
+vsn_mat_proteins<-datalist[[1]]
+se_filt_proteins<-datalist[[2]]
 
 
 
@@ -55,7 +59,7 @@ model_subtyping<-'MOFA'
 #### Markers over time:
 #### 1. Obtain the markers here 
 
-fn_sel=4; 
+fn_sel=23; 
 if (mode=='diagnosis'){
   factor=sel_factors[fn_sel]
   sel_factors_mode=sel_factors
@@ -66,26 +70,34 @@ if (mode=='diagnosis'){
 }
 
 
-factor=4
+factor=23
 top_view<-which.max(vars_by_factor[factor,])
 
 
 names(top_view)<-'miRNA'; keep_all_feats=TRUE
 names(top_view)<-'RNA'; keep_all_feats=TRUE 
+names(top_view)<-'proteomics_plasma'; keep_all_feats=TRUE 
 
+top_factor_feats_rna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='RNA', factor, top_fr = 0.01)
+top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.01)
+top_factor_feats_pl<-select_top_bottom_perc(MOFAobject=MOFAobject,view='proteomics_plasma', factor, top_fr = 0.01)
+
+top_factor_feats_pl
 
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
-  
+ top_factor_feats= top_factor_feats_mirna
 }else if (names(top_view)=='RNA') {
   view='RNA'; process_mirnas=FALSE; se=se_rnas 
-  
+    top_factor_feats = top_factor_feats_rna
+
 }else if (names(top_view)=='proteomics_plasma') {
   view='proteomics_plasma';se=se_filt_proteins
+  top_factor_feats = top_factor_feats_pl
   
   }
 
-
+se_filt_proteins
 
 #### mofa preprocess
 ##### Collect molecules that we want to plot over time #### 
@@ -98,10 +110,11 @@ if (names(top_view)=='miRNA'){
 
 
 
-top_factor_feats_rna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='RNA', factor, top_fr = 0.1)
-top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.1)
+
+
 feats_rna_all<-rownames(get_weights(MOFAobject, views = 'RNA', factors=factor)[[1]])
 feats_mirna_all<-rownames(get_weights(MOFAobject, views = 'miRNA', factors=factor)[[1]])
+feats_pl_all<-rownames(get_weights(MOFAobject, views = 'proteomics_plasma', factors=factor)[[1]])
 
 rownames(se_rnas)<-gsub('\\..*', '',rownames(se_rnas))
 feats_rna_all<-gsub('\\..*', '',feats_rna_all)
@@ -120,34 +133,39 @@ clinvars_to_add<-c('PATNO', 'PATNO_EVENT_ID', 'AGE', 'SEX', 'NHY','NP2PTOT', 'NP
 
 if (view=='proteomics_plasma' || view=='proteomics_csf' ){
   feat_names<-gsub('_proteomics.*', '',feat_names)
+  top_factor_feats<-gsub('_proteomics.*', '',top_factor_feats)
+  feats_pl_all=gsub('_proteomics.*', '',feats_pl_all)
 }
 
 
 
-
-keep_all_feats
 #rescale_option
-merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA')
+merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA', MOFAobject_clusts=MOFAobject_sel)
+merged_melt_filt_pl<-create_merged_melt(se_filt_proteins, feats_pl_all, view='proteomics_plasma', MOFAobject_clusts=MOFAobject_sel, 
+                run_cpm = FALSE)
+
 #merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
 
 
-
-dim(unique(merged_melt_filt$symbol))
-
 ### List of merged per group
-merged_melt_filt=merged_melt_filt_rna
+merged_melt_filt=merged_melt_filt_pl
+merged_melt_filt$symbol
+
+
 merged_melt_groups<-merged_melt_filt %>% 
   split(~group)
-  
+
+
+merged_melt_groups
 
 library(stringr)
 # load DE genes from cluster_comparisons file
 # load also time related features?? 
 # TODO: load these from the other file
+
 deseq_all<- vector("list", length = 3)
 
-de_files<-paste0(cluster_params_dir, '/',prefix, 'de_cluster_',)
-deseq_all_names
+de_files<-paste0(deseq_params, '/', prefix, 'de_cluster_' )
 
 #de_file<-paste0(cluster_params_dir, '/',prefix, 'de_cluster_', cluster_id , '.csv')
 
@@ -166,22 +184,25 @@ sel_feats<-unique(merged_melt_filt$symbol)
 sel_feats
 intersect(deseq_all_names$SG2, sel_feats)
 deseq_all_names$SG1 %in% sel_feats
-de_group_vs_control1<-deseq_all_names$SG1[deseq_all_names$SG1 %in% sel_feats]
-de_group_vs_control2<-deseq_all_names$SG2[deseq_all_names$SG2 %in% sel_feats]
-de_group_vs_control3<-deseq_all_names$SG3[deseq_all_names$SG3 %in% sel_feats]
-length(de_group_vs_control1); length(de_group_vs_control2); length(de_group_vs_control3)
-
-
+deseq_all_names
+de_group_vs_control<-lapply(deseq_all_names, function(deseq_clust){ deseq_clust[deseq_clust %in% sel_feats ] }) # filter de group vs control for selected
+de_group_vs_control
 ## significant and varying with time 
-most_sig_over_time1<-get_most_sig_over_time(merged_melt_groups[[1]][merged_melt_groups[[1]]$symbol %in% de_group_vs_control1 ,]) #%>% 
-most_sig_over_time2<-get_most_sig_over_time(merged_melt_groups[[2]][merged_melt_groups[[2]]$symbol %in% de_group_vs_control2 ,]) #%>% 
-most_sig_over_time3<-get_most_sig_over_time(merged_melt_groups[[3]][merged_melt_groups[[3]]$symbol %in% de_group_vs_control3 ,]) #%>% 
+de_group_vs_control[[1]]
+
+
+most_sig_over_time_list<-lapply(1:3, function(clust_id){
+  if (length(de_group_vs_control[[clust_id]])>0){
+   get_most_sig_over_time( merged_melt_groups[[clust_id]][merged_melt_groups[[clust_id]]$symbol %in%
+    de_group_vs_control[[clust_id]] ,] )
+}}
+
+)
 
 # they should chgange in pd but not in controls!! 
 # remove the ones in the controls
-most_sig_over_time<-rbind(most_sig_over_time1, most_sig_over_time2)
-most_sig_over_time<-most_sig_over_time%>%
-  arrange(Wilcox, decreasing=FALSE)
+most_sig_over_time<-do.call(rbind, most_sig_over_time_list)
+
 
 ## ECHECK DIRECTORIIONS
 #geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= c('CSAD'), keytype = c("SYMBOL"), columns=c('SYMBOL', 'GENEID'))
@@ -193,24 +214,20 @@ most_sig_over_time<-most_sig_over_time%>%
 
 ## CHOOSE MOLECULES HERE ####
 ####OUTPUT MOST SIG OVER TIME 
-most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig_over_time_ct$symbol),]
+#most_sig_over_time<-most_sig_over_time[!(most_sig_over_time$symbol %in% most_sig_over_time_ct$symbol),]
 
-de_group_vs_control_and_time<-intersect(most_sig_over_time$symbol, de_group_vs_control$symbol)
+#de_group_vs_control_and_time<-intersect(most_sig_over_time$symbol, de_group_vs_control$symbol)
 
 #### Choose molecules DE in group 1, but most sig over time in all? 
 
-most_sig_over_time1
 
 choose_group<-1
-if (choose_group==1){
-  de_group_vs_control_and_time<-intersect(most_sig_over_time1$symbol, de_group_vs_control1$symbol)
-}else if(choose_group==2){
-  de_group_vs_control_and_time<-intersect(most_sig_over_time2$symbol, de_group_vs_control2$symbol)
-  
-}else if(choose_group==3){
-  de_group_vs_control_and_time<-intersect(most_sig_over_time3$symbol, de_group_vs_control3$symbol)
-  
-}
+
+#most_sig_over_time1$symbol
+
+de_group_vs_control_and_time<-intersect(most_sig_over_time_list[[choose_group]]$symbol, de_group_vs_control[[choose_group]])
+
+
 
 #'ENSG00000205683' %in% de_group_vs_control_and_time
 ##### CHECK MONOTONICITY AND REMOVE ####
@@ -240,16 +257,16 @@ if (view=='RNA'){
 }
 
 
-choose_group=1
+choose_group=2
 ### We get the most significant by group for different factor top variables 
 write.csv(most_sig_over_time1, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
-                                     view,'_',group_cat ,
+                                     view,'_' ,
                                     'de_group_',  choose_group, 
                                      '.csv'))
 
 dim(de_group_vs_control1)
 write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_control_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
-                                      view,'_',group_cat ,
+                                      view,'_' ,
                                       'de_group_',  choose_group, 
                                       '.csv'))
 
@@ -262,20 +279,19 @@ write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_contro
 #######################################################
 ############ TIME TRAJECTORY FOR ALL VISITS ###########
 #######################################################
-merged_melt_filt = merged_melt_filt_rna
+merged_melt_filt = merged_melt_filt_pl
 
-unique(de_group_vs_control_and_time2)
 filt_top='top'; filt_top='selected'; filt_top='all' 
 filt_top='top'; 
 
-selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
+#selected_rnas<-unique(mirna_targets_edgel$Subcategory )# top10 factor 2)
 
+selected_rnas<-top_factor_feats_rna
 if (view=='miRNA'){
   selected_feats<-selected_mirs
 }else if ((view=='RNA')){
   selected_feats<-selected_rnas
 }
-selected_feats<-make.names(nodes_to_plot)
 
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt$symbol)
@@ -303,17 +319,25 @@ de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG
 # 4. de and in selected pathways 
 head(deseq_all_names$SG2)
 
-any(get_symbols_vector(de_group_vs_control2)=='ATP13A2')
-ds3<-deseq_all_groups[[3]]
-ds3[ds3$GENE_SYMBOL =='ATP13A2',]
+
+choose_group=1
+
+merged_melt_filt$symbol
+merged_melt_filt_most_sig$symbol
+#top_factor_feats = top_factor_feats_pl
+merged_melt_filt
+merged_melt_filt$symbol
+top_factor_feats
+top_factor_feats
+
+
 
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
-  choose_group=2
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2[1:30],]
- # merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats_rna[1:30],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats,]
   
   nrow=NULL; height=7; width=18
   nrow=6
@@ -331,9 +355,9 @@ if (filt_top=='top'){
   
   nrow=NULL; height=12; 
 }
-merged_melt_filt_most_sig
+merged_melt_filt_most_sig$symbol
 unique(merged_melt_filt_most_sig$GENE_SYMBOL)
-
+view
 if (view=='RNA'){
   ens<-as.character(merged_melt_filt_most_sig$symbol)
   symb<-get_symbols_vector(ens)
@@ -343,7 +367,6 @@ if (view=='RNA'){
   
   
 }
-
 
 
 #### in the boxplots add the groups 
@@ -368,20 +391,22 @@ merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(m
 
 factors_to_clust_s<-paste0(unlist(factors_to_clust), collapse='_')
 trajectory_fname<-paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
-       '_',  factors_to_clust_s, '_top_', filt_top,
+       '_',  factors_to_clust_s, filt_top,
        'cluster_',choose_group,'.jpeg')
 
+trajectory_fname
 plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory_fname = trajectory_fname )
 
 
 
+length(feats_rna_all)
+#top_factor_feats_rna
 
 
 
 
 
 
-##### MIRS-RNAS ENRICH
 
 
 
@@ -391,243 +416,6 @@ plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory
 
 
 
-merged_melt_filt_most_sig$value=as.numeric(merged_melt_filt_most_sig$value)
-merged_melt_filt_most_sig$NP2PTOT=as.numeric(merged_melt_filt_most_sig$NP2PTOT)
-
-merged_melt_filt_most_sig_g1<-merged_melt_filt_most_sig[merged_melt_filt_most_sig$kmeans_grouping==1,]
-
-
-merged_melt_filt_most_sig_g1$NP2PTOT
-crtest<-cor.test(merged_melt_filt_most_sig_g1$value, merged_melt_filt_most_sig_g1$NP2PTOT)
-var1<-merged_melt_filt_most_sig_g1 %>%
-  dplyr::filter(variable == 'ENSG00000149527')
-
-all_cors_with_scale<-merged_melt_filt_most_sig_g1%>%
-  group_by(variable) %>%
-  mutate(value=as.numeric(value))%>%
-  mutate(NP2PTOT=as.numeric(NP2PTOT))%>%
-  dplyr::summarize(cor= cor.test(value, NP2PTOT, use = "complete.obs")$estimate)%>%
-  arrange(desc(cor))
-
-all_cors_with_scale
-
-var1$NP2PTOT_cut<-cut(var1$NP2PTOT,breaks=4)
-ggplot(var1,aes( x=NP2PTOT_cut, y=value))+
-  geom_boxplot()
-
-
-
-
-
-
-
-
-
-
-
-### collect all results 
-sig_genes_all_factors=data.frame()
-factors_to_fetch<-c(sel_factors, sel_factors_pd_np3)
-factors_to_fetch<-sel_factors_diff
-
-view='RNA'
-factors_to_fetch=c(1,4,6,8,9,11,12)
-all_files<-sapply(factors_to_fetch, function(factor){
-  ### collect all moelcules for each factor 
-  top_view<-which.max(vars_by_factor[factor,])
-  view=names(top_view)
-  
-  most_sig_file1<-paste0(outdir, '/trajectories/most_sig_over_time_',factor,'_', view,'_',group_cat , '.csv')
-  return(most_sig_file1)
-  
-})
-all_files[[3]]
-
-file.exists(all_files[[3]])
-
-all_sig_genes<-lapply(all_files, function(file){
-  if (file.exists(file)){
-    print('found_file')
-    sig_genes_f<-as.data.frame(read.csv(file))
-    return(sig_genes_f)
-  }
-})
-
-  
-
-all_sig_genes2 <- do.call("rbind", all_sig_genes)
-all_sig_genes2<-all_sig_genes2%>%
-  arrange(Wilcox, decreasing=FALSE)
-
-
-## collect
-# TODO: AUTOMATE this part to collect them all in a function -- retrieve from home? 
-factors_to_cluster
-sapply(factors_to_cluster )
-fact=2
-fact2<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
-
-fact=8
-fact8<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
-
-fact=9
-fact9<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
-
-fact=14
-fact14<-as.data.frame(read.csv(paste0(outdir, '/trajectories/most_sig_over_time_',fact, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat , '.csv')))
-
-
-
-fact2$id <- 2
-fact8$id <- 8
-fact9$id <- 9
-fact14$id <- 14
-
-combined_sig_genes<-rbind(fact2, fact8, fact9, fact14); dim(combined_sig_genes)
-combined_sig_genes<-combined_sig_genes[!duplicated(combined_sig_genes$symbol),]
-
-dim(combined_sig_genes)
-combined_sig_genes_strict<-combined_sig_genes[combined_sig_genes$p.adj<0.0005,]
-#combined_sig_genes_strict<-combined_sig_genes[combined_sig_genes$p.adj<0.0004,]
-
-
-combined_sig_genes_strict
-combined_sig_genes_strict[combined_sig_genes_strict$id==2,]
-
-
-
-
-######## ENRICHMENT BY GENES 
-
-pvalueCutoff<-0.05
-gse_2 <- clusterProfiler::enrichGO(fact14$symbol, 
-                                   ont=ONT, 
-                                   keyType = 'ENSEMBL', 
-                                   OrgDb = 'org.Hs.eg.db', 
-                                   pvalueCutoff  = pvalueCutoff)
-
-
-
-gse_2
-results_file_tmp<-paste0(outdir, '/trajectories/enrichment/most_sig_over_time_',factor, '_cl_fs_',factors_to_cluster_s,'_', view,'_',group_cat)
-enrich_plots<-run_enrichment_plots(gse=gse_2,results_file=results_file_plot, N_DOT=15, N_EMAP=25, text_p=text_p )
-
-
-
-
-
-
-
-
-
-### CHANGE OF MOLECULE VS CHANGE OF NP3
-
-### TODO: PLOT FOR THE SAME PATIENTS THE  FUTURE TRAJECTORIES BY GROUPS!! 
-
-#. 1. Add k-means 
-
-
-
-
-
-sel_visit='V16'
-cl_var<-'NP2_TOT'
-sel_state = 'OFF'
-
-
-
-# TODO FIX 
-# this contains all future variable 
-df_future_clinvars<-get_future_clinvars(combined_bl_log)
-
-
-df_to_calc<-get_clinvar_changes(df_future_clinvars, sel_visit = sel_visit,   cl_var=cl_var, sel_state=sel_state)
-
-
-
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.miR.101.3p',]
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% 'hsa.let.7a.3p',]
-
-sel_feature<-most_sig_over_time$symbol[3];sel_feature
-#sel_feature<-'ANXA3'
-#sel_feature<-'DHRS13'
-
-merged_melt_filt_1<-merged_melt_filt[merged_melt_filt$symbol %in% sel_feature,]
-
-
-
-
-
-### split by visit 
-molecules_by_visit<-split(merged_melt_filt_1, merged_melt_filt_1$VISIT )
-
-molecules_by_visit2 <- molecules_by_visit %>% 
-  imap(function(x, y) x %>% rename_with(~paste(., y, sep = '_'), -PATNO)) %>%
-  reduce(full_join, by = "PATNO")
-
-
-molecules_by_visit2
-
-X2=molecules_by_visit2[,paste0('value','_','V08')]
-X1=molecules_by_visit2[,paste0('value','_','BL')]
-
-molecules_by_visit2$log_FC<-log(X2/X1)
-molecules_by_visit2$diff<-(X2-X1)
-
-
-scale_change<-df_to_calc[,c( 'diff_scale', 'PATNO',paste0('PDSTATE_', sel_visit ))]
-molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kmeans_grouping_V08')]
-molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PATNO')
-
-hist(scale_change$diff_scale)
-
-
-### color the top molecular ones too
-
-### WHICH GROUP
-kmeans_grouping<-groups_kmeans$cluster
-kmeans_grouping<-clusters_patients$cluster
-groups_kmeans$centers
-
-names(kmeans_grouping)<-gsub('\\_.*', '', names(kmeans_grouping))
-
-kmeans_grouping=data.frame(kmeans_grouping)
-kmeans_grouping$PATNO=rownames(kmeans_grouping)
-scale_change$PATNO
-kmeans_grouping$PATNO
-scale_change_gr<-merge(scale_change, kmeans_grouping, by='PATNO')
-scale_change_gr$kmeans_grouping=as.factor(scale_change_gr$kmeans_grouping)
-scale_change_gr
-
-ggplot(scale_change_gr, aes(x=diff_scale))+
-  geom_histogram(aes(fill=kmeans_grouping))
-
-
-
-scale_change<-df_to_calc[,c( 'diff_scale', 'PATNO',paste0('PDSTATE_', sel_visit ))]
-
-
-molecules_change_by_patno<-molecules_by_visit2[,c('log_FC','diff', 'PATNO', 'kmeans_grouping_V08')]
-molecules_change_by_patno<-merge(molecules_change_by_patno, scale_change, by='PATNO')
-
-# Plot the absolute difference between
-# Diff
-
-molecules_change_by_patno[, paste0('PDSTATE_', sel_visit )]<-factor(molecules_change_by_patno[, paste0('PDSTATE_', sel_visit )])
-colnames(molecules_change_by_patno)
-ggplot(molecules_change_by_patno[molecules_change_by_patno$kmeans_grouping_V08!='CONTROL',], 
-       aes(x=log_FC, y=diff_scale))+
-  geom_point(aes(color=kmeans_grouping_V08))+
-  geom_smooth(method = "lm")+
-  facet_wrap(as.formula(paste0('~ PDSTATE_', sel_visit)), nrow=3)+
-  labs(title=paste(sel_feature, cl_var))
-
-
-ggsave(paste0(outdir, '/trajectories/change/change_', factor, '_',sel_feature,'_', cl_var, '_',sel_visit,sel_state,'.jpeg'), 
-       width=6, height=5)
-
-molecules_change_by_patno
 
 
 

@@ -80,7 +80,7 @@ names(top_view)<-'proteomics_plasma'; keep_all_feats=TRUE
 
 top_factor_feats_rna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='RNA', factor, top_fr = 0.01)
 top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.01)
-top_factor_feats_pl<-select_top_bottom_perc(MOFAobject=MOFAobject,view='proteomics_plasma', factor, top_fr = 0.01)
+top_factor_feats_pl<-select_top_bottom_perc(MOFAobject=MOFAobject,view='proteomics_plasma', factor, top_fr = 0.05)
 
 top_factor_feats_pl
 

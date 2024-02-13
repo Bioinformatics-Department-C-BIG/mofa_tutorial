@@ -42,7 +42,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # edit this one 
 #VISIT_COMP='V08'
 process_mirnas= FALSE
-cell_corr_deseq<-TRUE
+cell_corr_deseq<-FALSE
 
 
 if (process_mirnas){
@@ -434,6 +434,7 @@ fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 force_compare=TRUE
 # Rerun them all together so that they are in one file for comparisons 
 cluster_pairs<-c('1','1_2', '1_3')
+
 gene_lists_compare<-gene_lists[cluster_pairs]
 
 enrich_compare_path <- paste0( paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp') , paste0(names(gene_lists_compare), collapse='-'))

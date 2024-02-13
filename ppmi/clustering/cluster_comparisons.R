@@ -42,7 +42,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # edit this one 
 #VISIT_COMP='V08'
 process_mirnas= FALSE
-cell_corr_deseq<-FALSE
+cell_corr_deseq<-TRUE
 
 
 if (process_mirnas){
@@ -128,7 +128,7 @@ get_factors_for_metric('moca')
 #  formula_deseq = '~AGE_SCALED+SEX+kmeans_grouping'
 
 # apply this both for mirs and rnas 
-y_clust
+
 variates_to_p<-get_covariates_cells(y_clust, thresh=0)
 variates_to_correct<-variates_to_p[!variates_to_p %in% c('Lymphocytes....', 'Neutrophils....', 'Neutrophil.Score')]
 variates_to_correct_s<-paste(variates_to_correct, collapse='+')
@@ -158,52 +158,57 @@ formula_deseq_format='n'
 formula_deseq_format='all'
 
 get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
-variates_to_correct
+      variates_to_correct
 
-if (length(variates_to_correct_s)>1){
-  variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
-}
-
-formula_deseq_format='all'
-
-if (!cell_corr_deseq){
-  formula_deseq_format=''
-}
+          if (length(variates_to_correct_s)>1){
+            variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
+      }
 
 
+          if (process_mirnas){
+            if (cell_corr_deseq) {
+
+              if ((formula_deseq_format)=='n'){
+                formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+              }else{
+                formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+
+              }       
+
+            }else{
+            formula_deseq_format <-''
+            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
 
 
-    if (process_mirnas){
-        formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
-      if (cell_corr_deseq) {
+            }
+          }else {
+            if (cell_corr_deseq) {
+            if ((formula_deseq_format)=='n'){
+                formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+              }else{
+                formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-        if ((formula_deseq_format)=='n'){
-          formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
-        }else{
-          formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+              }       
 
-        }       
+          }else{
+            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
+            formula_deseq_format <-''
+
+
 
       }
-    }else {
-      if (cell_corr_deseq) {
-       if ((formula_deseq_format)=='n'){
-          formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
-        }else{
-          formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-
-        }       
-
-    }else{
-      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
-
+      }
 
 }
-}
-}
+
 
 formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
-formula_deseq
+
+if (!cell_corr_deseq){
+  formula_deseq_format<-''
+}
+
+
 
 
 print(paste('formula: ', formula_deseq))
@@ -230,24 +235,32 @@ dir.create(cluster_params_dir, recursive = TRUE)
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 deseq_params
 
-clusters_indices= list( '1','2','3', c(1,2,3))
-clusters_names<-c(1,2,3,'1_2_3')
+
+clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','1'))
+
+clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3' )
+
 
   se_filt_all<-lapply(clusters_indices, function(cluster_id){ 
-    se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]})
-se_filt_all
 
+    se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id)]} )
 
+se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
+se_filt_all[['1_3']]$COHORT<-se_filt_all[['1_3']]$kmeans_grouping
 
 names(se_filt_all)<-clusters_names
 names(se_filt_all)
 
-
- 
+cluster_id_num = 1
+ cluster_id_index
 #dir.create(deseq_params, recursive = TRUE)
-for (cluster_id_index in clusters_names){
+for (cluster_id_num in 1:length(clusters_names)){
 
-  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id_index , '.csv')
+  cluster_id_index=clusters_indices[[cluster_id_num]]
+  cluster_id_name=clusters_names[[cluster_id_num]]
+ 
+
+  de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id_name , '.csv')
 
   de_params_file<-paste0(deseq_params, '/', prefix, make.names(formula_deseq))
   #de_file
@@ -261,10 +274,10 @@ for (cluster_id_index in clusters_names){
   }else{
     print(de_file)
     # else run the deseq with the design formula specified 
-        se_clust<-se_filt_all[[cluster_id_index]]
+        se_clust<-se_filt_all[[cluster_id_name]]
         deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count)
 
-        deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
+        deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
         if (!process_mirnas){
           # get symbols for RNA only 
           deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
@@ -278,8 +291,8 @@ for (cluster_id_index in clusters_names){
 
  
 
-  deseq_all_groups[[cluster_id_index]]<-deseq2ResDF
-  deseq_all[[cluster_id_index]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
+  deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
+  deseq_all[[cluster_id_name]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
 
@@ -305,20 +318,23 @@ graphics.off()
 
 # TODO: venn before and after correction 
 cluster_id_index
-for (cluster_id in clusters_indices){
+for (cluster_id_num in 1:length(clusters_names)){
 
       # Take the original data and deseq results to plot a volcano 
-      print(paste('cluster:',cluster_id))
-      cluster_id_index=paste0(cluster_id, collapse='_')
-      se_filt=se_filt_all[[cluster_id_index]]
+      print(paste('cluster:',cluster_id_num))
+    cluster_id_index=clusters_indices[[cluster_id_num]]
+    cluster_id_name=clusters_names[[cluster_id_num]]
 
-      deseq2ResDF=deseq_all_groups[[cluster_id_index]]
 
-      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id_index), xlim=c(-1.1,1.1),
+      se_filt=se_filt_all[[cluster_id_name]]
+
+      deseq2ResDF=deseq_all_groups[[cluster_id_name]]
+
+      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id_name), xlim=c(-1.1,1.1),
       lab=deseq2ResDF$GENE_SYMBOL)
 
       fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_COMP,'.jpeg')
-      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_index, '.jpeg')
+      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
       ggsave(fname,pvol, width=9,height=12, dpi=300)
 }
 
@@ -336,8 +352,10 @@ deseq_all_top<-lapply(deseq_all_names, function(x) intersect(x,top10 ) )
 deseq_all_top
 
 
-fname_venn=paste0(deseq_params, prefix, 'venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
-create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster AND highly variable' ))
+names(deseq_all_top)
+length(deseq_params)
+#fname_venn=paste0(deseq_params, prefix, 'venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
+#create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster AND highly variable' ))
 
 
 
@@ -354,42 +372,45 @@ dir.create(paste0(deseq_params, '/enr/'))
 
 deseq_params
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
-
+enrich_compare_path
 process_mirnas
 # run enrichment only for RNAs 
 
 if (!process_mirnas){
 
 gse_all_clusters=list()
-clusters_indices=c('1', '2', '3')
 
 
-  for (cluster_id in clusters_indices){
-      # run enrichment with the log2foldchange metric
-      print(cluster_id) 
+ for (cluster_id_num in 1:length(clusters_names)){
 
-      cluster_id_index=paste0(cluster_id, collapse='_')
-      deseq2ResDF = deseq_all_groups[[cluster_id_index]]
+      print(paste('cluster:',cluster_id_num))
+      cluster_id_index=clusters_indices[[cluster_id_num]]
+      cluster_id_name=clusters_names[[cluster_id_num]]
+       
+       # parse the deseq results  for the analysis
+      deseq2ResDF = deseq_all_groups[[cluster_id_name]]
+     # parse the gene list from the deseq results 
       gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
       names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
 
-      gene_lists[[cluster_id_index]]<-gene_list1 # load the gene lists separately for cluster compare 
+      # load the gene lists separately for cluster compare  
+      # TODO: move to another loop to save this intermediate output 
+      gene_lists[[cluster_id_name]]<-gene_list1 
 
-      results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_index)
+      # get the gene list and run ! - maybe it is not needed if we parse the cluster compare....
+      results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_name)
       gse_file<-paste0(results_file_cluster, '.Rds')
 
      # if (TRUE){
-
-
       if (!file.exists(gse_file)){
 
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
           N_EMAP=30 , N_NET=10)
           saveRDS(gse1,gse_file )
-        gse_all_clusters[[cluster_id]]<- gse1
+          gse_all_clusters[[cluster_id_name]]<- gse1
 
       }else{
-        gse_all_clusters[[cluster_id]]<- loadRDS(gse_file )
+        gse_all_clusters[[cluster_id_name]]<- loadRDS(gse_file )
       }
     }
 
@@ -397,30 +418,34 @@ clusters_indices=c('1', '2', '3')
 
 
 
-#[gse1@result$p.adjust<0.05]
 
 
 gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
 fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 
-if (length(gse_sig_all_clusters)>0){
-  create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
-main =paste0( ' DE pathways for each molecular cluster' ) )
-}
+#if (length(gse_sig_all_clusters)>0){
+#  create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
+#main =paste0( ' DE pathways for each molecular cluster' ) )
+#}
 
+
+
+
+force_compare=TRUE
+# Rerun them all together so that they are in one file for comparisons 
+cluster_pairs<-c('1','1_2', '1_3')
+gene_lists_compare<-gene_lists[cluster_pairs]
+
+enrich_compare_path <- paste0( paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp') , paste0(names(gene_lists_compare), collapse='-'))
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 
 
-
-force=TRUE
-# Rerun them all together so that they are in one file for comparisons 
-if (!file.exists(gse_compare_file) | force){
-
-
+if (!file.exists(gse_compare_file) | force_compare){
+    print('Running comparisons')
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
     # for each cluster for ONE time point 
-    geneClusters=gene_lists
-    gene_lists
+    geneClusters=gene_lists_compare
+    
     gse_compare<-compareCluster(geneClusters = geneClusters , 
                                 fun = "gseGO", 
                                 OrgDb='org.Hs.eg.db', 
@@ -431,7 +456,7 @@ if (!file.exists(gse_compare_file) | force){
 
     ### RUN SCRIPT compare
     names(geneClusters)                  
-    plot_enrich_compare(gse_compare,paste0(enrich_compare_path), N_EMAP = 60, N_DOT=8)
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path), N_EMAP = 60, N_DOT=8,N_DOT_U = 25, pvalueCutoff_sig = 0.05)
     saveRDS(gse_compare, gse_compare_file)
 }else{
     gse_compare<-loadRDS(gse_compare_file)
@@ -439,6 +464,7 @@ if (!file.exists(gse_compare_file) | force){
 
 
 }
+
 
 
 

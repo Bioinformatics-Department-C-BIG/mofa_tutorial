@@ -11,7 +11,7 @@ library('factoextra')
 # cluster samples here 
 
 
-all_fs_diff
+
 get_factors_for_metric<-function(diff_var){
 
   # get associated factors, remove the ones related to confounding

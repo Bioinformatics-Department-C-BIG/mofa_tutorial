@@ -12,7 +12,7 @@ library(sys)
 
 process_mirnas=FALSE
 
-VISIT='V06'
+VISIT='V08'
 source(paste0(script_dir, 'ppmi/config.R' ))
 source(paste0(script_dir,'ppmi/utils.R'))
 
@@ -165,11 +165,8 @@ fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by
 fname
 graphics.off()
 library(ggplot2)
-#if(process_mirnas){
-  #lab=rownames(rowData(vsd_filt_genes)) }else{
-   # lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+jpeg(fname, res = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
 
-        #jpeg(fname, width=10*100, height=10*100, res=150)
         my_pheatmap<-pheatmap(hm, 
                               #labels_row=lab,
                               cluster_rows=TRUE, 
@@ -184,9 +181,7 @@ library(ggplot2)
 
 show(my_pheatmap)
 dev.off()
-my_pheatmap
-ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
-
+fname
 
 
 

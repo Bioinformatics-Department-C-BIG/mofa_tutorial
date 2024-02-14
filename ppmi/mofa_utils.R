@@ -154,7 +154,7 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
     }
     )
     colnames(f_all)<-factors_all
-  f_features<-melt(f_all)[,2:3]
+  f_features<-reshape2::melt(f_all)[,2:3]
   colnames(f_features)<-c('Factor', 'feature')
   f_features$Factor
   return(f_features)

@@ -296,9 +296,9 @@ cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
 
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group, y, '_', color_by, '.png')
-
+outfile_clusters
 # Plot clustering for scales 
-
+color_by
 
 p <- MOFA2::plot_factors(MOFAobjectPD_sel, 
              factors=which(all_fs_diff[,y]),
@@ -380,7 +380,7 @@ plot_heatmap_median_by_cluster(col_data)
 
 col_data<-samples_metadata(MOFAobjectPD_sel)[c(colnames(estimations),clust_name, 'PATNO')]
 col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
-col_data
+col_data$NK
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means_cells_new' ,  '.png')
 outfile_cl_heatmap
 plot_heatmap_median_by_cluster(col_data)

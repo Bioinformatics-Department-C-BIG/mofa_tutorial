@@ -56,8 +56,7 @@ if (process_mirnas){
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 
-se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
-se_clusters
+
 ### Decide on the parameters settings 
 # Set the outdirectory 
 
@@ -74,6 +73,7 @@ clust_name=paste0(y_clust, '_clust')
 
 # MOFAobject_clusts<-MOFAobjectPD
 # Obtain clustering from mofa
+se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
@@ -246,11 +246,16 @@ clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
 
 names(se_filt_all)<-clusters_names
-names(se_filt_all)
+
+length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))
+
+if (length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))==1){
+  se_filt_all[[clust_id]]$COHORT<-se_filt_all[[clust_id]]$kmeans_grouping
+
+}# todo remove the ones below
 se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
 se_filt_all[['1_3']]$COHORT<-se_filt_all[['1_3']]$kmeans_grouping
 se_filt_all[['3_2']]$COHORT=se_filt_all[['3_2']]$kmeans_grouping
-
 se_filt_all[['3_1']]$COHORT=se_filt_all[['3_1']]$kmeans_grouping
 
 

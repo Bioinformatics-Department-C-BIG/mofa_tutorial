@@ -295,7 +295,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   
   # preprocess data turn to factors etc
   se_filt<-preprocess_se_deseq2(se_filt, min.count=min.count)
-  assay(se_filt)
+ 
+ 
   # if correcting by medication 
   se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
   se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
@@ -755,10 +756,11 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
 
 #results_file_ora = paste0(results_file_cluster,'_ora' )
 
-run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25){
+run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25,N_NET=20, pvalueCutoff_sig = 0.1,top_p=80){
   #'
-  #' Run enrichment and write the results 
+  #' Run enrichment and write the results to csv (gse@result)
   #' @param gene_list
+  #' @value gse@result
   #' ordered gene list to run gse 
   #'
   #' 
@@ -773,7 +775,7 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
   high_quant<-quantile(gene_list_ord_abs_ora, 0)
   high_quant_no<-length(gene_list_ord_abs_ora[gene_list_ord_abs_ora>high_quant])
   
-  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:80]), 
+  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:top_p]), 
                                                        ont=ONT, 
                                                        keyType = keyType, 
                                                        OrgDb = 'org.Hs.eg.db', 
@@ -790,24 +792,23 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
   run_ORA=TRUE
   
   gse_full=gse_protein_full_enrich
-  pvalueCutoff_sig = 0.1
-  gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1)
+  gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1) # write to fille 
   write.csv(as.data.frame(gse_full@result), paste0(results_file_ora, '.csv'))
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
-  gse@result$Description
-  
-  gse@result$p.adjust
+ 
   
   #N_DOT=15
   #N_EMAP=30
   if  (dim(gse)[1]>2 ){
+
+    # check if there is any de pathways before running plots 
     
     
        print(paste(factor,'sig'))
          which(gse_full@result$p.adjust<0.05)
   
-        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP, run_ORA=TRUE)
+        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP,N_NET=25, run_ORA=TRUE)
   }
   return(gse_full)
 }
@@ -838,7 +839,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15, pvalueCutoff_sig=0.05){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, pvalueCutoff_sig=0.05){
   ### GSE COMPARE ANALYSIS 
   enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
   gse_compare=dplyr::filter(gse_compare, p.adjust < pvalueCutoff_sig)
@@ -896,6 +897,7 @@ ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
 #results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
 library('clusterProfiler')
 #options(warn=0, error=NULL)
+
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=20, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL, run_ORA=FALSE){
 
@@ -970,8 +972,10 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   
   N_RIDGE=25
+  
   # only if all 3 are false run it 
-  if ( !(process_mirnas) & !(process_mofa) & !(run_ORA)){
+ # process_mofa=FALSE
+  if ( !(process_mirnas) & !(process_mofa) & !(class(gse_protein)=='enrichResult')){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     if (dim(r_p$data)[1]>0){

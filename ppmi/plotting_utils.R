@@ -117,7 +117,33 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 }
 
 
+create_heatmap_proteins<-function(hm,se_filt, fname,coldata_to_plot=c()){
+  #' 
+  #' simple heatmap for proteins 
+  #' 
+    
+    df<-as.data.frame(colData(se_filt)[coldata_to_plot]); rownames(df)<-df$PATNO_EVENT_ID
+    df$PATNO_EVENT_ID<-NULL
+#rownames(df)
+#colnames(hm)
+    jpeg(fname, res = 200, width=3+log2(dim(hm)[2]), height=3+log2(dim(hm)[1]), units='in')
 
+        my_pheatmap<-pheatmap(hm, 
+                              #labels_row=lab,
+                              cluster_rows=TRUE, 
+                              show_rownames=TRUE,
+                              scale='row', 
+                              cluster_cols=cluster_cols,
+                              annotation_col=df, 
+                              clustering_method = 'complete', 
+                              clustering_distance_cols = 'euclidean'
+        )
+        dim(hm)
+
+        show(my_pheatmap)
+        dev.off()
+    return(my_pheatmap)
+}
 
 
 #remove_cn=FALSE
@@ -139,21 +165,24 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
 library('EnhancedVolcano')
 
 
-plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL){
+plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj', FCcutoff=0.1,pCutoff=10e-2){
   #'
   #'
   #' Take a sumarized experiment and deseq results 
   #' @param deseq2ResDF deseq results dataframe 
   #'  @param summarized experiment 
+  #' @param x metric to plot on x eg. log2FoldChange
+  #' @param y padj
   #'
   #'
   #'
   
   
   #if(process_mirnas){lab=rownames(deseq2ResDF) }else{lab=deseq2ResDF$GENE_SYMBOL}
-  
-  mfc<-max(abs(deseq2ResDF$log2FoldChange))
-  pmax<-max(-log10(deseq2ResDF$padj), na.rm = TRUE)
+    
+
+  mfc<-max(abs(deseq2ResDF[,x]))
+  pmax<-max(-log10(deseq2ResDF[,y]), na.rm = TRUE)
   
   if (is.null(xlim)){ # if not supplied create it 
 
@@ -169,13 +198,13 @@ plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL){
   if (is.null(lab)){
     lab=rownames(deseq2ResDF)
   }
+
   pvol<-EnhancedVolcano(deseq2ResDF,
                         lab = lab,
-                        pCutoff = 10e-2,
-                        FCcutoff = 0.1,
-                        x = 'log2FoldChange',
-                        y = 'padj',
-                        
+                        pCutoff = pCutoff,
+                        FCcutoff =FCcutoff,
+                        x = x,
+                        y = y,
                         
                         ## format 
                         pointSize = 2,
@@ -201,6 +230,15 @@ plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL){
   pvol
   return(pvol)
 }
+
+
+
+plotVolcano_proteins<-function(results_de, se_filt, title='', xlim=NULL, lab=NULL){
+
+
+
+}
+
 
 library(ComplexHeatmap)
 library(circlize)

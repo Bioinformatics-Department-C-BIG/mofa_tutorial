@@ -838,12 +838,22 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8){
+
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=20, pvalueCutoff_sig=0.01){
   ### GSE COMPARE ANALYSIS 
+# pvalueCutoff_sig : helps to to show different colors 
+  gse_compare=dplyr::filter(gse_compare, p.adjust < pvalueCutoff_sig)
+
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   dot_comp
   ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
          dpi=250, width=12, height=16, 
+  )
+
+   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
+  dot_comp
+  ggsave(paste0(enrich_compare_path, 'dt_u','.jpeg' ), plot=dot_comp,
+         dpi=250, width=9, height=16, 
   )
   
   # N_EMAP 

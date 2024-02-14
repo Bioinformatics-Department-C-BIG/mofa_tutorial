@@ -295,7 +295,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   
   # preprocess data turn to factors etc
   se_filt<-preprocess_se_deseq2(se_filt, min.count=min.count)
-  assay(se_filt)
+ 
+ 
   # if correcting by medication 
   se_filt$PDMEDYN = as.factor(se_filt$PDMEDYN)
   se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
@@ -755,10 +756,11 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
 
 #results_file_ora = paste0(results_file_cluster,'_ora' )
 
-run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25){
+run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25,N_NET=20, pvalueCutoff_sig = 0.1,top_p=80){
   #'
-  #' Run enrichment and write the results 
+  #' Run enrichment and write the results to csv (gse@result)
   #' @param gene_list
+  #' @value gse@result
   #' ordered gene list to run gse 
   #'
   #' 
@@ -773,7 +775,7 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
   high_quant<-quantile(gene_list_ord_abs_ora, 0)
   high_quant_no<-length(gene_list_ord_abs_ora[gene_list_ord_abs_ora>high_quant])
   
-  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:80]), 
+  gse_protein_full_enrich <- clusterProfiler::enrichGO(names(gene_list_ord_abs_ora[1:top_p]), 
                                                        ont=ONT, 
                                                        keyType = keyType, 
                                                        OrgDb = 'org.Hs.eg.db', 
@@ -790,24 +792,23 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
   run_ORA=TRUE
   
   gse_full=gse_protein_full_enrich
-  pvalueCutoff_sig = 0.1
-  gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1)
+  gse=write_filter_gse_results(gse_full, results_file_ora, pvalueCutoff=0.1) # write to fille 
   write.csv(as.data.frame(gse_full@result), paste0(results_file_ora, '.csv'))
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
-  gse@result$Description
-  
-  gse@result$p.adjust
+ 
   
   #N_DOT=15
   #N_EMAP=30
   if  (dim(gse)[1]>2 ){
+
+    # check if there is any de pathways before running plots 
     
     
        print(paste(factor,'sig'))
          which(gse_full@result$p.adjust<0.05)
   
-        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP, run_ORA=TRUE)
+        enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP,N_NET=25, run_ORA=TRUE)
   }
   return(gse_full)
 }
@@ -838,10 +839,9 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=20, pvalueCutoff_sig=0.01){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, pvalueCutoff_sig=0.05){
   ### GSE COMPARE ANALYSIS 
-# pvalueCutoff_sig : helps to to show different colors 
+  enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
   gse_compare=dplyr::filter(gse_compare, p.adjust < pvalueCutoff_sig)
 
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
@@ -855,6 +855,14 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   ggsave(paste0(enrich_compare_path, 'dt_u','.jpeg' ), plot=dot_comp,
          dpi=250, width=9, height=16, 
   )
+  
+  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
+  dot_comp
+  ggsave(paste0(enrich_compare_path, 'dt_u','.jpeg' ), plot=dot_comp,
+         dpi=250, width=9, height=16, 
+  )
+
+
   
   # N_EMAP 
   #N_EMAP=80
@@ -895,6 +903,7 @@ ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
 #results_file = results_file_mofa, N_EMAP=50,geneList =NULL  )
 library('clusterProfiler')
 #options(warn=0, error=NULL)
+
 run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16, N_NET=20, showCategory_list=FALSE,
                                process_mofa=FALSE, text_p='', title_p='', geneList=NULL, run_ORA=FALSE){
 
@@ -969,8 +978,10 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   
   N_RIDGE=25
+  
   # only if all 3 are false run it 
-  if ( !(process_mirnas) & !(process_mofa) & !(run_ORA)){
+ # process_mofa=FALSE
+  if ( !(process_mirnas) & !(process_mofa) & !(class(gse_protein)=='enrichResult')){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     if (dim(r_p$data)[1]>0){
@@ -1490,7 +1501,8 @@ clip_outliers<-function(df1){
   #' @param 
   #'
   #'
-  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) { quantile(x, prob, names=F) })
+  df1.quantiles <- apply(df1, 1, function(x, prob=0.99) {
+       quantile(x, prob, names=F, na.rm=TRUE) })
   
   for (i in 1:dim(df1)[1]){
     df1[i,][ df1[i,]> df1.quantiles[i] ]<- df1.quantiles[i]
@@ -1505,7 +1517,7 @@ clip_outliers<-function(df1){
 
 
 
-preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinvars_to_add=c()){
+preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinvars_to_add=c(), run_cpm=TRUE){
   # 1. Select PD only 
   # 2. Subselected common samples - for training we can use all of them but 
   # for testing only the ones that we have 
@@ -1521,7 +1533,13 @@ preprocess_visit<-function(se_filt_V, common,feat_names=NULL, sel_cohorts, clinv
   se_filt_V_pd<-se_filt_V[,se_filt_V$COHORT %in% sel_cohorts]
   se_filt_V_pd<-se_filt_V_pd[,se_filt_V_pd$PATNO %in% common]
   # CPM or VSN? # cpm for plotting, vsn for 
-  df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+  if (run_cpm){
+     df_v<-cpm(assay(se_filt_V_pd),  normalized.lib.sizes=TRUE, log=TRUE )
+
+  }else{
+     df_v<-assay(se_filt_V_pd)
+
+  }
   
   
   # VSN OPTION 
@@ -1595,7 +1613,10 @@ preprocess_visit_predict<-function(se_filt_V, common,  sel_cohorts, clinvars_to_
 
 
 
-create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_common=TRUE){
+
+#filter_se(se_filt_proteins, VISIT=c('BL', 'V04', 'V06', 'V08'),sel_coh,sel_ps)
+
+create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_common=TRUE, run_cpm=TRUE){
   #' create a merged dataframe that includes all visits together 
   #' use a function to help with memory limit 
   #' @param se 
@@ -1615,12 +1636,12 @@ create_visits_df<-function(se, clinvars_to_add, feat_names=feat_names, filter_co
   
   
   ## DO NOT FILTER THE FEAT NAMES HERE 
-  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add )
-  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
-  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add)
-  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2 ), clinvars_to_add=clinvars_to_add)
+  v6_ens<-preprocess_visit(se_filt_V06, common=common,feat_names = feat_names,  sel_cohorts = c(1,2), clinvars_to_add =clinvars_to_add,run_cpm=run_cpm )
+  v8_ens<-preprocess_visit(se_filt_V08, common=common,feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
+  v4_ens<-preprocess_visit(se_filt_V04, common=common,feat_names=feat_names,  sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
+  bl_ens<-preprocess_visit(se_filt_BL, common=common, feat_names=feat_names, sel_cohorts = c(1,2), clinvars_to_add=clinvars_to_add,run_cpm=run_cpm)
   
-  ######### PLOT molecular markers 
+  ######### Plot molecular markers 
   ### MELT and MERGE 
   v8_melt<-reshape2::melt(v8_ens,id.vars=c(clinvars_to_add) )
   v6_melt<-reshape2::melt(v6_ens,id.vars=c(clinvars_to_add))

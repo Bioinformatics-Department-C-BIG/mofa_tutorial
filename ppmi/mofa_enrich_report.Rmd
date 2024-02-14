@@ -7,7 +7,10 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
+
+
 ```
 
 ## Mofa Enrichment analysis 
@@ -84,7 +87,7 @@ outdir_enrich<-paste0(outdir, '/enrichment/' )
 ```{r get_enrich_files, echo=FALSE}
 nf=c(2,4,6,18,22)
 nf=c(4,6)
-nf=c(2,11)
+nf=c(2,11, 23)
 
 
 get_files_weights<-function(outdir){
@@ -124,7 +127,7 @@ en_plots_all_proteins_csf<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/')
 
 
 #plot_settings
-out_width="50%"
+out_width="33%"
 out_width_w = "25%"
 
 ```

@@ -215,7 +215,7 @@ get_de_features_by_group<-function(merged_melt_filt_group, var_to_diff){
 }
 
 
-
+merged_melt_filt
 
 
 get_most_sig_over_time<-function(merged_melt_filt_group){
@@ -248,15 +248,17 @@ get_most_sig_over_time<-function(merged_melt_filt_group){
 
 
 
-
-create_merged_melt<-function(se, feat_names, view){
+#se=se_rnas; feat_names=feats_rna_all  ; MOFAobject_clusts = MOFAobject_sel; 
+#MOFAobject_sel
+#se;feat_names
+create_merged_melt<-function(se, feat_names, view, MOFAobject_clusts, run_cpm=TRUE){
   #' merged_melt_filt: is a merged sumamrized experiment, in long format, 
   #' that includes multiple visits
   #' and all molecules per patient 
   #' @param se
   #' @param
   #'  
-  merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE)
+  merged_melt_orig_1<-create_visits_df(se, clinvars_to_add, feat_names = feat_names, filter_common = TRUE, run_cpm=run_cpm)
   merged_melt_orig<-merged_melt_orig_1
   merged_melt_orig$symbol<-merged_melt_orig$variable
   #
@@ -269,7 +271,7 @@ create_merged_melt<-function(se, feat_names, view){
   
   if (sel_cohort){
     #'
-    #'
+    #' @merged
     merged_melt=merged_melt_orig[merged_melt_orig$COHORT==sel_cohort, ]
   }else{
     merged_melt=merged_melt_orig
@@ -278,13 +280,12 @@ create_merged_melt<-function(se, feat_names, view){
   merged_melt_ct=merged_melt_orig[merged_melt_orig$COHORT==2, ]
   
   merged_melt_pd<-merged_melt
-  y_clust='NP2PTOT'
+  y_clust='NP2PTOT_LOG'
   clust_name= paste0(y_clust, '_clust')
   
-  MOFAobject_clusts=MOFAobjectPD
   
-  
-  merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobjectPD, y_clust)
+ 
+  merged_melt$kmeans_grouping<-groups_from_mofa_factors(patnos=merged_melt$PATNO, MOFAobject_clusts= MOFAobject_clusts, y_clust)
   merged_melt$kmeans_grouping=as.numeric(merged_melt$kmeans_grouping)
   merged_melt[merged_melt$COHORT%in%c(2), 'kmeans_grouping']<-'HC'
   

@@ -44,7 +44,7 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-#VISIT=c('V08')
+VISIT=c('V04')
 #process_mirnas=FALSE
 #TISSUE='CSF'
 
@@ -146,7 +146,6 @@ vsn::meanSdPlot(normalized_data)
 
 
 ggsave(paste0(output_1,'meansd_justvsn_', p_params_out,'.png' ), width = 5, height=3)
-....#View........normalized_data)
 
 
 vsn_mat<-normalized_data
@@ -156,9 +155,8 @@ head(vsn_mat)
 
 p_params_out<- paste0(VISIT_S, '_',TISSUE, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
+
 write.csv2(vsn_mat,paste0(output_files,p_params_out, '_vsn.csv'), row.names=TRUE)
-
-
 
 
 for (most_var in c(0.3, 0.9)){
@@ -178,15 +176,13 @@ dev.off()
 
 
 
-#dev.off()
-colnames(highly_variable_proteins_mofa)
-
 
 
 
 #### save all and load 
 ##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
-datalist=list( vsn_mat, se_filt)
+datalist=list( vsn_mat, se_filt) # save the vsn summarized experiment and the raw summarized experiment 
+prot_vsn_se_filt_file
 saveRDS(datalist,prot_vsn_se_filt_file)
 meanSdPlot(vsn_mat)
 
@@ -206,5 +202,7 @@ if (!run_vsn){
 
 
 highly_variable_proteins_outfile
+
+
 
 

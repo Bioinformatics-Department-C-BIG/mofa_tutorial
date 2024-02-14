@@ -536,9 +536,9 @@ plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = se
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD'
-plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
+plot_covars_mofa(selected_covars=selected_covars2_progression,fname,plot='r',factors=get_factors_for_scales(selected_covars2_progression),labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 
-
+factors=sel_factors
 ### ALSO PLOT DIFF VARS for the controls 
 all_diff<-all_diff_variables[all_diff_variables %in% colnames(cors)]
 all_cors_diff<-cors[, all_diff]

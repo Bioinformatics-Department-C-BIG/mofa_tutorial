@@ -50,7 +50,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # edit this one 
 #VISIT_COMP='V08'
 process_mirnas= FALSE
-cell_corr_deseq<-FALSE
+cell_corr_deseq<-TRUE
 
 
 if (process_mirnas){
@@ -162,8 +162,8 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 ##  the model matrix is not full rank, so the model cannot be fit as specified.
 ##  One or more variables or interaction terms in the design formula are linear
 ##  combinations of the others and must be removed
-formula_deseq_format='n'
 formula_deseq_format='all'
+formula_deseq_format='n'
 
 get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
 variates_to_correct
@@ -192,6 +192,10 @@ if (!cell_corr_deseq){
 
         }       
 
+      } else{
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
+            formula_deseq_format = ''
+
       }
     }else {
       if (cell_corr_deseq) {
@@ -204,17 +208,15 @@ if (!cell_corr_deseq){
 
     }else{
       formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
+            formula_deseq_format = ''
 
 
 }
 }
 }
 
-formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
-formula_deseq
 
 
-print(paste('formula: ', formula_deseq))
 cluster_id=1
 
 #param <- SnowParam(workers = 6, type = "MPI")
@@ -228,6 +230,13 @@ gse_all<-vector("list", length = 0)
 ### se_filt_all: list to hold the se
 ### deseq_all_groups: list to hold the deseq results 
 ### deseq_significant_all_groups: list to hold significant 
+#formula_deseq_format
+# if not cell corr ensure that the formula is empty
+if (!cell_corr_deseq){
+  formula_deseq_format=''
+  formula_deseq_format<-''
+  print(formula_deseq_format)
+}
 
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/')
@@ -236,20 +245,17 @@ dir.create(deseq_params, recursive = TRUE)
 dir.create(cluster_params_dir, recursive = TRUE)
 
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
-deseq_params
+
 
 clusters_indices= list( '1','2','3', c(1,2,3))
 clusters_names<-c(1,2,3,'1_2_3')
 
   se_filt_all<-lapply(clusters_indices, function(cluster_id){ 
     se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id,'HC')]})
-se_filt_all
 
 
 
 names(se_filt_all)<-clusters_names
-names(se_filt_all)
-
 
  
 #dir.create(deseq_params, recursive = TRUE)
@@ -420,15 +426,17 @@ gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 
 
 
-force=TRUE
+force_compare=TRUE
+ pvalueCutoff_sig = 0.001
 # Rerun them all together so that they are in one file for comparisons 
-if (!file.exists(gse_compare_file) | force){
+if (!file.exists(gse_compare_file) | force_compare){
 
 
-    # Run cluster compare by cluster - it does not need the separate files only the gene lists 
+    # Run cluster compare by cluster 
     # for each cluster for ONE time point 
+    #  it does not need the separate files only the gene lists - it reruns for all 
     geneClusters=gene_lists
-    gene_lists
+    
     gse_compare<-compareCluster(geneClusters = geneClusters , 
                                 fun = "gseGO", 
                                 OrgDb='org.Hs.eg.db', 
@@ -439,7 +447,8 @@ if (!file.exists(gse_compare_file) | force){
 
     ### RUN SCRIPT compare
     names(geneClusters)                  
-    plot_enrich_compare(gse_compare,paste0(enrich_compare_path), N_EMAP = 60, N_DOT=8)
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path,pvalueCutoff_sig), N_EMAP = 60, N_DOT=8, N_DOT_U=25, 
+    pvalueCutoff_sig = pvalueCutoff_sig)
     saveRDS(gse_compare, gse_compare_file)
 }else{
     gse_compare<-loadRDS(gse_compare_file)
@@ -447,6 +456,8 @@ if (!file.exists(gse_compare_file) | force){
 
 
 }
+
+
 
 
 

@@ -41,8 +41,8 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 #VISIT_COMP='V08'
-process_mirnas= FALSE
-cell_corr_deseq<-TRUE
+process_mirnas= TRUE
+cell_corr_deseq<-FALSE
 
 
 if (process_mirnas){
@@ -196,10 +196,6 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
 
 
 
-      } else{
-      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
-            formula_deseq_format = ''
-
       }
       }
   return(formula_deseq)
@@ -247,6 +243,8 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 
 clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+# the order for deseq levels is first controls, second disease
+deseq_order= list( c('2', '1'),c('2', '1'),c('2', '1') ,c('2', '1'), c('2','1'), c('3','1'),c('2','3'), c('1', '3') )
 
 clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
@@ -258,12 +256,8 @@ clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
 names(se_filt_all)<-clusters_names
 
-length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))
 
-if (length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))==1){
-  se_filt_all[[clust_id]]$COHORT<-se_filt_all[[clust_id]]$kmeans_grouping
-
-}# todo remove the ones below
+# todo remove the ones below
 se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
 se_filt_all[['1_3']]$COHORT<-se_filt_all[['1_3']]$kmeans_grouping
 se_filt_all[['3_2']]$COHORT=se_filt_all[['3_2']]$kmeans_grouping
@@ -295,7 +289,10 @@ for (cluster_id_num in 1:length(clusters_names)){
     print(de_file)
     # else run the deseq with the design formula specified 
         se_clust<-se_filt_all[[cluster_id_name]]
-        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count)
+        deseq_order[[cluster_id_num]]
+        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, levels=deseq_order[[cluster_id_num]])
+        #deseq2ResDF$log2FoldChange
+
 
         deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
         if (!process_mirnas){

@@ -14,14 +14,18 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 
-VISIT_COMP='V08'
+VISIT_COMP='BL'
+VISIT_COMP='V06'
 VISIT_COMP='V08'
 
-for (VISIT_COMP in c('BL', 'V06', 'V04', 'V08')){
-    print(VISIT_COMP)
+formula_deseq_format='all'
+cell_corr_deseq<-FALSE
+
+#for (VISIT_COMP in c('BL', 'V06', 'V04', 'V08')){
+ #   print(VISIT_COMP)
     source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
-}
+#}
 
 
 # TODO: add mirs size effects using normalized data 

@@ -42,7 +42,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # edit this one 
 #VISIT_COMP='V08'
 process_mirnas= FALSE
-cell_corr_deseq<-TRUE
+
 
 
 if (process_mirnas){
@@ -154,20 +154,21 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 ##  the model matrix is not full rank, so the model cannot be fit as specified.
 ##  One or more variables or interaction terms in the design formula are linear
 ##  combinations of the others and must be removed
-formula_deseq_format='n'
 
-formula_deseq_format='all'
-formula_deseq_format='n'
+
+   if (length(variates_to_correct_s)>1){
+            variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
+          }
 
 get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
-      
-
-          if (length(variates_to_correct_s)>1){
-            variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
-      }
-
+      #' get the designformula for deseq based on the type of rnas/mirnas,
+      #'  and whether to correct for cell types
+      #' @param cell_corr_deseq: correct for cell types
+      #' @param formula_deseq_format: correct for neutrophils or all ('n' or 'all')
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # basic formula if no cell coreection
 
           if (process_mirnas){
+            # mirnas 
             if (cell_corr_deseq) {
 
               if ((formula_deseq_format)=='n'){
@@ -175,49 +176,22 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
               }else{
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-              }       
-
-            }else{
-            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
-
-
+              } 
             }
           }else {
-            if (cell_corr_deseq) {
+            # rnas
             if ((formula_deseq_format)=='n'){
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else{
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-
-              }       
-
-          }else{
-            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
-
-
-
-      } else{
-      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
-            formula_deseq_format = ''
-
-      }
-      }
+              }  
+           }
   return(formula_deseq)
 }
-formula_deseq
+
 
 formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
-formula_deseq
-if (!cell_corr_deseq){
-  formula_deseq_format<-''
-}
 
-
-
-
-cluster_id=1
-
-#param <- SnowParam(workers = 6, type = "MPI")
 
 
 deseq_all <- vector("list", length = 0) # holds the significant gene/mirs ids only for each cluster
@@ -258,16 +232,16 @@ clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
 names(se_filt_all)<-clusters_names
 
-length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))
-
-if (length(unique(na.omit(se_filt_all[[clust_id]]$COHORT)))==1){
-  se_filt_all[[clust_id]]$COHORT<-se_filt_all[[clust_id]]$kmeans_grouping
-
-}# todo remove the ones below
+se_filt_all<-lapply(se_filt_all, function(se_clust){
+    if (length(unique(na.omit(se_clust$COHORT)))==1){
+    se_clust$COHORT<-se_clust$kmeans_grouping}
+    return(se_clust)
+    
+  }
+)
+se_filt_all
+# todo remove the ones below
 se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
-se_filt_all[['1_3']]$COHORT<-se_filt_all[['1_3']]$kmeans_grouping
-se_filt_all[['3_2']]$COHORT=se_filt_all[['3_2']]$kmeans_grouping
-se_filt_all[['3_1']]$COHORT=se_filt_all[['3_1']]$kmeans_grouping
 
 
 
@@ -451,7 +425,7 @@ fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 
 
 
-force_compare=TRUE
+force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 
 cluster_pairs<-c('3','3_1', '3_2')
 cluster_pairs<-c('1','1_2', '1_3', '2', '3') # Unique in 1: not in 2,3 and also 
@@ -462,6 +436,7 @@ enrich_compare_path <- paste0( paste0(deseq_params, '/enr/', prefix, enrich_para
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 
 gse_compare_file
+
 if (!file.exists(gse_compare_file) | force_compare){
     print('Running comparisons')
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
@@ -486,6 +461,9 @@ if (!file.exists(gse_compare_file) | force_compare){
 
 
 }
+
+names(gse_compare)
+
 
 
 

@@ -981,7 +981,7 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
   
   # only if all 3 are false run it 
  # process_mofa=FALSE
-  if ( !(process_mirnas) & !(process_mofa) & !(class(gse_protein)=='enrichResult')){
+  if ( !(process_mirnas) & !(process_mofa) & !(class(gse)=='enrichResult')){
     print('ridge')
     r_p<-ridgeplot(gse, showCategory = N_RIDGE)
     if (dim(r_p$data)[1]>0){

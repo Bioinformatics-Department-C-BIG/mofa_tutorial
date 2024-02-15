@@ -1,5 +1,10 @@
 
 
+#Apply to current combinations 
+
+# 
+
+
 
 
 clusters_indices=c('1','2','3')
@@ -54,7 +59,7 @@ clusters_indices=c('1','2','3')
 
             saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
 
-            gse_compare_all_vis[[cluster_id]]<-gse_compare_visit
+             gse_compare_all_vis[[cluster_id]]<-gse_compare_visit
             }else{
               gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
             }
@@ -97,6 +102,9 @@ for (cluster_id in clusters_indices){
 
 
 }
+
+
+
 
 length(intersection_all_clusts)
 
@@ -224,7 +232,7 @@ for (cluster_id in clusters_indices){
       ## apply for each visit, take the enrichment score and plot it 
       cols<-c('Description', 'p.adjust')
     gse_clust_pathway[[cluster_id]]<-lapply(gse_compare_visit_res_t, function(gse_clust){
-      return(gse_clust[grep('response to lipopolysaccharide', gse_clust$Description, ), cols])
+      return(gse_clust[grep('MHC', gse_clust$Description, ), cols])
     })
 
 

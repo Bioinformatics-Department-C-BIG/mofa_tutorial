@@ -1,0 +1,184 @@
+---
+title: "Mofa Clusters Enrichment V06"
+output:
+  html_document: default
+  pdf_document: default
+  css: styles.css
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+
+out_width = "30%"
+```
+
+## Mofa Enrichment analysis 
+
+
+```{r load_scripts, echo=FALSE}
+
+
+
+print(getwd())
+
+cell_corr_deseq = TRUE
+#VISIT='V08'
+
+source(paste0('../../ppmi/setup_os.R'))
+```
+
+
+```{r Enrichment,  results='hide', echo=FALSE, message=FALSE, warning=FALSE }
+
+
+knitr::opts_chunk$set(error = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+
+
+
+source(paste0(script_dir, 'ppmi/clustering/run_clustering_pipeline.R'))
+
+#source(paste0(script_dir, 'ppmi/setup_os.R'))
+
+
+
+
+```
+
+
+```{r print_settings, echo=FALSE}
+# Print the settings that were used to run
+print(cell_corr_deseq)
+print(paste('Cell type Correction: ', formula_deseq_format))
+print(paste('VISIT ', VISIT_COMP ))
+
+
+```
+
+
+
+```{r Volcanoes,  echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Volcano" ,fig.align='center'}
+
+# show the volcanoes
+clusters_names_sub<-c('1', '2', '3')
+vol_names<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+}
+)
+
+
+knitr::include_graphics(vol_names, dpi = 96 )
+
+
+
+```
+
+
+```{r dotplots,   echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Volcano" ,fig.align='center' }
+
+# load dps 
+clusters_names_sub<-c('1', '2', '3')
+
+N_DOT=15
+dot_names<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_name,  '_dot', N_DOT, '.jpeg')
+}
+
+)
+# load emaps
+
+N_EMAP=30
+emap_names<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_name, '_emap_', N_EMAP, '.jpeg')
+}
+)
+
+N_EMAP=30
+emap_names<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_name, '_emap_', N_EMAP, '.jpeg')
+}
+)
+
+
+
+knitr::include_graphics(dot_names, dpi = 96 )
+
+
+
+```
+
+
+```{r emaps,   echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Emaps" ,fig.align='center' }
+
+knitr::include_graphics(emap_names, dpi = 96 )
+
+
+```
+
+
+
+# Cluster comparisons
+
+```{r compare,   echo=FALSE, message=FALSE,fig.width=15,  fig.show='hold',out.width ="49%",  fig.cap="Pathway analysis Comparisons" ,fig.align='center' }
+
+filt_clusts = c('1','2','3')
+pvalueCutoff_sig = 0.05
+
+enrich_compare_path <- paste0( enrich_compare_path_all , paste0(filt_clusts, collapse='-'), pvalueCutoff_sig  )
+dt_comp_u<-paste0(enrich_compare_path,'dt_u','.jpeg')
+dt_comp<-paste0(enrich_compare_path,'dt','.jpeg')
+emap_comp<-paste0(enrich_compare_path,'emap', N_EMAP_COMP,'.jpeg')
+
+#file.exists(dt)
+knitr::include_graphics(c(dt_comp_u, dt_comp), dpi = 96 )
+
+
+```
+
+
+```{r emap_comp,   echo=FALSE, message=FALSE,fig.width=15,  fig.show='hold',out.width ="70%",  fig.cap="Pathway analysis Comparisons" ,fig.align='center' }
+
+
+knitr::include_graphics(emap_comp, dpi = 96)
+
+```
+
+
+
+```{r compare_cl1,   echo=FALSE, message=FALSE,fig.width=15,  fig.show='hold',out.width ="49%",  fig.cap="Pathway analysis Comparisons" ,fig.align='center' }
+# cluster 1 comparison
+# make a function to load all comparisons
+filt_clusts = c('1','1_2','1_3', '2', '3')
+
+
+pvalueCutoff_sig = 0.05
+enrich_compare_path <- paste0( enrich_compare_path_all , paste0(filt_clusts, collapse='-'), pvalueCutoff_sig  )
+dt_comp_u<-paste0(enrich_compare_path,'dt_u','.jpeg')
+dt_comp<-paste0(enrich_compare_path,'dt','.jpeg')
+emap_comp<-paste0(enrich_compare_path,'emap', N_EMAP_COMP,'.jpeg')
+file.exists(dt_comp_u)
+#file.exists(dt)
+knitr::include_graphics(c(dt_comp_u,dt_comp), dpi = 96 )
+
+
+```
+
+
+
+```{r compare_cl3,   echo=FALSE, message=FALSE,fig.width=15,  fig.show='hold',out.width ="49%",  fig.cap="Pathway analysis Comparisons" ,fig.align='center' }
+# cluster 1 comparison
+# make a function to load all comparisons
+filt_clusts = c('3','3_1','3_2', '1', '2')
+
+enrich_compare_path <- paste0( enrich_compare_path_all , paste0(filt_clusts, collapse='-'), pvalueCutoff_sig  )
+dt_comp_u<-paste0(enrich_compare_path,'dt_u','.jpeg')
+dt_comp<-paste0(enrich_compare_path,'dt','.jpeg')
+emap_comp<-paste0(enrich_compare_path,'emap', N_EMAP_COMP,'.jpeg')
+file.exists(dt_comp_u)
+#file.exists(dt)
+knitr::include_graphics(c(dt_comp_u,dt_comp), dpi = 96 )
+
+
+```

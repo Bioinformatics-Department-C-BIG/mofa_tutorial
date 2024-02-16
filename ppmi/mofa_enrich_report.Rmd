@@ -24,7 +24,6 @@ print(getwd())
 cell_corr_deseq = TRUE
 #VISIT='V08'
 source(paste0('../ppmi/setup_os.R'))
-#source(paste0(script_dir, 'ppmi/setup_os.R'))
 script_dir
 data_dir
 

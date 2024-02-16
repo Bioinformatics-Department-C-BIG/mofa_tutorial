@@ -1,15 +1,16 @@
 
-library(DESeq2)
-library(edgeR)
-library(org.Hs.eg.db)
-library(sgof)
+suppressWarnings(library(DESeq2))
+suppressWarnings(library(edgeR))
+suppressWarnings(library(org.Hs.eg.db))
+suppressWarnings(library(sgof))
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/factoextra")
-library('factoextra')
-library(plyr)
-library(dplyr)
+suppressWarnings(library('factoextra'))
+suppressWarnings(library(plyr))
+suppressWarnings(library(dplyr))
+
 library('WGCNA') # needƒ empiricalBayesLM
-library(R.filesets)
+suppressWarnings(library(R.filesets))
 ## Utils 
 ## Summarized experiment 
 
@@ -275,7 +276,7 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 }
 
 
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE, contrast_order = c('1', '2')){
   #'
   #' @param 
   # TODO: add plate and/OR site 
@@ -302,9 +303,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   se_filt$PDMEDYN[is.na(se_filt$PDMEDYN)]=0
   se_filt$LEDD[is.na(se_filt$LEDD)]=0 # add zeros to na then scale!
   se_filt$LEDD_scaled<- scale(se_filt$LEDD)
-  
-  
-  assay(se_filt)
+
+
   
   
   ddsSE <- DESeqDataSet(se_filt, 
@@ -314,11 +314,12 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
   
   deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
-  #deseq2Data <- DESeq(ddsSE, parallel=TRUE)
-  #deseq2Data <- DESeq(ddsSE)
+
   
-  deseq2Results<-results(deseq2Data)
-  deseq2Results_ordered <- results(dds, contrast=c("COHORT","1","2"))
+  #deseq2Results<-results(deseq2Data)
+  # important: contrast_order will define the order for deseq comparisons
+  # and will affect the log2FC directions 
+  deseq2Results <- results(deseq2Data, contrast=c("COHORT",contrast_order))
 
   deseq2ResDF <- as.data.frame(deseq2Results)
   
@@ -842,38 +843,36 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 
 
 plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, pvalueCutoff_sig=0.05){
+  
   ### GSE COMPARE ANALYSIS 
   enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
   gse_compare=dplyr::filter(gse_compare, p.adjust < pvalueCutoff_sig)
 
+  # list of output files 
+  dt_path = paste0(enrich_compare_path, 'dt','.jpeg' )
+  dt_u_path = paste0(enrich_compare_path, 'dt_u','.jpeg' )
+  emap_path = paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' )
+  cnet_path = paste0(enrich_compare_path, 'cnet.jpeg' )
+  
+  # Dotplot - signed and unsigned
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
-  dot_comp
-  ggsave(paste0(enrich_compare_path, 'dt','.jpeg' ), plot=dot_comp,
+  ggsave(dt_path, plot=dot_comp,
          dpi=250, width=12, height=16, 
   )
 
    dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
-  dot_comp
-  ggsave(paste0(enrich_compare_path, 'dt_u','.jpeg' ), plot=dot_comp,
+  ggsave(dt_u_path, plot=dot_comp,
          dpi=250, width=9, height=16, 
   )
   
-  dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
-  dot_comp
-  ggsave(paste0(enrich_compare_path, 'dt_u','.jpeg' ), plot=dot_comp,
-         dpi=250, width=9, height=16, 
-  )
-
-
-  
-  # N_EMAP 
-  #N_EMAP=80
+   
+  # Emap 
   gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
   
   emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
-  ggsave(paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' ), plot=emap_comp,
+  ggsave(emap_path, plot=emap_comp,
          dpi=200, width=10, height=10, units='in')
   
 
@@ -887,7 +886,7 @@ cex.params = list(category_label = 0.6, gene_label = 0.4)
 cnet_comp<-cnetplot(gse_compare.orig, showCategory = 10, 
          cex.params = cex.params)
 
-ggsave(paste0(enrich_compare_path, 'cnet.jpeg' ), plot=cnet_comp,
+ggsave(cnet_path, plot=cnet_comp,
          dpi=200)
   
   
@@ -935,8 +934,6 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
 
   
     
-  
-
     show(dp)
     
   
@@ -1859,6 +1856,25 @@ get_clinical_clusters<-function(y, centers=4){
   
   return(clinical_clusters$cluster)
   
+}
+
+
+
+#### Cell type functions 
+get_covariates_cells<-function(y_clust, thresh=0){
+  # get the cell types that corelated with the metric
+  #' 
+  #' @thresh: -log10pvalue
+  fact=get_factors_for_metric(y_clust)
+  colnames(estimations)[!colnames(estimations) %in% colnames(cors_all_pd)]
+  
+  cell_types<-c(colnames(estimations), measured_cells)[c(colnames(estimations), measured_cells) %in% colnames(cors_all_pd) ]
+  
+  c(colnames(estimations), measured_cells)
+
+  clust_variates<-cors_all_pd[fact, cell_types]
+  variates_to_p<-names(which(colSums(clust_variates)>thresh))
+  return(variates_to_p)
 }
 
 

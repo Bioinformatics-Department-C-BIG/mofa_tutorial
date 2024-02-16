@@ -16,7 +16,7 @@ source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 
 VISIT_COMP='BL'
 VISIT_COMP='V06'
-VISIT_COMP='V08'
+VISIT_COMP='V06'
 
 formula_deseq_format='all'
 cell_corr_deseq<-FALSE
@@ -31,6 +31,7 @@ cell_corr_deseq<-FALSE
 # TODO: add mirs size effects using normalized data 
 # correct for RIN and mapped bases 
 ## Add future scales 
+
 
 
 

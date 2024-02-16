@@ -221,6 +221,8 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 
 clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+# the order for deseq levels is first controls, second disease
+deseq_order= list( c('2', '1'),c('2', '1'),c('2', '1') ,c('2', '1'), c('2','1'), c('3','1'),c('2','3'), c('1', '3') )
 
 clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
@@ -269,7 +271,10 @@ for (cluster_id_num in 1:length(clusters_names)){
     print(de_file)
     # else run the deseq with the design formula specified 
         se_clust<-se_filt_all[[cluster_id_name]]
-        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count)
+        deseq_order[[cluster_id_num]]
+        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, levels=deseq_order[[cluster_id_num]])
+        #deseq2ResDF$log2FoldChange
+
 
         deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
         if (!process_mirnas){
@@ -460,12 +465,12 @@ if (!file.exists(gse_compare_file) | force_compare){
 }
 
 
-}
 
 names(gse_compare)
 
 
 
+}
 
 
 
@@ -503,8 +508,7 @@ names(gse_compare)
 
 
 
-
-
+ # nolint
 
 
 

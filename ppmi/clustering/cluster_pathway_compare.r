@@ -6,7 +6,6 @@ to_remove_clust<-c()
 clust_comparison_indices<-c('1','1_2',  '1_3')
 to_remove_clust<-c('2','3')
 to_remove_clust<-c('2','3')
-to_remove_clust<-c()
 
 # TODO: 3,2
 clust_id = '1'

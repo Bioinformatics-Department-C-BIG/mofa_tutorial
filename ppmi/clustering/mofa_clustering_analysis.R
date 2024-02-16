@@ -282,7 +282,6 @@ clust_metric<-y
 
 met<-met[!is.na(met[, clust_metric]),]
 clust_name<-paste0(clust_metric, '_clust')
-print(paste('Using subset of  ', dim(met)[1], ' patients'))
 freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 
 #k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)

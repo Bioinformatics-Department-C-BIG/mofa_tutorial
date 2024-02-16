@@ -318,6 +318,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   #deseq2Data <- DESeq(ddsSE)
   
   deseq2Results<-results(deseq2Data)
+  deseq2Results_ordered <- results(dds, contrast=c("COHORT","1","2"))
+
   deseq2ResDF <- as.data.frame(deseq2Results)
   
   padj_T_hv<-0.05

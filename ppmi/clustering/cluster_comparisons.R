@@ -64,8 +64,8 @@ view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 # Set the outdirectory 
 
 #y_clust='scopa'
-DIFF_VAR='moca'
 DIFF_VAR='NP2PTOT_LOG'
+DIFF_VAR='moca'
 
 y_clust=DIFF_VAR
 

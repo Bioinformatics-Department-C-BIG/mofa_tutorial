@@ -152,7 +152,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
-                      'AGE_SCALED' )
+                      'AGE' )
                       
 
 

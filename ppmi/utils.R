@@ -274,12 +274,12 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   return(se_filt)
 }
 
-
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE){
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE, levels= c('2','1')){
   #'
   #' @param 
   # TODO: add plate and/OR site 
   # se_filt1 neutrophil counts, and usable bases
+  #'contrast c("condition","numerator","denominator")
   
   #IF NEUTROPHILS IN DESIGN
   if (cell_corr_deseq){
@@ -303,22 +303,21 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   se_filt$LEDD[is.na(se_filt$LEDD)]=0 # add zeros to na then scale!
   se_filt$LEDD_scaled<- scale(se_filt$LEDD)
   
-  
-  assay(se_filt)
-  
+  # levels = c('cntrl','trt') # first pass the control which is 2
+  se_filt$COHORT <- factor(se_filt$COHORT, levels =levels)
+
   
   ddsSE <- DESeqDataSet(se_filt, 
                         design = as.formula(formula_deseq))
   ddsSE<-estimateSizeFactors(ddsSE)
   
-  #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
   
   deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
   #deseq2Data <- DESeq(ddsSE, parallel=TRUE)
-  #deseq2Data <- DESeq(ddsSE)
   
-  deseq2Results<-results(deseq2Data)
-  deseq2Results_ordered <- results(dds, contrast=c("COHORT","1","2"))
+  # add the contrast to ensure the right direction for lcfse
+  deseq2Results <- results(deseq2Data)
+ # deseq2Results <- results(deseq2Data, contrast=contrast)
 
   deseq2ResDF <- as.data.frame(deseq2Results)
   

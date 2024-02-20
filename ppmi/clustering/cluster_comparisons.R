@@ -41,7 +41,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 #VISIT_COMP='V08'
-process_mirnas= TRUE
+process_mirnas= FALSE
 cell_corr_deseq<-FALSE
 
 
@@ -289,9 +289,7 @@ for (cluster_id_num in 1:length(clusters_names)){
     print(de_file)
     # else run the deseq with the design formula specified 
         se_clust<-se_filt_all[[cluster_id_name]]
-        deseq_order[[cluster_id_num]]
         deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, levels=deseq_order[[cluster_id_num]])
-        #deseq2ResDF$log2FoldChange
 
 
         deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
@@ -397,7 +395,7 @@ if (!process_mirnas){
 
 gse_all_clusters=list()
 
-
+cluster_id_num=1
  for (cluster_id_num in 1:length(clusters_names)){
 
       print(paste('cluster:',cluster_id_num))

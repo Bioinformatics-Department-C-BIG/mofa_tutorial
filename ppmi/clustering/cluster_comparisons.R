@@ -3,10 +3,13 @@
 
 # WARNING DO NOT CHANGE THIS, MOVE TO A FUNCTION!! ## 
 ### FIRST LOAD required files  ####
+
+
 source(paste0(script_dir, '/ppmi/utils.R'))
 
 process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
 
+knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
 source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
 if (!base::exists(quote(se_mirs))){
@@ -16,8 +19,6 @@ if (!base::exists(quote(se_mirs))){
 }
 
 
-
-hist(head(assay(se_mirs),10)[10:50])
 # hist(head(assay(se_mirs_norm),10)[10:50])
 
 process_mirnas=FALSE
@@ -33,7 +34,7 @@ if (!base::exists(quote(se_rnas))){
 ## 2. Run deseq 
 ## 3. enrichment 
 
-MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit only 
+MOFAobject_clusts=MOFAobject_sel # take it from the clustering of the last visit only 
 
 
 ## SETUP the script parameters here ####
@@ -41,8 +42,10 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clusterig of the last visit 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
 #VISIT_COMP='V08'
+
+# do not remove these because in the loading..
 process_mirnas= FALSE
-cell_corr_deseq<-FALSE
+
 
 
 if (process_mirnas){
@@ -119,7 +122,6 @@ colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
 
 
-get_factors_for_metric('moca')
 
 
 # TODO: include corrected for cell counts  and uncorrected formula
@@ -154,20 +156,21 @@ if(!any(colnames(estimations)%in% colnames(colData(se_clusters)))){
 ##  the model matrix is not full rank, so the model cannot be fit as specified.
 ##  One or more variables or interaction terms in the design formula are linear
 ##  combinations of the others and must be removed
-formula_deseq_format='n'
 
-formula_deseq_format='all'
-formula_deseq_format='n'
+
+   if (length(variates_to_correct_s)>1){
+            variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
+          }
 
 get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_s){
-      
-
-          if (length(variates_to_correct_s)>1){
-            variates_to_correct_s<-paste0(variates_to_correct_s, collapse='+')
-      }
-
+      #' get the designformula for deseq based on the type of rnas/mirnas,
+      #'  and whether to correct for cell types
+      #' @param cell_corr_deseq: correct for cell types
+      #' @param formula_deseq_format: correct for neutrophils or all ('n' or 'all')
+      formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # basic formula if no cell coreection
 
           if (process_mirnas){
+            # mirnas 
             if (cell_corr_deseq) {
 
               if ((formula_deseq_format)=='n'){
@@ -175,45 +178,22 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
               }else{
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-              }       
-
-            }else{
-            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT' # remove plate as well 
-
-
+              } 
             }
           }else {
-            if (cell_corr_deseq) {
+            # rnas
             if ((formula_deseq_format)=='n'){
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else{
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-
-              }       
-
-          }else{
-            formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+COHORT'
-
-
-
-      }
-      }
+              }  
+           }
   return(formula_deseq)
 }
-formula_deseq
+
 
 formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
-formula_deseq
-if (!cell_corr_deseq){
-  formula_deseq_format<-''
-}
 
-
-
-
-cluster_id=1
-
-#param <- SnowParam(workers = 6, type = "MPI")
 
 
 deseq_all <- vector("list", length = 0) # holds the significant gene/mirs ids only for each cluster
@@ -244,7 +224,7 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
 # the order for deseq levels is first controls, second disease
-deseq_order= list( c('2', '1'),c('2', '1'),c('2', '1') ,c('2', '1'), c('2','1'), c('3','1'),c('2','3'), c('1', '3') )
+deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
 
 clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
@@ -256,12 +236,16 @@ clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
 
 names(se_filt_all)<-clusters_names
 
+se_filt_all<-lapply(se_filt_all, function(se_clust){
+    if (length(unique(na.omit(se_clust$COHORT)))==1){
+    se_clust$COHORT<-se_clust$kmeans_grouping}
+    return(se_clust)
+    
+  }
+)
 
 # todo remove the ones below
 se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
-se_filt_all[['1_3']]$COHORT<-se_filt_all[['1_3']]$kmeans_grouping
-se_filt_all[['3_2']]$COHORT=se_filt_all[['3_2']]$kmeans_grouping
-se_filt_all[['3_1']]$COHORT=se_filt_all[['3_1']]$kmeans_grouping
 
 
 
@@ -275,10 +259,7 @@ for (cluster_id_num in 1:length(clusters_names)){
  
 
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id_name , '.csv')
-
   de_params_file<-paste0(deseq_params, '/', prefix, make.names(formula_deseq))
-  #de_file
-
 
    if (file.exists(de_file)){
   #if (FALSE)
@@ -289,8 +270,15 @@ for (cluster_id_num in 1:length(clusters_names)){
     print(de_file)
     # else run the deseq with the design formula specified 
         se_clust<-se_filt_all[[cluster_id_name]]
-        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, levels=deseq_order[[cluster_id_num]])
+        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, contrast_order=deseq_order[[cluster_id_num]])
+        #deseq2ResDF$log2FoldChange
 
+
+        # pipeline
+        # 1. run deseq
+        # 2. save results 
+        # 3. plot Volcano 
+        # 4. run enrichment 
 
         deseq_all_groups[[cluster_id_name]]<-deseq2ResDF
         if (!process_mirnas){
@@ -299,6 +287,17 @@ for (cluster_id_num in 1:length(clusters_names)){
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
         file.create(de_params_file)
+
+
+        # Volcano
+        pvol<-plotVolcano(  deseq2ResDF, se_clust, title=paste0('Cluster ', cluster_id_name), xlim=c(-1.1,1.1),
+            lab=deseq2ResDF$GENE_SYMBOL)
+
+      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_COMP,'.jpeg')
+      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+      ggsave(fname,pvol, width=9,height=12, dpi=300)
+
+
 
         # Also write the parameters of deseq
 
@@ -311,7 +310,7 @@ for (cluster_id_num in 1:length(clusters_names)){
 } 
 # Save and load # Rrename ens id.*
 
-
+de_file
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
 
@@ -329,29 +328,6 @@ graphics.off()
 
 ########### 
 
-
-
-# TODO: venn before and after correction 
-cluster_id_index
-for (cluster_id_num in 1:length(clusters_names)){
-
-      # Take the original data and deseq results to plot a volcano 
-      print(paste('cluster:',cluster_id_num))
-    cluster_id_index=clusters_indices[[cluster_id_num]]
-    cluster_id_name=clusters_names[[cluster_id_num]]
-
-
-      se_filt=se_filt_all[[cluster_id_name]]
-
-      deseq2ResDF=deseq_all_groups[[cluster_id_name]]
-
-      pvol<-plotVolcano(  deseq2ResDF, se_filt, title=paste0('Cluster ', cluster_id_name), xlim=c(-1.1,1.1),
-      lab=deseq2ResDF$GENE_SYMBOL)
-
-      fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_COMP,'.jpeg')
-      fname<-paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
-      ggsave(fname,pvol, width=9,height=12, dpi=300)
-}
 
 
 #### 2. Venn from significant in top of factor
@@ -376,7 +352,6 @@ length(deseq_params)
 
 
 
-deseq2ResDF$log2FoldChange
 order_by_metric='log2pval';order_by_metric_s='log2p'
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
@@ -387,8 +362,7 @@ dir.create(paste0(deseq_params, '/enr/'))
 
 deseq_params
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
-enrich_compare_path
-process_mirnas
+
 # run enrichment only for RNAs 
 
 if (!process_mirnas){
@@ -446,17 +420,19 @@ fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 
 
 
-force_compare=TRUE
+force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 
-cluster_pairs<-c('3','3_1', '3_2')
-cluster_pairs<-c('1','1_2', '1_3', '2', '3') # Unique in 1: not in 2,3 and also 
+cluster_pairs<-c('1','1_2', '1_3', '2', '3')# Unique in 1: not in 2,3 and also 
+cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2') 
+
 
 gene_lists_compare<-gene_lists[cluster_pairs]
-
-enrich_compare_path <- paste0( paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp') , paste0(names(gene_lists_compare), collapse='-'))
+enrich_compare_path_all<-paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
+enrich_compare_path <- paste0( enrich_compare_path_all, paste0(names(gene_lists_compare), collapse='-'))
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
-
 gse_compare_file
+N_EMAP_COMP=60
+
 if (!file.exists(gse_compare_file) | force_compare){
     print('Running comparisons')
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
@@ -472,14 +448,42 @@ if (!file.exists(gse_compare_file) | force_compare){
 
 
     ### RUN SCRIPT compare
-    names(geneClusters)                  
-    plot_enrich_compare(gse_compare,paste0(enrich_compare_path), N_EMAP = 60, N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = 0.05)
+    plot_enrich_compare(gse_compare,paste0(enrich_compare_path), N_EMAP = N_EMAP_COMP, N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = 0.05)
     saveRDS(gse_compare, gse_compare_file)
 }else{
     gse_compare<-loadRDS(gse_compare_file)
 }
 
 
+force_compare_all_options=FALSE
+if (force_compare_all_options | !knitr_mode){
+
+    
+# Subset the comparisons and plot different versions 
+filt_clusts_all<-list( c('1','1_2', '1_3', '2', '3'), # unique in 1
+                        c('3','3_1', '3_2', '1', '2'), # unique in 3
+                        c('1','2','3')) # just compare with controls 
+
+lapply(filt_clusts_all, function(filt_clusts){
+        # subset and compare 
+        # subset 
+        enrich_compare_path <- paste0( enrich_compare_path_all , paste0(filt_clusts, collapse='-'))
+
+        #   
+        gse_compare_sub<-gse_compare %>% 
+          dplyr::filter(Cluster %in% filt_clusts)
+
+
+          plot_enrich_compare(gse_compare_sub,paste0(enrich_compare_path), N_EMAP = 60,
+          N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = 0.05)
+        }
+      
+)
+
+}
+
+
+
 }
 
 
@@ -518,10 +522,7 @@ if (!file.exists(gse_compare_file) | force_compare){
 
 
 
-
-
-
-
+ # nolint
 
 
 

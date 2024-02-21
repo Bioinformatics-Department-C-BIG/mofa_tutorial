@@ -333,42 +333,60 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
 }
 
 
-
+#se_filt<-se_filt_clust
+#protein_matrix<-protein_matrices[[cluster_id]]
 de_proteins_by_group<-function(se_filt, protein_matrix){
-
-     #'@param se_filt
+    #' Differential abundance using limma
+    #' 
+     #'@param se_filt: summarized experiment 
+     #' @param protein_matrix: vsn normalized values will be used in limma 
      #' 
-    
-    COHORT<-se_filt$COHORT
+   
+    is.na(se_filt$COHORT)
+    dim(protein_matrix)
+    colnames(protein_matrix)
+    colnames(se_filt)
+    protein_matrix[,!is.na(se_filt$COHORT) ]
+    se_filt = se_filt[,!is.na(se_filt$COHORT)]
+
+    COHORT<-as.factor(se_filt$COHORT)
     AGE=se_filt$AGE_SCALED
     SEX=se_filt$SEX
-    se_filt$INEXPAGE
-
-    dim(se_filt)
+    se_filt$COHORT
 
     AGE_AT_VISIT=AGE
     
     formula_deseq_test<-'~AGE_AT_VISIT+SEX+COHORT'
+    
+    contrast=c("COHORT", contrast_order = c(1,2))
 
+    # specify the design 
     design <- model.matrix(as.formula(formula_deseq_test) )
-    design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
+    design <- model.matrix(~0+AGE_AT_VISIT+SEX+COHORT )
+    design
+    contrast <- makeContrasts( COHORT1 - COHORT2, levels=design)
 
+
+    # run the model
     fit <- lmFit(protein_matrix, design = design)
+    fit = contrasts.fit(fit, contrast) # set contrast order 
     fit.cont <- eBayes(fit, trend=TRUE)
-    fit.cont 
+
     summa.fit <- decideTests(fit.cont)
     
-    
     print(colnames(fit.cont$design))
+    fit.cont$design
     design_params<-colnames(fit.cont$design)
-    coh_design<-design_params[grep('COHORT', design_params)]
+    
+    #coh_design<-design_params[grep('COHORT', design_params)]
+    results_de<-topTable(fit.cont, number = nfeats)
 
-    results_de<-topTable(fit.cont, number = nfeats, coef=coh_design)
 
     return(results_de)  
 }
 
-#remove_genes
+
+
 
 
 fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_log, PDSTATE=NULL){
@@ -758,7 +776,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
 
 
 #results_file_ora = paste0(results_file_cluster,'_ora' )
-
+ #keyType='SYMBOL'; N_DOT=15; N_EMAP=25;N_NET=20; pvalueCutoff_sig = 0.1;top_p=80
 run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N_DOT=15, N_EMAP=25,N_NET=20, pvalueCutoff_sig = 0.1,top_p=80){
   #'
   #' Run enrichment and write the results to csv (gse@result)
@@ -799,7 +817,7 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
   write.csv(as.data.frame(gse_full@result), paste0(results_file_ora, '.csv'))
   
   gse=dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
- 
+  
   
   #N_DOT=15
   #N_EMAP=30
@@ -808,7 +826,6 @@ run_ora_gene_list<-function(gene_list_ord, results_file_ora, keyType='SYMBOL', N
     # check if there is any de pathways before running plots 
     
     
-       print(paste(factor,'sig'))
          which(gse_full@result$p.adjust<0.05)
   
         enrich_plots<-run_enrichment_plots(gse=gse,results_file=results_file_ora, N_DOT=N_DOT, N_EMAP=N_EMAP,N_NET=25, run_ORA=TRUE)

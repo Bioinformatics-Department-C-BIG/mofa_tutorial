@@ -110,7 +110,6 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
         MOFAobjectPD_sel@samples_metadata[, xname] = as.factor(clust_ps)
         # TODO: save labels
 
-        #write.csv()
         return(clust_ps)
 
 }}

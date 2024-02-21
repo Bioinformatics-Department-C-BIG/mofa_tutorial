@@ -1,4 +1,6 @@
 # Script to run limma for proteins 
+# TODO: add venn per cluster 
+# TODO: run pathways per cluster 
 
 source(paste0('ppmi/setup_os.R'))
 library(limma)
@@ -12,7 +14,8 @@ library(sys)
 
 process_mirnas=FALSE
 
-VISIT='BL'
+#VISIT_COMP='V06' # set elsewhere
+VISIT = VISIT_COMP
 source(paste0(script_dir, 'ppmi/config.R' ))
 source(paste0(script_dir,'ppmi/utils.R'))
 
@@ -59,12 +62,10 @@ se_clusters<-se_filt_proteins
 ### attach mofa clusts to se
 # MOFAobject_clusts<-MOFAobjectPD
 # Obtain clustering from mofa
-se_clusters$COHORT
-se_clusters$PATNO
-sm$PATNO
+
 
 sm<-samples_metadata(MOFAobject_clusts)
-y_clust
+
 sm$NP2PTOT_LOG_clust
 patnos=se_clusters$PATNO
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
@@ -75,10 +76,8 @@ protein_matrices<-list()
 
 de_all_groups_proteins<-list()
 
-dim(protein_matrix)
-cluster_id
-se_cluster_ind
-# TODO: ensure thatthis is also run for all subjects together
+
+# TODO: ensure that this is also run for all subjects together
 
 length(se_filt_all)
 
@@ -91,26 +90,27 @@ for (cluster_id in 1:3){
 
 }
 
-dim(protein_matrix)
 protein_matrix<-protein_matrices[[1]]
 se_filt_all[[1]]$COHORT
 
-cluster_params_dir
+
 
 for (cluster_id in 1:3){
 
-        outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT, '/' )
+        outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
         outdir_s_p
         se_filt_clust<-se_filt_all[[cluster_id]]
         protein_matrix<-protein_matrices[[cluster_id]]
-        results_de<-de_proteins_by_group(se_filt_clust, protein_matrix)
+        results_de<-de_proteins_by_group(se_filt=se_filt_clust, protein_matrix=protein_matrix)
         #results_de<-topTable(fit.cont, coef='COHORT' ) 
         de_all_groups_proteins[[cluster_id]]<-results_de
         #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
+    #print(results_de['IL5',])
+    #print(results_de['MMP9',])
 
-    results_de
+
     dir.create(outdir_s_p)
 
     ns_full<-table(se_filt_clust$COHORT_DEFINITION)
@@ -133,12 +133,14 @@ for (cluster_id in 1:3){
     )
     pvol
     prefix='prot_'
-    fname<-paste0(outdir_s_p,'/EnhancedVolcano_edited_', prefix,VISIT,'cl',cluster_id, '.jpeg')
-    ggsave(fname,pvol, width=6,height=8, dpi=300)
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, TISSUE,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
+    ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
+
+results_de
 #ggsave(fname,pvol, width=6,height=8, dpi=300)
 
-prefix
+print(fname_vol)
 ## Create a p-adjusted
 ## how many total proteins?
 dim(vsn_mat)
@@ -164,55 +166,67 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 #df_ord<-df[order(df$COHORT),]
 pvol
 order_by_metric<-'padj_reverse'
-if (TISSUE=='CSF' & VISIT=='V08'){
+if (TISSUE=='CSF' & VISIT_COMP=='V08'){
   log2fol_T_overall=1
   
 }
 log2fol_T_overall=0
-log2fol_T_hm=1
+log2fol_T_hm=0
 padj_T_overall=0.05
 padj_T_hm=0.05
 
 results_de
 gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_hm & 
                                                            results_de$logFC>log2fol_T_hm]
-gene_list_limma_significant_heatmap
+
 
 length(gene_list_limma_significant_heatmap)
 ids<-rownames(vsn_mat) %in% gene_list_limma_significant_heatmap
-
+## if zero significant plot the highly variable proteins 
+highly_variable_proteins_mofa<-  selectMostVariable(vsn_mat, TOP_PN)
+ids_highly_var<-ids<-rownames(vsn_mat) %in% rownames(highly_variable_proteins_mofa)
+ids_highly_var
 
 hm<-vsn_mat[ids,]
+if (sum(ids)<1){
+  hm<-vsn_mat[ids_highly_var,]
+}
+
 results_de$padj_reverse<--results_de$adj.P.Val
 
 
 
-
-df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )]); rownames(df)<-df$PATNO_EVENT_ID
+# se_filt proteins contains them all?
+se_filt_proteins$PATNO_EVENT_ID
+df<-as.data.frame(colData(se_filt_proteins)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )]); rownames(df)<-df$PATNO_EVENT_ID
 df$PATNO_EVENT_ID<-NULL
 colnames(vsn_mat)
 rownames(df)
 #rownames(df)<-se_filt$PATNO_EVENT_ID
-se_filt$COHORT
+se_filt_proteins$COHORT
 dim(df)
 dim(hm)
 
-#hm_ord<-hm[,order(df$COHORT)]
 
 #<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
 filter_highly_var=FALSE; most_var_t=FALSE
+
+
 cluster_cols=TRUE
 n_sig_f=30
 fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
               filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
-fname
+
 graphics.off()
 library(ggplot2)
+
 #if(process_mirnas){
   #lab=rownames(rowData(vsd_filt_genes)) }else{
    # lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
 
         #jpeg(fname, width=10*100, height=10*100, res=150)
+
+
         my_pheatmap<-pheatmap(hm, 
                               #labels_row=lab,
                               cluster_rows=TRUE, 
@@ -228,7 +242,8 @@ library(ggplot2)
 show(my_pheatmap)
 dev.off()
 my_pheatmap
-ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
+fname
+#ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
 
 
 
@@ -245,14 +260,14 @@ if (run_olink){
     #### ALSO TRY T-TEST
     data<-read_NPX(prot_files[1])
     data=prot_bl
-    VISIT='BL'
+    VISIT_COMP='BL'
     colnames(data)<- c( "PATNO" ,       "EVENT_ID"  ,   "Index"   ,     "OlinkID"    ,
                         "UniProt"     , "Assay"     ,   "MISSINGFREQ", "Panel"    , 
                         "PANEL_LOT_NR" ,"PLATEID"   ,   "QC_WARNING" ,  "LOD"    ,    
                         "NPX"   ,       "update_stamp")
     
     table(data$EVENT_ID)
-    data_filt<-data[data$EVENT_ID %in% VISIT,]
+    data_filt<-data[data$EVENT_ID %in% VISIT_COMP,]
     data_filt$EVENT_ID
     
     unique(data_filt$PATNO)
@@ -362,7 +377,6 @@ signif_proteins_mofa_ids<-rownames(signif_proteins_mofa %>%
                             dplyr::filter(significant =='Significant'))
 
 
-highly_variable_sign_proteins_mofa<-highly_variable_proteins_mofa[rownames(highly_variable_proteins_mofa) %in%  signif_proteins_mofa_ids,]
 
 
 results_de_signif$abslog2pval
@@ -415,13 +429,13 @@ res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
 #if (file.exists(res_path)){
 #  gse_protein_full=loadRDS(res_path)
 #}else{
+
+# TODO: run per cluster 
+# Input:  gene_list_ord per cluster (coming from DE limma results )
+# 
         if (run_ORA){
-          
-          gse_protein_full <- clusterProfiler::enrichGO(gene_list_ora, 
-                                                        ont=ONT, 
-                                                        keyType = 'SYMBOL', 
-                                                        OrgDb = 'org.Hs.eg.db', 
-                                                        pvalueCutoff  = pvalueCutoff)
+          # writes 
+           gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord, results_file_ora =outdir_s_p_enrich_file  )
           
         }else{
           
@@ -444,61 +458,5 @@ res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
   
   
 #}
-gse_protein_full
-dim(gse_protein_full@result)
-hist(gse_protein_full@result$pvalue)
-sig_ind<-gse_protein_full[gse_protein_full@result$pvalue<0.05,]
-sig_ind$p.adjust; dim(sig_ind)
-process_mirnas=FALSE
-
-write.csv(as.data.frame(gse_protein_full@result), paste0(outdir_s_p_enrich_file, pvalueCutoff, '.csv'))
-
-# EXTRACT THE SIG ONLY 
-gse_protein=write_filter_gse_results(gse_protein_full, outdir_s_p_enrich_file, pvalueCutoff)
-
-length(which(gse_protein_full@result$pvalue<0.05))
-
-sig_gse_result<-gse_protein_full@result[gse_protein_full@result$pvalue<pvalueCutoff_sig,]
-write.csv(as.data.frame(sig_gse_result), paste0(outdir_s_p_enrich_file,pvalueCutoff_sig ,'.csv'))
-
-sig_gse_result
-
-gse_protein_pval=filter(gse_protein_full, pvalue < pvalueCutoff_sig)
-gse_protein_padj=filter(gse_protein_full, p.adjust < pvalueCutoff_sig)
-
-if (use_pval){
-  gse_protein=gse_protein_pval
-}else{
-  gse_protein=gse_protein_padj
-}
-gse_protein@result$p.adjust
-
-### supply the full result 
-##enrich_plots<-run_enrichment_plots(gse=gse_protein_full,results_file=outdir_s_p_enrich_file , N_DOT=15, N_EMAP = 15)
-process_mirnas=FALSE
-un_paths<-dim(gse_protein@result)[1]
-un_paths
-
-get_pval_text<-function(gse, pvalueCutoff_sig){
-  text_p1=ifelse(run_ORA,paste0('\n DE: ',  length(gene_list_ora)), '')
-  text_p2<-paste0('\n p-adj.< ', pvalueCutoff_sig,': ', length(which(gse@result$p.adjust<pvalueCutoff_sig)), 
-                  '\n p-val.< ', pvalueCutoff_sig,': ', length(which(gse@result$pvalue<pvalueCutoff_sig))  )
-  text_p=paste0(text_p1, text_p2)
-}
-text_p<-get_pval_text(gse_protein_full, pvalueCutoff_sig)
-title_p=ifelse( run_ORA==FALSE, paste0('GSEA, ',order_statistic), paste0('ORA, p.adj<',padj_T_overall))
-title_p
-  enrich_plots<-run_enrichment_plots(gse=gse_protein ,results_file=outdir_s_p_enrich_file , 
-                                     N_DOT=15, N_EMAP = 25,N_TREE=25, text_p=text_p, title_p)
-
-
-
-
-
-
-enrich_plots
-
-### run enrichGo with anova
-
 
 

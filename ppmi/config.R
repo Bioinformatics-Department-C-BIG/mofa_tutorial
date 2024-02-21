@@ -143,15 +143,17 @@ deseq_file<-paste0(output_files, param_str_f, 'deseq.Rds'); deseq_file
 outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 
-######## PROCESS PROTEINS 
+######## PROCESS PROTEINS #### load by tissue
 
 
 
 TOP_PN=0.9
 
-TISSUE='CSF'
 
+TISSUE='CSF'
 TISSUE='Plasma'
+
+
 
 NA_PERCENT=0.9
 
@@ -159,8 +161,6 @@ NORMALIZED=TRUE;run_vsn=FALSE
 run_vsn=TRUE
 sel_coh_s<-paste(sel_coh,sep='_',collapse='-')
 VISIT_S=paste(VISIT,sep='_',collapse='-')
-
-
 
 
 ## VISIT_S to allow this to be more than one visits at once!! 

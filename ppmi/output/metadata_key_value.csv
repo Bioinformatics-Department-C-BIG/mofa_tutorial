@@ -47,3 +47,4 @@ PD_MED_USE' ,                    'Medication use'
 moca,MoCa
 scopa,SCOPA
 AGE,Age
+Neutrophil.Lymphocyte, NLR

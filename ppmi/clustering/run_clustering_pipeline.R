@@ -26,13 +26,15 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-# source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
+
+
+DIFF_VAR = 'NP2PTOT_LOG'
 VISIT_COMP='BL'
 VISIT_COMP='V08'
 
 formula_deseq_format='n'
-formula_deseq_format='all'
 
 cell_corr_deseq<-TRUE
 cell_corr_deseq<-FALSE
@@ -41,18 +43,44 @@ VISIT_COMP='BL'
 VISIT_COMP='V06'
 VISIT_COMP='BL'
 VISIT_COMP='V08'
+#prefix='mirnas_'
+TISSUE='CSF'
+TISSUE='Plasma'
 
-#for (VISIT_COMP in c('BL', 'V06', 'V04', 'V08')){
- #   print(VISIT_COMP)
-    source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
+process_mirnas=TRUE
 
-#}
+formula_deseq_format='all' # so far we only run all for mirnas 
+formula_deseq_format='n' # so far we only run all for mirnas 
+
+for (cell_corr_deseq in c(TRUE, FALSE)){
 
 
+        for (VISIT_COMP in c('BL', 'V06', 'V04', 'V08')){
+        #   print(VISIT_COMP)
+            source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
+
+        }
+
+
+
+
+}
+
+
+# for proteins only 
+# TODO: change the config to allow plasma or csf 
+# TISSUE=Plasma, CSF
+ for (VISIT_COMP in c('V06', 'BL', 'V04', 'V08')){
+#for (VISIT_COMP in c( 'V04', 'V08')){
+
+    source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
+    # ensure that the settings were not updated elsewhere
+    print(paste0(TISSUE,' VISIT: ', VISIT_COMP ))
+        }
 # TODO: add mirs size effects using normalized data 
 # correct for RIN and mapped bases 
 ## Add future scales 
 
-
+# Run the proteins too 
 
 

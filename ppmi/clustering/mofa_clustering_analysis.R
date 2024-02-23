@@ -110,7 +110,6 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
         MOFAobjectPD_sel@samples_metadata[, xname] = as.factor(clust_ps)
         # TODO: save labels
 
-        #write.csv()
         return(clust_ps)
 
 }}
@@ -152,7 +151,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
-                      'AGE_SCALED' )
+                      'AGE' )
                       
 
 

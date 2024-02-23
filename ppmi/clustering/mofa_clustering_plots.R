@@ -8,6 +8,9 @@
 
 cors_all_pd<-as.data.frame(cors_all_pd)
 
+# Find out the top correlates
+df1<-cors_all_pd['Factor2',]%>%t() %>% as.data.frame()
+df1 %>% dplyr::arrange(Factor2 )
 
 
 
@@ -15,9 +18,14 @@ paste0(DIFF_VAR,'_BL')
 
  diff_variables_to_p=c( 
          'NP2PTOT',  'scopa', 'sft',  'moca',
-         'Neutrophil.Lymphocyte', 'AGE_SCALED',
-         'duration'
-         )
+         'Neutrophil.Lymphocyte', 'AGE',
+         'duration', 
+         # f23
+         # added V12 because it is significant ? 
+         'RBD_TOT','rem_V12'
+                  )
+
+
 
 ### Select group for plotting
 met<-samples_metadata(MOFAobject_sel)
@@ -26,14 +34,14 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-diff_variables
+clust_vars<-c('NP2PTOT_LOG', 'moca')
 clust_name
 facet_rows = 2
 
 
 #### Boxplots ####
 
-sapply(diff_variables, function(y_clust){
+sapply(clust_vars, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
 
@@ -58,7 +66,7 @@ sapply(diff_variables, function(y_clust){
 
 
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p), width=8+length(c(diff_variables_to_p))/facet_rows, 
-    height=1+2*facet_rows, bn=bn_all_fname, facet_rows = 1, 
+    height=1+1.5*facet_rows, bn=bn_all_fname, facet_rows = 1, 
     text='')
 
 
@@ -79,7 +87,7 @@ sapply(diff_variables, function(y_clust){
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
 DIFF_VAR='NP2PTOT_LOG'
 y <- DIFF_VAR# cluster metric 
-DIFF_VAR
+
 color_by=paste0(y, '_clust')
 clust_metric<-y
 
@@ -100,9 +108,9 @@ cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
 
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group, y, '_', color_by, '.png')
-outfile_clusters
+
 # Plot clustering for scales 
-color_by
+
 
 p <- MOFA2::plot_factors(MOFAobjectPD_sel, 
              factors=which(all_fs_diff[,y]),
@@ -125,7 +133,7 @@ library(dplyr)
 
 
 diff_variables_to_p=c(diff_variables_to_p, 'nfl_serum')
-diff_variables_to_p
+
 
 outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD_sel))
@@ -143,6 +151,9 @@ col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
 plot_heatmap_median_by_cluster<-function(col_data){
       #
     #means_by_cluster %>% group_indices()
+    #' Get the median values for each clinical variable 
+    #' Usually the variables are the top related to the factor used for clustering 
+
 
 
       # Get the median per cluster and scale it for the ehatmap 
@@ -254,7 +265,32 @@ samples_metadata(MOFAobject)[selected_covars2]
   
 }
 
-sm$duration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

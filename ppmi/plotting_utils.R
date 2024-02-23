@@ -529,7 +529,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   as.numeric(met[,clust_metric])
   met[,clust_metric ]<-as.numeric(met[,clust_metric])
   met<-met[!is.na(met[, clust_metric]),]
-  print(paste('Using subset of  ', dim(met)[1], ' patients'))
+  #print(paste('Using subset of  ', dim(met)[1], ' patients'))
   freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
   
 

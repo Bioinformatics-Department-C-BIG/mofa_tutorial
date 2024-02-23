@@ -1,0 +1,147 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  css: styles.css
+params: 
+      title: "Mofa Clusters Enrichment - all modalities"
+      VISIT_COMP: V08
+      cell_corr_deseq: TRUE
+      formula_deseq_format: 'n'
+---
+
+---
+title:  `r params$title`
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+VISIT_COMP = params$VISIT_COMP
+cell_corr_deseq = params$cell_corr_deseq
+formula_deseq_format = params$formula_deseq_format
+
+
+out_width = "30%"
+```
+
+# DE RNA analysis by cluster
+
+
+```{r load_scripts, echo=FALSE}
+
+
+
+print(getwd())
+
+cell_corr_deseq = TRUE
+#VISIT='V08'
+
+source(paste0('../../ppmi/setup_os.R'))
+```
+
+
+
+
+```{r Enrichment,  results='hide', echo=FALSE, message=FALSE, warning=FALSE }
+
+
+knitr::opts_chunk$set(error = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+
+
+
+source(paste0(script_dir, 'ppmi/clustering/run_clustering_pipeline_report.R'))
+
+#source(paste0(script_dir, 'ppmi/setup_os.R'))
+
+
+
+
+```
+
+
+```{r print_settings, echo=FALSE}
+# Print the settings that were used to run
+print(cell_corr_deseq)
+print(paste('Cell type Correction: ', formula_deseq_format))
+print(paste('VISIT ', VISIT_COMP ))
+
+
+```
+
+
+
+```{r Volcanoes,  echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Volcano" ,fig.align='center'}
+
+# show the volcanoes
+clusters_names_sub<-c('1', '2', '3')
+
+vol_names<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+}
+)
+prefix='mirnas_'
+vol_names_mirnas<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params, '/Volcano_', prefix, VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+}
+)
+
+prefix='prot_'
+TISSUE='CSF'
+deseq_params_prot = paste0(deseq_params, '../../../de_c0/', VISIT_COMP, '/')
+vol_names_prot_csf<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params_prot, '/Volcano_', prefix,TISSUE,'_', VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+}
+)
+prefix='prot_'
+TISSUE='Plasma'
+deseq_params_prot = paste0(deseq_params, '../../../de_c0/', VISIT_COMP, '/')
+vol_names_prot_plasma<-sapply(clusters_names_sub,function(cluster_id_name){
+      paste0(deseq_params_prot, '/Volcano_', prefix,TISSUE,'_', VISIT_COMP,'_cluster_', cluster_id_name, '.jpeg')
+}
+)
+
+file.exists(vol_names_prot_csf)
+#vol_names_prot
+#deseq_params_prot
+knitr::include_graphics(vol_names, dpi = 96 )
+
+
+
+```
+
+
+```{r Volcanoes_mirnas,  echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="miRNAs" ,fig.align='center'}
+
+# show the volcanoes
+knitr::include_graphics(vol_names_mirnas, dpi = 96 )
+
+
+
+```
+
+
+
+
+```{r Volcanoes_prot_plasma,  echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Proteins Plasma" ,fig.align='center'}
+
+# show the volcanoes
+knitr::include_graphics(vol_names_prot_plasma, dpi = 96 )
+
+
+
+```
+
+
+```{r Volcanoes_prot,  echo=FALSE, message=FALSE,fig.width=12, fig.height=7, fig.show='hold',out.width =out_width,  fig.cap="Proteins CSF" ,fig.align='center'}
+
+# show the volcanoes
+knitr::include_graphics(vol_names_prot_csf, dpi = 96 )
+
+
+
+```
+
+

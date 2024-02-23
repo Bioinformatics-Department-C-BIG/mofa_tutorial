@@ -124,6 +124,5 @@ if (run_rna_mirna){
   
   
 }
-TOP_MN
 
-
+p_params_mofa<-p_params_plasma

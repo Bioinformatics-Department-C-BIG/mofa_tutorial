@@ -6,29 +6,43 @@
 
 
 source(paste0(script_dir, '/ppmi/utils.R'))
-
-process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-
 knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
-source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-if (!base::exists(quote(se_mirs))){
-  se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
- # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+load_all_se<-function(){
+  #'
+  #' @param
+  #' @return se_rnas, se_mirnas 
+
+
+      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
+
+
+      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+      if (!base::exists(quote(se_mirs))){
+        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+
+      }
+
+
+      # hist(head(assay(se_mirs_norm),10)[10:50])
+
+      process_mirnas=FALSE
+      source(paste0(script_dir, '/ppmi/config.R'))
+      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+      if (!base::exists(quote(se_rnas))){
+
+        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      }
+
+      return(list(se_rnas, se_mirs))
 
 }
 
 
-# hist(head(assay(se_mirs_norm),10)[10:50])
-
-process_mirnas=FALSE
-source(paste0(script_dir, '/ppmi/config.R'))
-#source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-if (!base::exists(quote(se_rnas))){
-
-  se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-}
-
+all_se_list<-load_all_se()
+se_rnas = all_se_list[[1]]
+se_mirs = all_se_list[[2]]
 
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
@@ -41,10 +55,9 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clustering of the last visit
 # 1. select visit, 2. process mirs 
 # TODO: make function to load for rnas and mirnas separately
 # edit this one 
-#VISIT_COMP='V08'
 
 # do not remove these because in the loading..
-process_mirnas= FALSE
+#process_mirnas= FALSE
 
 
 
@@ -64,10 +77,10 @@ view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 # Set the outdirectory 
 
 #y_clust='scopa'
-DIFF_VAR='moca'
-DIFF_VAR='NP2PTOT_LOG'
+# DIFF_VAR='NP2PTOT_LOG'
+#DIFF_VAR='moca'
 
-y_clust=DIFF_VAR
+y_clust = DIFF_VAR
 
 clust_name=paste0(y_clust, '_clust')
 
@@ -468,14 +481,17 @@ lapply(filt_clusts_all, function(filt_clusts){
         # subset and compare 
         # subset 
         enrich_compare_path <- paste0( enrich_compare_path_all , paste0(filt_clusts, collapse='-'))
-
+        pvalueCutoff_sig = 0.05
         #   
+        # Check if already run eg. if emap is there
+
+        enrich_compare_path
         gse_compare_sub<-gse_compare %>% 
           dplyr::filter(Cluster %in% filt_clusts)
 
 
           plot_enrich_compare(gse_compare_sub,paste0(enrich_compare_path), N_EMAP = 60,
-          N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = 0.05)
+          N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = pvalueCutoff_sig)
         }
       
 )

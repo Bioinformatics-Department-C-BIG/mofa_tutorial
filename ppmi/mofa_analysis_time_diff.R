@@ -195,7 +195,7 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
  names(non_na_vars)
- force_cors=FALSE
+ force_cors=TRUE
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file
@@ -207,10 +207,14 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   cors_pearson
 }else{
   stats<-apply(MOFAobjectPD_sel@samples_metadata, 2,table )
-  non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+  sm_pd<-MOFAobjectPD_sel@samples_metadata
+  # Checks if the variance >0 to obtain corelation
+  non_na_vars<-which(!is.na(sapply(stats,mean)) & apply(sm_pd,2,var, na.rm=TRUE)>0 ) 
+   length(names(non_na_vars) )
 
   cors_both<-get_correlations(MOFAobjectPD_sel, names(non_na_vars))
-  cors_pearson_pd = as.data.frame(cors_both[[2]]);  cors_all_pd = as.data.frame(cors_both[[1]])
+  cors_pearson_pd = as.data.frame(cors_both[[2]]); # H
+  cors_all_pd = as.data.frame(cors_both[[1]])
 
 
   write.csv2(cors_pearson_pd, covars_f_pearson_pd)
@@ -218,7 +222,8 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
 
 # CORS ALL SAMPLES 
   stats<-apply(MOFAobject_sel@samples_metadata, 2,table )
-  non_na_vars<-which(!is.na(sapply(stats,mean)) & sapply(stats,var)>0 )
+  sm<-MOFAobject_sel@samples_metadata
+  non_na_vars<-which(!is.na(sapply(stats,mean)) & apply(sm,2,var, na.rm=TRUE)>0 )
   cors_both<-get_correlations(MOFAobject_sel, names(non_na_vars))
   cors_both[[2]]
   cors_pearson=as.data.frame(cors_both[[2]]); cors=as.data.frame(cors_both[[1]]); cors_all=cors_both[[1]]
@@ -227,7 +232,6 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   write.csv2(cors,covars_f_pvalue)
 
 }
-
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES  ####
 # corelate categorical covariates

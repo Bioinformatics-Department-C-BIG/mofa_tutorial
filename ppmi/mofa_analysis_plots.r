@@ -160,8 +160,17 @@ get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
   
 }
 
+MOFAobject@samples_metadata$tau_asyn
+
+
+
+colnames(cors_all_pd)[grep('tau',colnames(cors_all_pd) ) ]
+cors_all_pd[,'tau_asyn']
 progression_markers <- c('nfl_serum', 'lowput_ratio','tau_ab', 'tau_asyn', 'abeta', 'mean_striatum', 'sft', 'td_pigd', 'HVLTRDLY' )
-clinical_markers_conf<-c( 'abeta', 'sft' )
+biochemical_markers_conf<-c( 'abeta','tau_ab', 'tau_asyn', 'ptau_ab', 'lowput_ratio', 'ptau', 'ab_asyn'  , 'hemo', 'asyn', 'CSFSAA') # add these biochemical markers 
+
+
+measured_cells
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
@@ -170,11 +179,11 @@ all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 
                        'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
                          'sft_V12', c(colnames(estimations),measured_cells), 
                          'Multimapped....', 'Uniquely.mapped....')
-all_diff_variables_prog_conf<-c(clinical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
+all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
                     'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
 
-clinical_markers_conf
-variables_conf_only_clinical<-c(clinical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG')
+biochemical_markers_conf
+variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG')
    
 sel_factors_conf<-get_factors_for_scales(variables_conf_only_clinical)
 
@@ -219,18 +228,28 @@ fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
 
+outdir
 sel_factors_conf
+variables_conf_only_clinical
+
+cors_all_pd$tau_asyn
 fname<-'factors_covariates_strict_PD_conference_clinical'
 plot_covars_mofa(selected_covars=variables_conf_only_clinical,fname,plot='log_pval',
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
+
+
+fname<-'factors_covariates_strict_PD_conference_clinical_cor'
+plot_covars_mofa(selected_covars=variables_conf_only_clinical,fname,plot='r',
+                 factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
+
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 graphics.off()
 
 estim_cors<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
-estim_cors
-cors_all_pd
+
+
 cors_estim<-cors_all_pd[c(23),  estim_cors]
 cors_estim
 colnames(cors_estim)[cors_estim>0]
@@ -260,6 +279,7 @@ all_diff_variables_prog=unique(all_diff_variables_prog, c(colnames(estimations),
 all_diff_variables_prog
 #### Factors related to the longterm change in scale #####
 graphics.off()
+sel_factors_diff
 fname<-'factors_covariates_only_nonzero_strict_PD_diff'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_diff'
@@ -310,17 +330,18 @@ all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog
 
 
 # Plot 1: some more non motor that we discovered
-
-fname<-'factors_covariates_only_nonzero_broad_PD'
+selected_covars_broad=unique(selected_covars_broad)
+fname<-'factors_covariates_broad_PD'
 MOFAobjectPD@samples_metadata$Lymphocytes....
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
-fname<-'factors_covariates_only_nonzero_broad_PD'
-plot_covars_mofa(selected_covars_broad,fname,plot,c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+fname<-'factors_covariates_broad_PD_all_fs'
+estimations
+names(selected_covars_broad)
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
-fname<-'factors_covariates_only_nonzero_broad_cor_PD'
-
-plot_covars_mofa(selected_covars_broad,fname,plot='r',c(1:15),labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+fname<-'factors_covariates_broad_cor_PD'
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot='r',sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 
 
@@ -354,9 +375,11 @@ dir.create(paste0(outdir, '/covariates/'))
 write.csv(cors_pearson, paste0(outdir, '/covariates/covariate_corelations_pearson.csv'))
 for (fx in 1:N_FACTORS){
   sig<-cors[fx,]>1.5
-  c1<-cors[fx,][sig]
+  c1<-cors[fx,][sig];
    c2<-cors_pearson[fx,][sig]
-  c3<-format(cbind(c1,c2), digits=2); c3<-c3[order(c3[,1], decreasing = TRUE),]
+  sig_names<-colnames(sig)[which(t(sig))]
+
+  c3<-format(cbind(sig_names,c1,c2), digits=2); c3<-c3[order(c3[,1], decreasing = TRUE),]
   write.csv(c3, 
             paste0(outdir, '/covariates/',fx, '.csv'))
 }

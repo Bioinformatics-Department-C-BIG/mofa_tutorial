@@ -1,11 +1,7 @@
 
 
 #Apply to current combinations 
-
 # 
-
-
-
 
 clusters_indices=c('1','2','3')
 

@@ -379,29 +379,47 @@ get_labels<-function(selected_covars, labels_col=FALSE){
   }
   return(labels_col_plot)
 }
+
+
+
+
+
+
+
+
 #selected_covars = c('COHORT', 'CONCOHORT')
 #MOFAobject_to_plot  = MOFAobject_sel
+#selected_covars=variables_conf_only_clinical;
+#plot='log_pval';
+#factors = sel_factors_conf;
+#labels_col=TRUE;
+# MOFAobject_to_plot=MOFAobjectPD_sel  ;
+#alpha=0.05
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
                            MOFAobject_to_plot=MOFAobject, res=200, alpha=0.05){
   
   # filter if some do not exist in the colnames of metadata
-  #apply(MOFAobjectPD@samples_metadata[,selected_covars3], 2, function(x) {length(which(duplicated(x)))==length(x)-1 })
   # first check if the requested names exist in the metadata 
+  selected_covars = unique(selected_covars)
   selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject_to_plot@samples_metadata) ]
   
   
   sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
   sd_na<-c(is.na(sds)|sds==0)
-  
+  print(paste('removed', selected_covars[sd_na]))
+
   # then check that the sd is not NA
+    # remove if there are at least non-na values
+
   selected_covars=selected_covars[ !(sd_na) ]
 
-  # remove if there are at least non-na values
   selected_covars = selected_covars[colSums(!is.na(MOFAobject_to_plot@samples_metadata[, selected_covars]))>3]
 
+  #print(paste(colSums(!is.na(MOFAobject_to_plot@samples_metadata[, selected_covars]))))
 
+# check if significant before removing
  P2_data<-correlate_factors_with_covariates(MOFAobject_to_plot,
-                                        covariates =selected_covars , plot = plot,
+                                        covariates =selected_covars , plot = 'log_pval',
                                         labels_col=get_labels(selected_covars, labels_col = TRUE), 
                                         factors = factors, 
                                         cluster_cols=TRUE, 
@@ -409,6 +427,8 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
                                         alpha=alpha)
 
   # keep only what is >0
+
+ print(paste('removed', colnames(P2_data)[colSums(P2_data)==0]))
   selected_covars = selected_covars[colSums(P2_data)>0]
   #plot='log_pval'
   

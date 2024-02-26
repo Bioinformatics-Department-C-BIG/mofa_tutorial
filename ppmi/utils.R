@@ -51,12 +51,16 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'rigidity','months', 
                          'con_putamen', 'con_putamen_V10', 
                          'change', 
-                         'asyn', 'CSFSAA', 'NP3_TOT_LOG_SCALED', 
+                         # biochemical
+                         'asyn', 'CSFSAA', 'ptau', 'ptau_asyn', 'ptau_tau', 'abeta', 'ab_asyn', 'asyn', 'hemo', 
+                          'NP3_TOT_LOG_SCALED', 
                          'NP3_TOT_diff_V16', 'SCAU_TOT_diff_V16', 'NP2_TOT_diff_V16',
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
                          'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 'RIN', 
-                         'Uniquely.mapped')
+                         'Uniquely.mapped'
+                         
+                         )
                    #      diff_vars)
 #'DYSKIRAT')
 

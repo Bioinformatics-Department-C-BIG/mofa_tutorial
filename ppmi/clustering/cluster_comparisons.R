@@ -382,7 +382,7 @@ if (!process_mirnas){
 
 gse_all_clusters=list()
 
-cluster_id_num=1
+
  for (cluster_id_num in 1:length(clusters_names)){
 
       print(paste('cluster:',cluster_id_num))
@@ -436,7 +436,8 @@ fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 
 cluster_pairs<-c('1','1_2', '1_3', '2', '3')# Unique in 1: not in 2,3 and also 
-cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2') 
+cluster_pairs<-c('1','2', '3') 
+cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2','1_2_3' ) 
 
 
 gene_lists_compare<-gene_lists[cluster_pairs]
@@ -451,7 +452,8 @@ if (!file.exists(gse_compare_file) | force_compare){
     # Run cluster compare by cluster - it does not need the separate files only the gene lists 
     # for each cluster for ONE time point 
     geneClusters=gene_lists_compare
-    
+
+
     gse_compare<-compareCluster(geneClusters = geneClusters , 
                                 fun = "gseGO", 
                                 OrgDb='org.Hs.eg.db', 
@@ -475,7 +477,8 @@ if (force_compare_all_options | !knitr_mode){
 # Subset the comparisons and plot different versions 
 filt_clusts_all<-list( c('1','1_2', '1_3', '2', '3'), # unique in 1
                         c('3','3_1', '3_2', '1', '2'), # unique in 3
-                        c('1','2','3')) # just compare with controls 
+                        c('1','2','3'), 
+                        c('1','2','3', '1_2_3')) # just compare with controls 
 
 lapply(filt_clusts_all, function(filt_clusts){
         # subset and compare 

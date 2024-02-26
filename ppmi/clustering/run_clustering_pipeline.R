@@ -47,7 +47,7 @@ VISIT_COMP='V08'
 TISSUE='CSF'
 TISSUE='Plasma'
 
-process_mirnas=TRUE
+process_mirnas=FALSE
 
 formula_deseq_format='all' # so far we only run all for mirnas 
 formula_deseq_format='n' # so far we only run all for mirnas 

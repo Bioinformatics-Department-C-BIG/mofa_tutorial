@@ -1,19 +1,23 @@
+
+
 install.packages("BiocManager", repos = "http://cran.us.r-project.org")
 install.packages('devtools')
 
 
 BiocManager::install("mixOmics")
-BiocManager::install(version = "3.16")
+
 #remove.packages('BiocManager')
 
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager", version(16))
-remove.packages('BiocManager')
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+
+
+
+  install.packages("BiocManager")
 BiocManager::install("MOFA2")
 BiocManager::install("MOFAdata")
 
 BiocManager::install('Org.Mm.eg.db')
-
+remove.packages("MOFA2")
 install.packages(
   "ggplot2",
   repos = c("http://rstudio.org/_packages",
@@ -49,8 +53,7 @@ BiocManager::install('cluster')
 
 
 ##setup
-install.packages('rstudioapi')
-
+BiocManager::install('sva')
 
 ###### Single layer
 
@@ -155,6 +158,12 @@ BiocManager::install('GOfuncR')
 BiocManager::install('VennDiagram')
 
 BiocManager::install('reshape')
+BiocManager::install('psych')
+
+BiocManager::install('ggpubr')
+BiocManager::install('R.filesets')
+
+
 
 BiocManager::install('randomForest')
 BiocManager::install('DescTools')
@@ -168,12 +177,63 @@ suppressPackageStartupMessages(library(randomForest))
 BiocManager::install("vsn")
 BiocManager::install('GGally')
 BiocManager::install("sva")
+<<<<<<< HEAD
+BiocManager::install("gplots")
+=======
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 
 ## install timeOmics
 BiocManager::install('timeOmics')
 BiocManager::install('propr')
 
+<<<<<<< HEAD
+BiocManager::install('randomForest')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=======
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 
 

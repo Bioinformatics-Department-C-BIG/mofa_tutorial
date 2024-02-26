@@ -48,7 +48,7 @@ sel_subcoh=FALSE
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=TRUE
 sel_subcoh=c('INEXPD');
-
+cell_corr_deseq=TRUE
 
 #sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 

@@ -11,4 +11,3 @@ update.packages(checkBuilt=TRUE)
 
 version
 
-packageStatus()

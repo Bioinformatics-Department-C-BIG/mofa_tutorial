@@ -25,11 +25,14 @@ if (Sys.info()['sysname']=='Darwin'){
   setwd('/data8TB/efiath/git/mofa_tutorial/')
   data_dir<-'/data8TB/efiath/git/mofa_tutorial/'
   script_dir<-'/data8TB/efiath/git/mofa_tutorial/'
+  ppmi_data<-'/data8TB/efiath/git/mofa_tutorial/ppmi/ppmi_data/'
   
 }else  {
-  setwd('D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/')
-  data_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
-  script_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/git/mofa/'
+  setwd('D:/DATADRIVE/Efi Athieniti/Documents/GitHub/mofa_tutorial/')
+  data_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/GitHub/mofa_tutorial/'
+  ppmi_data<-'D:/DATADRIVE/Efi Athieniti/Documents/ppmi_backup/ppmi_data/'
+
+  script_dir<-'D:/DATADRIVE/Efi Athieniti/Documents/GitHub/mofa_tutorial/'
   
   
 }

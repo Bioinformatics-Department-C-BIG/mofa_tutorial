@@ -1,4 +1,4 @@
-#BiocManager::install('sva')
+
 
 library('sva')
 library('WGCNA')
@@ -17,8 +17,11 @@ library('FactoMineR')
 
 # remove genes related to the first PCA ###
 
-filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+filtered_genes<-read.csv(paste0(data_dir, '/ppmi/output/filteredGenes.csv'))
 remove_genes<-filtered_genes$perc0.1
+# does this script take this file as input..?
+decon<-loadRDS(paste0(output_files, '/decon.RDS'))
+estimations<-decon$proportions$qprogwc_ABIS_S0
 
 
 cell_corr_mofa=FALSE

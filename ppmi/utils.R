@@ -130,9 +130,9 @@ mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
 ## GENES RELATED TO THE BATCH EFFECT
-filtered_genes<-read.csv(paste0(data_dir, 'ppmi/ppmi_data/rnaseq/filteredGenes.csv'))
+filtered_genes<-read.csv(paste0(data_dir,'/ppmi/output/filteredGenes.csv'))
 
-remaining<-read.csv('ppmi/remaining_genes.csv', header = FALSE)
+remaining<-read.csv(paste0(data_dir,'/ppmi/output/remaining_genes.csv'), header = FALSE)
 remaining_genes<-gsub( '\\..*', '', remaining$V1)
 
 batch_effect_genes<-filtered_genes$perc0.1
@@ -268,9 +268,7 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
   se_filt<-filter_se_byExpr(se_filt, min.count=min.count);   dim(assay(se_filt) )
 
 
- 
-  min.count
- 
+  
   
   return(se_filt)
 }
@@ -281,7 +279,6 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   #' @param 
   # TODO: add plate and/OR site 
   # se_filt1 neutrophil counts, and usable bases
-  #'contrast c("condition","numerator","denominator")
   
   #IF NEUTROPHILS IN DESIGN
   if (cell_corr_deseq){
@@ -312,6 +309,7 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
                         design = as.formula(formula_deseq))
   ddsSE<-estimateSizeFactors(ddsSE)
   
+  #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
   
   deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
 

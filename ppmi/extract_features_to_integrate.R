@@ -26,7 +26,11 @@ Visits<-c('BL', 'V04', 'V06', 'V08')
 #close(gz1)
 
 ### rnas_fname includes the merged counts for all patients for all visits that I merged together on the server
+<<<<<<< HEAD
+rnas_fname<-paste0(ppmi_data, '/rnaseq/', VISIT, '.csv')
+=======
 rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 getwd()
 for (VISIT in Visits){
@@ -101,7 +105,11 @@ close(gz1)
 
 
 
+<<<<<<< HEAD
+mirnas_rpmmm<-read.csv2(paste0(data_dir,ppmi_data, '/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
+=======
 mirnas_rpmmm<-read.csv2(paste0(data_dir,'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
 
 
@@ -191,17 +199,29 @@ Visits=c('BL', 'V04', 'V06', 'V08')
 
 #### ALL VISITS # include alla visits again
 
+<<<<<<< HEAD
+  prot_files<-list.files(path=paste0(ppmi_data,'proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+                         full.names = TRUE)
+  
+  if (NORMALIZED){
+    prot_files<-list.files(path=paste0(ppmi_data,'/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+=======
   prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
                          full.names = TRUE)
   
   if (NORMALIZED){
     prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
                            full.names = TRUE)
     
     pv='NPX'
   }else{
     
+<<<<<<< HEAD
+    prot_files<-list.files(path=paste0( ppmi_data,'/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
+=======
     prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
+>>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
                            full.names = TRUE)
     pv='COUNT' # Value of the protein level 
 

@@ -368,7 +368,7 @@ length(deseq_params)
 order_by_metric='log2pval';order_by_metric_s='log2p'
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
-ONT='BP'
+ONT='MF'
 pvalueCutoff_sig=0.05
 enrich_params<-paste0(ONT, order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))

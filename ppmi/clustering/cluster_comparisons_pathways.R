@@ -1,3 +1,4 @@
+source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
 
 #Apply to current combinations 
@@ -32,10 +33,6 @@ clusters_indices=c('1','2','3')
         return(gene_list1)
         }
       )
-
-
-
-
 
       # Cluster compare for each cluster - compare the time points 
       dir.create(paste0(deseq_params_all, '/enr/', formula_deseq_format))
@@ -77,17 +74,12 @@ union_all_clusts=list() # holds the union of pathways of all time points for eac
 gse_compare_all_vis
 for (cluster_id in clusters_indices){
 
-      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+      enrich_compare_path=paste0(deseq_params_all, '/enr/',formula_deseq_format,'/', prefix, enrich_params, cluster_id, 'time')
 
       # Print each visit 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
       gse_compare_visit_res_t<-split(gse_compare_visit_res$Description,  gse_compare_visit_res$Cluster) # split by visit
       gse_compare_visit_res_t_sub<-gse_compare_visit_res_t 
-
-
-    # Get
-    
-
 
       
        # Intersection of all time points
@@ -126,69 +118,78 @@ cluster_id = '2'
 
 sig_clust = 'V08'
 padjust_cutoff = 0.05
-
-
-cluster_id = '1'
-sig_clust = 'V08'
 padjust_cutoff = 0.001
 
-gse_compare_cl<-gse_compare_all_vis[[cluster_id]]
-gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
-gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_clust]]
+
+#' @param sig_clust: select top paths from which time point? 
+cluster_id = '2' ; sig_time = 'BL'; 
+
+# 
+cluster_id = '3' ; sig_time = 'V08';top_paths = 50
+#'  @param metric
+metric='logFC';metric='NES';
+
+#' decide on pathways to keep 
+get_top_per_clust<-function(gse_compare_all_vis){
+
+  top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
+    gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
+    gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
+    gse_cluster_1<-gse_all_cls[[sig_time]]
+
+    paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)][1:top_paths]
+    #paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff]
+    paths1_sig_top<-na.omit(paths1_sig_top) # only plot top 
+    return(paths1_sig_top)
 
 
-gse_cluster_1<-gse_all_cls[[sig_clust]]
-paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff]
-length(paths1_sig)
-gse_compare_cl
-
-clust_nams<-names(gse_compare_cl@geneClusters)
-names(gse_compare_cl)
-# by cluster 
-#c('1', '2', '3')
-log_fcs_all_clusts<-lapply(c(1,2,3),function(clust_id){
-
-        gene_list_cluster_1<-gse_compare_cl@geneClusters[[clust_id]]
-        gse_cluster_1<-gse_all_cls[[clust_id]]
-        paths<-gse_cluster_1$Description
-        # filter the significant? 
-        genes_in_path<-strsplit(gse_cluster_1$core_enrichment, '/')
-
-        # logfc per pathway 
-        log_fcs<-lapply(genes_in_path,function(genes){
-                return(mean(gene_list_cluster_1[genes], na.rm=TRUE))
-
-        } )
-        log_fcs_vec<-as.data.frame(unlist(log_fcs))
-        
-        print(length(paths))
-        log_fcs_vec$Description<-unlist(paths)
-       # print(rownames(log_fcs_vec))
-        return(log_fcs_vec)
+  })
+  return(top_clust)
+ 
 }
-)
+
+top_sig_all_clusts<-get_top_per_clust(gse_compare_all_vis)
 
 
-merged_df<-Reduce(function(x, y) merge(x, y,  by='Description', all=TRUE), log_fcs_all_clusts)
-rownames(merged_df)<-merged_df$Description; merged_df$Description=NULL
-colnames(merged_df)
-colnames(merged_df)<-clust_nams
-merged_df2<-merged_df
-merged_df2[merged_df2==NA]<-0
+    gse_compare_cl<-gse_compare_all_vis[[cluster_id]]
+    gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
+    gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
+    gse_cluster_1<-gse_all_cls[[sig_time]]
+
+    paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)][1:top_paths]
+    paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff]
+    paths1_sig_top<-na.omit(paths1_sig_top) # only plot top 
+    paths1_sig_top
+
+
+    # get a merged df per cluster 
+
+    log_fcs_all_clusts_list<-get_log_fcs(geneClusters, gse_all_cls )
+    merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_clusts_list,metric )
+
+
+
+
+
+
+
+
+
+logFC_merged_df2<-merged_df_lfc
+logFC_merged_df2[logFC_merged_df2==NA]<-0
 #merged_df2<-na.omit(merged_df)
 #merged_df2<-merged_df
-rownames(merged_df2) %in% paths1_sig
-merged_df2<-merged_df2[rownames(merged_df2) %in% paths1_sig,]
+rownames(logFC_merged_df2)
+logFC_merged_df2<-logFC_merged_df2[rownames(logFC_merged_df2) %in% paths1_sig_top,]
+print(logFC_merged_df2)
+graphics.off()
 
-fname= paste0(enrich_compare_path,'cl_',cluster_id, p.adjust_cutoff, '_heatmap.png')
+fname= paste0(enrich_compare_path,'cl_',cluster_id, padjust_cutoff,'_' , metric,'_heatmap.png')
 jpeg(fname, width=10*100, height=15*100, res=150)
-
-pheatmap(as.matrix(merged_df2))
+pheatmap(as.matrix(logFC_merged_df2))
 dev.off()
+logFC_merged_df2
 
-
-paths
-unlist(log_fcs)
 
 gse_compare_visit_res_t_sub
 

@@ -3,8 +3,13 @@
 
 ### Complex heatmap 
 
-library('ComplexHeatmap')
-plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
+  suppressPackageStartupMessages(library(ComplexHeatmap))
+  
+  suppressPackageStartupMessages(library(circlize))
+   suppressPackageStartupMessages(library('EnhancedVolcano'))
+
+
+  plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                        cluster_cols=FALSE, order_by_hm='COHORT', sel_samples){
   
   
@@ -50,7 +55,6 @@ plot_heatmap<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TR
   cluster_cols=cluster_cols
   hm_scaled
   #jpeg(fname, width=2000, height=1500, res=200)
-  library(ggplot2)
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
@@ -162,7 +166,6 @@ create_heatmap_proteins<-function(hm,se_filt, fname,coldata_to_plot=c()){
 
 
 
-library('EnhancedVolcano')
 
 
 plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj', FCcutoff=0.1,pCutoff=10e-2){
@@ -240,8 +243,6 @@ plotVolcano_proteins<-function(results_de, se_filt, title='', xlim=NULL, lab=NUL
 }
 
 
-library(ComplexHeatmap)
-library(circlize)
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
@@ -294,7 +295,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   ### SCALE!! 
   hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
   #jpeg(fname, width=2000, height=1500, res=200)
-  library(ggplot2)
   if(process_mirnas){
     lab=rownames(rowData(vsd_filt_genes)) }else{
       lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}

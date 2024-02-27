@@ -30,7 +30,6 @@ source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 
 
 
-DIFF_VAR = 'NP2PTOT_LOG'
 VISIT_COMP='BL'
 VISIT_COMP='V08'
 
@@ -46,11 +45,14 @@ VISIT_COMP='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
 TISSUE='Plasma'
+DIFF_VAR = 'moca'
+#DIFF_VAR = 'NP2PTOT_LOG'
 
 process_mirnas=FALSE
 
 formula_deseq_format='all' # so far we only run all for mirnas 
 formula_deseq_format='n' # so far we only run all for mirnas 
+ONT='BP'
 
 for (cell_corr_deseq in c(TRUE, FALSE)){
 

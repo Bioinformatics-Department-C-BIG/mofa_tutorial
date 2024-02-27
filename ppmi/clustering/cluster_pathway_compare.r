@@ -16,7 +16,7 @@ clust_id = '1'
 #clust_id = '3'
 
 
-
+# GSE compare holds all the 
 gse_compare_df<-as.data.frame(gse_compare)
 gse_compare_sig<-gse_compare_df[gse_compare_df$p.adjust<0.05,]
 
@@ -52,6 +52,8 @@ write.csv(gse_compare_sig_inter_pvals,paste0(enrich_compare_path, paste0(clust_c
 
 
 print(gse_compare_sig_inter_pvals)
+
+
 
 
 

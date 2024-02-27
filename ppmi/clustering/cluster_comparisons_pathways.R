@@ -71,7 +71,7 @@ union_all_clusts=list() # holds the union of pathways of all time points for eac
 
 
 
-gse_compare_all_vis
+
 for (cluster_id in clusters_indices){
 
       enrich_compare_path=paste0(deseq_params_all, '/enr/',formula_deseq_format,'/', prefix, enrich_params, cluster_id, 'time')
@@ -125,11 +125,7 @@ padjust_cutoff = 0.001
 cluster_id = '2' ; sig_time = 'BL'; 
 
 # 
-cluster_id = '3' ; sig_time = 'V08';top_paths = 50
-#'  @param metric
-metric='logFC';metric='NES';
 
-#' decide on pathways to keep 
 get_top_per_clust<-function(gse_compare_all_vis){
 
   top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
@@ -147,48 +143,81 @@ get_top_per_clust<-function(gse_compare_all_vis){
   return(top_clust)
  
 }
+cluster_id = '2' ; sig_time = 'V08';top_paths = 25
+#'  @param metric
+
+metric='logFC';
+
+
+gse_compare_cl=gse_compare_all_vis[[3]]
+#' decide on pathways to keep 
+
+
 
 top_sig_all_clusts<-get_top_per_clust(gse_compare_all_vis)
+top_sig_all_clusts<-unlist(top_sig_all_clusts)
+metric = 'logFC'
+metric='NES';
+# holds all timepoints all, clusters 
+log_fcs_all_tps_all_clusts<-lapply(gse_compare_all_vis, function(gse_compare_cl){
+  #' @param 
+  #' @param
+  #' gse_compare_cl<-[[cluster_id]]
+  #' @return merged_df_lfc a dataframe with logFC/NES for all timepoints (n paths x n timepoints)
+  gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
 
+  log_fcs_all_tps_list<-get_log_fcs(gse_all_cls )
+  
+  merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) )
 
-    gse_compare_cl<-gse_compare_all_vis[[cluster_id]]
-    gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
-    gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
-    gse_cluster_1<-gse_all_cls[[sig_time]]
+  return(merged_df_lfc)
+})
 
-    paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)][1:top_paths]
-    paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff]
-    paths1_sig_top<-na.omit(paths1_sig_top) # only plot top 
-    paths1_sig_top
-
-
-    # get a merged df per cluster 
-
-    log_fcs_all_clusts_list<-get_log_fcs(geneClusters, gse_all_cls )
-    merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_clusts_list,metric )
-
-
-
-
-
-
+which_n<-log_fcs_all_tps_list[[2]]$Description =='inflammatory response'
+log_fcs_all_tps_list[[2]][which_n,]
 
 
 
-logFC_merged_df2<-merged_df_lfc
-logFC_merged_df2[logFC_merged_df2==NA]<-0
-#merged_df2<-na.omit(merged_df)
-#merged_df2<-merged_df
-rownames(logFC_merged_df2)
-logFC_merged_df2<-logFC_merged_df2[rownames(logFC_merged_df2) %in% paths1_sig_top,]
-print(logFC_merged_df2)
+which_n<-log_fcs_all_tps_all_clusts[[1]]$Description =='natural killer cell mediated cytotoxicity'
+log_fcs_all_tps_all_clusts[[1]][which_n,]
+
+log_fcs_all_tps_all_clusts<-lapply(1:length(log_fcs_all_tps_all_clusts), function(i){
+  x = log_fcs_all_tps_all_clusts[[i]]
+  list_names<-names(log_fcs_all_tps_all_clusts)
+  colnames(x)<-paste0(colnames(x), '_', list_names[[i]]) 
+  colnames(x)[1]<-'Description'
+  return(x)
+}
+)
+
+
+
+# merge all dfs for all clusters
+merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Description', all=TRUE), log_fcs_all_tps_all_clusts)
+
+
+# get a merged df per cluster 
+
+
+merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_clusts_list,metric )
+
+
+
+logFC_merged_df2<-merged_df_all_tps_all_clusts
+logFC_merged_df2[is.na(logFC_merged_df2)]<-0
+
+logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all_clusts,]
+
+rownames(logFC_merged_df2)<-logFC_merged_df2$Description
+logFC_merged_df2$Description<-NULL
 graphics.off()
-
-fname= paste0(enrich_compare_path,'cl_',cluster_id, padjust_cutoff,'_' , metric,'_heatmap.png')
-jpeg(fname, width=10*100, height=15*100, res=150)
-pheatmap(as.matrix(logFC_merged_df2))
+rownames(logFC_merged_df2)
+fname= paste0(enrich_compare_path,'clall_', padjust_cutoff,'_' , metric,'_heatmap.png')
+jpeg(fname, width=15*100, height=15*100, res=200)
+ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
+    column_split = rep(1:3, each=3))
 dev.off()
-logFC_merged_df2
+
 
 
 gse_compare_visit_res_t_sub

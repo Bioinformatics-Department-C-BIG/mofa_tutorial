@@ -1,7 +1,7 @@
 
 
 # Cluster profiler enrichment analysis utils
-get_log_fcs<-function(geneClusters, gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc'){
+get_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc'){
     # for a set of gene lists and their logFCs 
     # calculate average logFC
     #' @param gse_all_cls the gse_compare list of results
@@ -50,24 +50,29 @@ get_log_fcs<-function(geneClusters, gse_all_cls, clust_names = c('BL', 'V06', 'V
 
    
 
-    get_pathway_metrics_df<-function(log_fcs_all_clusts_list, metric){
+    get_pathway_metrics_df<-function(log_fcs_all_clusts_list,clust_names,  metric='NES' ){
     #'
+    #' creates a merged result for all time points for a clusts 
+    #' merges by pathway
+    #' @param log_fcs_all_clusts_list holds all time ponts list of gse results 
     #' @param
-    #' @param
+    #' 
 
 
       log_fcs_all_clusts_list_nes = lapply(log_fcs_all_clusts_list, function(x1){
         x1[,c('Description', metric)]
-    })
+      })
 
-
-
+  
+      # merge time points 
       merged_df<-Reduce(function(x, y) merge(x, y,  by='Description', all=TRUE), log_fcs_all_clusts_list_nes)
-      rownames(merged_df)<-merged_df$Description; merged_df$Description=NULL
-      colnames(merged_df)<-clust_names
+      #rownames(merged_df)<-merged_df$Description; merged_df$Description=NULL
+      colnames(merged_df)<-c('Description' ,clust_names)
 
       return(merged_df)
 
 
 }
+
+merged_df
 

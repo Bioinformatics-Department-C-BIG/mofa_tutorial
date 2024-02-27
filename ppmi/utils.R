@@ -321,6 +321,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TR
   #deseq2Results<-results(deseq2Data)
   # important: contrast_order will define the order for deseq comparisons
   # and will affect the log2FC directions 
+# design <- model.matrix(~0+AGE_AT_VISIT+SEX+COHORT )
+
   deseq2Results <- results(deseq2Data, contrast=c("COHORT",contrast_order))
 
   deseq2ResDF <- as.data.frame(deseq2Results)
@@ -733,7 +735,10 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   gene_list_ord=gene_list
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
+
+
   gse=run_enrich_gene_list(gene_list, results_file)
+  
  
   return(gse)
 }
@@ -755,15 +760,23 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
     #results_file
 
 
-  gse_full <- clusterProfiler::gseGO(gene_list, 
-                                     ont=ONT, 
-                                     keyType = 'ENSEMBL', 
-                                     OrgDb = 'org.Hs.eg.db', 
-                                     pvalueCutoff  = pvalueCutoff  )
+  if (!file.exists(paste0(results_file, '.Rds'))){
+    
+      gse_full <- clusterProfiler::gseGO(gene_list, 
+                                        ont=ONT, 
+                                        keyType = 'ENSEMBL', 
+                                        OrgDb = 'org.Hs.eg.db', 
+                                        pvalueCutoff  = pvalueCutoff  )
+      
+      
   
-  
+
+  }else{
+      print('loading file')
+      gse_full = loadRDS(paste0(results_file, '.Rds'))
+  }
   gse = write_filter_gse_results(gse_full, results_file, pvalueCutoff)
-  
+
   gse = dplyr::filter(gse_full, p.adjust < pvalueCutoff_sig)
     if  (dim(gse)[1]>2 ){
       # check if the enrichment returned more than one resulting paths before plotting!
@@ -1005,8 +1018,15 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
     if (dim(r_p$data)[1]>0){
       r_p
       ggsave(paste0(results_file, '_ridge_', N_RIDGE, '.jpeg'), width=8, height=8)
+
+
+
       
     }
+    # only run these for gsea?
+
+
+
   }
   
   
@@ -1037,13 +1057,21 @@ run_enrichment_plots<-function(gse, results_file,N_EMAP=25, N_DOT=15, N_TREE=16,
                       showCategory=N_NET, 
                       foldChange =  geneList)
     
-    p2_net
     show(p2_net)
-    #graphics.off()
     if (is.numeric(N_NET)){write_n=N_NET}
     unlist(strsplit('all', '',1))[[1]]
 
     ggsave(paste0(results_file, '_gc_', unlist(strsplit(node_label, ''))[[1]], '_',write_n, '.jpeg'), width=20, height=20)
+
+
+  # also heatplot if the genelist is available
+  p2 <- heatplot(gse_x, foldChange=geneList, showCategory=15)
+  show(p2)
+  print('heatplot')
+  ggsave(paste0(results_file, '_hp_',write_n, '.jpeg'), width=20, height=6)
+
+
+
   }else{
     p1_net <- cnetplot(gse_x)
     show(p1_net)

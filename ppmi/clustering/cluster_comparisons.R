@@ -368,7 +368,7 @@ length(deseq_params)
 order_by_metric='log2pval';order_by_metric_s='log2p'
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
-ONT='MF'
+
 pvalueCutoff_sig=0.05
 enrich_params<-paste0(ONT, order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))
@@ -382,7 +382,8 @@ if (!process_mirnas){
 
 gse_all_clusters=list()
 
-
+force_gse=FALSE # SET to true to rerun plots 
+#clusters_names
  for (cluster_id_num in 1:length(clusters_names)){
 
       print(paste('cluster:',cluster_id_num))
@@ -404,10 +405,10 @@ gse_all_clusters=list()
       gse_file<-paste0(results_file_cluster, '.Rds')
 
      # if (TRUE){
-      if (!file.exists(gse_file)){
+      if (!file.exists(gse_file) | force_gse){
 
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
-          N_EMAP=30 , N_NET=10)
+          N_EMAP=30 , N_NET=10, force_gse=FALSE)
           saveRDS(gse1,gse_file )
           gse_all_clusters[[cluster_id_name]]<- gse1
 
@@ -470,7 +471,7 @@ if (!file.exists(gse_compare_file) | force_compare){
 }
 
 
-force_compare_all_options=FALSE
+force_compare_all_options=TRUE
 if (force_compare_all_options | !knitr_mode){
 
     
@@ -542,6 +543,10 @@ lapply(filt_clusts_all, function(filt_clusts){
 
 
  # nolint
+
+
+
+
 
 
 

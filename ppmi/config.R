@@ -11,7 +11,7 @@ MIN_COUNT_G=100
 MIN_COUNT_M=10
 
 
-TOP_GN=0.10
+TOP_GN=0.20
 #TOP_MN=0.75
 TOP_MN=0.50 # this is called inside mofa so check if it is the same as the mofa config... 
 
@@ -48,7 +48,7 @@ sel_subcoh=FALSE
 sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 sel_subcoh=TRUE
 sel_subcoh=c('INEXPD');
-cell_corr_deseq=TRUE
+#cell_corr_deseq=TRUE
 
 #sel_subcoh=c('INEXPD',  'INEXLRRK2', 'INEXSNCA');
 

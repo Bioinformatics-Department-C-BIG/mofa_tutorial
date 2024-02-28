@@ -231,6 +231,8 @@ dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/'
 dir.create(deseq_params, recursive = TRUE)
 dir.create(cluster_params_dir, recursive = TRUE)
 
+
+
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
 
 
@@ -365,15 +367,12 @@ length(deseq_params)
 
 
 
-order_by_metric='log2pval';order_by_metric_s='log2p'
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
 
 pvalueCutoff_sig=0.05
 enrich_params<-paste0(ONT, order_by_metric_s)
 dir.create(paste0(deseq_params, '/enr/'))
-
-deseq_params
 enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
 
 # run enrichment only for RNAs 
@@ -471,8 +470,8 @@ if (!file.exists(gse_compare_file) | force_compare){
 }
 
 
-force_compare_all_options=TRUE
-if (force_compare_all_options | !knitr_mode){
+force_compare_plot_all_options=TRUE
+if (force_compare_plot_all_options | !knitr_mode){
 
     
 # Subset the comparisons and plot different versions 
@@ -480,7 +479,7 @@ filt_clusts_all<-list( c('1','1_2', '1_3', '2', '3'), # unique in 1
                         c('3','3_1', '3_2', '1', '2'), # unique in 3
                         c('1','2','3'), 
                         c('1','2','3', '1_2_3')) # just compare with controls 
-
+filt_clusts_all = filt_clusts_all[c(3,4)]
 lapply(filt_clusts_all, function(filt_clusts){
         # subset and compare 
         # subset 
@@ -494,8 +493,8 @@ lapply(filt_clusts_all, function(filt_clusts){
           dplyr::filter(Cluster %in% filt_clusts)
 
 
-          plot_enrich_compare(gse_compare_sub,paste0(enrich_compare_path), N_EMAP = 60,
-          N_DOT=8,N_DOT_U = 20, pvalueCutoff_sig = pvalueCutoff_sig)
+          plot_enrich_compare(gse_compare_sub,paste0(enrich_compare_path), N_EMAP = 25,
+          N_DOT=10,N_DOT_U = 10, pvalueCutoff_sig = pvalueCutoff_sig)
         }
       
 )

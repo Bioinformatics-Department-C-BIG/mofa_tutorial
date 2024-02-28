@@ -1,28 +1,38 @@
+
+
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
 
 #Apply to current combinations 
-# 
+# Clust comparisons for RNA/mirna
+
+# Enrichment settings for RNA/miRNA
+order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
+pvalueCutoff_sig=0.05
+
+
 
 clusters_indices=c('1','2','3')
-
 
     ### Cluster compare by visit ### 
     # 1. load all gene lists again
     # deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
-
+#formula_deseq_format
   if (!cell_corr_deseq){
     formula_deseq_format=''
   }
 
     times_sel<-c('BL', 'V06', 'V08')
     gse_compare_all_vis <-list()
+     cluster_id='1'
 
+
+    force_compare_time=FALSE
     for (cluster_id in clusters_indices){
 
       # cluster compare all visits together  
-    
-      deseq_all_times<-vector("list", length = 3)
+    #print(colnames(deseq2ResDF_time))
+     # deseq_all_times<-vector("list", length = 3)
 
       deseq_all_times<-sapply(times_sel, function(VISIT){
         deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
@@ -35,9 +45,9 @@ clusters_indices=c('1','2','3')
       )
 
       # Cluster compare for each cluster - compare the time points 
-      dir.create(paste0(deseq_params_all, '/enr/', formula_deseq_format))
-      enrich_compare_path=paste0(deseq_params_all, '/enr/', formula_deseq_format, '/', prefix, enrich_params, cluster_id, 'time')
-      if (!file.exists(paste0(enrich_compare_path, '.Rds' ))){
+      dir.create(paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format), recursive = TRUE)
+      enrich_compare_path=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params, cluster_id, 'time')
+      if (!file.exists(paste0(enrich_compare_path, '.Rds' )) | force_compare_time){
      # if (TRUE){
 
       
@@ -45,10 +55,11 @@ clusters_indices=c('1','2','3')
                                         fun = "gseGO", 
                                         OrgDb='org.Hs.eg.db', 
                                         ont=ONT, 
-                                        keyType = 'ENSEMBL') 
+                                        keyType = 'ENSEMBL', 
+                                        pvalueCutoff=1)  # allow them all in to get log2FC for all paths 
 
 
-            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id), N_EMAP = 80, N_DOT=5)
+            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id), N_EMAP = 60, N_DOT=7, N_DOT_U=10)
 
             saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
 
@@ -58,7 +69,7 @@ clusters_indices=c('1','2','3')
             }
   }
 
-
+# TODO: load one with pvaluecutoff 1 and one with 0.05 
 
 
 
@@ -69,15 +80,14 @@ clusters_indices=c('1','2','3')
 intersection_all_clusts=list()  # holds the intersection of pathways of all time points for each cluster  - length: nclusters 
 union_all_clusts=list() # holds the union of pathways of all time points for each cluster  - length: nclusters 
 
-
-
-
 for (cluster_id in clusters_indices){
 
-      enrich_compare_path=paste0(deseq_params_all, '/enr/',formula_deseq_format,'/', prefix, enrich_params, cluster_id, 'time')
+      enrich_compare_path=paste0(deseq_params_all, '/all_time/enr/',formula_deseq_format,'/', prefix, enrich_params, cluster_id, 'time')
 
       # Print each visit 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
+      # todo: FILTER by pvalue gse_compare_visit_res
+
       gse_compare_visit_res_t<-split(gse_compare_visit_res$Description,  gse_compare_visit_res$Cluster) # split by visit
       gse_compare_visit_res_t_sub<-gse_compare_visit_res_t 
 
@@ -97,13 +107,8 @@ for (cluster_id in clusters_indices){
       create_venn(venn_list = gse_compare_visit_res_t_sub, fname_venn =fname_venn,main =paste0( 'Pathways by visit, cluster: ', cluster_id  ))
 
 
-
-
 }
 
-formula_deseq_format
-# TODO: get the 
-colnames(gse_compare@compareClusterResult)
 # [1] "Cluster"         "ID"              "Description"     "setSize"
 # [5] "enrichmentScore" "NES"             "pvalue"          "p.adjust"
 # [9] "qvalue"          "rank"            "leading_edge"    "core_enrichment"
@@ -112,10 +117,7 @@ colnames(gse_compare@compareClusterResult)
 
 
 # split for all clusters
-
-
 cluster_id = '2'
-
 sig_clust = 'V08'
 padjust_cutoff = 0.05
 padjust_cutoff = 0.001
@@ -134,7 +136,7 @@ get_top_per_clust<-function(gse_compare_all_vis){
     gse_cluster_1<-gse_all_cls[[sig_time]]
 
     paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)][1:top_paths]
-    #paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff]
+    #paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff] # also cut with padjusted? 
     paths1_sig_top<-na.omit(paths1_sig_top) # only plot top 
     return(paths1_sig_top)
 
@@ -143,22 +145,20 @@ get_top_per_clust<-function(gse_compare_all_vis){
   return(top_clust)
  
 }
-cluster_id = '2' ; sig_time = 'V08';top_paths = 25
+cluster_id = '2' ; sig_time = 'V08';top_paths = 12
 #'  @param metric
 
 metric='logFC';
-
-
-gse_compare_cl=gse_compare_all_vis[[3]]
+gse_compare_cl=gse_compare_all_vis[[1]]
 #' decide on pathways to keep 
-
-
-
 top_sig_all_clusts<-get_top_per_clust(gse_compare_all_vis)
 top_sig_all_clusts<-unlist(top_sig_all_clusts)
-metric = 'logFC'
 metric='NES';
+metric = 'logFC'
+
 # holds all timepoints all, clusters 
+#
+padjust_hm<-0.05
 log_fcs_all_tps_all_clusts<-lapply(gse_compare_all_vis, function(gse_compare_cl){
   #' @param 
   #' @param
@@ -166,20 +166,17 @@ log_fcs_all_tps_all_clusts<-lapply(gse_compare_all_vis, function(gse_compare_cl)
   #' @return merged_df_lfc a dataframe with logFC/NES for all timepoints (n paths x n timepoints)
   gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
 
-  log_fcs_all_tps_list<-get_log_fcs(gse_all_cls )
+  log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls ) # calculates the average logFC per pathway
   
-  merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) )
+
+  merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) , padjust_cutoff = padjust_hm)
 
   return(merged_df_lfc)
 })
 
-which_n<-log_fcs_all_tps_list[[2]]$Description =='inflammatory response'
-log_fcs_all_tps_list[[2]][which_n,]
 
-
-
-which_n<-log_fcs_all_tps_all_clusts[[1]]$Description =='natural killer cell mediated cytotoxicity'
-log_fcs_all_tps_all_clusts[[1]][which_n,]
+#which_n<-log_fcs_all_tps_list[[3]]$Description =='natural killer cell mediated cytotoxicity'
+#log_fcs_all_tps_list[[3]][which_n,]
 
 log_fcs_all_tps_all_clusts<-lapply(1:length(log_fcs_all_tps_all_clusts), function(i){
   x = log_fcs_all_tps_all_clusts[[i]]
@@ -199,7 +196,6 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 # get a merged df per cluster 
 
 
-merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_clusts_list,metric )
 
 
 
@@ -211,16 +207,21 @@ logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all
 rownames(logFC_merged_df2)<-logFC_merged_df2$Description
 logFC_merged_df2$Description<-NULL
 graphics.off()
-rownames(logFC_merged_df2)
-fname= paste0(enrich_compare_path,'clall_', padjust_cutoff,'_' , metric,'_heatmap.png')
+
+enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
+enrich_compare_path_all_clusts
+
+fname= paste0(enrich_compare_path_all_clusts,'clall_',padjust_hm,'_' , metric, top_paths,'_heatmap.png')
+fname
 jpeg(fname, width=15*100, height=15*100, res=200)
 ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
     column_split = rep(1:3, each=3))
+  #  title = paste(metric, 'p-adj:', padjust_hm))
 dev.off()
 
 
 
-gse_compare_visit_res_t_sub
+
 
 
 
@@ -295,7 +296,7 @@ sel_t<-'V08'
 # check Swhat is in V08 only AND in the unique of the union of all times
 for (cluster_id in clusters_indices){
 
-      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+      enrich_compare_path=paste0(deseq_params_all, '/all_time/enr/', prefix, enrich_params, cluster_id, 'time')
 
 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult

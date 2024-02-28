@@ -44,7 +44,7 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-VISIT=c('V04')
+VISIT=c('V08')
 #process_mirnas=FALSE
 #TISSUE='CSF'
 
@@ -63,7 +63,6 @@ if (NORMALIZED){
 }
 in_file_original
 
-outdir<-outdir_orig
 
 #### Read in 
 prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
@@ -138,7 +137,6 @@ tmp<- assays(se_filt)[[1]]
 ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
 
 ### TODO: filter before normalization!!! 
-tmp
 
 normalized_data<-justvsn(tmp)
 vsn::meanSdPlot(normalized_data)
@@ -176,9 +174,6 @@ dev.off()
 
 
 
-
-
-
 #### save all and load 
 ##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
 datalist=list( vsn_mat, se_filt) # save the vsn summarized experiment and the raw summarized experiment 
@@ -201,7 +196,7 @@ if (!run_vsn){
 }
 
 
-highly_variable_proteins_outfile
+
 
 
 

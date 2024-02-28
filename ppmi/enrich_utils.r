@@ -1,7 +1,7 @@
 
 
 # Cluster profiler enrichment analysis utils
-get_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc'){
+calculate_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc'){
     # for a set of gene lists and their logFCs 
     # calculate average logFC
     #' @param gse_all_cls the gse_compare list of results
@@ -30,7 +30,7 @@ get_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric=
 
         #print(length(paths))
         log_fcs_vec$Description<-unlist(paths)
-        log_fcs_vec$NES<-gse_cluster_1$NES
+        log_fcs_vec<- cbind(log_fcs_vec, gse_cluster_1)
 
        # print(rownames(log_fcs_vec))
         return(log_fcs_vec)
@@ -50,17 +50,19 @@ get_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric=
 
    
 
-    get_pathway_metrics_df<-function(log_fcs_all_clusts_list,clust_names,  metric='NES' ){
+    get_pathway_metrics_df<-function(log_fcs_all_clusts_list,clust_names,  metric='NES',padjust_cutoff=0.05 ){
     #'
     #' creates a merged result for all time points for a clusts 
     #' merges by pathway
     #' @param log_fcs_all_clusts_list holds all time ponts list of gse results 
     #' @param
     #' 
-
+  #log_fcs_all_clusts_list = log_fcs_all_tps_list
 
       log_fcs_all_clusts_list_nes = lapply(log_fcs_all_clusts_list, function(x1){
-        x1[,c('Description', metric)]
+        x2<-  x1[x1$p.adjust<padjust_cutoff,]
+
+        x2[,c('Description', metric)]
       })
 
   
@@ -74,5 +76,5 @@ get_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric=
 
 }
 
-merged_df
+
 

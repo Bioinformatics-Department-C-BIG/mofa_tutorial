@@ -50,9 +50,10 @@ DIFF_VAR = 'NP2PTOT_LOG'
 
 process_mirnas=FALSE
 
-formula_deseq_format='n' # so far we only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
-cell_corr_deseq=FALSE;
+formula_deseq_format='n' # so far we only run all for mirnas 
+
+cell_corr_deseq=TRUE;
 
 ONT='BP'
 
@@ -90,5 +91,7 @@ for (cell_corr_deseq in c( FALSE)){
 ## Add future scales 
 
 # Run the proteins too 
+
+
 
 

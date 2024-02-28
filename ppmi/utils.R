@@ -881,20 +881,20 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   gse_compare=dplyr::filter(gse_compare, p.adjust < pvalueCutoff_sig)
 
   # list of output files 
-  dt_path = paste0(enrich_compare_path, 'dt','.jpeg' )
-  dt_u_path = paste0(enrich_compare_path, 'dt_u','.jpeg' )
+  dt_path = paste0(enrich_compare_path, 'dt',N_DOT,'.jpeg' ); wh_dot<-c(12,16)
+  dt_u_path = paste0(enrich_compare_path, 'dt_u',N_DOT_U,'.jpeg' );wh_dot_u<-c(7,10)
   emap_path = paste0(enrich_compare_path, 'emap',N_EMAP,'.jpeg' )
   cnet_path = paste0(enrich_compare_path, 'cnet.jpeg' )
   
   # Dotplot - signed and unsigned
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   ggsave(dt_path, plot=dot_comp,
-         dpi=250, width=12, height=16, 
+         dpi=250, width=wh_dot[1], height=wh_dot[2], 
   )
 
    dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
   ggsave(dt_u_path, plot=dot_comp,
-         dpi=250, width=9, height=16, 
+         dpi=250, width=wh_dot_u[1], height=wh_dot_u[2], 
   )
   
    
@@ -905,7 +905,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(emap_path, plot=emap_comp,
-         dpi=200, width=10, height=10, units='in')
+         dpi=250, width=10, height=10, units='in')
   
 
 

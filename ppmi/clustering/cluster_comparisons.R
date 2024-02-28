@@ -470,7 +470,7 @@ if (!file.exists(gse_compare_file) | force_compare){
 }
 
 
-force_compare_plot_all_options=TRUE
+force_compare_plot_all_options=FALSE
 if (force_compare_plot_all_options | !knitr_mode){
 
     

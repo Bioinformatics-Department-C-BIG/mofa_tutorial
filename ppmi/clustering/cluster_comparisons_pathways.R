@@ -7,6 +7,10 @@ source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 # Clust comparisons for RNA/mirna
 
 # Enrichment settings for RNA/miRNA
+
+
+
+
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 pvalueCutoff_sig=0.05
 
@@ -158,7 +162,7 @@ metric = 'logFC'
 
 # holds all timepoints all, clusters 
 #
-padjust_hm<-0.05
+padjust_hm<-1
 log_fcs_all_tps_all_clusts<-lapply(gse_compare_all_vis, function(gse_compare_cl){
   #' @param 
   #' @param
@@ -198,11 +202,24 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 
 
 
+gse_pathways_fs_list<-get_pathways_for_factors(outdir,fact, pvalueCutoff_mofa_factors=0.05, top_ps=30)
+gse_pathways_df<-do.call(rbind,gse_pathways_fs_list)
 
 logFC_merged_df2<-merged_df_all_tps_all_clusts
 logFC_merged_df2[is.na(logFC_merged_df2)]<-0
 
-logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all_clusts,]
+
+#logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all_clusts,] # plot top significant or top mofa
+if (use_top_mofa){
+
+}
+
+logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% unlist(gse_pathways_fs_list),] # plot top significant or top mofa
+logFC_merged_df2
+length(gse_pathways_fs_list[[2]])
+gse_pathways_fs_list[[2]]
+
+
 
 rownames(logFC_merged_df2)<-logFC_merged_df2$Description
 logFC_merged_df2$Description<-NULL
@@ -211,12 +228,29 @@ graphics.off()
 enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
 enrich_compare_path_all_clusts
 
-fname= paste0(enrich_compare_path_all_clusts,'clall_',padjust_hm,'_' , metric, top_paths,'_heatmap.png')
-fname
-jpeg(fname, width=15*100, height=15*100, res=200)
-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
-    column_split = rep(1:3, each=3))
+
+
+fname= paste0(enrich_compare_path_all_clusts,'cl_all_',padjust_hm,'_' , metric, top_paths,'_heatmap.png')
+Reduce(intersect,gse_pathways_fs_list)
+
+gse_pathways_unlist<-gse_pathways_fs_list %>% dplyr::bind_rows()
+gse_pathways_df_factor<-gse_pathways_df$factor[match(rownames(logFC_merged_df2), (gse_pathways_df$Description)) ]
+gse_pathways_df_factor
+row_ha = rowAnnotation(factor=as.factor(gse_pathways_df_factor))
+# TODO: add the median NP2PTOT? 
+# TODO: add time point 6 
+#met %>% group_by(NP2PTOT_LOG_clust)%>%
+#summarise_at(c('NP2PTOT_BL','NP2PTOT'),median)
+
+
+
+
+jpeg(fname, width=20*100, height=15*100, res=200)
+ht<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
+    column_split = rep(1:3, each=3), 
+     right_annotation = row_ha)
   #  title = paste(metric, 'p-adj:', padjust_hm))
+draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
 dev.off()
 
 
@@ -360,7 +394,6 @@ for (cluster_id in clusters_indices){
 }
 
 
-gse_clust[grep('lipo', gse_clust$Description ),'Description']
 
 
 gse_clust_pathway[[1]]

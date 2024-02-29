@@ -77,6 +77,41 @@ correlate_factors_with_covariates_categ<-function(MOFAobject, covariates){
 
 
 
+
+correlate_factors_categorical<-function(y, MOFAobject){
+  ##  obtain correlations of factors with the clinical clusters 
+  #' explicitly done for categorical variables
+  #' probably the same as above? 
+  #' @param name 
+  #'
+  #'
+  #'
+  #'
+    clust_name=paste0(y)
+   # clust_name='Biological.group'
+ 
+      sm<-MOFA2::samples_metadata(MOFAobject)
+      if (clust_name %in% colnames(sm)){
+        covariates=MOFA2::samples_metadata(MOFAobject)[,clust_name ]
+        Z <- get_factors(MOFAobject, factors = 1:5, 
+                         as.data.frame = FALSE)
+
+        Z <- do.call(rbind, Z)
+
+        #psych::corr.test(Z, covariates, method = "pearson", 
+        #                  adjust = "BH")
+        y_pvals<-apply(Z, 2, function(z) {
+          kruskal.test(z,covariates)$p.value })
+        y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
+        #y_pvals<-y_pvals<0.05
+        # do Kruskal Wallis test to see whether or not there is statistically significant difference between three or more groups
+
+        return(y_pvals)
+      }
+  }
+
+
+
 run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   ### Run mofa and write to file
   #'

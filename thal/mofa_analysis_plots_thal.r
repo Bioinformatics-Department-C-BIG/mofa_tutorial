@@ -18,12 +18,8 @@ library('cluster')
 
 y='Biological.group'
 
-factors_to_clust<-which(all_fs_diff[ ,y]);print(factors_to_clust)
-sm<-samples_metadata(MOFAobjectPD)
-all_clusts<-colnames(sm)[grep('clust',colnames(sm))]
-cluster_samples_mofa=TRUE
-set.seed(123)
-set.seed(1239)
+sm<-samples_metadata(MOFAobject)
+
 
 Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
 as.data.frame(Z)
@@ -96,14 +92,20 @@ MOFAobjectPatients
 # FACTORS COVARIATES 
 met<-samples_metadata(MOFAobjectPatients)
 MOFAobjectPD_sel@samples_metadata$Biological.group<-as.factor(MOFAobjectPD_sel@samples_metadata$Biological.group)
+graphics.off()
 fname<-'factors_covariates_all'
 plot_covars_mofa(selected_covars = colnames(sm),fname,plot,factors=c(1:N_FACTORS)[-c(6)],
-                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel, alpha=0.05 )
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobject, alpha=0.05 )
+
+MOFAobjectPatients@samples_metadata$Biological.group<-as.numeric(as.factor(MOFAobjectPatients@samples_metadata$Biological.group))
 
 fname<-'factors_covariates_patients'
-MOFAobjectPatients@samples_metadata$Biological.group<-as.numeric(as.factor(MOFAobjectPatients@samples_metadata$Biological.group))
-MOFAobjectPatients@samples_metadata$Biological.group
 plot_covars_mofa(selected_covars = colnames(sm),fname,plot,factors=c(1:N_FACTORS),
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPatients, alpha=0.05 )
+
+
+fname<-'factors_covariates_patients_cor'
+plot_covars_mofa(selected_covars = colnames(sm),fname,plot='r',factors=c(1:N_FACTORS),
                     labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPatients, alpha=0.05 )
 
 
@@ -153,8 +155,10 @@ MOFAobject@samples_metadata$tau_asyn
 #3 categorical
 sm$Biological.group
 clinical_scales_cat<-c('Biological.group', 'SEX')
+correlate_factors_categorical('Biological.group')
 
-  cors_kruskal<-sapply(clinical_scales_cat, correlate_factors_categorical)
+
+  cors_kruskal<-sapply(clinical_scales_cat, correlate_factors_categorical, MOFAobject=MOFAobject)
   rownames(cors_kruskal)<-1:N_FACTORS
   kw_cors<-format(cors_kruskal, digits=1)<0.05
   factors_cor_with_clusters<-kw_cors
@@ -182,7 +186,7 @@ MOFAobjectPD_sel
 sel_factors_conf<-get_factors_for_scales(variables_clinical)
 
 graphics.off()
-colnames(estimations)
+
 
 
 ###########################################################
@@ -279,7 +283,7 @@ graphics.off()
 colnames(estimations)
 
 
-  
+which.min(Z[,5])
   
 ### wHICH VARIABLES correlate with which factors 
 cors<-as.data.frame(cors)
@@ -302,7 +306,7 @@ x_cor_t=2
 i=111
 #### Factor plots ####
 #### MANUAL
-fs=c(4,5)
+fs=c(1,4)
 total_vols<-colnames(sm)[grep('Total|Number',colnames(sm))]
 MOFAobject@samples_metadata[,total_vols] <-sapply(MOFAobject@samples_metadata[,total_vols], as.numeric)
 MOFAobjectPatients@samples_metadata$FIB.4<-as.numeric(MOFAobjectPatients@samples_metadata$FIB.4)
@@ -312,7 +316,8 @@ MOFAobjectPatients@samples_metadata$APRI
 color_by='Biological.group'
 fss<-paste(fs,sep='_',collapse='-')
 dir.create(file.path(paste0(outdir,'/factor_plots/2D/')), showWarnings = FALSE)
-FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by, x_cor_t,'.png')
+FNAME
+FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by,'.png')
      pf<-plot_factors(MOFAobject,  factors = fs, color_by = color_by, show_missing = FALSE )
                       
  ggsave(FNAME,plot=pf, width = 3, height=3, dpi=200)
@@ -339,6 +344,16 @@ pf<-plot_factors(MOFAobjectPatients,  factors = fs, shape_by=shape_by,color_by =
  FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by,shape_by, 'only_patients','.png')
 pf<-plot_factors(MOFAobjectPatients,  factors = fs, shape_by=shape_by,color_by = color_by, show_missing = FALSE )              
  ggsave(FNAME,plot=pf, width = 3, height=3, dpi=200)
+
+  color_by = 'FERITIN'; shape_by='Biological.group'
+ FNAME<-paste0(outdir,'/factor_plots/2D/', 'plot_factors_variate_2D',fss,'_',color_by,shape_by, 'only_patients','.png')
+pf<-plot_factors(MOFAobjectPatients,  factors = fs, shape_by=shape_by,color_by = color_by, show_missing = FALSE )              
+ ggsave(FNAME,plot=pf, width = 3, height=3, dpi=200)
+
+
+
+
+
 
 
 
@@ -668,9 +683,11 @@ views=names(MOFAobject@data)
             print('rna')
             p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
           }
-          
+          width=3
           if (views[i]=='metabolites'){
            p_ws<-p_ws+ theme(axis.text.y = element_text(size=7))
+            width=5
+           
           }
           
           #scale_colour_(values=cols) 
@@ -678,7 +695,7 @@ views=names(MOFAobject@data)
           try(  
           ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
                  plot=p_ws, 
-                 width = 5, height=(nFeatures/5)+0.5, dpi=300)
+                 width = width, height=(nFeatures/5)+0.5, dpi=300)
           )
           
           
@@ -725,6 +742,7 @@ graphics.off()
 MOFAobject_hm=MOFAobjectPD
 
 ii=3
+fps=N_FACTORS
 for (i in seq(1,2)){
   for (ii in seq(1,fps)){
     #print(paste('Modality', i, 'factor', ii))

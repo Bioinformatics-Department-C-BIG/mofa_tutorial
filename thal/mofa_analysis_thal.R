@@ -28,7 +28,7 @@ library('factoextra')
 source(paste0(script_dir,'ppmi/mofa_utils.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
-outdir
+
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
@@ -43,7 +43,7 @@ sm<-samples_metadata(MOFAobject)
 patno_event_ids=samples_metadata(MOFAobject)$PATNO_EVENT_ID
 
 sm<-samples_metadata(MOFAobject);
-
+MOFAobject@samples_metadata<-preprocess_clinical_vars(MOFAobject)
 # diff variables holds the vars with the future changes 
 
 
@@ -70,58 +70,6 @@ sm<-samples_metadata(MOFAobject)
 sm
 
 
-
-
-
-
-correlate_factors_categorical<-function(y, MOFAobject=MOFAobject){
-  ##  obtain correlations of factors with the clinical clusters 
-  #' explicitly done for categorical variables
-  #' @param name 
-  #'
-  #'
-  #'
-  #'
-    clust_name=paste0(y)
-    #clust_name='Biological.group'
- 
-      sm<-samples_metadata(MOFAobject)
-      if (clust_name %in% colnames(sm)){
-        covariates=samples_metadata(MOFAobject)[,clust_name ]
-        Z <- get_factors(MOFAobject, factors = 1:5, 
-                         as.data.frame = FALSE)
-
-        Z <- do.call(rbind, Z)
-
-        #psych::corr.test(Z, covariates, method = "pearson", 
-        #                  adjust = "BH")
-        y_pvals<-apply(Z, 2, function(z) {
-          kruskal.test(z,covariates)$p.value })
-        y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
-        #y_pvals<-y_pvals<0.05
-        # do Kruskal Wallis test to see whether or not there is statistically significant difference between three or more groups
-
-        return(y_pvals)
-      }
-  }
-  
-
-# TODO: padjust
-clinical_scales=c('NP2PTOT', 'NP3TOT', 'SCAU_TOT', 'RBD_TOT', 'updrs3_score', 'updrs2_score')
-add_clinical_clusters=FALSE
-
-if (add_clinical_clusters){
-  
-  cors_kruskal<-sapply(clinical_scales, correlate_factors_categorical)
-  rownames(cors_kruskal)<-1:N_FACTORS
-  kw_cors<-format(cors_kruskal, digits=1)<0.05
-  factors_cor_with_clusters<-kw_cors
-  #library(pheatmap)
-  pheatmap(-log10(cors_kruskal))
-  #}
-  
-  #)
-}
 
 
 
@@ -182,6 +130,22 @@ if (file.exists(covars_f_pearson_pd) & !(force_cors)){
 
 ################ DEFINE SETS OF FACTORS WITH DIFFERENT NAMES  ####
 # corelate categorical covariates
+
+cors
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

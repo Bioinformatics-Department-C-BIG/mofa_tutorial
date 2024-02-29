@@ -6,18 +6,17 @@ library("vsn")
 
 
 source(paste0('ppmi/setup_os.R'))
-
+source(paste0('ppmi/config.R'));deseq_file;
 source(paste0('ppmi/mofa_utils.R'))
 source(paste0('ppmi/utils.R'))
 
-
-source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+output_files<-paste0(data_dir, '/ppmi/output/')
 
 data_dir
 
 # samples on columns 
 metabolites<-read.csv(paste0(data_dir,'/thal/ThalCypris_peak_metaboanalyst_2022_corrected_all_sample_cells - Copy.csv'), row.names = 1)
-metabolites
+
 
 mir_data<-read.csv(paste0(data_dir,'/thal/mature_counts.csv'), row.names = 1)
 
@@ -134,7 +133,7 @@ prot_data_m<-as.matrix(prot_data_m)
 colnames(prot_data_m)
 #which(prot_data_m < 0)
 prot_data_m <- replace(prot_data_m, which(prot_data_m < 0), NA)
-prot_data_m
+
 jpeg(paste0(data_dir, '/thal/plots/hist_proteins_proc.jpeg'), units='in', height=10, width = 10, res=150)
 hist(prot_data_m)
 dev.off()
@@ -145,10 +144,16 @@ dev.off()
 #View(as.matrix(assay(vsd)))
 
 ### 
+jpeg(paste0(data_dir, '/thal/plots/hist_proteins_metabolites.jpeg'), units='in', height=10, width = 10, res=150)
 hist( as.matrix(metabolites_log))
+dev.off()
 
+jpeg(paste0(data_dir, '/thal/plots/hist_mirnas.jpeg'), units='in', height=10, width = 10, res=150)
 hist( as.matrix(assay(vsd)))
+dev.off()
+jpeg(paste0(data_dir, '/thal/plots/hist_mirnas_log.jpeg'), units='in', height=10, width = 10, res=150)
 hist( mirna_log)
+dev.off()
 
 ####### HIGHLY VARIABLE######## 
 most_var<-0.3
@@ -156,13 +161,15 @@ mirna_log_most_var =selectMostVariable(mirna_log, most_var)
 metabolites_log_most_var =selectMostVariable(metabolites_log, most_var)
 prot_data_m_most_var <- selectMostVariable(as.matrix(prot_data_m), most_var)
 
-
+remove_outlier<-which(colnames(mirna_log_most_var)=='PS37')
 
 ######## run mofa ########################
-data_full<-list(miRNA=as.matrix(mirna_log_most_var), 
-                metabolites = as.matrix(metabolites_log_most_var), 
-                proteomics=as.matrix(prot_data_m_most_var))
+data_full<-list(miRNA=as.matrix(mirna_log_most_var)[, -remove_outlier], 
+                metabolites = as.matrix(metabolites_log_most_var)[, -remove_outlier], 
+                proteomics=as.matrix(prot_data_m_most_var)[, -remove_outlier])
 
+
+n=length(colnames(data_full[[1]]))
 
 dim(mirna_log_most_var)
 
@@ -171,16 +178,21 @@ colnames(metabolites_log_most_var)
 
 scale_views=TRUE
 
-outdir<-paste0(data_dir,'/thal/output/three_mod/')
 N_FACTORS=5
+outdir<-paste0(data_dir,'/thal/output/three_mod_',n, '_',N_FACTORS, '/')
+
 MOFAobject<-create_mofa(data_full)
-MOFAobject<-run_mofa_wrapper( MOFAobject, outdir=outdir, N_FACTORS =N_FACTORS, force=TRUE)
+MOFAobject<-run_mofa_wrapper( MOFAobject, outdir=outdir, N_FACTORS =N_FACTORS, force=FALSE)
 
-samplesheet$sample<-samplesheet$Sample.name
 
-samples_metadata(MOFAobject)<-samplesheet
 MOFAobject
-outdir
+samplesheet_ro<-samplesheet[-remove_outlier,]
+dim(samplesheet_ro)
+samplesheet_ro$sample<-samplesheet_ro$Sample.name
+
+samples_metadata(MOFAobject)<-samplesheet_ro
+
+
 
 
 

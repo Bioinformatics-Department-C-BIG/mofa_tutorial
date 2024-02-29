@@ -83,7 +83,7 @@ param_str_m
 #### specific to rna seq 
 output_1=paste0(data_dir, '/ppmi/output/')
 output_files_orig<-output_1
-output_files<-output_1
+output_files<-paste0(data_dir, '/ppmi/output/')
 outdir_orig<-paste0(data_dir,'/ppmi/plots/')
 
 

@@ -264,13 +264,12 @@ write_vars_output<-function(MOFAobject, vars_by_factor){
               ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
   
   p3<-plot_variance_explained(MOFAobject, max_r2=20)+
-    theme(axis.text.x=element_text(size=20), 
+    theme(axis.text.x=element_text(size=20,angle=90), 
           axis.text.y=element_text(size=20))
   ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
-         width = 5, height=N_FACTORS/2,
+         width = 5, height=3+N_FACTORS/2,
          dpi=100)
 }
-
 
 
 

@@ -1347,6 +1347,21 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
 }
 
 
+selectMostVariable<-function(vsn_mat,q){
+  #' selects rows ie. genes must be rows
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var, na.rm=TRUE)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat);dim(vsn_mat)
+  if (is.null(topx)){print('Warning: zero most variable features returned')}
+  return(vsn_mat)
+
+  }
+
 prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 

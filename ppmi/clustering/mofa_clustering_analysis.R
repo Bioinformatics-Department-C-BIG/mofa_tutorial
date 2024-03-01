@@ -11,6 +11,7 @@ library('factoextra')
 # cluster samples here 
 
 
+PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_metadata$COHORT_DEFINITION=='Parkinson\'s Disease']
 
 MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 

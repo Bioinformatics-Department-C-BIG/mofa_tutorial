@@ -26,7 +26,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 
 
@@ -95,4 +95,12 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 # Run the proteins too 
 # Concatenates all time points 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_all_time.R'))
+
+
+
+
+
+
+
+
 

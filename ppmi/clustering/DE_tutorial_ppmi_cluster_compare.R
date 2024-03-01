@@ -96,6 +96,7 @@ se_filt_all[[1]]$COHORT
 
 
 for (cluster_id in 1:3){
+      print(cluster_id)
 
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
         outdir_s_p
@@ -389,3 +390,4 @@ for (cluster_id in 1:3){
 
 
 }
+

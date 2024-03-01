@@ -161,6 +161,18 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 
 
 ################### HEATMAPS  ############
+# Heatmaps of the vs values OR the log2FC values per cluster 
+
+
+
+
+
+
+
+
+
+
+
 
 #ARRANGE
 #df_ord<-df[order(df$COHORT),]
@@ -244,6 +256,14 @@ dev.off()
 my_pheatmap
 fname
 #ggsave(fname, my_pheatmap, dpi = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
+
+
+
+
+
+
+
+
 
 
 

@@ -2,18 +2,31 @@
 
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
+  get_de_results_path<-function(deseq_params_all=deseq_params_all, VISIT=VISIT, formula_deseq_format=formula_deseq_format,  prefix=prefix, cluster_id=cluster_id ){
+    #' returns the deseq results pathway for 
+    #' @param VISIT
+    #' @param formula_deseq_format
+    #' @param prefix
+    #' @param cluster_id
+    #' 
+            return(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'))
+        }
 
 #Apply to current combinations 
 # Clust comparisons for RNA/mirna
 
-# Enrichment settings for RNA/miRNA
+#' Enrichment settings for RNA/miRNA
+#' This script takes the enrichment analysis results for all time points and concatenates them 
+#' 
+#' @value Produces a heatmap
+#' Compares the de pathways 
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 pvalueCutoff_sig=0.05
 
 
 
 clusters_indices=c('1','2','3')
-
+dir.create(deseq_params_all, '/all_time/enr/')
     ### Cluster compare by visit ### 
     # 1. load all gene lists again
     # deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
@@ -35,7 +48,11 @@ clusters_indices=c('1','2','3')
      # deseq_all_times<-vector("list", length = 3)
 
       deseq_all_times<-sapply(times_sel, function(VISIT){
-        deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
+        
+        # deseq_params_all already loaded in cluster comparison script 
+        de_results_path<-get_de_results_path(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id)
+
+        deseq2ResDF_time<-read.csv(de_results_path, row.names=1) 
         
         gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
         names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
@@ -158,7 +175,7 @@ metric = 'logFC'
 
 # holds all timepoints all, clusters 
 #
-padjust_hm<-0.05
+padjust_hm<-1
 log_fcs_all_tps_all_clusts<-lapply(gse_compare_all_vis, function(gse_compare_cl){
   #' @param 
   #' @param
@@ -213,7 +230,7 @@ enrich_compare_path_all_clusts
 
 fname= paste0(enrich_compare_path_all_clusts,'clall_',padjust_hm,'_' , metric, top_paths,'_heatmap.png')
 fname
-jpeg(fname, width=15*100, height=15*100, res=200)
+png(fname, width=15*100, height=15*100, res=200)
 ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
     column_split = rep(1:3, each=3))
   #  title = paste(metric, 'p-adj:', padjust_hm))
@@ -318,7 +335,7 @@ for (cluster_id in clusters_indices){
 gse_compare_visit_res_t
 
 
-
+enrich_compare_path
 
 
 

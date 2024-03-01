@@ -74,7 +74,7 @@ for (cell_corr_deseq in c( FALSE)){
 
 # after running all time points run time comparisons 
 
-source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways.R'))
+source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time.R'))
 
 
 
@@ -83,7 +83,7 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways.R'))
 # TISSUE=Plasma, CSF
  for (VISIT_COMP in c('V06', 'BL', 'V04', 'V08')){
 #for (VISIT_COMP in c( 'V04', 'V08')){
-
+    # compares each time point separatelty 
     source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
     # ensure that the settings were not updated elsewhere
     print(paste0(TISSUE,' VISIT: ', VISIT_COMP ))
@@ -93,5 +93,6 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways.R'))
 ## Add future scales 
 
 # Run the proteins too 
-
+# Concatenates all time points 
+source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_all_time.R'))
 

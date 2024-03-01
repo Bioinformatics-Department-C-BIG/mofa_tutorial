@@ -226,7 +226,8 @@ if (!cell_corr_deseq){
 }
 
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
-deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/')
+# since we are at a specific visit 
+deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/') 
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/'))
 dir.create(deseq_params, recursive = TRUE)
 dir.create(cluster_params_dir, recursive = TRUE)
@@ -249,9 +250,11 @@ clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
     se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id)]} )
 
 
-names(se_filt_all)<-clusters_names
+  names(se_filt_all)<-clusters_names
 
 se_filt_all<-lapply(se_filt_all, function(se_clust){
+    # temporarily replaces the COHORT value to be the cluster group 
+    # might be better to use a different name and either use cohort or clusters 
     if (length(unique(na.omit(se_clust$COHORT)))==1){
     se_clust$COHORT<-se_clust$kmeans_grouping}
     return(se_clust)
@@ -260,7 +263,6 @@ se_filt_all<-lapply(se_filt_all, function(se_clust){
 )
 
 # todo remove the ones below
-se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
 
 
 
@@ -301,10 +303,11 @@ for (cluster_id_num in 1:length(clusters_names)){
           deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
+        # Also write the parameters of deseq
         file.create(de_params_file)
 
 
-        # Volcano
+        # 3. Volcano
         pvol<-plotVolcano(  deseq2ResDF, se_clust, title=paste0('Cluster ', cluster_id_name), xlim=c(-1.1,1.1),
             lab=deseq2ResDF$GENE_SYMBOL)
 
@@ -314,7 +317,6 @@ for (cluster_id_num in 1:length(clusters_names)){
 
 
 
-        # Also write the parameters of deseq
 
   }
 
@@ -324,12 +326,9 @@ for (cluster_id_num in 1:length(clusters_names)){
   deseq_all[[cluster_id_name]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
-
-de_file
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
 
-deseq_all_names
 
 
 #### 1. Venn from significant 
@@ -407,7 +406,7 @@ force_gse=FALSE # SET to true to rerun plots
       if (!file.exists(gse_file) | force_gse){
 
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
-          N_EMAP=30 , N_NET=10, force_gse=FALSE)
+          N_EMAP=30 , N_NET=10)
           saveRDS(gse1,gse_file )
           gse_all_clusters[[cluster_id_name]]<- gse1
 
@@ -470,7 +469,7 @@ if (!file.exists(gse_compare_file) | force_compare){
 }
 
 
-force_compare_plot_all_options=TRUE
+force_compare_plot_all_options=FALSE
 if (force_compare_plot_all_options | !knitr_mode){
 
     
@@ -525,23 +524,6 @@ lapply(filt_clusts_all, function(filt_clusts){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- # nolint
 
 
 

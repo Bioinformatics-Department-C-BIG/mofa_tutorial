@@ -244,7 +244,7 @@ samples_metadata(MOFAobject)[selected_covars2]
 #}
 
 
-
+#install.packages('reshape')
   ############## Create boxplots by group #### 
   col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
   col_data_melt<-reshape::melt(col_data, id=c('PATNO', clust_name))

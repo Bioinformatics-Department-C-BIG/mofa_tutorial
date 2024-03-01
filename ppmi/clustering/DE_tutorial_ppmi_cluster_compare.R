@@ -107,11 +107,11 @@ for (cluster_id in 1:3){
         #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
-    #print(results_de['IL5',])
-    #print(results_de['MMP9',])
 
 
     dir.create(outdir_s_p)
+   # prefix
+    write.csv(results_de, paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv'))
 
     ns_full<-table(se_filt_clust$COHORT_DEFINITION)
     ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
@@ -150,7 +150,7 @@ dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enrich)
+outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot/'); dir.create(outdir_s_p_enrich)
 #write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
@@ -439,16 +439,18 @@ gene_list_ord
 pvalueCutoff=1
 #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
 
-
-
+outdir_s_p_enrich
+use_pval
+dir.create(outdir_s_p, '/enr_prot/', recursive=TRUE)
 outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
                                '_anova_', run_anova, 'pval_', use_pval )
-res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
+res_path<-paste0(outdir_s_p_enrich_file)
 
 
 #if (file.exists(res_path)){
 #  gse_protein_full=loadRDS(res_path)
-#}else{
+#}else{run_ORA
+run_ORA=formula_deseq
 
 # TODO: run per cluster 
 # Input:  gene_list_ord per cluster (coming from DE limma results )
@@ -474,6 +476,7 @@ res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
           use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
           
         }
+        
   saveRDS(gse_protein_full, res_path)
   
   

@@ -45,8 +45,8 @@ VISIT_COMP='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
 TISSUE='Plasma'
-DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
+DIFF_VAR = 'NP2PTOT_LOG'
 
 process_mirnas=FALSE
 
@@ -81,6 +81,7 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 # for proteins only 
 # TODO: change the config to allow plasma or csf 
 # TISSUE=Plasma, CSF
+#prefix='prot_'
  for (VISIT_COMP in c('V06', 'BL', 'V04', 'V08')){
 #for (VISIT_COMP in c( 'V04', 'V08')){
     # compares each time point separatelty 
@@ -94,7 +95,12 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 
 # Run the proteins too 
 # Concatenates all time points 
-source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_all_time.R'))
+source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
+
+
+
+
+
 
 
 

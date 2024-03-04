@@ -185,9 +185,8 @@ top_paths_all_factors$Description
 metric='logFC';
 gse_compare_cl=gse_compare_all_vis[[1]]
 #' decide on pathways to keep 
-top_sig_all_clusts
+
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
-top_sig_all_clusts<-unlist(top_sig_all_clusts)
 metric='NES';
 metric = 'logFC'
 
@@ -235,7 +234,7 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 length(all_sig_all_clusts)
 
 logFC_merged_df2<-merged_df_all_tps_all_clusts
-use_mofa_paths = FALSE
+use_mofa_paths = TRUE
 
 if (use_mofa_paths){
   top_paths = 30
@@ -255,7 +254,6 @@ if (use_mofa_paths){
   selected_paths<-top_sig_all_clusts
 }
 
-length(top_sig_all_clusts)
 # filter top 
   logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
 

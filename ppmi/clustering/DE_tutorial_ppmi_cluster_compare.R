@@ -16,6 +16,8 @@ process_mirnas=FALSE
 
 #VISIT_COMP='V06' # set elsewhere
 VISIT = VISIT_COMP
+#VISIT_COMP = 'V08'
+
 source(paste0(script_dir, 'ppmi/config.R' ))
 source(paste0(script_dir,'ppmi/utils.R'))
 
@@ -81,7 +83,7 @@ de_all_groups_proteins<-list()
 
 length(se_filt_all)
 
-for (cluster_id in 1:3){
+for (cluster_id in c(1:3)){
 
   se_clusters
   se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id,'HC')
@@ -94,8 +96,9 @@ protein_matrix<-protein_matrices[[1]]
 se_filt_all[[1]]$COHORT
 
 
+prefix='prot_'
 
-for (cluster_id in 1:3){
+for (cluster_id in  c(1:3)){
       print(cluster_id)
 
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
@@ -112,7 +115,9 @@ for (cluster_id in 1:3){
 
     dir.create(outdir_s_p)
    # prefix
-    write.csv(results_de, paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv'))
+   rfile<-paste0(outdir_s_p, prefix,TISSUE, '_de_cl',cluster_id,  '_results.csv')
+   print(rfile)
+    write.csv(results_de, rfile)
 
     ns_full<-table(se_filt_clust$COHORT_DEFINITION)
     ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
@@ -133,7 +138,6 @@ for (cluster_id in 1:3){
                     subtitle=ns
     )
     pvol
-    prefix='prot_'
     fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, TISSUE,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
@@ -151,7 +155,7 @@ dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot/'); dir.create(outdir_s_p_enrich)
+outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', TISSUE, '/'); dir.create(outdir_s_p_enrich)
 #write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
@@ -348,7 +352,7 @@ for (cluster_id in 1:3){
 
       outdir_s_p_enrich
       use_pval
-      dir.create(outdir_s_p, '/enr_prot/', recursive=TRUE)
+      dir.create(paste0(outdir_s_p, '/enr_prot', TISSUE,'/'), recursive=TRUE)
       outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
                                     '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id )
       res_path<-paste0(outdir_s_p_enrich_file)
@@ -359,7 +363,7 @@ for (cluster_id in 1:3){
       #  gse_protein_full=loadRDS(res_path)
       #}else{run_ORA
       run_ORA=TRUE
-      force_gse=TRUE
+      force_gse=FALSE
       # TODO: run per cluster 
       # Input:  gene_list_ord per cluster (coming from DE limma results )
       # 

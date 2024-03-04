@@ -197,8 +197,45 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
   
 }
 
+#pvalueCutoff=0.05
+
+factor=2
+top_p=20
+
+get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20){
+  # mofa enrichment files - read the csv file
+  # ONT - added now
+  
+
+    results_file_mofa = paste0(outdir, '/enrichment/gsego_',ONT, factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
+    results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_', pvalueCutoff, '.csv')
+
+    top_pathways<-read.csv(paste0(results_file_mofa ))
+    top_pathways<-top_pathways[, c('Description', 'p.adjust')]
+    top_pathways<-top_pathways %>% arrange(p.adjust) %>% as.data.frame()
+    top_pathways <- top_pathways[1:top_p,]
+    top_pathways$factor<-factor
+    return(top_pathways)
+    
+  
+
+}
 
 
+concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20){
+    #'
+    #' @param factors 
+    #' @param top_p: top number of pathways to extract
+    #'  
+
+
+    
+    top_pathways_all_factors<-lapply(factors, 
+      get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p)
+
+    top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
+    return(top_pathways_all_factors)
+}
 
 
 #object=MOFAobjectPD

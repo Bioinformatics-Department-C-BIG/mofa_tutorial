@@ -35,7 +35,7 @@ sel_group=4
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
 clust_vars<-c('NP2PTOT_LOG', 'moca')
-clust_name
+
 facet_rows = 2
 
 

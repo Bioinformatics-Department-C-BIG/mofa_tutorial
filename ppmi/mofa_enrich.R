@@ -57,6 +57,7 @@ sel_factors
 vars_by_factor_all$r2_per_factor$group1[sel_factors,]
 
 ONT='BP'
+# todo: add ONT in results file settings 
 
 get_ranked_gene_list_mofa<-function(view, factor){
         f1<-get_weights(MOFAobject, view=view, factor=factor)
@@ -126,7 +127,7 @@ if (TRUE){
                             
                           }else{
                           gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
-                          results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
+                          results_file_mofa = paste0(outdir, '/enrichment/gsego_', ONT, factor,'_' )
                           
                           gse_mofa<-run_enrich_gene_list(gene_list_ord, results_file=results_file_mofa )
                                
@@ -175,7 +176,7 @@ if (TRUE){
                          # TODO: DECIDE on the number
                           if (run_ORA){
                             names(gene_list_ord) = gsub('_proteomics.*', '',names(gene_list_ord))
-                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',factor,'_')
+                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',ONT, factor,'_')
                             dir.create(paste0(outdir, '/enrichment/', tissue,'/ora/'), recursive = TRUE)
                             
                             
@@ -287,7 +288,7 @@ dir.create(paste0(outdir, '/enrichment/'))
 for (factor in sel_factors_to_p){
           #' Need to create this to convert mir object
           #'
-        results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+        results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_'ONT,factor,'_' )
         suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
         gse_mofa_mirs=list_mirs[[factor]]
         
@@ -321,7 +322,7 @@ if (run_plots){
           list1_genes
           
           for (factor in sel_factors_to_p){
-            results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+            results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',ONT, factor,'_')
             suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
             gse_mofa_mirs=list_mirs[[factor]]
             

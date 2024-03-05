@@ -336,7 +336,6 @@ MOFAobjectPD@samples_metadata$Lymphocytes....
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 fname<-'factors_covariates_broad_PD_all_fs'
-estimations
 names(selected_covars_broad)
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 

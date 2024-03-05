@@ -82,35 +82,25 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
 
     
 
-
+ MOFAobjectPD_sel@samples_metadata$NP3TOT_clust
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
-  #' @param
-  #' 
-  #' 
+  #' @param diff_var: variable to cluster by 
+  #'
+  #'
 
         fact <- get_factors_for_metric(diff_var)
     
-
-
         #print(paste(diff_var,paste(fact, collapse=', ')))
         xname = paste0(diff_var, '_clust')
       if (length(fact) > 0){
-        set.seed(42)
         set.seed(60)
         clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD_sel, centers=k_centers_m,
-         factors=fact, rescale=rescale_option) # Cluster using kmeans
-        clusters_x
-       # if (MOFAobject==1){
-        #  names(clusters_x)<-gsub('\\_.*', '', names(clusters_x))
+             factors=fact, rescale=rescale_option) # Cluster using kmeans
 
-       # }
-
-        
-        clust_ps<-clusters_x;clust_ps
+        clust_ps<-clusters_x;
         MOFAobjectPD_sel@samples_metadata[, xname] = as.factor(clust_ps)
         # TODO: save labels
-
         return(clust_ps)
 
 }}
@@ -131,7 +121,7 @@ write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
 
 
 
-
+names(all_clusts_mofa)
 
 for (diff_var in names(all_clusts_mofa)){
     MOFAobjectPD_sel@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
@@ -149,6 +139,7 @@ for (diff_var in names(all_clusts_mofa)){
 ## Can produce for multiple metrics 
 
 diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
+
                       'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
                       'upsit', 'VLTFRUIT', 'sft', 
                       'stai_state', 'stai_trait', 
@@ -164,4 +155,7 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
           'hvlt_immediaterecall_V12'
 
          )
+
+
+
 

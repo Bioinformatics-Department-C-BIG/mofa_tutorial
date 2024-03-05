@@ -17,7 +17,8 @@ df1 %>% dplyr::arrange(Factor2 )
 paste0(DIFF_VAR,'_BL')
 
  diff_variables_to_p=c( 
-         'NP2PTOT',  'scopa', 'sft',  'moca',
+         'NP2PTOT',
+         'NP3TOT',  'scopa', 'sft',  'moca',
          'Neutrophil.Lymphocyte', 'AGE',
          'duration', 
          # f23
@@ -34,7 +35,7 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca')
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa')
 
 facet_rows = 2
 

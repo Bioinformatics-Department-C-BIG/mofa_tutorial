@@ -8,6 +8,9 @@ suppressWarnings(library(sgof))
 suppressWarnings(library('factoextra'))
 suppressWarnings(library(plyr))
 suppressWarnings(library(dplyr))
+### TODO: move to a utils / preprocessing file because it is used also for proteoomics
+library(SummarizedExperiment)
+
 
 library('WGCNA') # needƒ empiricalBayesLM
 suppressWarnings(library(R.filesets))
@@ -166,8 +169,42 @@ load_se_all_visits<-function(input_file, combined){
   return(se)
 }
 
-### TODO: move to a utils / preprocessing file because it is used also for proteoomics
-library(SummarizedExperiment)
+
+
+
+load_all_se<-function(){
+  #'
+  #' load summarized experiment for rnas and mirnas 
+  #' @param
+  #' @return se_rnas, se_mirnas 
+
+
+      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
+
+
+      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+      if (!base::exists(quote(se_mirs))){
+        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+
+      }
+
+
+      # hist(head(assay(se_mirs_norm),10)[10:50])
+
+      process_mirnas=FALSE
+      source(paste0(script_dir, '/ppmi/config.R'))
+      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+      if (!base::exists(quote(se_rnas))){
+
+        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      }
+
+      return(list(se_rnas, se_mirs))
+
+}
+
+
 
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
@@ -717,8 +754,7 @@ library(ggplot2)
 
 suppressWarnings(library('R.filesets' ))
 library('enrichplot' )
-require(DOSE)
-library('enrichplot')
+
 
 
 #deseq2ResDF
@@ -727,21 +763,63 @@ library('enrichplot')
 
 run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15){
   #'
-  #' Get the ordered list 
-  #' @param deseq2ResDF
+  #' Get the ordered gene list from a deseq object
+  #' @param deseq2ResDF deseq results object 
+  #' @param results_file file to write gsea result 
+  #' @param N_DOT enrichment visualization 
+  #' 
   #' 
   #'
   #deseq2ResDF=deseq2ResDF1
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   gene_list_ord=gene_list
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
-
-
   gse=run_enrich_gene_list(gene_list, results_file)
   
  
   return(gse)
 }
+
+
+
+
+
+ run_enrich_mirnas<-function(gene_list_ord, pvalueCutoff=0.05, test_type='GSEA',top_mirs_ora=20){
+
+
+                  if (test_type=='GSEA'){
+
+                        mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
+                                                            mirna_type = "mature",
+                                                            test_type = "GSEA",
+                                                            species = 'Homo sapiens'                      ,
+                                                            categories = c('miRPathDB_GO_Biological_process_mature'),
+                                                            sig_level=pvalueCutoff)
+
+                        mieaa_return<-mieaa_all_gsea_mofa
+                   }else{
+                          mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = names(gene_list_ord)[1:top_mirs_ora],
+                                                                  mirna_type = "mature",
+                                                                  test_type = "ORA",
+                                                                  species = 'Homo sapiens'                      ,
+                                                                categories = c('Target genes (miRTarBase)'),
+                                                                  sig_level=pvalueCutoff
+                          ) 
+
+                        mieaa_return<-mieaa_all_gsea_mofa_target
+
+
+                        }
+                            
+                              
+                    
+                    return(mieaa_return)
+
+
+
+
+                    }
+
 
 
 

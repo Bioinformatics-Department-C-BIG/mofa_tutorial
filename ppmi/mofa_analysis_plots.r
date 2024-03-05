@@ -86,7 +86,7 @@ if (cluster_samples_mofa){
   if (length(sel_coh)>1){
     #for (k_centers_m in c(6)){
     for (k_centers_m_try in c(3,2)){
-      clusters <- cluster_samples(MOFAobject, k=k_centers_m_try, factors=c(1:15))
+      clusters <- cluster_samples(MOFAobject, k=k_centers_m_try, factors=c(1:N_FACTORS))
     }
     # clusters <- cluster_samples(MOFAobject, k=3, factors=c(3,4))
   }
@@ -171,7 +171,7 @@ biochemical_markers_conf<-c( 'abeta','tau_ab', 'tau_asyn', 'ptau_ab', 'lowput_ra
 
 
 measured_cells
-clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT')
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT', 'NP3TOT_LOG')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
@@ -179,11 +179,11 @@ all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 
                        'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
                          'sft_V12', c(colnames(estimations),measured_cells), 
                          'Multimapped....', 'Uniquely.mapped....')
-all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG',
+all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG','NP3TOT_LOG',
                     'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
 
 biochemical_markers_conf
-variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG')
+variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG', 'NP3TOT_LOG')
    
 sel_factors_conf<-get_factors_for_scales(variables_conf_only_clinical)
 
@@ -222,7 +222,7 @@ plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)
 
 plot='log_pval'
 
-sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa'))
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG'))
 sel_factors_conf
 fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
@@ -269,7 +269,7 @@ all_clin_clusts<-colnames(cors_all_pd)[grep('clin_clust',colnames(cors_all_pd) )
 
 # 2. scales + 3. imaging S
 vars_to_plot=all_diff_variables; 
-all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts, 'NP2PTOT_LOG')
+all_diff_variables_prog<-c(vars_to_plot,'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', all_clin_clusts, 'NP2PTOT_LOG', 'NP3TOT_LOG')
 sm=MOFAobjectPD_sel@samples_metadata
 sel_factors_diff<-get_factors_for_scales(all_diff_variables_prog)
 
@@ -749,26 +749,22 @@ views[i]
 data.frame()
 
 
-#### Load features 
-fs_metadata<-read.csv(paste0(data_dir,'/ppmi/ppmi_data/features_metadata_genes.csv'))
-colnames(fs_metadata)<-c('f', 'feature_id', 'known')
-colnames(fs_metadata)
-fs_metadata$view='RNA'
-fs_met_to_merge<-fs_metadata[,c('feature_id', 'view', 'known'  )]
+# #### Load features 
+# KNOWN GENES
+# fs_metadata<-read.csv(paste0(data_dir,'/ppmi/ppmi_data/features_metadata_genes.csv'))
+# colnames(fs_metadata)<-c('f', 'feature_id', 'known')
+# colnames(fs_metadata)
+# fs_metadata$view='RNA'
+# fs_met_to_merge<-fs_metadata[,c('feature_id', 'view', 'known'  )]
 
-source(paste0(script_dir, 'ppmi/mofa_my_utils.R'))
-p_ws<-plot_top_weights2(MOFAobject_gs,
-                       view = 'RNA',
-                       factor = 14,
-                       nfeatures = 15,     # Top number of features to highlight
-                       scale = F
-)
-p_ws
-# known genes 
-
-tail(MOFAobject_gs@features_metadata$fea)
-
-tail(features_metadata(MOFAobject_gs))
+# source(paste0(script_dir, 'ppmi/mofa_my_utils.R'))
+# p_ws<-plot_top_weights2(MOFAobject_gs,
+#                        view = 'RNA',
+#                        factor = 14,
+#                        nfeatures = 15,     # Top number of features to highlight
+#                        scale = F
+# )
+# p_ws
 
 
 #### 

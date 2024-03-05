@@ -13,9 +13,11 @@ VISIT_COMP='V06'
 TISSUE
 # TODO: run all timepoints!!!
 view=paste0('proteomics_', tolower(TISSUE))
-top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact, view=view, top_fr=0.01   )
+top_fr=0.01
+top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact, view=view, top_fr=top_fr   )
 top_proteins$feature<-gsub(paste0('_',view),'', top_proteins$feature)
 top_proteins$feature
+
 
 
 get_de_proteins_per_tp<-function(VISIT_COMP){
@@ -52,25 +54,66 @@ get_de_proteins_per_tp<-function(VISIT_COMP){
         rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
         de_results_prot_top$X
         colnames(all_clusts_proteins_logFC)<-names(de_all)
-        print(all_clusts_proteins_logFC)
         
         return(all_clusts_proteins_logFC)
 
 }
 
 
+times<-c('BL', 'V06')
+all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp)
+all_clusts_times_logFC_df<-do.call(cbind, all_clusts_proteins_logFC_all_times )
 
-all_clusts_proteins_logFC_all_times<-lapply(c('BL', 'V04', 'V06', 'V08'), get_de_proteins_per_tp)
-all_clusts_proteins_logFC_all_times_df<-do.call(cbind, all_clusts_proteins_logFC_all_times )
+x = all_clusts_times_logFC_df
+get_limits<-function(x){
+        xmax<-max(x)
+        xmin<-min(x)
+        max_all<-max(c(abs(xmax), abs(xmin)))
+        return(c(-max_all, max_all))
+}
 
-VISIT_COMP
-rep(1:3, 4)
+xminxmax<-get_limits(all_clusts_times_logFC_df)
+col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
 
-colnames(all_clusts_proteins_logFC_all_times_df)
-jpeg(paste0(outdir_s_p,'/',TISSUE, '_heatmap_log2FC.jpeg'),  res=200, width=10, height=10, units='in')
-ComplexHeatmap::pheatmap(as.matrix(all_clusts_proteins_logFC_all_times_df), 
- column_split = rep(1:3, 4), )
+colnames(all_clusts_times_logFC_df)
+# add factor annotation 
+
+row_an<-as.factor(top_proteins$Factor[match(rownames(all_clusts_times_logFC_df),top_proteins$feature)])
+row_ha<-rowAnnotation(factor=row_an)
+row_an
+row_ha
+cluster_cols=FALSE
+(top_fr*100)
+jpeg(paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_',top_fr, '_heatmap_log2FC.jpeg'),  res=200, width=6, height=2+(top_fr*500), units='in')
+cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
+ column_split = rep(1:3, length(times)), 
+  col = col_fun, 
+  cluster_cols = cluster_cols,
+  right_annotation=row_ha
+ 
+ )
+ show(cm)
 dev.off()
+graphics.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

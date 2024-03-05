@@ -407,7 +407,7 @@ gse_clust_pathway=list()
 for (cluster_id in clusters_indices){
     print(cluster_id)
 
-      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+      enrich_compare_path=paste0(deseq_params_all, '/enr_' prefix, '/', prefix, enrich_params, cluster_id, 'time')
 
 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult

@@ -239,38 +239,33 @@ lv_to_plot = 'V08'
 to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 lv_to_plot = 'V14'
 
-to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
+to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
 
 
 clust_metric='NP2PTOT_LOG'
 clust_metric='NP2PTOT_LOG'
-clust_metric='moca'
+clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG')
 
-all_fs_diff$updrs2_score_LOG
-df_plot
-cluster_params
-cluster_params_dir
-outdir
+
 
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
-  for (y in to_plot){
+  for (clust_metric in clust_metrics){
+    for (y in to_plot){
 
-    clust_name<-paste0(clust_metric, '_clust')
-    clust_name
-    fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
-    cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
+      clust_name<-paste0(clust_metric, '_clust')
+      fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
+      cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
 
-    fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
-    print(fname)
-    plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
-     add_individual_lines=add_individual_lines, 
-    add_boxplots = TRUE)
-  
-  
-  }
-
-  graphics.off()
+      fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
+      plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
+      add_individual_lines=add_individual_lines, 
+      add_boxplots = TRUE)
     
+    
+    }
+
+    graphics.off()
+  }
 
   
 fname
@@ -282,6 +277,10 @@ fname
 ## CLUSTER TRAJECTORIES ####
 y='NP2PTOT'
 get_clinical_clusters(y)
+
+
+
+
 
 
 

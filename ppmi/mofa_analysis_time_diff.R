@@ -249,7 +249,12 @@ all_diff<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 all_diff_variables<-colnames(sm)[grep('diff', colnames(sm))]
 
-all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3TOT', 'updrs3_score', 'updrs2_score',
+# variables to cluster 
+all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3TOT','NP3TOT_LOG', 'updrs3_score', 'updrs2_score',
+                     'updrs2_score_LOG', 'updrs3_score_LOG', 
+                     'scopa', 'rem', 'upsit', 'moca', 'sft',
+                     'abeta', 'sft_V12')
+all_diff_variables=c('NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3TOT','NP3TOT_LOG', 'updrs3_score', 'updrs2_score',
                      'updrs2_score_LOG', 'updrs3_score_LOG', 
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta', 'sft_V12')

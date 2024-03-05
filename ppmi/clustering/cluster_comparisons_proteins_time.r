@@ -61,6 +61,7 @@ get_de_proteins_per_tp<-function(VISIT_COMP){
 
 
 times<-c('BL', 'V06')
+
 all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp)
 all_clusts_times_logFC_df<-do.call(cbind, all_clusts_proteins_logFC_all_times )
 
@@ -84,7 +85,8 @@ row_an
 row_ha
 cluster_cols=FALSE
 (top_fr*100)
-jpeg(paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_',top_fr, '_heatmap_log2FC.jpeg'),  res=200, width=6, height=2+(top_fr*500), units='in')
+
+jpeg(paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr, '_heatmap_log2FC.jpeg'),  res=200, width=6, height=2+(top_fr*500), units='in')
 cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
  column_split = rep(1:3, length(times)), 
   col = col_fun, 
@@ -95,6 +97,13 @@ cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df),
  show(cm)
 dev.off()
 graphics.off()
+
+
+
+print(rownames(as.matrix(all_clusts_times_logFC_df)))
+write.csv(rownames(as.matrix(all_clusts_times_logFC_df)),paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'prot.csv') )
+
+
 
 
 

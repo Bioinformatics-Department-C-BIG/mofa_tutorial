@@ -151,9 +151,9 @@ TOP_PN=0.9
 
 
 
-
-TISSUE='Plasma'
 TISSUE='CSF'
+TISSUE='Plasma'
+
 
 NA_PERCENT=0.9
 

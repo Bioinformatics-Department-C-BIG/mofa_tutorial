@@ -204,17 +204,16 @@ if (TRUE){
                           }
                   }
                   }
-                    
+                   
       }
   
-  
-  
+
   gene_list_ord
   just_load=FALSE
   sel_factors_to_enrich
 sel_factors_to_enrich = c(1:N_FACTORS)
   ######## MIRNAS ON THEIR OWN
-        for (factor in sel_factors_to_enrich){
+for (factor in sel_factors_to_enrich){
           for (view in c('miRNA')){
             #view='RNA'; factor=3
             print(paste0(view,' ', factor ))
@@ -227,7 +226,7 @@ sel_factors_to_enrich = c(1:N_FACTORS)
               
                     gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
                     gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
-                    rba_mieaa_enrich<-run_enrich_mirnas(gene_list_ord, pvalueCutoff = pvalueCutoff, test_type='GSEA')
+                    mieaa_all_gsea_mofa<-run_enrich_mirnas(gene_list_ord, pvalueCutoff = pvalueCutoff, test_type='GSEA')
                     list_mirs[[factor]]<-mieaa_all_gsea_mofa
                     #list_mirs_target[[factor]]<-mieaa_all_gsea_mofa
             
@@ -268,6 +267,10 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 run_plots=FALSE
 run_plots=TRUE
 sel_factors_to_p
+                
+process_mirnas=TRUE
+process_mofa=TRUE
+
 if (run_plots){
 
           run_ORA=TRUE
@@ -286,28 +289,14 @@ if (run_plots){
             if (!is.null(mieaa_all_gsea)){
                 print(paste('plotting, ',factor))
                 mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
-                mieaa_gsea_1=mieaa_res[[1]]
-                enr_full=mieaa_res[[2]]
-                
-                
+                #mieaa_gsea_1=mieaa_res[[1]] # gsea result # not used anywhere...
+                enr_full=mieaa_res[[2]] 
+                              
                 list_mirs_enrich[[factor]]<-enr_full
-                
-                print(any(enr_full@result$p.adjust<0.05))
-                
-                
                 gse_mofa_sig=write_filter_gse_results(enr_full, results_file_mofa, pvalueCutoff)
                 
-                write.csv(as.data.frame(gse_mofa_sig@result), paste0(results_file_mofa, '.csv'))
-                
-                ### to run mofa results
-                
-                process_mirnas=TRUE
-                process_mofa=TRUE
-                dim(gse_mofa_sig)
-                gse_mofa_sig
-                #& vars_by_factor[,'proteomics'][factor]>1
-                type(gse_mofa_sig)
-                dim(gse_mofa_sig)[1]>4
+                #write.csv(as.data.frame(gse_mofa_sig@result), paste0(results_file_mofa, '.csv'))
+  
                 if  (dim(gse_mofa_sig)[1]>4 ){
                   print(dim(gse_mofa_sig)[1])
                   print(paste(factor,'sig'))

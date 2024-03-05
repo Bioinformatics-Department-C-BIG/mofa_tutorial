@@ -243,7 +243,6 @@ to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
 
 
 clust_metric='NP2PTOT_LOG'
-clust_metric='NP2PTOT_LOG'
 clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG')
 
 

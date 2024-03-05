@@ -54,8 +54,6 @@ cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_
 ## choose if the clu
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
-all_fs_diff[, c('NP2PTOT_LOG', 'updrs2_score_LOG_diff_V12', 'moca')]
-
 ### Select group for plotting
 sel_group=4
 if (length(groups_names(MOFAobject))>1){

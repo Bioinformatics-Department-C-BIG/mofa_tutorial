@@ -45,10 +45,9 @@ VISIT_COMP='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
 TISSUE='Plasma'
-DIFF_VAR = 'moca'
 DIFF_VAR = 'NP2PTOT_LOG'
+DIFF_VAR = 'moca'
 
-process_mirnas=TRUE 
 process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
@@ -58,7 +57,7 @@ cell_corr_deseq=FALSE;
 ONT='BP'
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
-run_all=TRUE 
+run_all=FALSE 
 if (run_all){
 
 for (cell_corr_deseq in c( FALSE)){
@@ -96,6 +95,8 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 
 # Run the proteins too 
 # Concatenates all time points 
+source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
+
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
 
 

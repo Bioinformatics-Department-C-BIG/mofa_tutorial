@@ -171,7 +171,8 @@ biochemical_markers_conf<-c( 'abeta','tau_ab', 'tau_asyn', 'ptau_ab', 'lowput_ra
 
 
 measured_cells
-clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT', 'NP3TOT_LOG')
+#sm$updrs3_score_on
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT', 'NP3TOT_LOG', 'NP3TOT','updrs3_score_on')
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
@@ -179,11 +180,13 @@ all_diff_variables_prog<-c(vars_to_plot, 'AGE', 'SEX', 'PDSTATE', 'PD_MED_USE', 
                        'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocyte', 
                          'sft_V12', c(colnames(estimations),measured_cells), 
                          'Multimapped....', 'Uniquely.mapped....')
-all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG','NP3TOT_LOG',
+all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'Plate', 'NP2PTOT_LOG','NP3TOT_LOG','NP3TOT',
                     'Neutrophil.Lymphocyte', c(colnames(estimations),measured_cells) )
 
 biochemical_markers_conf
-variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG', 'NP3TOT_LOG')
+sm$updrs3_score_on
+variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG', 'NP3TOT_LOG', 
+'updrs3_score_on', 'updrs3_score_on_LOG', 'NP3TOT')
    
 sel_factors_conf<-get_factors_for_scales(variables_conf_only_clinical)
 
@@ -222,8 +225,9 @@ plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)
 
 plot='log_pval'
 
-sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG'))
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG','NP3TOT', 'updrs3_score_on', 'updrs3_score_on_LOG'))
 sel_factors_conf
+sm_pd$updrs3_score_on_LOG
 fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
@@ -247,6 +251,7 @@ fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
 graphics.off()
 
+mofa_multi_to_use
 estim_cors<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
 
 
@@ -470,7 +475,7 @@ graphics.off()
   p1<-p1+theme(axis.text.x=element_text(size=16), 
                axis.title.y=element_text(size=16), 
                axis.text.y=element_text(size=16))
-  plot(p1)
+  p1
   ggsave(paste0(outdir, 'variance_explained_total','.png'),plot=p1, 
          width = 3, height=3, dpi=300)
 #install.packages('psych')
@@ -768,11 +773,35 @@ data.frame()
 
 #### 
 
-rownames(MOFAobject_gs@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject_gs@expectations$W$proteomics_csf))
-rownames(MOFAobject_gs@expectations$W$proteomics_csf)<-gsub('_c', '', rownames(MOFAobject_gs@expectations$W$proteomics_csf))
-rownames(MOFAobject_gs@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', '_p', rownames(MOFAobject_gs@expectations$W$proteomics_plasma))
 
+modify_metadata_for_plotting<-function(MOFAobject){
+  #'
+  #' 
 
+    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject@expectations$W$proteomics_csf))
+    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_c', '', rownames(MOFAobject@expectations$W$proteomics_csf))
+    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', '_p', rownames(MOFAobject@expectations$W$proteomics_plasma))
+    
+    
+    # convert groups to numeric
+    sm<-as.data.frame(MOFAobject@samples_metadata)
+   # sm[,grep('age', colnames(sm))]<-sapply(sm[,grep('age', colnames(sm))], as.numeric)
+
+    MOFAobject@samples_metadata[,grep('age', colnames(sm))]<-sapply(sm[,grep('age', colnames(sm))], as.numeric)
+
+  return(MOFAobject)
+
+}
+
+modify_features_for_plotting<-function(MOFAobject){
+  # modify gene names 
+    ens_ids_full<- features_names(MOFAobject)$RNA
+    ens_ids<-gsub('\\..*', '', ens_ids_full)
+    features_names(MOFAobject)$RNA<-get_symbols_vector(ens_ids)
+    return(MOFAobject)
+
+}
+MOFAobject_gs<-modify_metadata_for_plotting(MOFAobject_gs)
 
 W <- get_weights(MOFAobject_gs, factors = 1, views = 4, 
                  as.data.frame = TRUE)
@@ -861,25 +890,50 @@ views=names(MOFAobject@data)
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
-dim(cors_all_pd)
 cors_heatmap=cors_all_pd
+colnames(cors_all_pd['Factor1',])[cors_all_pd['Factor1',]>2]
 cors_all_pd[3, ]
 graphics.off()
 
-    exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st')
+exclude_vars_rec<-colnames(sm)[grep('REC_ID',colnames(sm))]
+exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st', 'REC_ID',exclude_vars_rec)
+
 MOFAobject_hm=MOFAobjectPD
+MOFAobject_hm<-modify_features_for_plotting(MOFAobject_hm)
+
+#MOFAobject_hm<-modify_metadata_for_plotting(MOFAobject_hm)
+# Modify the mofa object 
+dim(MOFAobject_hm@samples_metadata)
+
+colnames(estimations) %in% colnames(MOFAobject_hm@samples_metadata)
+colnames(estimations) %in% colnames(cors_all_pd)
+
 
 ii=3
-for (i in seq(1,2)){
+# Settings 
+cor_p_T<-0.1
+cor_T<-ifelse(run_mofa_complete,  1.5, 1.3 )
+cor_T
+ii=1
+vps
+
+
+MOFAobject_hm
+MOFAobject_hm@samples_metadata<-MOFAobject_hm@samples_metadata[,!duplicated(colnames(MOFAobject_hm@samples_metadata))]
+i=2
+for (i in seq(1,vps)){
   for (ii in seq(1,fps)){
-    #print(paste('Modality', i, 'factor', ii))
+ #   for (ii in seq(1,1)){
+    print(paste('Modality', i, 'factor', ii))
 
     cluster_rows=TRUE;cluster_cols=TRUE
     
     
     
     ###### Heatmaps 
-    nfs=40
+    
+    nfs=min(round(MOFAobject@dimensions$D[i]*0.05), 30)
+   
     #jpeg(paste0(outdir, 'heatmap/heatmap_',ii,'_',views[i],'_', 'nfs_', nfs, '_cr_',cluster_rows, '.jpeg'), res=150,height=20*nfs, width=20*nfs)
     # Plot heatmaps for each factor only for miRNA 
     
@@ -894,56 +948,73 @@ for (i in seq(1,2)){
     
     
     ns<-dim(MOFAobject_hm@samples_metadata)[1]
-    if (run_mofa_complete){
-      cor_T<-1.5; cor_p_T<-0.1
-      
-    }else{
-      cor_T<-2; cor_p_T<-0.1
-      
-    }
+ 
     rel_cors<-cors_heatmap[ii,][,cors_heatmap[ii,]>cor_T ]
-    rel_cors
+    rel_cors$moca
+    
     # sig holds the names only 
     cors_sig=names(rel_cors); cors_sig
+    # remove some
+   
+
+    names(rel_cors)
     FT=0
     if (length(cors_sig)==0){
       cors_sig=c()
       rel_cors
     } else if (length(cors_sig)>15){
-      FT=15
+      FT=min(c(length(cors_sig), 20))
+      
       # rel_cors_ordered<-rel_cors[order(-rel_cors)][1:7]
       order(-as.matrix(rel_cors))
-       rel_cors_ordered<-rel_cors[ order(-as.matrix(rel_cors)),][1:FT]
-      #rel_cors_ordered<-rel_cors[order(-rel_cors)]
 
-      cors_sig<-names(rel_cors_ordered)
-    }
-
-    cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]; cors_sig
-    cors_sig<-cors_sig[!grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|PAG_', cors_sig)]
+      # order the columns 
+       rel_cors_ordered<-rel_cors[ order(-as.matrix(rel_cors))]
     
+
+      #rel_cors_ordered<-rel_cors[order(-rel_cors)]
+      
+      cors_sig<-names(rel_cors_ordered)
+      cors_sig<-cors_sig[!(cors_sig %in% exclude_vars)]; cors_sig
+      cors_sig<-cors_sig[!grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_', cors_sig)]
+      
+      cors_sig<-cors_sig[1:FT]
+
+
+
+
+    }
+    
+    # Check the numbers in the specific view
+    patients_in_hm<-colnames(mofa_multi_to_use[[i]])[colnames(mofa_multi_to_use[[i]]) %in% MOFAobject_hm@samples_metadata$PATNO_EVENT_ID]
+    patients_in_hm
     plot_heatmap_flag=TRUE
     cors_sig<-cors_sig[cors_sig %in% colnames(MOFAobject_hm@samples_metadata)]
     MOFAobject_hm@samples_metadata[,cors_sig]
-    
-    #is.na(MOFAobject_gs@samples_metadata[,cors_sig])
-
-    ### if the col contains only NA
-    
-    #which(cors_sig_non_na=='PDSTATE')
-    #cors_sig_non_na=cors_sig_non_na[-3]
+   
+    MOFAobject_hm@samples_metadata[,cors_sig]<-sapply(MOFAobject_hm@samples_metadata[,cors_sig], as.numeric)
     if (length(cors_sig)>1){
-      cors_sig_non_na<-names(which( !apply(is.na(MOFAobject_hm@samples_metadata[,cors_sig]),2,any )))
       
+      apply(is.na(MOFAobject_hm@samples_metadata[,cors_sig]),2,any )
+      sm<-MOFAobject_hm@samples_metadata
+      sm_hm<-sm[sm$PATNO_EVENT_ID %in% patients_in_hm,]
+      cors_sig_non_na<-names(which(!(colSums(is.na(sm_hm[,cors_sig]))>NROW(sm_hm)-5) ))
+      
+      MOFAobject_hm@samples_metadata<-MOFAobject_hm@samples_metadata %>% mutate(across(cors_sig, ~replace_na(., mean(., na.rm=TRUE))))
+      # try to see if variance 0 is problematic
+      cors_sig_non_na<-names(which(sapply(sm_hm[,cors_sig_non_na], var)>1))
+      cors_sig_non_na
+      #cors_sig_non_na<-cors_sig_non_na[!cors_sig_non_na %in% c('Neutrophil.Score', 'SITE_V12', 'symptom5_V10', 'symptom5_BL')]
+
     }else{
       cors_sig_non_na=cors_sig 
     }
-    cors_sig_non_na
+length(    cors_sig_non_na)
+
     if( length(cors_sig_non_na)==0){
       cors_sig_non_na=c()
     }
     denoise=FALSE
-    
     #cors_sig_non_na=cors_sig
     groups='all';groups=2; 
     groups=1
@@ -952,40 +1023,49 @@ for (i in seq(1,2)){
                   FT, 'den_', denoise, groups, '.jpeg')
 
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
-    p<-plot_data_heatmap(MOFAobject_hm, 
-                         view = views[i], 
-                         factor =  ii,  
-                         features = nfs,
-                         groups = groups, 
-                         denoise = denoise,
-                         cluster_rows = cluster_rows, 
-                         cluster_cols = cluster_cols,
-                         show_rownames = TRUE, show_colnames = TRUE,
-                         scale = "row",
-                         annotation_samples = cors_sig_non_na,
-                         main=main_t
-                         
-                         
-    )
+    tryCatch({
+      p<-plot_data_heatmap(MOFAobject_hm, 
+                          view = views[i], 
+                          factor =  ii,  
+                          features = nfs,
+                          groups = groups, 
+                          denoise = denoise,
+                          cluster_rows = cluster_rows, 
+                          cluster_cols = cluster_cols,
+                          show_rownames = TRUE, show_colnames = TRUE,
+                          scale = "row",
+                          na_col = "grey90",
+                          annotation_samples = cors_sig_non_na,
+                          main=main_t)
+   
+    p
     #ggsave(hname, plot=p,height=nfs/2, width=(ns+as.numeric(length(cors_sig_non_na) )) )
-    if (run_mofa_complete){
-      width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
-      
-    }else{
-      width=ifelse( length(cors_sig_non_na)> 0,ns/80+6,ns/80+4)
-      
-    }
+        if (run_mofa_complete){
+          width=ifelse( length(cors_sig_non_na)> 0,ns/10+6,ns/10+4)
+          
+        }else{
+          width=ifelse( length(cors_sig_non_na)> 0,ns/80+6,ns/80+4)
+          
+        }
+        
+        ggsave(hname, plot=p,height=nfs/5+2, width=width, dpi=250) 
+ 
     
-    ggsave(hname, plot=p,height=nfs/5+2, width=width, dpi=250) 
-    
-    
-  }
+  }, 
+
+    error = function(e) {
+      an.error.occured <<- TRUE
+    print(e)})
+  
+  
+}
   # top weights
   # concat all 
   
   
-  
-}
+}  
+
+
 
 
 

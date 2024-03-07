@@ -792,7 +792,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
                         mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
                                                             mirna_type = "mature",
                                                             test_type = "GSEA",
-                                                            species = 'Homo sapiens'                      ,
+                                                           species = 'Homo sapiens'                      ,
                                                             categories = c('miRPathDB_GO_Biological_process_mature'),
                                                             sig_level=pvalueCutoff)
 

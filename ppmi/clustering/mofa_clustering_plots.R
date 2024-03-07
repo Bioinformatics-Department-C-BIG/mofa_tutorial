@@ -35,10 +35,12 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa')
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on')
 
+get_factors_for_metric('updrs3_score_on')
 facet_rows = 2
 
+#write_vars_output(MOFAobject, vars_by_factor, factors=fact)
 
 #### Boxplots ####
 

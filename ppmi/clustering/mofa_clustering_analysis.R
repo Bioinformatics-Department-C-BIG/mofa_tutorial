@@ -32,6 +32,7 @@ get_factors_for_metric<-function(diff_var){
 
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
+
 remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
 rescale_option=TRUE
@@ -39,7 +40,9 @@ rescale_option=TRUE
 
 DIFF_VAR='moca'
 DIFF_VAR='NP2PTOT_LOG'
-
+if (DIFF_VAR=='updrs3_score_on'){
+  k_centers_m=2
+}
 
 sel_group_cors = FALSE # Where to get corelations from
 if (sel_group_cors){

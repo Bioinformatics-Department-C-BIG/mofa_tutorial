@@ -169,16 +169,6 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', TISSUE, '/'); dir.create(outd
 # Heatmaps of the vs values OR the log2FC values per cluster 
 
 
-
-
-
-
-
-
-
-
-
-
 #ARRANGE
 #df_ord<-df[order(df$COHORT),]
 pvol
@@ -219,7 +209,6 @@ df<-as.data.frame(colData(se_filt_proteins)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVE
 df$PATNO_EVENT_ID<-NULL
 colnames(vsn_mat)
 rownames(df)
-#rownames(df)<-se_filt$PATNO_EVENT_ID
 se_filt_proteins$COHORT
 dim(df)
 dim(hm)

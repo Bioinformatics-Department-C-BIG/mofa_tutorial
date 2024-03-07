@@ -1,7 +1,9 @@
 
 
 formula_deseq_format='n'
-cell_corr_deseq = TRUE
+cell_corr_deseq = FALSE
+process_mirnas = FALSE
+
 for (VISIT_COMP in c('V08', 'V06', 'BL', 'V04')){
 
         rmarkdown::render("ppmi/clustering/cluster_compare_report.Rmd", params = list(
@@ -38,6 +40,25 @@ for (VISIT_COMP in c('V08', 'V06', 'BL', 'V04')){
 
         )
 }
+
+
+
+## Plot annotation of factors 
+clust_metric<-'NP2PTOT_LOG'
+clust_metric<-'updrs3_score_on'
+nf<-get_factors_for_metric(clust_metric)
+ #nf = c(1,11,12) # factors to get enrichment 
+ nf_s<-paste0( nf, collapse = ' ')
+
+ rmarkdown::render("ppmi/mofa_enrich_report.Rmd", params = list(
+            title=paste0('MOFA enrich report - factors annotation ',clust_metric, ', ', nf_s  ), 
+            nf = nf),
+                    output_file = paste0("Mofa Enrichment, ", clust_metric, ', ', nf_s, ".html")
+ )
+
+
+
+
 
 
 

@@ -4,7 +4,7 @@
 # WARNING DO NOT CHANGE THIS, MOVE TO A FUNCTION!! ## 
 ### FIRST LOAD required files  ####
 
-
+#process_mirnas
 source(paste0(script_dir, '/ppmi/utils.R'))
 knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
@@ -13,7 +13,7 @@ knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
-
+se_mirs
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -37,8 +37,9 @@ if (process_mirnas){
 }else{
   se_sel = se_rnas
   prefix='rnas_'
-}
 
+}
+  print(prefix)
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 
@@ -208,12 +209,15 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 
 
-clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+#clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC')) 
+
 # the order for deseq levels is first controls, second disease
-deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+#deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2') )
 
-clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
-
+#clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
+clusters_names<-c('1','2','3','1_2_3')
 
   se_filt_all<-lapply(clusters_indices, function(cluster_id){ 
 

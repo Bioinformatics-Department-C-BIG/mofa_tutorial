@@ -44,7 +44,7 @@ combined<-read.csv2(metadata_output)
 
 ### TODO: filter out the cohort too before processig !! 
 
-VISIT=c('BL')
+VISIT=c('V06')
 #process_mirnas=FALSE
 #TISSUE='CSF'
 

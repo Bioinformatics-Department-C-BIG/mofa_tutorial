@@ -45,10 +45,12 @@ VISIT_COMP='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
 TISSUE='Plasma'
-DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
+DIFF_VAR = 'NP2PTOT_LOG'
+DIFF_VAR = 'updrs3_score_on'
+#DIFF_VAR = 'NP2PTOT_LOG'
 
-process_mirnas = FALSE 
+process_mirnas = TRUE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
@@ -57,7 +59,9 @@ cell_corr_deseq=FALSE;
 ONT='BP'
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
-run_all=FALSE 
+
+
+run_all=TRUE 
 if (run_all){
 
 for (cell_corr_deseq in c( FALSE)){
@@ -98,6 +102,9 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
+
+
+
 
 
 

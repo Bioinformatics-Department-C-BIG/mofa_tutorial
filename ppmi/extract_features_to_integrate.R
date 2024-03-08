@@ -26,29 +26,24 @@ Visits<-c('BL', 'V04', 'V06', 'V08')
 #close(gz1)
 
 ### rnas_fname includes the merged counts for all patients for all visits that I merged together on the server
-<<<<<<< HEAD
 rnas_fname<-paste0(ppmi_data, '/rnaseq/', VISIT, '.csv')
-=======
-rnas_fname<-paste0('ppmi/ppmi_data/rnaseq/', VISIT, '.csv')
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 getwd()
 for (VISIT in Visits){
   #' 
-  #'
+  #' @ 
   #'
   rnas<-read.csv2(rnas_fname, sep = ',')
   #rnas<-read.csv2(gzfile(gz1))
-  rownames(rnas)<-rnas$Geneid
-  rnas$Geneid<-NULL
-  rnas_BL<-select(rnas,contains(VISIT))
+  rownames(rnas)<-rnas$Geneid;   rnas$Geneid<-NULL; # set the rownames to be the Geneid
+
+  rnas_BL<-select(rnas,contains(VISIT)) # select the specific VISIT 
+  
   ### Split the names to extract patient number
   names_split<- strsplit(names(rnas_BL),split='\\.')
   names_split_df<-do.call(rbind, names_split);names_split_df
   PATNO<-names_split_df[,2]
-  length(unique(PATNO))
-  
-  dim(rnas_BL)
+
   colnames(rnas_BL)<-PATNO;head(colnames(rnas_BL))
   
   write.csv2(rnas_BL, paste0(output_files, 'rnas_', VISIT, '.csv'), row.names = TRUE)
@@ -105,11 +100,7 @@ close(gz1)
 
 
 
-<<<<<<< HEAD
 mirnas_rpmmm<-read.csv2(paste0(data_dir,ppmi_data, '/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
-=======
-mirnas_rpmmm<-read.csv2(paste0(data_dir,'ppmi/ppmi_data/mirnas/PPMI_sncRNAcounts/mirna_quantification_matrix_rpmmm_norm.csv/std_quantification_rpmmm_norm_mirna.final_ids.csv'), sep = '\t')
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 mirnas_all_visits_fname<-paste0(output_files, 'mirnas_all_visits_norm.csv.gz')# SAVE normalized results here 
 
 
@@ -125,7 +116,6 @@ VISIT='BL'
 VISIT='V04'
 VISIT='V06'
 mirnas_BL<-select(mirnas_rpmmm,contains(VISIT))
-mirnas_BL
 
 names_split<- strsplit(names(mirnas_BL),split='\\.')
 
@@ -133,11 +123,6 @@ PATNO<-sapply(names_split, '[[', 3)
 length(PATNO)
 colnames(mirnas_BL)<-PATNO
 rownames(mirnas_BL)<-mirnas_rpmmm$miRNA
-
-length((mirnas_BL))
-tail(colnames(mirnas_BL), 400)
-rownames(mirnas_BL)
-
 
 write.csv2(mirnas_BL, paste0(output_files, 'mirnas_', VISIT, '.csv'), row.names = TRUE)
 
@@ -182,59 +167,39 @@ library(tidyr)
 
 
 
+# Settings - change to run for two tissues 
+# TODO: make a function and add parameters: 
+# TISSUE, NORMALIZED, pattern 
+
 TISSUE='Plasma'
 TISSUE='CSF'
 
 NORMALIZED=TRUE
-
-
-setwd(os_dir)
-Visits
-
-
 output_files<-paste0(data_dir, 'ppmi/output/')
-NORMALIZED=TRUE
-
 Visits=c('BL', 'V04', 'V06', 'V08')
 
 #### ALL VISITS # include alla visits again
 
-<<<<<<< HEAD
-  prot_files<-list.files(path=paste0(ppmi_data,'proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
-                         full.names = TRUE)
+pattern='*9000*_NPX*'
   
+
+  pr_project_id='9000'
   if (NORMALIZED){
-    prot_files<-list.files(path=paste0(ppmi_data,'/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
-=======
-  prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
-                         full.names = TRUE)
-  
-  if (NORMALIZED){
-    prot_files<-list.files(path=paste0(data_dir,'ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*_NPX*',
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
-                           full.names = TRUE)
-    
+    pattern=paste0('*',pr_project_id, '.+NPX*')
     pv='NPX'
   }else{
-    
-<<<<<<< HEAD
-    prot_files<-list.files(path=paste0( ppmi_data,'/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
-=======
-    prot_files<-list.files(path=paste0('ppmi/ppmi_data/proteomics/targeted_olink/', TISSUE), pattern='*Counts*',
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
-                           full.names = TRUE)
+    pattern=paste0('*',pr_project_id, '.+Counts*')
     pv='COUNT' # Value of the protein level 
-
-    
   }
   
- 
+ paste0(ppmi_data,'/proteomics/targeted_olink/', TISSUE)
   
+prot_files<-list.files(path=paste0(ppmi_data,'/proteomics/targeted_olink/', TISSUE), pattern=pattern,
+                           full.names = TRUE)
   prot_files
-  
   ### names of output files 
-  outname<-paste0(output_files, 'proteomics_', TISSUE, '_',NORMALIZED,  '.csv')
-  outname2<-paste0(output_files, 'proteomics_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
+  outname<-paste0(output_files, 'proteomics_',pr_project_id,'_',  TISSUE, '_',NORMALIZED,  '.csv')
+  outname2<-paste0(output_files, 'proteomics_', pr_project_id, '_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
   
   
   # Merge the 4 datasets together 
@@ -245,43 +210,36 @@ Visits=c('BL', 'V04', 'V06', 'V08')
     return(df)
   }
                                 )
-  
-  all_frames<-lapply(read_all, as.data.frame)
-  all_frames2<-do.call(rbind, all_frames)
+all_frames<-lapply(read_all, as.data.frame) 
+all_frames2<-do.call(rbind, all_frames)
 
-  ppmi_prot=all_frames2
+ppmi_prot=all_frames2
 
-  ### remove PPMI- suffix from PATNO column 
-  ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
-  print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
-  prot_bl<-ppmi_prot
+### remove PPMI- suffix from PATNO column 
+ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
+print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
+prot_bl<-ppmi_prot
+  colnames(ppmi_prot)
   
-  
-  
-  #ppmi_prot<-as.data.frame(ppmi_prot) %>% 
-  #               mutate(across('PATNO', str_replace, 
-  #                          'PPMI-', ''
-  #                         ))
-  ## Filter baseline
-  ## Remove unecessary columns 
-  prot_bl_matrix<-as.data.frame(subset(prot_bl,
+## Filter baseline
+## Remove unecessary columns 
+prot_bl_matrix<-as.data.frame(subset(prot_bl,
                                        select=-c(LOD, update_stamp, OLINKID, UNIPROT, MISSINGFREQ,
                                                  PANEL, EVENT_ID, PLATEID, INDEX, PANEL_LOT_NR)))
   
-  prot_bl_matrix<-as.data.frame(subset(prot_bl,
-                                       select=-c( update_stamp, OLINKID, UNIPROT,
+ prot_bl_matrix<-as.data.frame(subset(prot_bl,
+                                       select=-c(  OLINKID, UNIPROT,
                                                   PANEL, PLATEID)))
   
   ## Extract QC pass only 
-    prot_bl_matrix
-  prot_bl_matrix_QC<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
-  if (length(prot_bl_matrix_QC)==0){
-    prot_bl_matrix_QC<-prot_bl_matrix
-    
-  }
-  table(prot_bl_matrix_QC$QC_WARNING)
-  hist(log10(prot_bl_matrix[,pv]))
-  
+head(prot_bl_matrix)
+prot_bl_matrix_QC<-prot_bl_matrix[prot_bl_matrix$QC_WARNING=='PASS',]
+#if (length(prot_bl_matrix_QC)==0){
+#    prot_bl_matrix_QC<-prot_bl_matrix
+#    
+#  }
+    hist(prot_bl_matrix[,pv])
+
   
   
   ## Reshape: Make a wide matrix with patient in columns 
@@ -319,18 +277,15 @@ Visits=c('BL', 'V04', 'V06', 'V08')
   ## Write output both log and not logged
   fwrite(prot_bl_wide, paste0(outname), row.names = TRUE)
   fwrite(prot_bl_wide_unlog, paste0(outname2), row.names = TRUE)
-  dim(prot_bl_wide)
-  dim(prot_bl_wide)
-  
-  df<-prot_bl_wide_unlog[prot_bl_wide_unlog<10]
-  #df<-prot_bl_wide[prot_bl_wide<200]
-  
+
+    hist(as.numeric(log(as.matrix(prot_bl_wide_unlog))))
+  df<-prot_bl_wide_unlog[prot_bl_wide_unlog<1]
+  df<-log10(prot_bl_wide_unlog)
   hist(as.numeric(as.matrix(df)))
 
 dev.off()
 
 
-combined[match(colnames(prot_bl_wide), combined$PATNO_EVENT_ID),]$COHORT_DEFINITION
 
 
 

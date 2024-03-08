@@ -112,7 +112,7 @@ correlate_factors_categorical<-function(y, MOFAobject){
 
 
 
-run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
+run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15, drop_factor_threshold =  -1){
   ### Run mofa and write to file
   #'
   #' @param MOFAobject 
@@ -126,7 +126,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   model_opts$num_factors <- N_FACTORS
   data_opts$scale_views=scale_views
   train_opts<-get_default_training_options(MOFAobject)
-
+  train_opts$drop_factor_threshold <- drop_factor_threshold
   
   
   MOFAobject <- prepare_mofa(MOFAobject,

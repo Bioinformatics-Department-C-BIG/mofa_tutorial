@@ -194,8 +194,8 @@ covars_f_pvalue<-paste0(covariates_dir, 'pvalue.csv' )
 covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
- names(non_na_vars)
- force_cors=TRUE
+ #names(non_na_vars)
+ force_cors=FALSE
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file
@@ -259,10 +259,28 @@ all_diff_variables=c('NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3
                      'updrs2_score_LOG', 'updrs3_score_LOG', 'updrs3_score_on',
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
                      'abeta', 'sft_V12')
+
+
+round(cors_all_pd[,'moca'], digits=2)
+round(cors_all_pd[,'NP2PTOT_LOG'], digits=2)
+round(cors_pearson_pd[,'NP2PTOT_LOG'], digits=2)
+
+round(cors_all_pd[,'NP3TOT_LOG'], digits=2)
+round(cors[,'COHORT'], digits=2)
+round(cors_pearson[,'COHORT'], digits=2)
+
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
 
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
+
+
+
+
+
+
+
+
 
 
 

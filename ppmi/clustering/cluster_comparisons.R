@@ -421,8 +421,10 @@ if (process_mirnas){
           gse_file<-paste0(results_file_cluster, '.Rds')
 
         # if (TRUE){
+           
           if (!file.exists(gse_file) | force_gse){
 
+      
               gse1<-run_enrich_mirnas(gene_list1, pvalueCutoff = pvalueCutoff, test_type='GSEA')
               saveRDS(gse1,gse_file )
               gse_all_clusters[[cluster_id_name]]<- gse1
@@ -438,16 +440,14 @@ if (process_mirnas){
                 }
 
 
-              
+             
 
           }else{
             gse_all_clusters[[cluster_id_name]]<- loadRDS(gse_file )
 
-            
-           
-
 
           }
+           
         }
 
     } 

@@ -151,9 +151,10 @@ TOP_PN=0.9
 
 
 
-TISSUE='CSF'
 
 TISSUE='Plasma'
+TISSUE='CSF'
+
 
 NA_PERCENT=0.9
 
@@ -167,30 +168,39 @@ VISIT_S=paste(VISIT,sep='_',collapse='-')
 TOP_PN<-0.9
 
 #### read in proteomics 
-p_params_in<- paste0(  TISSUE, '_', NORMALIZED)
+pr_project_id='9000'
+p_params_in<- paste0( pr_project_id, '_',  TISSUE, '_', NORMALIZED)
 
 
-outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_',TISSUE, '_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_',
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT,'_', pr_project_id, '_', TISSUE, '_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_',
                    sel_subcoh_s,  des, '/' )
 
 
-p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
+p_params_FILE<- paste0(VISIT_S, '_', pr_project_id, '_',TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
 
 
 
-p_params<- paste0(VISIT_S, '_',TISSUE, '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-p_params_csf<- paste0(VISIT_S, '_','CSF', '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
-p_params_plasma<- paste0(VISIT_S, '_','Plasma', '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+p_params<- paste0(VISIT_S, '_',pr_project_id, '_',TISSUE,  '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+p_params_csf<- paste0(VISIT_S, '_',pr_project_id, '_','CSF', '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
+p_params_plasma<- paste0(VISIT_S, '_',pr_project_id, '_','Plasma', '_', substr(NORMALIZED,1,1), '_', sel_coh_s, sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
 
 
-outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT_S,'_',TISSUE, '_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_',
+outdir_s_p<-paste0(outdir_orig, '/single/proteomics_', VISIT_S,'_',pr_project_id, '_',TISSUE, '_norm_', substr(NORMALIZED,1,1),'vsn_', substr(run_vsn,1,1), '_coh_', sel_coh_s, '_',
                    sel_subcoh_s,  des, '/' )
 
 
-p_params_FILE<- paste0(VISIT_S, '_', TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
+p_params_FILE<- paste0(VISIT_S, '_', pr_project_id, '_',TISSUE, '_', NORMALIZED, '_',sel_coh_s,  sel_subcoh_s )
 
 
 prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
+
+
+
+
+
+
+
+
 
 
 

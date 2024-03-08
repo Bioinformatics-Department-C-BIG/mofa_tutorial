@@ -1,7 +1,7 @@
 
 
 
-# get correlatins for selected vars 
+# get correlations for selected vars 
 
 correlate_factors_with_covariates
 cors_pd<-correlate_factors_with_covariates(MOFAobjectPD_sel, c('NP2PTOT_LOG'),return_data=TRUE , alpha=1  )
@@ -303,12 +303,15 @@ cors
 
 
 ## For this analysis 
-sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
 
+sel_factors_coh<-get_factors_for_scales(c('COHORT', 'CONCOHORT'), cors_all=cors)
+sel_factors_coh
 
 #### Factors related to the longterm change in scale #####
 fname<-'factors_covariates_only_nonzero_strict_diff'
-plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot,factors = sel_factors_diff,labels_col=TRUE, MOFAobject=MOFAobject_sel )
+all_diff_variables_prog
+sel_factors_diff
+plot_covars_mofa(selected_covars=unique(all_diff_variables_prog),fname,plot,factors = 1:25,labels_col=TRUE, MOFAobject=MOFAobject_sel )
 fname<-'factors_covariates_only_nonzero_strict_cor'
 
 samples_metadata(MOFAobject_sel)$COHORT<-as.numeric(samples_metadata(MOFAobject_sel)$COHORT)
@@ -1177,6 +1180,28 @@ p <- plot_factors(MOFAobject,
 #  geom_vline(xintercept=(-0.5), linetype="dashed")
 print(p)
 ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

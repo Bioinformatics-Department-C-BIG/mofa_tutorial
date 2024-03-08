@@ -106,7 +106,7 @@ sel_factors_to_enrich=1:N_FACTORS
 
 
 just_load=FALSE
-just_load=TRUE
+just_load=FALSE
 
 if (TRUE){
   

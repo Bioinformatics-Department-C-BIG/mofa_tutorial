@@ -1,17 +1,18 @@
 
+
 #library('MOFAdata')
-
 library('MOFA2')
-utils::data(reactomeGS)
 
+#utils::data(reactomeGS)
+#data(reactomeGS)
 
-head((reactomeGS))
+#head((reactomeGS))
 
 ## TODO: if enrichment is already run then just load results
 ## load res.positive to be used in the next script
-res.positive$feature.sets
-res=res.positive
-res.positive$pval.adj
+#res.positive$feature.sets
+#res=res.positive
+#es.positive$pval.adj
 
 
 write_enrich<-function(res, sign_mode){
@@ -175,6 +176,8 @@ dev.off()
 
 
 ###### turn to enrichment result to plot 
+
+
 
 
 

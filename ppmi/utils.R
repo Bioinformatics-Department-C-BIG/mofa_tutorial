@@ -1253,7 +1253,7 @@ Category<-'GO Biological process (miRPathDB)';
 library('multienrichjam')
 library('clusterProfiler')
 
-mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Category='GO Biological process (miRPathDB)'){
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Category='GO Biological process (miRPathDB)', Padj_T_paths = 0.05){
 #mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)',mir_results_file){
 
   #' post-process mieaa enrichment analysis results 
@@ -2042,3 +2042,55 @@ create_venn<-function(venn_list, fname_venn, main){
 
 
 
+
+
+#### Load metadata ####
+
+load_metadata<-function(){
+
+    metadata_output<-paste0(output_files, 'combined.csv')
+    combined_all_original<-read.csv2(metadata_output)
+    metadata_output<-paste0(output_files, 'combined_log.csv') 
+    combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
+    return(combined_bl_log)
+}
+
+
+
+pre_process_proteomics<-function(proteomics){
+  #'
+  #' 
+
+  
+
+      df<-proteomics
+      proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
+
+      
+            ### filter here before editing more 
+      ## filter out rows with very low min count
+      df<-proteomics; 
+      min.count= quantile(df, na.rm = TRUE, 0.01)
+      min.count= min(df, na.rm = TRUE)
+      ### KEEP
+       ## kEEP THE ROWS THAT HAVE MORE THAN 80% NON NA VALUES 
+      keep <- rowSums(df>min.count, na.rm = TRUE) >= round(NA_PERCENT*ncol(df))
+      proteomics<-proteomics[keep,]
+
+      
+      
+      #### MAKE NUMERIC 
+      raw_counts_all=proteomics
+      class(raw_counts_all) <- "numeric"
+      ## They seem to have taken averages for replicas so need to fix 
+      #raw_counts_all<-round(raw_counts_all)
+      
+      data<-proteomics
+      data<-as.data.frame(data)
+      
+      data$name<-c(rownames(data))
+      data$ID<-data$name
+      data_columns=seq(1:dim(proteomics)[2])
+      
+      return(raw_counts_all)
+}

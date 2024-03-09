@@ -13,17 +13,28 @@ library('MOFA2')
 #res.positive$feature.sets
 #res=res.positive
 #es.positive$pval.adj
-
-
+#res=res.negative
+colnames(res.negative[[1]])
+head(res$feature.statistics)
 write_enrich<-function(res, sign_mode){
   #' 
   #'' @res res.negative result from mofa enrichment 
   #'
   #'
   #'res$pval.adj
+  #' res
+      colnames(res)
+      head(res)
       res$pval.adj=as.data.frame(res$pval.adj)   ;
       results_enrich<-as.data.frame(sapply(res$pval.adj, as.numeric));
+      all_fs<-colnames(results_enrich)
       results_enrich$Description=rownames(res$pval.adj); 
+
+      sapply(all_fs,pcgse_dot_by_factor, results_enrich=results_enrich )
+      
+
+
+
       all_fs_merged2<-reshape::melt(results_enrich, id.vars = 'Description');
       
       res$pval=as.data.frame(res$pval) 
@@ -47,8 +58,33 @@ write_enrich<-function(res, sign_mode){
       write.csv(format(all_fs_merged2_pval2, digits=3),paste0(neg_file,  '.csv' ), row.names = TRUE)
       all_fs_merged2_pval2_sig=all_fs_merged2_pval2[ all_fs_merged2_pval2$p.adjust<T,]
       write.csv(format(all_fs_merged2_pval2_sig, digits=3),paste0(neg_file, '_', T,  '.csv' ))
+      return(all_fs_merged2_pval2_sig)
       
 }
+
+# plot: dot plot
+pcgse_dot_by_factor<-function(factor, results_enrich){
+
+      barpl_input<-results_enrich[ c('Description',factor )]
+      colnames(barpl_input)<-c('Description','p.adjust' )
+     barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
+
+      barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
+
+    barpl_input_top$x = factor
+    barpl_input_top$log10=-log10(barpl_input_top$p.adjust)
+    barpl_input_top$log10
+    ggplot(data = barpl_input_top, aes( x=x,y = Description, 
+                            color = `p.adjust`, size=-log10(p.adjust))) + 
+      geom_point() +
+      scale_color_gradient(low = "red", high = "blue") +
+      theme_bw() + 
+      ylab("") + 
+      xlab("") + 
+      ggtitle("GO enrichment analysis")
+
+    ggsave(paste0(outdir, '/enrichment/pcgse/',factor, '.png'), width=7, height=5)
+    }
 
 
 subcategory<- 'CP:KEGG'
@@ -59,10 +95,12 @@ dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
 
 mode='proteomics'
+mode='proteomics_csf'
+
 mode='RNA'
 
 for (subcategory in c('GO:BP', 'GO:MF' )){
-  if (mode=='proteomics'){
+  if (mode=='proteomics'| mode=='proteomics_csf'| mode=='proteomics_plasma'){
     gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
     
   }else{
@@ -78,7 +116,7 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
   features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
                                          function(x) {stringr::str_remove(x, '\\..*')}
   )
-  
+ 
   
   sign_mode='negative'
   enrich_res_file_neg<-paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' )
@@ -104,13 +142,15 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           
           mode='negative'
           res_negative_df<-write_enrich(res.negative, sign_mode=mode)
+          res_negative_df
           saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
-
+ #names(res.negative)
           mode='positive'
 
           res_positive_df<-write_enrich(res.positive, sign_mode=mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
+          res_negative_df
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
             by=c('Description','Factor' ))
           res_merged$pvalue_min<-c(rowMins(as.matrix(res_merged[,c('pvalue_n','pvalue_p')])))

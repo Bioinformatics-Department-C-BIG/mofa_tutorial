@@ -14,7 +14,7 @@ source(paste0('ppmi/setup_os.R'))
 
 
 
-output_files='ppmi/output/'
+output_files=paste0(data_dir,'ppmi/output/')
 
 
 VISIT='V08'
@@ -164,6 +164,132 @@ close(gz1)
 
 library(tidyr)
 ##### PROTEOMICS - OLINK
+
+
+
+# Settings - change to run for two tissues 
+# TODO: make a function and add parameters: 
+# TISSUE, NORMALIZED, pattern 
+
+TISSUE='Plasma'
+TISSUE='CSF'
+
+NORMALIZED=TRUE
+data_dir
+output_files<-paste0(data_dir, 'ppmi/output/')
+Visits=c('BL', 'V04', 'V06', 'V08')
+
+#### ALL VISITS # include alla visits again
+
+pattern='*9000*_NPX*';  prot_dir<-paste0(ppmi_data,'/proteomics/targeted_olink/', TISSUE); pr_project_id = 9000
+ if (NORMALIZED){
+    pattern=paste0('*',pr_project_id, '.+NPX*')
+    pv='NPX'
+  }else{
+    pattern=paste0('*',pr_project_id, '.+Counts*')
+    pv='COUNT' # Value of the protein level 
+  }
+### names of output files 
+  outname<-paste0(output_files, 'proteomics_',pr_project_id,'_',  TISSUE, '_',NORMALIZED,  '.csv')
+  outname2<-paste0(output_files, 'proteomics_', pr_project_id, '_', TISSUE, '_', NORMALIZED,  '_no_log.csv')
+  
+
+
+
+ppmi_data
+
+pr_project_id='177'; prot_dir<-paste0(ppmi_data,'/proteomics/untargeted/'); pattern = pr_project_id
+prot_files<-list.files(path=paste0(prot_dir), pattern=pattern,
+                           full.names = TRUE)
+
+
+  prot_files
+  
+  # Merge the 4 datasets together 
+  read_all<-lapply(prot_files, function(x) {
+    #print(x)
+    # panel INF is read as a number...
+    df<-read.csv(x)
+    return(df)
+  }
+                                )
+all_frames<-lapply(read_all, as.data.frame) 
+all_frames2<-do.call(rbind, all_frames)
+
+ppmi_prot=all_frames2
+ppmi_prot$PATNO
+colnames(ppmi_prot)
+head(ppmi_prot)
+ppmi_prot %>% group_by(TYPE,PATNO) 
+ppmi_prot %>% group_by(TYPE, COHORT) %>%
+    filter(CLINICAL_EVENT=='V08' ) %>%
+     distinct(PATNO, TYPE, COHORT) %>%
+    summarise(user_situations = n())
+### remove PPMI- suffix from PATNO column 
+
+print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
+prot_bl<-ppmi_prot
+  colnames(ppmi_prot)
+  
+## Filter baseline
+ prot_bl_matrix<-as.data.frame(subset(prot_bl,
+                                       select=c(PATNO, CLINICAL_EVENT, TYPE, TESTNAME, TESTVALUE)))
+
+  
+  ## Reshape: Make a wide matrix with patient in columns 
+  prot_bl_tbl<-as.data.table(prot_bl_matrix)
+  prot_bl_tbl$PATNO_EVENT_ID<-paste0(prot_bl_tbl$PATNO,'_',prot_bl_tbl$CLINICAL_EVENT)
+prot_bl_tbl$PATNO_EVENT_ID
+  pair_keys<-prot_bl_tbl[, c( 'PATNO_EVENT_ID', 'TESTNAME')] 
+#  dups<-prot_bl_tbl[duplicated(pair_keys),]$PATNO_EVENT_ID
+ # dups
+
+
+  #### duplicates are averaged..... 
+  TYPE='Cerebrospinal Fluid'
+  TYPE='Plasma'
+
+      outname<-paste0(output_files, 'proteomics_',pr_project_id,'_',TYPE,  '.csv')
+      outname_vsn<-paste0(output_files, 'proteomics_',pr_project_id,'_',TYPE,  'vsn.csv')
+
+  prot_bl_tbl_csf<-prot_bl_tbl[prot_bl_tbl$TYPE==TYPE,]
+ # prot_bl_tbl_plasma<-prot_bl_tbl[prot_bl_tbl$TYPE=='Plasma',]
+
+prot_bl_tbl_input<-prot_bl_tbl_csf
+
+  convert_to_wide_proteins<-function(prot_bl_tbl_input){
+
+      
+      prot_bl_wide<-data.table::dcast(prot_bl_tbl_input,  TESTNAME ~ PATNO_EVENT_ID,
+                                      value.var ='TESTVALUE', fun.aggregate = mean)
+      
+
+
+      prot_bl_wide<-as.data.frame(prot_bl_wide)
+      rownames(prot_bl_wide)<-prot_bl_wide$TESTNAME
+      prot_bl_wide$TESTNAME<-NULL
+      head(row.names(prot_bl_wide))
+      return(prot_bl_wide)
+
+  }
+  
+  prot_bl_wide
+prot_bl_wide<-convert_to_wide_proteins(prot_bl_tbl_input)
+prot_bl_wide
+prot_bl_wide_vsn<-preprocess_un_proteomics(prot_bl_wide)
+prot_bl_wide_vsn
+
+## Write output both log and not logged
+write.csv2(prot_bl_wide, paste0(outname), row.names = TRUE)
+write.csv2(prot_bl_wide_vsn, paste0(outname_vsn))
+
+
+hist(as.numeric(as.matrix(prot_bl_wide)))
+hist(as.numeric(log(as.matrix(prot_bl_wide_unlog))))
+
+
+
+
 
 
 

@@ -35,6 +35,10 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 
+
+
+#grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_')
+
 #diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
 #diff_vars<-diff_vars[!grepl('clust',diff_vars)]
 #diff_vars
@@ -50,7 +54,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'SCAU7', 'NP3SPCH', 'NP3RISNG', 'NP2EAT', 
                          'NP3RTARU', 'RBD_TOT', 
                          'con_putamen', 
-                         'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 
+                         'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 'LEDD', 
                          'rigidity','months', 
                          'con_putamen', 'con_putamen_V10', 
                          'change', 
@@ -1440,7 +1444,21 @@ selectMostVariable<-function(vsn_mat,q){
 
   }
 
-prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
+
+library(vsn)
+
+preprocess_un_proteomics<-function(proteins_un){
+  # vsn proteomics 
+    # convert NaN to na
+    proteins_un<- proteins_un %>% mutate_all(~ifelse(is.nan(.), NA, .))
+  proteins_un<-justvsn(as.matrix(proteins_un))
+  #proteins_un_plasma_vsn<-log(proteins_un_plasma)
+  return(proteins_un)
+
+}
+
+
+prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params, prot_mode='t'){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 
   # TODO: simplify the reading and setting the feature column to null? 
@@ -1451,22 +1469,49 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   proteins_outfile = paste0(output_files, p_params_out , '_vsn.csv')
   proteins_outfile_csf = paste0(output_files, p_params_csf , '_vsn.csv')
   proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_vsn.csv')
-  
-  
+    
   proteins_vsn_mat<-as.matrix(read.csv2(proteins_outfile, row.names=1, header=TRUE, check.names = FALSE))
   proteins_csf_vsn_mat<-as.matrix(read.csv2(proteins_outfile_csf, row.names=1, header=TRUE, check.names = FALSE))
   proteins_plasma_vsn_mat<-as.matrix(read.csv2(proteins_outfile_plasma, row.names=1, header=TRUE, check.names = FALSE))
 
 
+  # untargeted
+  proteins_un_plasma<-as.matrix(read.csv2(prot_untargeted_plasma_vsn_f,row.names=1, header=TRUE, check.names = FALSE))
+  proteins_un_csf<-as.matrix(read.csv2(prot_untargeted_csf_vsn_f, row.names=1, header=TRUE, check.names = FALSE))
+  # filter by visit
+
+  proteins_un_plasma<-proteins_un_plasma[,grep(VISIT, colnames(proteins_un_plasma))]
+  proteins_un_csf<-proteins_un_csf[,grep(VISIT, colnames(proteins_un_csf))]
+
+
+
+  # select most variable for all proteomics  
   highly_variable_proteins_mofa<-  selectMostVariable(proteins_vsn_mat, TOP_PN)
   highly_variable_proteins_mofa_plasma<-selectMostVariable(proteins_plasma_vsn_mat, TOP_PN)
   highly_variable_proteins_mofa_csf<-selectMostVariable(proteins_csf_vsn_mat, TOP_PN)
   
+  highly_variable_proteins_un_mofa_csf<-selectMostVariable(proteins_un_csf, TOP_PN)
+  highly_variable_proteins_un_mofa_plasma<-selectMostVariable(proteins_un_plasma, TOP_PN)
   
   ### Start loading mofa data
   proteomics<-as.data.frame(highly_variable_proteins_mofa)
-  proteomics_plasma<-as.data.frame(highly_variable_proteins_mofa_plasma)
-  proteomics_csf<-as.data.frame(highly_variable_proteins_mofa_csf)
+
+  proteomics_t_plasma<-as.data.frame(highly_variable_proteins_mofa_plasma)
+  proteomics_t_csf<-as.data.frame(highly_variable_proteins_mofa_csf)
+  proteomics_un_plasma<-as.data.frame(highly_variable_proteins_un_mofa_plasma)
+  proteomics_un_csf<-as.data.frame(highly_variable_proteins_un_mofa_csf)
+
+
+
+    if (prot_mode=='t'){
+        proteomics_plasma<-as.data.frame(highly_variable_proteins_mofa_plasma)
+        proteomics_csf<-as.data.frame(highly_variable_proteins_mofa_csf)
+
+    }else{
+        proteomics_plasma<-proteomics_un_plasma
+        proteomics_csf<-proteomics_un_csf
+    }
+
   
   ##### Load mirnas + RNAs 
   ### we use data.table because there are duplicate samples? 
@@ -1487,9 +1532,13 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   
   data_full<-list(miRNA=as.matrix(miRNA), 
                   RNA=as.matrix(RNA),
-                  proteomics=as.matrix(proteomics), 
+                  #proteomics=as.matrix(proteomics), 
                   proteomics_plasma=as.matrix(proteomics_plasma), 
-                  proteomics_csf=as.matrix(proteomics_csf))
+                  proteomics_csf=as.matrix(proteomics_csf), 
+                  proteomics_t_plasma=as.matrix(proteomics_t_plasma), 
+                   proteomics_t_csf=as.matrix(proteomics_t_csf)
+
+                  )
   
   
   return(data_full)
@@ -1510,20 +1559,26 @@ create_multi_experiment<-function(data_full, combined_bl){
   
   RNA= data_full[['RNA']]
   miRNA= data_full[['miRNA']]
-  proteomics= data_full[['proteomics']]
+ # proteomics= data_full[['proteomics']]
   
   proteomics_csf= data_full[['proteomics_csf']]
   proteomics_plasma= data_full[['proteomics_plasma']]
-  
+  proteomics_t_plasma= data_full[['proteomics_t_plasma']]
+  proteomics_t_csf= data_full[['proteomics_t_csf']]
+
   
   assay_full=c(rep('RNA', dim(RNA)[2]),
                rep('miRNA', dim(miRNA)[2]),
                rep('proteomics_csf', dim(proteomics_csf)[2]),
-                rep('proteomics_plasma', dim(proteomics_plasma)[2]))
+                rep('proteomics_plasma', dim(proteomics_plasma)[2]),
+                rep('proteomics_t_csf', dim(proteomics_t_csf)[2]),
+                rep('proteomics_t_plasma', dim(proteomics_t_plasma)[2]))
 
   
-  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
-  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics_csf), colnames(proteomics_plasma))
+  #colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics))
+  colname = c(colnames(RNA), colnames(miRNA), colnames(proteomics_csf), colnames(proteomics_plasma), 
+   colnames(proteomics_t_csf), 
+  colnames(proteomics_t_plasma) )
   
   primary=colname
   sample_map=DataFrame(assay=assay_full, primary=primary, colname=colname)
@@ -1540,12 +1595,17 @@ create_multi_experiment<-function(data_full, combined_bl){
   rownames(metadata_filt_unique)<-metadata_filt_unique$PATNO_EVENT_ID
   
   #rownames(metadata_filt)=metadata_filt$PATNO_EVENT_ID
-  
+
   
   mofa_multi<-MultiAssayExperiment(experiments=data_full,
                                    colData = metadata_filt_unique, 
                                    sampleMap=sample_map)
-  
+
+
+# added se filter   
+
+  mofa_multi<-mofa_multi[,mofa_multi$INEXPAGE %in% c(sel_subcoh, 'INEXHC')]
+
   
   return(mofa_multi)
 }

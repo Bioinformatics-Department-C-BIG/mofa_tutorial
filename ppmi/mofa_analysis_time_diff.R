@@ -38,6 +38,9 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
 
+
+plot_data_overview(MOFAobject)
+ggsave(paste0(outdir,'/data_overview.jpeg'))
 write_vars_output(MOFAobject, vars_by_factor) # output plots on var metrics
 
 
@@ -273,6 +276,10 @@ round(cors_pearson[,'COHORT'], digits=2)
 
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
+
+
+
+
 
 
 

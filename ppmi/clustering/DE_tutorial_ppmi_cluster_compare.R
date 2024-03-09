@@ -16,6 +16,8 @@ process_mirnas=FALSE
 
 #VISIT_COMP='V06' # set elsewhere
 VISIT = VISIT_COMP
+#VISIT_COMP = 'V08'
+
 source(paste0(script_dir, 'ppmi/config.R' ))
 source(paste0(script_dir,'ppmi/utils.R'))
 
@@ -81,7 +83,7 @@ de_all_groups_proteins<-list()
 
 length(se_filt_all)
 
-for (cluster_id in 1:3){
+for (cluster_id in c(1:3)){
 
   se_clusters
   se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id,'HC')
@@ -94,8 +96,10 @@ protein_matrix<-protein_matrices[[1]]
 se_filt_all[[1]]$COHORT
 
 
+prefix='prot_'
 
-for (cluster_id in 1:3){
+for (cluster_id in  c(1:3)){
+      print(cluster_id)
 
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
         outdir_s_p
@@ -107,11 +111,13 @@ for (cluster_id in 1:3){
         #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
-    #print(results_de['IL5',])
-    #print(results_de['MMP9',])
 
 
     dir.create(outdir_s_p)
+   # prefix
+   rfile<-paste0(outdir_s_p, prefix,TISSUE, '_de_cl',cluster_id,  '_results.csv')
+   print(rfile)
+    write.csv(results_de, rfile)
 
     ns_full<-table(se_filt_clust$COHORT_DEFINITION)
     ns<-paste0(rownames(ns_full)[1],' ', ns_full[1], '\n' ,names(ns_full)[2], ' ', ns_full[2])
@@ -132,7 +138,6 @@ for (cluster_id in 1:3){
                     subtitle=ns
     )
     pvol
-    prefix='prot_'
     fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, TISSUE,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
@@ -150,7 +155,7 @@ dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enrich)
+outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', TISSUE, '/'); dir.create(outdir_s_p_enrich)
 #write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
@@ -161,6 +166,8 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enrichment/'); dir.create(outdir_s_p_enr
 
 
 ################### HEATMAPS  ############
+# Heatmaps of the vs values OR the log2FC values per cluster 
+
 
 #ARRANGE
 #df_ord<-df[order(df$COHORT),]
@@ -202,7 +209,6 @@ df<-as.data.frame(colData(se_filt_proteins)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVE
 df$PATNO_EVENT_ID<-NULL
 colnames(vsn_mat)
 rownames(df)
-#rownames(df)<-se_filt$PATNO_EVENT_ID
 se_filt_proteins$COHORT
 dim(df)
 dim(hm)
@@ -250,213 +256,131 @@ fname
 
 
 
-#############################
-#install.packages("OlinkAnalyze")
-run_olink=FALSE
-if (run_olink){
-  
-    
-    library(OlinkAnalyze)
-    #### ALSO TRY T-TEST
-    data<-read_NPX(prot_files[1])
-    data=prot_bl
-    VISIT_COMP='BL'
-    colnames(data)<- c( "PATNO" ,       "EVENT_ID"  ,   "Index"   ,     "OlinkID"    ,
-                        "UniProt"     , "Assay"     ,   "MISSINGFREQ", "Panel"    , 
-                        "PANEL_LOT_NR" ,"PLATEID"   ,   "QC_WARNING" ,  "LOD"    ,    
-                        "NPX"   ,       "update_stamp")
-    
-    table(data$EVENT_ID)
-    data_filt<-data[data$EVENT_ID %in% VISIT_COMP,]
-    data_filt$EVENT_ID
-    
-    unique(data_filt$PATNO)
-    outcome<-combined[,c('PATNO','COHORT', 'AGE_SCALED', 'SEX' )]
-    outcome<-outcome[!duplicated(outcome$PATNO),]
-    outcome<-outcome[outcome$COHORT %in% sel_coh,]
-    
-    ### now merge the specific data visit and metadata
-    data_merged<-merge(data_filt, outcome, by='PATNO')
-    data_merged$COHORT<-as.factor(data_merged$COHORT)
-    
-    data_merged$SampleID<-data_merged$PATNO
-    ttest_results<-olink_ttest(df = data_merged,
-                variable = 'COHORT')
-    
-    olink_wilcox_results<-olink_wilcox(df = data_merged,
-                 variable = 'COHORT')
-    
-    olink_wilcox_results%>%
-      dplyr::filter(Threshold == 'Significant')
-    
-    
-    library(dplyr)
-    data_merged$SEX=as.factor(data_merged$SEX)
-    data_merged_rescaled<-data_merged
-    data_merged_rescaled$NPX=data_merged_rescaled$NPX*1e6
-    anova_results_oneway <- olink_anova(df = data_merged_rescaled, 
-                                        variable = c('COHORT' ,'AGE_SCALED', 'SEX'))
-    
-    data_merged$COHORT=as.factor(data_merged$COHORT)
-    anova_results_oneway <- olink_anova(df = data_merged, 
-                                        variable = 'COHORT',
-                                        covariates = c('AGE_SCALED', 'SEX'))
-    
-    anova_results_oneway_significant <- anova_results_oneway %>%
-      dplyr::filter(Threshold == 'Significant')
-    
-    
-    anova_results_oneway_significant_genes <- anova_results_oneway %>%
-      dplyr::filter(Threshold == 'Significant') %>%
-      dplyr::pull(Assay, Adjusted_pval)
-    
-    length(anova_results_oneway_significant)
-    
-    anova_results_oneway_significant[1:20]
-    anova_results_oneway$Assay
-    write.csv(anova_results_oneway,paste0(output_files, 'olink_de.csv' ))
-    
-    
-    anova_posthoc_oneway_results <- olink_anova_posthoc(df = data_merged, 
-                                        variable = 'COHORT',
-                                        covariates = c('AGE_SCALED', 'SEX'))
-    
-    
 
 
-}
-
-T=0.05
 
 
 
 ################# ENRICHMENT - GSEA-GO #############
-order_statistic<-'log2pval'
+
 order_statistic<-'logFC'
-order_statistic<-'log2pval'
-order_statistic<-'adj.P.Val'
-order_statistic<-'signlog2pval'
-order_statistic<-'P.Value'
-order_statistic<-'log2pval'
-#order_statistic<-'pval_reverse'
-order_statistic<-'log2pval'
-order_statistic<-'logFC'
-order_statistic<-'logFC'
-order_statistic<-'signlog2pval'
-order_statistic<-'logFC'
+#TODO: need to clean up remove gsea 
+
+for (cluster_id in 1:3){
+
+      results_de = de_all_groups_proteins[[cluster_id]]
+      #order_statistic<-'log2pval_not_adj' - NO RESULTS 
+      results_de$pval_reverse<- -results_de$P.Value ## this prob does not work with gsea because there are no negative values 
+
+      results_de$log2pval<- -log10(results_de$adj.P.Val) * results_de$logFC
+      results_de$abslog2pval<- abs(results_de$log2pval)
+      results_de$abslog2pval<- abs(results_de$log2pval)
+      results_de$signlogFCpval<- abs(results_de$log2pval)
+
+      results_de$log2pval_not_adj<- -log10(results_de$P.Value) * results_de$logFC
+      results_de$signlog2pval<- -log10(results_de$adj.P.Val) * sign(results_de$logFC)
+      results_de[results_de$adj.P.Val<0.05,'signlog2pval']
+
+      write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 
 
-
-#order_statistic<-'log2pval_not_adj' - NO RESULTS 
-results_de$pval_reverse<- -results_de$P.Value ## this prob does not work with gsea because there are no negative values 
-
-results_de$log2pval<- -log10(results_de$adj.P.Val) * results_de$logFC
-results_de$abslog2pval<- abs(results_de$log2pval)
-results_de$abslog2pval<- abs(results_de$log2pval)
-results_de$signlogFCpval<- abs(results_de$log2pval)
-
-results_de$log2pval_not_adj<- -log10(results_de$P.Value) * results_de$logFC
-results_de$signlog2pval<- -log10(results_de$adj.P.Val) * sign(results_de$logFC)
-results_de[results_de$adj.P.Val<0.05,'signlog2pval']
-
-write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
+      log2fol_T_overall<-0.1
+      padj_T_overall<-.05
+      results_de_signif<-mark_significant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
+                                  padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
 
 
-log2fol_T_overall<-0.1
-padj_T_overall<-.05
-results_de_signif<-mark_significant(results_de,padj_T = padj_T_overall, log2fol_T = log2fol_T_overall, 
-                            padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
+      log2fol_T_mofa<-0
+      padj_T_mofa<-.05
+      signif_proteins_mofa<-mark_significant(results_de,padj_T = padj_T_mofa, log2fol_T = log2fol_T_mofa, 
+                                          padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
 
-
-log2fol_T_mofa<-0
-padj_T_mofa<-.05
-signif_proteins_mofa<-mark_significant(results_de,padj_T = padj_T_mofa, log2fol_T = log2fol_T_mofa, 
-                                    padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
-
-signif_proteins_mofa_ids<-rownames(signif_proteins_mofa %>%
-                            dplyr::filter(significant =='Significant'))
+      signif_proteins_mofa_ids<-rownames(signif_proteins_mofa %>%
+                                  dplyr::filter(significant =='Significant'))
 
 
 
 
-results_de_signif$abslog2pval
-
-################### run gsea with anova ######################
-gene_list1<-results_de[,order_statistic]
-names(gene_list1)<-rownames(results_de)
-gene_list_ord=gene_list1[order(-gene_list1)]
-gene_list_ord
-gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
-gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
+      ################### run gsea with anova ######################
+      gene_list1<-results_de[,order_statistic]
+      names(gene_list1)<-rownames(results_de)
+      gene_list_ord=gene_list1[order(-gene_list1)]
+      gene_list_ord
+      gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
+      gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
 
-run_anova=FALSE
-run_ORA=TRUE; 
-use_protein_pval=FALSE ## Proteins to use a sinput 
-use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
+      run_anova=FALSE
+      run_ORA=TRUE; 
+      use_protein_pval=FALSE ## Proteins to use a sinput 
+      use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
 
 
-pvalueCutoff_sig=0.1
-if (run_anova){
-  order_statistic<-'statistic'
-  gene_list2<-pull(anova_results_oneway, statistic)
-  names(gene_list2)<-anova_results_oneway$Assay
-  gene_list_ord=gene_list2[order(-gene_list2)]
-  
-  
-}
-length(gene_list_ord)
-gene_list_ora=gene_list_limma_significant
-if (use_protein_pval){
-  gene_list_ora=gene_list_limma_significant_pval
-  
-}
-gene_list_ora
-ONT='BP'
-
-gene_list_ord
-
-pvalueCutoff=1
-#outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
-
-
-
-outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
-                               '_anova_', run_anova, 'pval_', use_pval )
-res_path<-paste0(outdir_s_p_enrich_file, 'gse.RDS')
-
-
-#if (file.exists(res_path)){
-#  gse_protein_full=loadRDS(res_path)
-#}else{
-
-# TODO: run per cluster 
-# Input:  gene_list_ord per cluster (coming from DE limma results )
-# 
-        if (run_ORA){
-          # writes 
-           gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord, results_file_ora =outdir_s_p_enrich_file  )
-          
-        }else{
-          
+      pvalueCutoff_sig=0.1
+      if (run_anova){
+        order_statistic<-'statistic'
+        gene_list2<-pull(anova_results_oneway, statistic)
+        names(gene_list2)<-anova_results_oneway$Assay
+        gene_list_ord=gene_list2[order(-gene_list2)]
         
-          
-          #### TODO: ALSO RUN ENRICHMENT using ANOVA from 
-          gse_protein_full <- clusterProfiler::gseGO(gene_list_ord, 
-                                        ont=ONT, 
-                                        keyType = 'SYMBOL', 
-                                        OrgDb = 'org.Hs.eg.db', 
-                                        pvalueCutoff  = pvalueCutoff 
-                                          )
-      
-          
-          
-          use_protein_pval=FALSE # if we are rrunning gsea this is not used actually so set to false everytime
-          
-        }
-  saveRDS(gse_protein_full, res_path)
-  
-  
-#}
+        
+      }
+      length(gene_list_ord)
+      gene_list_ora=gene_list_limma_significant
+      if (use_protein_pval){
+        gene_list_ora=gene_list_limma_significant_pval
+        
+      }
+      gene_list_ora
+      ONT='BP'
 
+      gene_list_ord
+
+      pvalueCutoff=1
+      #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
+
+      outdir_s_p_enrich
+      use_pval
+      dir.create(paste0(outdir_s_p, '/enr_prot', TISSUE,'/'), recursive=TRUE)
+      outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
+                                    '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id )
+      res_path<-paste0(outdir_s_p_enrich_file)
+
+      outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, 'cl', cluster_id)
+      outdir_s_p_enrich_file
+      #if (file.exists(res_path)){
+      #  gse_protein_full=loadRDS(res_path)
+      #}else{run_ORA
+      run_ORA=TRUE
+      force_gse=FALSE
+      # TODO: run per cluster 
+      # Input:  gene_list_ord per cluster (coming from DE limma results )
+      # 
+              if (run_ORA){
+                # writes 
+                if (file.exists(paste0(outdir_s_p_enrich_file, '.Rds'))| !force_gse){
+
+                      print('skip')
+                }
+              else{
+                
+              
+          
+                
+                
+                
+
+                gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord, results_file_ora =outdir_s_p_enrich_file  )
+                  saveRDS(gse_protein_full, paste0(outdir_s_p_enrich_file))
+
+
+              }
+              
+        }
+        
+      #}outdir_s_p_enrich_file
+
+
+
+}
 

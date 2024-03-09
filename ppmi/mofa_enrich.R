@@ -57,6 +57,7 @@ sel_factors
 vars_by_factor_all$r2_per_factor$group1[sel_factors,]
 
 ONT='BP'
+# todo: add ONT in results file settings 
 
 get_ranked_gene_list_mofa<-function(view, factor){
         f1<-get_weights(MOFAobject, view=view, factor=factor)
@@ -104,10 +105,9 @@ sel_factors_to_enrich=1:N_FACTORS
 #BiocManager::install("fgsea")
 
 
-just_load=TRUE
+just_load=FALSE
 just_load=FALSE
 
-sel_factors_to_enrich
 if (TRUE){
   
       for (factor in sel_factors_to_enrich){
@@ -126,7 +126,7 @@ if (TRUE){
                             
                           }else{
                           gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
-                          results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_')
+                          results_file_mofa = paste0(outdir, '/enrichment/gsego_', ONT, factor,'_' )
                           
                           gse_mofa<-run_enrich_gene_list(gene_list_ord, results_file=results_file_mofa )
                                
@@ -175,7 +175,7 @@ if (TRUE){
                          # TODO: DECIDE on the number
                           if (run_ORA){
                             names(gene_list_ord) = gsub('_proteomics.*', '',names(gene_list_ord))
-                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',factor,'_')
+                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',ONT, factor,'_')
                             dir.create(paste0(outdir, '/enrichment/', tissue,'/ora/'), recursive = TRUE)
                             
                             
@@ -204,75 +204,46 @@ if (TRUE){
                           }
                   }
                   }
-                    
+                   
       }
   
-  
-  
+
   gene_list_ord
-sel_factors_to_enrich = c(4)
+  just_load=FALSE
+  sel_factors_to_enrich
+sel_factors_to_enrich = c(1:N_FACTORS)
   ######## MIRNAS ON THEIR OWN
-        for (factor in sel_factors_to_enrich){
+for (factor in sel_factors_to_enrich){
           for (view in c('miRNA')){
             #view='RNA'; factor=3
             print(paste0(view,' ', factor ))
             #factor=4;view='proteomics'
-            gene_list_ord<-get_ranked_gene_list_mofa(view, factor)                   
-                    
+            gene_list_ord<-get_ranked_gene_list_mofa(view, factor)   
               if (view=='miRNA'){
-                
-                
                 if (just_load){
-                  
                   list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
-                
-                         
                 }else{
-                
-                        gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
-                        gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
-                        mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
-                                                           mirna_type = "mature",
-                                                           test_type = "GSEA",
-                                                           species = 'Homo sapiens'                      ,
-                                                           categories = c('miRPathDB_GO_Biological_process_mature'),
-                                                           sig_level=pvalueCutoff
-                        )
-                        #  sel_categories = c('Target genes (miRTarBase)')
-
-                        #  rba_mieaa_enrich
-                        #  mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = names(gene_list_ord)[1:20],
-                        #                                          mirna_type = "mature",
-                        #                                          test_type = "ORA",
-                        #                                          species = 'Homo sapiens'                      ,
-                        #                                        categories = c('Target genes (miRTarBase)'),
-                        #                                          sig_level=pvalueCutoff
-                        #  )
-                         
-                         
-        
-                         list_mirs[[factor]]<-mieaa_all_gsea_mofa
-                         #list_mirs_target[[factor]]<-mieaa_all_gsea_mofa
-                         
-                         saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
-                         #saveRDS(list_mirs_target, paste0(mofa_enrich_rds, 'mirs_targets'))
+              
+                    gene_list_ord_cut<-gene_list_ord[order(abs(gene_list_ord))[1:200]]
+                    gene_list_ord_cut<-gene_list_ord_cut[order(gene_list_ord_cut, decreasing=TRUE)]
+                    mieaa_all_gsea_mofa<-run_enrich_mirnas(gene_list_ord, pvalueCutoff = pvalueCutoff, test_type='GSEA')
+                    list_mirs[[factor]]<-mieaa_all_gsea_mofa
+                    #list_mirs_target[[factor]]<-mieaa_all_gsea_mofa
+            
+                    saveRDS(list_mirs, paste0(mofa_enrich_rds, 'mirs'))
+                    #saveRDS(list_mirs_target, paste0(mofa_enrich_rds, 'mirs_targets'))
                          
                 }
                }
-             
           }
-            
-          
-
-      
-              
       }
 }
 #  
-
+list_mirs
 list_mirs<-loadRDS(paste0(mofa_enrich_rds, 'mirs'))
 
 length(list_mirs)
+is.null(list_mirs[[3]])
 as.logical(lapply(list1, is.null))
 as.logical(lapply(list_mirs, is.null))
 
@@ -284,22 +255,6 @@ sel_factors_to_p<-sel_factors_to_enrich
 dir.create(paste0(outdir, '/enrichment/'))
 
 
-for (factor in sel_factors_to_p){
-          #' Need to create this to convert mir object
-          #'
-        results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
-        suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
-        gse_mofa_mirs=list_mirs[[factor]]
-        
-        mieaa_all_gsea=gse_mofa_mirs
-        Padj_T_paths=0.05
-        mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
-        mieaa_gsea_1=mieaa_res[[1]]
-        enr_full=mieaa_res[[2]]
-        
-        
-        list_mirs_enrich[[factor]]<-enr_full
-}
 
 as.logical(lapply(list_mirs_enrich, is.null))
 ## this will be used further-make sure it is produced correctly
@@ -308,10 +263,13 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 #list1=listALL[[1]]
 
 #### Now run the prot view ? 
-run_plots=ifelse(isRStudio, FALSE, TRUE)
 # TODO: PASS 
 run_plots=FALSE
 run_plots=TRUE
+sel_factors_to_p
+                
+process_mirnas=TRUE
+process_mofa=TRUE
 
 if (run_plots){
 
@@ -321,42 +279,32 @@ if (run_plots){
           list1_genes
           
           for (factor in sel_factors_to_p){
-            results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',factor,'_')
+            results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',ONT,'_' ,factor,'_')
             suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
             gse_mofa_mirs=list_mirs[[factor]]
             
             mieaa_all_gsea=gse_mofa_mirs
             Padj_T_paths=0.05
-            mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
-            mieaa_gsea_1=mieaa_res[[1]]
-            enr_full=mieaa_res[[2]]
-            
-            
-            list_mirs_enrich[[factor]]<-enr_full
-            
-            print(any(enr_full@result$p.adjust<0.05))
-            
-            
-            gse_mofa_sig=write_filter_gse_results(enr_full, results_file_mofa, pvalueCutoff)
-            
-            write.csv(as.data.frame(gse_mofa_sig@result), paste0(results_file_mofa, '.csv'))
-            
-            ### to run mofa results
-            
-            process_mirnas=TRUE
-            process_mofa=TRUE
-            dim(gse_mofa_sig)
-            gse_mofa_sig
-            #& vars_by_factor[,'proteomics'][factor]>1
-            type(gse_mofa_sig)
-            dim(gse_mofa_sig)[1]>4
-            if  (dim(gse_mofa_sig)[1]>4 ){
-              print(dim(gse_mofa_sig)[1])
-              print(paste(factor,'sig'))
-              enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
-                                                 results_file=results_file_mofa, 
-                                                 N_DOT=20, N_EMAP = 50)    
-              
+
+            if (!is.null(mieaa_all_gsea)){
+                print(paste('plotting, ',factor))
+                mieaa_res<-mirna_enrich_res_postprocessing(mieaa_all_gsea, mir_results_file=results_file_mofa)
+                #mieaa_gsea_1=mieaa_res[[1]] # gsea result # not used anywhere...
+                enr_full=mieaa_res[[2]] 
+                              
+                list_mirs_enrich[[factor]]<-enr_full
+                gse_mofa_sig=write_filter_gse_results(enr_full, results_file_mofa, pvalueCutoff)
+                
+                #write.csv(as.data.frame(gse_mofa_sig@result), paste0(results_file_mofa, '.csv'))
+  
+                if  (dim(gse_mofa_sig)[1]>4 ){
+                  print(dim(gse_mofa_sig)[1])
+                  print(paste(factor,'sig'))
+                  enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
+                                                    results_file=results_file_mofa, 
+                                                    N_DOT=20, N_EMAP = 50)    
+                  
+                }
             }
             
           }

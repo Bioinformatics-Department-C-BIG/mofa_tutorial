@@ -1,10 +1,18 @@
 ---
-title: "Mofa Enrichment "
 output:
   html_document: default
   pdf_document: default
   css: styles.css
+params: 
+      title: 'Mofa Clusters comparisons - V08'
+      nf: c(2,11, 23)
+
 ---
+
+---
+title:  `r params$title`
+---
+
 
 ```{r setup, include=FALSE}
 
@@ -82,11 +90,11 @@ outdir_enrich<-paste0(outdir, '/enrichment/' )
 
 
 
-## DotPlots  
+
 ```{r get_enrich_files, echo=FALSE}
-nf=c(2,4,6,18,22)
-nf=c(4,6)
-nf=c(2,11, 23)
+#nf=c(2,4,6,18,22)
+#nf=c(4,6)
+#nf=c(2,11, 23)
 
 
 get_files_weights<-function(outdir){
@@ -131,17 +139,7 @@ out_width_w = "25%"
 
 ```
 
-
-
-```{r plot, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="RNA",fig.show='hold',fig.align='center'}
-
-
-
- print(paste("0.01, -0.14, 0.03, 0.3, -0.05, -0.21, 0.1, 0.07, 0, 0.06, -0.05, 0.03, 0.07, 0.09, -0.09, -0.02, 0.1, -0.15, -0.01, -0.02, -0.04, -0.16, 0.03, 0.03, -0.02"))
-knitr::include_graphics(en_plots_all, dpi = 96 )
-
-```
-
+## Top weighted molecules 
 
 
 ```{r plot_weights, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width_w, fig.cap="weights",fig.show='hold',fig.align='center'}
@@ -155,6 +153,17 @@ knitr::include_graphics(weight_plots, dpi = 96 )
 
 ```
 
+## Enrichment analysis 
+### DotPlots  
+
+```{r plot, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="RNA",fig.show='hold',fig.align='center'}
+
+
+
+ print(paste("0.01, -0.14, 0.03, 0.3, -0.05, -0.21, 0.1, 0.07, 0, 0.06, -0.05, 0.03, 0.07, 0.09, -0.09, -0.02, 0.1, -0.15, -0.01, -0.02, -0.04, -0.16, 0.03, 0.03, -0.02"))
+knitr::include_graphics(en_plots_all, dpi = 96 )
+
+```
 
 
 
@@ -171,7 +180,7 @@ knitr::include_graphics(en_plots_all_proteins_csf, dpi = 96 )
 
 
 
-## gene plots
+### Gene plots
 
 
 ```{r gc_get_files, , echo=FALSE}
@@ -210,7 +219,7 @@ en_plots_all_proteins_csf_emap<-get_files(paste0(outdir_enrich, '/proteins_csf/o
 ```
 
 
-## Enrichment map
+### Enrichment map
 
 ```{r plot_emap, echo=FALSE, fig.width=25, fig.height=7, out.width =out_width, fig.cap="RNA",fig.show='hold',fig.align='center'}
 
@@ -219,10 +228,19 @@ knitr::include_graphics(en_plots_all_emap, dpi = 96 )
 
 ```
 
-```{r plot_proteins_emap, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins",fig.show='hold',fig.align='center'}
+```{r plot_proteins_emap, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins plasma",fig.show='hold',fig.align='center'}
 
 
 knitr::include_graphics(en_plots_all_proteins_emap, dpi = 96 )
+
+
+```
+
+
+
+```{r plot_proteins_csf_emap, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins csf",fig.show='hold',fig.align='center'}
+
+
 knitr::include_graphics(en_plots_all_proteins_csf_emap, dpi = 96 )
 
 

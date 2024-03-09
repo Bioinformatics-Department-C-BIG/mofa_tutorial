@@ -126,3 +126,4 @@ if (run_rna_mirna){
 }
 
 p_params_mofa<-p_params_plasma
+#p_params_plasma

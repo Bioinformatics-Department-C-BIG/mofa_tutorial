@@ -2,22 +2,31 @@
 
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
+  get_de_results_path<-function(deseq_params_all=deseq_params_all, VISIT=VISIT, formula_deseq_format=formula_deseq_format,  prefix=prefix, cluster_id=cluster_id ){
+    #' returns the deseq results pathway for 
+    #' @param VISIT
+    #' @param formula_deseq_format
+    #' @param prefix
+    #' @param cluster_id
+    #' 
+            return(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'))
+        }
 
 #Apply to current combinations 
 # Clust comparisons for RNA/mirna
 
-# Enrichment settings for RNA/miRNA
-
-
-
-
+#' Enrichment settings for RNA/miRNA
+#' This script takes the enrichment analysis results for all time points and concatenates them 
+#' 
+#' @value Produces a heatmap
+#' Compares the de pathways 
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 pvalueCutoff_sig=0.05
 
 
 
 clusters_indices=c('1','2','3')
-
+dir.create(deseq_params_all, '/all_time/enr/')
     ### Cluster compare by visit ### 
     # 1. load all gene lists again
     # deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
@@ -39,7 +48,11 @@ clusters_indices=c('1','2','3')
      # deseq_all_times<-vector("list", length = 3)
 
       deseq_all_times<-sapply(times_sel, function(VISIT){
-        deseq2ResDF_time<-read.csv(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'), row.names=1) 
+        
+        # deseq_params_all already loaded in cluster comparison script 
+        de_results_path<-get_de_results_path(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id)
+
+        deseq2ResDF_time<-read.csv(de_results_path, row.names=1) 
         
         gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
         names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
@@ -130,16 +143,25 @@ padjust_cutoff = 0.001
 #' @param sig_clust: select top paths from which time point? 
 cluster_id = '2' ; sig_time = 'BL'; 
 
-# 
+sig_time = 'V08'
 
-get_top_per_clust<-function(gse_compare_all_vis){
+get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig_time ){
 
+  # return the top significant pathways by cluster
+  # sig_time: for a specific time point
   top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
     gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
     gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
     gse_cluster_1<-gse_all_cls[[sig_time]]
+    
+    gse_cluster_1<-gse_cluster_1 %>% filter(p.adjust<0.05)
 
-    paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)][1:top_paths]
+    paths1_sig_top<-gse_cluster_1$Description[order(gse_cluster_1$p.adjust)]
+
+
+    if (top_paths){
+      paths1_sig_top<-paths1_sig_top[1:top_paths]
+    }
     #paths1_sig<-gse_cluster_1$Description[gse_cluster_1$p.adjust<padjust_cutoff] # also cut with padjusted? 
     paths1_sig_top<-na.omit(paths1_sig_top) # only plot top 
     return(paths1_sig_top)
@@ -149,14 +171,22 @@ get_top_per_clust<-function(gse_compare_all_vis){
   return(top_clust)
  
 }
-cluster_id = '2' ; sig_time = 'V08';top_paths = 12
+
+
+
+cluster_id = '2' ; sig_time = 'V08';
+top_paths = 60
+
+top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
+dim(top_paths_all_factors)
+top_paths_all_factors$Description
 #'  @param metric
 
 metric='logFC';
 gse_compare_cl=gse_compare_all_vis[[1]]
 #' decide on pathways to keep 
-top_sig_all_clusts<-get_top_per_clust(gse_compare_all_vis)
-top_sig_all_clusts<-unlist(top_sig_all_clusts)
+
+all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
 metric='NES';
 metric = 'logFC'
 
@@ -202,21 +232,34 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 
 use_top_mofa=TRUE
 
-gse_pathways_fs_list<-get_pathways_for_factors(outdir,fact, pvalueCutoff_mofa_factors=0.05, top_ps=30)
-gse_pathways_df<-do.call(rbind,gse_pathways_fs_list)
+length(all_sig_all_clusts)
 
 logFC_merged_df2<-merged_df_all_tps_all_clusts
+use_mofa_paths = TRUE
+
+if (use_mofa_paths){
+  top_paths = 30
+
+  top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
+    dim(top_paths_all_factors)
+
+  top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts,]
+   dim(top_paths_all_factors)
+  selected_paths<-top_paths_all_factors$Description
+
+
+}else{
+  top_paths=15
+  top_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis,  top_paths = top_paths,sig_time=sig_time))
+
+  selected_paths<-top_sig_all_clusts
+}
+
+# filter top 
+  logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
+
+dim(logFC_merged_df2)
 logFC_merged_df2[is.na(logFC_merged_df2)]<-0
-
-
-#logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all_clusts,] # plot top significant or top mofa
-
-logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% unlist(gse_pathways_fs_list),] # plot top significant or top mofa
-logFC_merged_df2
-length(gse_pathways_fs_list[[2]])
-gse_pathways_fs_list[[2]]
-
-
 
 rownames(logFC_merged_df2)<-logFC_merged_df2$Description
 logFC_merged_df2$Description<-NULL
@@ -225,41 +268,33 @@ graphics.off()
 enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
 enrich_compare_path_all_clusts
 
+fname= paste0(enrich_compare_path_all_clusts,'clall_' , metric,'mofa_',as.numeric(use_mofa_paths),'_', top_paths, '_heatmap.png')
+fname
+row_an<-top_paths_all_factors[match( rownames(logFC_merged_df2), top_paths_all_factors$Description  ), ] 
+row_an2<-as.factor(row_an$factor); names(row_an2)<-row_an$Description
 
+row_ha = rowAnnotation( factor=row_an2)
 
-fname= paste0(enrich_compare_path_all_clusts,'cl_all_',padjust_hm,'_' , metric, 'mofa',use_top_mofa,top_paths,'_heatmap.png')
-Reduce(intersect,gse_pathways_fs_list)
-
-gse_pathways_unlist<-gse_pathways_fs_list %>% dplyr::bind_rows()
-gse_pathways_df_factor<-gse_pathways_df$factor[match(rownames(logFC_merged_df2), (gse_pathways_df$Description)) ]
-gse_pathways_df_factor
-row_ha = rowAnnotation(factor=as.factor(gse_pathways_df_factor))
-# TODO: add the median NP2PTOT? 
-# TODO: add time point 6 
-#met %>% group_by(NP2PTOT_LOG_clust)%>%
-#summarise_at(c('NP2PTOT_BL','NP2PTOT'),median)
-
-
-
-
-jpeg(fname, width=20*100, height=15*100, res=200)
-ht<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), show_rownames=T, 
+png(fname, width=20*100, height=20*100, res=200)
+ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
+    show_rownames=TRUE, 
     column_split = rep(1:3, each=3), 
-     right_annotation = row_ha)
+    right_annotation = row_ha, 
+    heatmap_legend_param  = list(direction = "horizontal"))
+
+    
+    draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm")
+    )
+
   #  title = paste(metric, 'p-adj:', padjust_hm))
 draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
 dev.off()
 
+logFC_merged_df2[10, ]
 
 
 
 
-
-
-
-length(intersection_all_clusts)
-
-intersection_all_clusts
 
 fname_venn=paste0(enrich_compare_path, 'time_all_intersection.png')
 create_venn(venn_list = intersection_all_clusts, fname_venn =fname_venn,main =paste0( 'Pathways by cluster' ))
@@ -323,6 +358,7 @@ sapply(c('1','2','3'), function(x){
 
 #' @gse_compare_visit_res_t: holds all times for each cluster
 unique_timepoint<-list()
+dir.create(paste0(deseq_params_all, '/all_time/enr/'))
 sel_t<-'V08'
 # check Swhat is in V08 only AND in the unique of the union of all times
 for (cluster_id in clusters_indices){
@@ -342,14 +378,15 @@ for (cluster_id in clusters_indices){
 
     print(dim(unique_timepoint[[cluster_id]]))
 
-    write.csv(unique_timepoint[[cluster_id]],paste0(enrich_compare_path, '_unique_per_timepoint',sel_t,'_',cluster_id,'.csv' ))
+    # 
+    write.csv(unique_timepoint[[cluster_id]],paste0(enrich_compare_path, 'unique',sel_t,'_',cluster_id,'.csv' ))
 
 
 }
 gse_compare_visit_res_t
 
 
-
+enrich_compare_path
 
 
 
@@ -368,10 +405,11 @@ gse_clust_pathway=list()
 
 
 
+
 for (cluster_id in clusters_indices){
     print(cluster_id)
 
-      enrich_compare_path=paste0(deseq_params_all, '/enr/', prefix, enrich_params, cluster_id, 'time')
+      enrich_compare_path=paste0(deseq_params_all, '/enr_', prefix, '/', prefix, enrich_params, cluster_id, 'time')
 
 
       gse_compare_visit_res<-gse_compare_all_vis[[cluster_id]]@compareClusterResult
@@ -393,8 +431,6 @@ for (cluster_id in clusters_indices){
 
 
 
-gse_clust_pathway[[1]]
-
 
 
 
@@ -408,6 +444,8 @@ new$VISIT
 
 ggplot(new,aes(x=VISIT, y=-log10(p.adjust), group=Description))+
     geom_line(aes(color=Description))
+
+
 
 
 

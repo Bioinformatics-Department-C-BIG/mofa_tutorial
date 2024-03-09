@@ -177,17 +177,13 @@ suppressPackageStartupMessages(library(randomForest))
 BiocManager::install("vsn")
 BiocManager::install('GGally')
 BiocManager::install("sva")
-<<<<<<< HEAD
 BiocManager::install("gplots")
-=======
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 
 ## install timeOmics
 BiocManager::install('timeOmics')
 BiocManager::install('propr')
 
-<<<<<<< HEAD
 BiocManager::install('randomForest')
 
 
@@ -232,8 +228,6 @@ BiocManager::install('randomForest')
 
 
 
-=======
->>>>>>> 5eb7f7804e2a2863e64c5eb156e4d515d2cf94c4
 
 
 

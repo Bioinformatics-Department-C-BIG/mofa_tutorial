@@ -1,18 +1,12 @@
 
 
 #script_dir<-paste0(dirname(rstudioapi::getSourceEditorContext()$path), '/../')
-#script_dir
 source(paste0('ppmi/setup_os.R'))
 source(paste0(script_dir, 'ppmi/setup_os.R'))
 
-#source(paste0('/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/setup_os.R'))
-#BiocManager::install('GOSemSim')
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
-# select visit: ALL, V02, V04, V06, V08 
-# BiocManager::install("MOFA2", version="1.8")
-#etach('package:MOFA2', unload=TRUE)
-#source("https://bioconductor.org/biocLite.R")
+# select visit to run mofa: ALL, V02, V04, V06, V08 
 
 
 library(MOFA2)
@@ -65,24 +59,9 @@ source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
 
-
-
-#output_files
-# metadata source 
-metadata_output<-paste0(output_files, 'combined.csv')
-combined_all_original<-read.csv2(metadata_output)
-metadata_output<-paste0(output_files, 'combined_log.csv') 
-combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
-
-
-
+combined_bl_log<-load_metadata()
 combined_bl <- combined_bl_log
-combined_bl_log$Usa
-
-combined_bl_log$RBD_TOT
 decon<-loadRDS(paste0(output_files, '/decon.RDS'))
-
-
 scale_views=TRUE
 
 
@@ -96,7 +75,7 @@ if (run_mofa_complete){
   N_FACTORS=15  ### so far gives the best of the corelations for TOP_GN=0.30, MN=0.5, PN=0.9
 }
 
-
+drop_factor_threshold = 0.001
 
 
 
@@ -146,7 +125,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
     
     dir.create(outdir, showWarnings = FALSE)
    # force=FALSE
-    MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=force, N_FACTORS=N_FACTORS )
+    MOFAobject<-run_mofa_wrapper(MOFAobject, outdir, force=force, N_FACTORS=N_FACTORS, drop_factor_threshold=drop_factor_threshold )
     
     
   
@@ -208,7 +187,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 
 
 # n_factors best=15
-for (N_FACTORS in c(25)){
+for (N_FACTORS in c(30)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
@@ -240,9 +219,9 @@ for (N_FACTORS in c(25)){
 
   MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
   
-  
-  
-  
+  MOFAobject@dimensions$K
+ 
+  N_FACTORS =  MOFAobject@dimensions$K
   
 }
 
@@ -282,6 +261,18 @@ samples_metadata(MOFAobject)<-as.data.frame(sm2)
 ## tests 
 cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
 cors_real$r
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

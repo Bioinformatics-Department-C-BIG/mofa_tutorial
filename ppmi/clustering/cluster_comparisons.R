@@ -4,46 +4,16 @@
 # WARNING DO NOT CHANGE THIS, MOVE TO A FUNCTION!! ## 
 ### FIRST LOAD required files  ####
 
-
+#process_mirnas
 source(paste0(script_dir, '/ppmi/utils.R'))
 knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
-load_all_se<-function(){
-  #'
-  #' @param
-  #' @return se_rnas, se_mirnas 
-
-
-      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-
-
-      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-      if (!base::exists(quote(se_mirs))){
-        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-      # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
-
-      }
-
-
-      # hist(head(assay(se_mirs_norm),10)[10:50])
-
-      process_mirnas=FALSE
-      source(paste0(script_dir, '/ppmi/config.R'))
-      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-      if (!base::exists(quote(se_rnas))){
-
-        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-      }
-
-      return(list(se_rnas, se_mirs))
-
-}
 
 
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
-
+se_mirs
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -67,8 +37,9 @@ if (process_mirnas){
 }else{
   se_sel = se_rnas
   prefix='rnas_'
-}
 
+}
+  print(prefix)
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 
@@ -226,7 +197,8 @@ if (!cell_corr_deseq){
 }
 
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
-deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/')
+# since we are at a specific visit 
+deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/') 
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/'))
 dir.create(deseq_params, recursive = TRUE)
 dir.create(cluster_params_dir, recursive = TRUE)
@@ -237,21 +209,26 @@ fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_
 
 
 
-clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+#clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC')) 
+
 # the order for deseq levels is first controls, second disease
-deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+#deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2'), c('1','2'), c('1','3'),c('3','2'), c('3', '1') )
+deseq_order= list( c('1', '2'),c('1', '2'),c('1', '2') ,c('1', '2') )
 
-clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
-
+#clusters_names<-c(1,2,3,'1_2_3', '1_2', '1_3', '3_2' , '3_1')
+clusters_names<-c('1','2','3','1_2_3')
 
   se_filt_all<-lapply(clusters_indices, function(cluster_id){ 
 
     se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id)]} )
 
 
-names(se_filt_all)<-clusters_names
+  names(se_filt_all)<-clusters_names
 
 se_filt_all<-lapply(se_filt_all, function(se_clust){
+    # temporarily replaces the COHORT value to be the cluster group 
+    # might be better to use a different name and either use cohort or clusters 
     if (length(unique(na.omit(se_clust$COHORT)))==1){
     se_clust$COHORT<-se_clust$kmeans_grouping}
     return(se_clust)
@@ -260,7 +237,6 @@ se_filt_all<-lapply(se_filt_all, function(se_clust){
 )
 
 # todo remove the ones below
-se_filt_all[['1_2']]$COHORT<-se_filt_all[['1_2']]$kmeans_grouping
 
 
 
@@ -301,10 +277,11 @@ for (cluster_id_num in 1:length(clusters_names)){
           deseq2ResDF$GENE_SYMBOL<-get_symbols_vector(gsub('\\..*', '',rownames(deseq2ResDF))) 
         }
         write.csv(deseq2ResDF, de_file, row.names=TRUE)
+        # Also write the parameters of deseq
         file.create(de_params_file)
 
 
-        # Volcano
+        # 3. Volcano
         pvol<-plotVolcano(  deseq2ResDF, se_clust, title=paste0('Cluster ', cluster_id_name), xlim=c(-1.1,1.1),
             lab=deseq2ResDF$GENE_SYMBOL)
 
@@ -314,7 +291,6 @@ for (cluster_id_num in 1:length(clusters_names)){
 
 
 
-        # Also write the parameters of deseq
 
   }
 
@@ -324,12 +300,9 @@ for (cluster_id_num in 1:length(clusters_names)){
   deseq_all[[cluster_id_name]]<-deseq2ResDF[deseq2ResDF$mofa_sign %in% 'Significant',] # holds the significant only
 } 
 # Save and load # Rrename ens id.*
-
-de_file
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
 
-deseq_all_names
 
 
 #### 1. Venn from significant 
@@ -371,9 +344,15 @@ order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
 
 
 pvalueCutoff_sig=0.05
+test_type_mirnas = 'GSEA'
 enrich_params<-paste0(ONT, order_by_metric_s)
-dir.create(paste0(deseq_params, '/enr/'))
-enrich_compare_path=paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
+#enrich_params_mirs<-unlist(strsplit(test_type_mirnas, ''))[1]
+enrich_params_mirs<-enrich_params
+
+dir.create(paste0(deseq_params, '/enr_',prefix, '/'))
+enrich_compare_path=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params, 'comp')
+
+
 
 # run enrichment only for RNAs 
 
@@ -400,25 +379,91 @@ force_gse=FALSE # SET to true to rerun plots
       gene_lists[[cluster_id_name]]<-gene_list1 
 
       # get the gene list and run ! - maybe it is not needed if we parse the cluster compare....
-      results_file_cluster=paste0(deseq_params, '/enr/', prefix, enrich_params, 'cl', cluster_id_name)
+      results_file_cluster=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params, 'cl', cluster_id_name)
       gse_file<-paste0(results_file_cluster, '.Rds')
 
      # if (TRUE){
       if (!file.exists(gse_file) | force_gse){
 
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
-          N_EMAP=30 , N_NET=10, force_gse=FALSE)
+          N_EMAP=30 , N_NET=10)
           saveRDS(gse1,gse_file )
           gse_all_clusters[[cluster_id_name]]<- gse1
+          
 
       }else{
         gse_all_clusters[[cluster_id_name]]<- loadRDS(gse_file )
       }
     }
 
+} 
+
+#force_gse=TRUE
+if (process_mirnas){
+  # run a different test..
+  cluster_id_num=1
+  clusters_names
+    for (cluster_id_num in 1:length(clusters_names)){
+
+          print(paste('cluster:',cluster_id_num))
+          cluster_id_index=clusters_indices[[cluster_id_num]]
+          cluster_id_name=clusters_names[[cluster_id_num]]
+          
+          # parse the deseq results  for the analysis
+          deseq2ResDF = deseq_all_groups[[cluster_id_name]];
+        # parse the gene list from the deseq results 
+          gene_list1<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
+
+          gene_lists[[cluster_id_name]]<-gene_list1 
+
+          # get the gene list and run ! - maybe it is not needed if we parse the cluster compare....
+          results_file_cluster=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params_mirs, 'cl', cluster_id_name)
+          gse_file<-paste0(results_file_cluster, '.Rds')
+
+        # if (TRUE){
+           
+          if (!file.exists(gse_file) | force_gse){
+
+      
+              gse1<-run_enrich_mirnas(gene_list1, pvalueCutoff = pvalueCutoff, test_type='GSEA')
+              saveRDS(gse1,gse_file )
+              gse_all_clusters[[cluster_id_name]]<- gse1
+           
+              mieaa_res<-mirna_enrich_res_postprocessing(gse1, mir_results_file=results_file_cluster)# convert to enrich result 
+              enr_full=mieaa_res[[2]]
+               gse_mofa_sig=write_filter_gse_results(enr_full, results_file_cluster, pvalueCutoff)
+                if  (dim(gse_mofa_sig)[1]>4 ){
+                    enrich_plots<-run_enrichment_plots(gse=gse_mofa_sig,
+                                                      results_file=results_file_cluster, 
+                                                      N_DOT=20, N_EMAP = 50)    
+                  
+                }
+
+
+             
+
+          }else{
+            gse_all_clusters[[cluster_id_name]]<- loadRDS(gse_file )
+
+
+          }
+           
+        }
+
+    } 
 
 
 
+
+
+
+
+
+
+
+
+
+if (!process_mirnas){
 
 
 
@@ -441,7 +486,7 @@ cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2','1_2_3' )
 
 
 gene_lists_compare<-gene_lists[cluster_pairs]
-enrich_compare_path_all<-paste0(deseq_params, '/enr/', prefix, enrich_params, 'comp')
+enrich_compare_path_all<-paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params, 'comp')
 enrich_compare_path <- paste0( enrich_compare_path_all, paste0(names(gene_lists_compare), collapse='-'))
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
 gse_compare_file
@@ -525,23 +570,6 @@ lapply(filt_clusts_all, function(filt_clusts){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- # nolint
 
 
 

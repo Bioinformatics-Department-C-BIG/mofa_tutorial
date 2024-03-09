@@ -77,7 +77,42 @@ correlate_factors_with_covariates_categ<-function(MOFAobject, covariates){
 
 
 
-run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
+
+correlate_factors_categorical<-function(y, MOFAobject){
+  ##  obtain correlations of factors with the clinical clusters 
+  #' explicitly done for categorical variables
+  #' probably the same as above? 
+  #' @param name 
+  #'
+  #'
+  #'
+  #'
+    clust_name=paste0(y)
+   # clust_name='Biological.group'
+ 
+      sm<-MOFA2::samples_metadata(MOFAobject)
+      if (clust_name %in% colnames(sm)){
+        covariates=MOFA2::samples_metadata(MOFAobject)[,clust_name ]
+        Z <- get_factors(MOFAobject, factors = 1:5, 
+                         as.data.frame = FALSE)
+
+        Z <- do.call(rbind, Z)
+
+        #psych::corr.test(Z, covariates, method = "pearson", 
+        #                  adjust = "BH")
+        y_pvals<-apply(Z, 2, function(z) {
+          kruskal.test(z,covariates)$p.value })
+        y_pvals<-as.numeric(p.adjust(y_pvals, method = 'BH'))
+        #y_pvals<-y_pvals<0.05
+        # do Kruskal Wallis test to see whether or not there is statistically significant difference between three or more groups
+
+        return(y_pvals)
+      }
+  }
+
+
+
+run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15, drop_factor_threshold =  -1){
   ### Run mofa and write to file
   #'
   #' @param MOFAobject 
@@ -91,7 +126,7 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15 ){
   model_opts$num_factors <- N_FACTORS
   data_opts$scale_views=scale_views
   train_opts<-get_default_training_options(MOFAobject)
-
+  train_opts$drop_factor_threshold <- drop_factor_threshold
   
   
   MOFAobject <- prepare_mofa(MOFAobject,
@@ -162,8 +197,45 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
   
 }
 
+#pvalueCutoff=0.05
+
+factor=2
+top_p=20
+
+get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20){
+  # mofa enrichment file - read the csv file
+  # ONT - added now
+  
+
+    results_file_mofa = paste0(outdir, '/enrichment/gsego_',ONT, factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
+    results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_', pvalueCutoff, '.csv')
+
+    top_pathways<-read.csv(paste0(results_file_mofa ))
+    top_pathways<-top_pathways[, c('Description', 'p.adjust')]
+    top_pathways<-top_pathways %>% arrange(p.adjust) %>% as.data.frame()
+    top_pathways <- top_pathways[1:top_p,]
+    top_pathways$factor<-factor
+    return(top_pathways)
+    
+  
+
+}
 
 
+concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20){
+    #'
+    #' @param factors 
+    #' @param top_p: top number of pathways to extract
+    #'  
+
+
+    
+    top_pathways_all_factors<-lapply(factors, 
+      get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p)
+
+    top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
+    return(top_pathways_all_factors)
+}
 
 
 #object=MOFAobjectPD
@@ -251,7 +323,7 @@ cluster_by_mofa_factors<-function(MOFAobject, factors,centers=2, rescale=FALSE, 
 
 
 
-write_vars_output<-function(MOFAobject, vars_by_factor){
+write_vars_output<-function(MOFAobject, vars_by_factor, factors='all'){
   #'
   #'
   #'write the variance plot 
@@ -259,18 +331,32 @@ write_vars_output<-function(MOFAobject, vars_by_factor){
   #' @param vars_by_factor
   #'
   #'
+  
+  
+  if (type(factors)=='character'){
+    nf=N_FACTORS}else{
+    nf=length(factors)
+  }
+  height = 3+nf/2
+
+
+  factors_s = paste0(factors, collapse='_')
   vars_by_factor_f<-format(vars_by_factor*100, digits=2)
   write.table(format(vars_by_factor_f,digits = 2)
               ,paste0(outdir,'variance_explained.txt'), quote=FALSE)
   
-  p3<-plot_variance_explained(MOFAobject, max_r2=20)+
-    theme(axis.text.x=element_text(size=20), 
+  p3<-plot_variance_explained(MOFAobject, max_r2=20, factors=factors)+
+    theme(axis.text.x=element_text(size=20,angle=90), 
           axis.text.y=element_text(size=20))
-  ggsave(paste0(outdir, 'variance_explained','.png'), plot=p3,
-         width = 5, height=N_FACTORS/2,
+  ggsave(paste0(outdir, 'variance_explained_', factors_s,'.png'), plot=p3,
+         width = 5, height=height,
          dpi=100)
-}
 
+
+
+
+
+}
 
 
 

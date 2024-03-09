@@ -17,7 +17,8 @@ df1 %>% dplyr::arrange(Factor2 )
 paste0(DIFF_VAR,'_BL')
 
  diff_variables_to_p=c( 
-         'NP2PTOT',  'scopa', 'sft',  'moca',
+         'NP2PTOT',
+         'NP3TOT',  'scopa', 'sft',  'moca',
          'Neutrophil.Lymphocyte', 'AGE',
          'duration', 
          # f23
@@ -34,10 +35,12 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca')
-clust_name
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on')
+
+get_factors_for_metric('updrs3_score_on')
 facet_rows = 2
 
+#write_vars_output(MOFAobject, vars_by_factor, factors=fact)
 
 #### Boxplots ####
 
@@ -244,7 +247,7 @@ samples_metadata(MOFAobject)[selected_covars2]
 #}
 
 
-
+#install.packages('reshape')
   ############## Create boxplots by group #### 
   col_data<-samples_metadata(MOFAobjectPD)[c(diff_variables_to_p,clust_name, 'PATNO')]
   col_data_melt<-reshape::melt(col_data, id=c('PATNO', clust_name))

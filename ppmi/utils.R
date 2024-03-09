@@ -8,6 +8,9 @@ suppressWarnings(library(sgof))
 suppressWarnings(library('factoextra'))
 suppressWarnings(library(plyr))
 suppressWarnings(library(dplyr))
+### TODO: move to a utils / preprocessing file because it is used also for proteoomics
+library(SummarizedExperiment)
+
 
 library('WGCNA') # needƒ empiricalBayesLM
 suppressWarnings(library(R.filesets))
@@ -166,8 +169,42 @@ load_se_all_visits<-function(input_file, combined){
   return(se)
 }
 
-### TODO: move to a utils / preprocessing file because it is used also for proteoomics
-library(SummarizedExperiment)
+
+
+
+load_all_se<-function(){
+  #'
+  #' load summarized experiment for rnas and mirnas 
+  #' @param
+  #' @return se_rnas, se_mirnas 
+
+
+      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
+
+
+      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+      if (!base::exists(quote(se_mirs))){
+        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+
+      }
+
+
+      # hist(head(assay(se_mirs_norm),10)[10:50])
+
+      process_mirnas=FALSE
+      source(paste0(script_dir, '/ppmi/config.R'))
+      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
+      if (!base::exists(quote(se_rnas))){
+
+        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      }
+
+      return(list(se_rnas, se_mirs))
+
+}
+
+
 
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
@@ -717,8 +754,7 @@ library(ggplot2)
 
 suppressWarnings(library('R.filesets' ))
 library('enrichplot' )
-require(DOSE)
-library('enrichplot')
+
 
 
 #deseq2ResDF
@@ -727,21 +763,63 @@ library('enrichplot')
 
 run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15){
   #'
-  #' Get the ordered list 
-  #' @param deseq2ResDF
+  #' Get the ordered gene list from a deseq object
+  #' @param deseq2ResDF deseq results object 
+  #' @param results_file file to write gsea result 
+  #' @param N_DOT enrichment visualization 
+  #' 
   #' 
   #'
   #deseq2ResDF=deseq2ResDF1
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   gene_list_ord=gene_list
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
-
-
   gse=run_enrich_gene_list(gene_list, results_file)
   
  
   return(gse)
 }
+
+
+
+
+
+ run_enrich_mirnas<-function(gene_list_ord, pvalueCutoff=0.05, test_type='GSEA',top_mirs_ora=20){
+
+
+                  if (test_type=='GSEA'){
+
+                        mieaa_all_gsea_mofa <- rba_mieaa_enrich(test_set = names(gene_list_ord),
+                                                            mirna_type = "mature",
+                                                            test_type = "GSEA",
+                                                           species = 'Homo sapiens'                      ,
+                                                            categories = c('miRPathDB_GO_Biological_process_mature'),
+                                                            sig_level=pvalueCutoff)
+
+                        mieaa_return<-mieaa_all_gsea_mofa
+                   }else{
+                          mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = names(gene_list_ord)[1:top_mirs_ora],
+                                                                  mirna_type = "mature",
+                                                                  test_type = "ORA",
+                                                                  species = 'Homo sapiens'                      ,
+                                                                categories = c('Target genes (miRTarBase)'),
+                                                                  sig_level=pvalueCutoff
+                          ) 
+
+                        mieaa_return<-mieaa_all_gsea_mofa_target
+
+
+                        }
+                            
+                              
+                    
+                    return(mieaa_return)
+
+
+
+
+                    }
+
 
 
 
@@ -1175,7 +1253,7 @@ Category<-'GO Biological process (miRPathDB)';
 library('multienrichjam')
 library('clusterProfiler')
 
-mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Category='GO Biological process (miRPathDB)'){
+mirna_enrich_res_postprocessing=function(mieaa_all_gsea,mir_results_file,  Category='GO Biological process (miRPathDB)', Padj_T_paths = 0.05){
 #mirna_enrich_res_postprocessing=function(mieaa_all_gsea, Category='GO Biological process (miRPathDB)',mir_results_file){
 
   #' post-process mieaa enrichment analysis results 
@@ -1346,6 +1424,21 @@ get_highly_variable_matrix<-function(prefix, VISIT_S, min.count, sel_coh_s,sel_s
   
 }
 
+
+selectMostVariable<-function(vsn_mat,q){
+  #' selects rows ie. genes must be rows
+  #' Selects top q most variable genes
+  #' Ideally take vsn transformed dataset!
+  #' @param: vsn_mat: genes/proteomics matrix after vsn/vst transform
+  #' q: top q genes/
+  variances <- apply(vsn_mat, 1, var, na.rm=TRUE)
+  topx<-names(variances[order(variances, decreasing = TRUE)])[1:round(length(variances)*q, digits=0)]
+  vsn_mat <- vsn_mat[topx, ]
+  NROW(vsn_mat);dim(vsn_mat)
+  if (is.null(topx)){print('Warning: zero most variable features returned')}
+  return(vsn_mat)
+
+  }
 
 prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
   #### Takes in the parameters of the input files and loads them 
@@ -1949,3 +2042,55 @@ create_venn<-function(venn_list, fname_venn, main){
 
 
 
+
+
+#### Load metadata ####
+
+load_metadata<-function(){
+
+    metadata_output<-paste0(output_files, 'combined.csv')
+    combined_all_original<-read.csv2(metadata_output)
+    metadata_output<-paste0(output_files, 'combined_log.csv') 
+    combined_bl_log<-read.csv2(metadata_output) # combined_bl_log holds the updated data , log, scaled, future visits 
+    return(combined_bl_log)
+}
+
+
+
+pre_process_proteomics<-function(proteomics){
+  #'
+  #' 
+
+  
+
+      df<-proteomics
+      proteomics <- df[rowSums(is.na(df)) < round(0.2*ncol(df)), ]
+
+      
+            ### filter here before editing more 
+      ## filter out rows with very low min count
+      df<-proteomics; 
+      min.count= quantile(df, na.rm = TRUE, 0.01)
+      min.count= min(df, na.rm = TRUE)
+      ### KEEP
+       ## kEEP THE ROWS THAT HAVE MORE THAN 80% NON NA VALUES 
+      keep <- rowSums(df>min.count, na.rm = TRUE) >= round(NA_PERCENT*ncol(df))
+      proteomics<-proteomics[keep,]
+
+      
+      
+      #### MAKE NUMERIC 
+      raw_counts_all=proteomics
+      class(raw_counts_all) <- "numeric"
+      ## They seem to have taken averages for replicas so need to fix 
+      #raw_counts_all<-round(raw_counts_all)
+      
+      data<-proteomics
+      data<-as.data.frame(data)
+      
+      data$name<-c(rownames(data))
+      data$ID<-data$name
+      data_columns=seq(1:dim(proteomics)[2])
+      
+      return(raw_counts_all)
+}

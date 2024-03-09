@@ -200,7 +200,7 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 # get a merged df per cluster 
 
 
-
+use_top_mofa=TRUE
 
 gse_pathways_fs_list<-get_pathways_for_factors(outdir,fact, pvalueCutoff_mofa_factors=0.05, top_ps=30)
 gse_pathways_df<-do.call(rbind,gse_pathways_fs_list)
@@ -210,9 +210,6 @@ logFC_merged_df2[is.na(logFC_merged_df2)]<-0
 
 
 #logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% top_sig_all_clusts,] # plot top significant or top mofa
-if (use_top_mofa){
-
-}
 
 logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% unlist(gse_pathways_fs_list),] # plot top significant or top mofa
 logFC_merged_df2
@@ -230,7 +227,7 @@ enrich_compare_path_all_clusts
 
 
 
-fname= paste0(enrich_compare_path_all_clusts,'cl_all_',padjust_hm,'_' , metric, top_paths,'_heatmap.png')
+fname= paste0(enrich_compare_path_all_clusts,'cl_all_',padjust_hm,'_' , metric, 'mofa',use_top_mofa,top_paths,'_heatmap.png')
 Reduce(intersect,gse_pathways_fs_list)
 
 gse_pathways_unlist<-gse_pathways_fs_list %>% dplyr::bind_rows()

@@ -198,7 +198,7 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
  #names(non_na_vars)
- force_cors=FALSE
+ force_cors=TRUE
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file

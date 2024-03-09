@@ -24,7 +24,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
-source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
+#source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
@@ -47,12 +47,13 @@ VISIT_COMP='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
 TISSUE='Plasma'
+
+DIFF_VAR = 'updrs3_score_on'
 DIFF_VAR = 'moca'
 DIFF_VAR = 'NP2PTOT_LOG'
-DIFF_VAR = 'updrs3_score_on'
 #DIFF_VAR = 'NP2PTOT_LOG'
 
-process_mirnas = TRUE 
+process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 

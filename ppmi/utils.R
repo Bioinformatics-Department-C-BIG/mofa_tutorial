@@ -655,6 +655,8 @@ get_age_at_visit<-function(new){
 #                  units = "years")
 
 
+
+#### Mapping ####
 #### data specifc 
 get_symbols_vector<-function(ens ){
   #' @param ens ensemble ids to conver to symbols 
@@ -677,6 +679,30 @@ get_symbols_vector<-function(ens ){
 }
 
 
+
+library(httr)
+
+#BiocManager::install('httr')
+my_protein_ids <- c('Q8N4C6', 'Q9UM73')
+my_protein_ids
+
+#MOFAobject@features_metadata
+get_gene_symbol_uniprot<-function(my_protein_ids){
+
+
+    results <- POST(url = "https://www.uniprot.org/uploadlists/",
+                    body = list(from = 'ID',
+                                to = 'GENENAME',
+                                format = 'tab',
+                                query = paste(my_protein_ids, collapse = ' ')))
+
+    uniprot_results <- content(results, type = 'text/tab-separated-values', 
+                              col_names = TRUE, 
+                              col_types = NULL, 
+                              encoding = "UTF-8")
+                              uniprot_results
+    return(uniprot_results)
+}
 
 ######## DE ANALYSIS #######
 #results_de<-mark_signficant(

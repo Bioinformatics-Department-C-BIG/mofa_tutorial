@@ -14,8 +14,7 @@ library('MOFA2')
 #res=res.positive
 #es.positive$pval.adj
 #res=res.negative
-colnames(res.negative[[1]])
-head(res$feature.statistics)
+
 write_enrich<-function(res, sign_mode){
   #' 
   #'' @res res.negative result from mofa enrichment 
@@ -83,7 +82,7 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
       xlab("") + 
       ggtitle("GO enrichment analysis")
 
-    ggsave(paste0(outdir, '/enrichment/pcgse/',factor, '.png'), width=7, height=5)
+    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '_', factor, '.png'), width=7, height=5)
     }
 
 
@@ -97,7 +96,36 @@ dir.create(paste0(outdir, '/enrichment/'))
 mode='proteomics'
 mode='proteomics_csf'
 
+assay(mofa_multi[,,3])
+
 mode='RNA'
+
+
+
+
+   
+features_names(MOFAobject)$RNA
+features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
+                                         function(x) {stringr::str_remove(x, '\\..*')})
+
+MOFAobject_enr<-MOFAobject
+features_names(MOFAobject_enr)$proteomics_csf<-gsub('_proteomics_csf','',features_names(MOFAobject_enr)$proteomics_csf)
+features_names(MOFAobject_enr)$proteomics_csf
+library('org.Hs.eg.db')
+library('AnnotationDbi')
+
+mode = 'proteomics_csf'
+my_protein_ids = features_names(MOFAobject_enr)[[mode]]
+my_protein_ids
+my_protein_mapping<-AnnotationDbi::select(org.Hs.eg.db, my_protein_ids,  "SYMBOL","UNIPROT")
+my_protein_mapping<-my_protein_mapping[!duplicated(my_protein_mapping$UNIPROT),]
+my_protein_mapping<-my_protein_mapping[match(features_names(MOFAobject_enr)[[mode]], my_protein_mapping$UNIPROT),]
+features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
+
+
+
+
+
 
 for (subcategory in c('GO:BP', 'GO:MF' )){
   if (mode=='proteomics'| mode=='proteomics_csf'| mode=='proteomics_plasma'){
@@ -111,11 +139,6 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
   gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
   colnames(gs)
   
-  
-  features_names(MOFAobject)$RNA
-  features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
-                                         function(x) {stringr::str_remove(x, '\\..*')}
-  )
  
   
   sign_mode='negative'
@@ -127,14 +150,15 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
         res.positive=loadRDS(enrich_res_file_pos)
     
   }else{
+    #res.negative
           # GSEA on negative weights, with default options
-          res.negative <- run_enrichment(MOFAobject, 
+          res.negative <- run_enrichment(MOFAobject_enr, 
                                          feature.sets = gs, 
                                          view = mode,
                                          sign = "negative"
           )
           
-          res.positive <- run_enrichment(MOFAobject, 
+          res.positive <- run_enrichment(MOFAobject_enr, 
                                          feature.sets = gs, 
                                          view = mode,
                                          sign = "positive"

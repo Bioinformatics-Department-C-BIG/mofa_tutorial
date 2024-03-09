@@ -281,7 +281,7 @@ prot_bl_wide_vsn
 
 ## Write output both log and not logged
 write.csv2(prot_bl_wide, paste0(outname), row.names = TRUE)
-write.csv2(prot_bl_wide_vsn, paste0(outname_vsn))
+write.csv2(prot_bl_wide_vsn, paste0(outname_vsn),row.names = TRUE)
 
 
 hist(as.numeric(as.matrix(prot_bl_wide)))

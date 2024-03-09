@@ -188,7 +188,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 }
 
 # n_factors best=15
-for (N_FACTORS in c(30)){
+for (N_FACTORS in c(35)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
@@ -225,7 +225,6 @@ for (N_FACTORS in c(30)){
   N_FACTORS =  MOFAobject@dimensions$K
   
 }
-colnames(assay(mofa_multi_to_use[,,4]))
 
 
 length(intersect(colnames(assay(mofa_multi_to_use[,,2])),colnames(assay(mofa_multi_to_use[,,4])) ))
@@ -273,6 +272,11 @@ samples_metadata(MOFAobject)<-as.data.frame(sm3)
 ## tests 
 cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
 cors_real$r
+
+
+
+
+
 
 
 

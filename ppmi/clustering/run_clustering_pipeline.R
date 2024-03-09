@@ -49,10 +49,10 @@ TISSUE='CSF'
 TISSUE='Plasma'
 
 DIFF_VAR = 'updrs3_score_on'
-DIFF_VAR = 'moca'
+
 DIFF_VAR = 'NP2PTOT_LOG'
 #DIFF_VAR = 'NP2PTOT_LOG'
-
+#DIFF_VAR = 'moca'
 process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
@@ -68,7 +68,6 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 run_all=TRUE 
 if (run_all){
-
 for (cell_corr_deseq in c( FALSE)){
 
 

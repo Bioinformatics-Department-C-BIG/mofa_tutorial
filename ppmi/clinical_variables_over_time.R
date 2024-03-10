@@ -121,7 +121,7 @@ lv='V13_V14';
 
     
     if (clust_name %in% colnames(df_plot_2k)){
-      print(clust_name)
+      #print(clust_name)
 
 
       df_plot_2k[, 'grouping']<-as.factor(df_plot_2k[, clust_name])
@@ -216,7 +216,6 @@ lv='V13_V14';
 
 to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
 for (y in  to_plot){
-  print(y)
   df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
   df_plot_2k =df_plot_2k[df_plot_2k$INEXPAGE %in% c(sel_subcoh, 'INEXHC'),]
 
@@ -239,11 +238,9 @@ lv_to_plot = 'V08'
 to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 lv_to_plot = 'V14'
 
-to_plot=c('updrs2_score', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
-
-
-clust_metric='NP2PTOT_LOG'
-clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG')
+to_plot=c('updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
+clust_metric='updrs3_score_on'
+clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
 
 
 

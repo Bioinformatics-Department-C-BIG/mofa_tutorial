@@ -82,7 +82,7 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
       xlab("") + 
       ggtitle("GO enrichment analysis")
 
-    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '_', factor, '.png'), width=7, height=5)
+    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
     }
 
 
@@ -111,39 +111,69 @@ features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA,
 MOFAobject_enr<-MOFAobject
 features_names(MOFAobject_enr)$proteomics_csf<-gsub('_proteomics_csf','',features_names(MOFAobject_enr)$proteomics_csf)
 features_names(MOFAobject_enr)$proteomics_csf
+features_names(MOFAobject_enr)$proteomics_plasma<-gsub('_proteomics_plasma','',features_names(MOFAobject_enr)$proteomics_plasma)
+features_names(MOFAobject_enr)$proteomics_t_plasma<-gsub('_proteomics_t_plasma','',features_names(MOFAobject_enr)$proteomics_t_plasma)
+features_names(MOFAobject_enr)$proteomics_t_csf<-gsub('_proteomics_t_csf','',features_names(MOFAobject_enr)$proteomics_t_csf)
+#features_names(MOFAobject_enr)$proteomics_t_csf
 library('org.Hs.eg.db')
 library('AnnotationDbi')
 
-mode = 'proteomics_csf'
+mode = 'proteomics_plasma'
+mode='proteomics_t_csf'
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
-my_protein_ids
-my_protein_mapping<-AnnotationDbi::select(org.Hs.eg.db, my_protein_ids,  "SYMBOL","UNIPROT")
-my_protein_mapping<-my_protein_mapping[!duplicated(my_protein_mapping$UNIPROT),]
-my_protein_mapping<-my_protein_mapping[match(features_names(MOFAobject_enr)[[mode]], my_protein_mapping$UNIPROT),]
-features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
+
+head(my_protein_ids)
+#my_protein_mapping<-AnnotationDbi::select(org.Hs.eg.db, my_protein_ids,  "SYMBOL","UNIPROT")
+#my_protein_mapping<-my_protein_mapping[!duplicated(my_protein_mapping$UNIPROT),]
+#my_protein_mapping<-my_protein_mapping[match(features_names(MOFAobject_enr)[[mode]], my_protein_mapping$UNIPROT),]
+#features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
 
 
 
+get_feature_set_uniprot<-function(gs_original){
+  #' map colnames of feature.sets with UNIRPOT SYMBOL
+  #' @param gs_original: the feature set with gene symbols 
+  #' 
+      gs_uniprot<-gs_original
+      head(colnames(gs_original))
+    # convert the feature.sets matrix rownames to uniprot
+    #colnames(gs_uniprot)<-
+    ug_mapping<-AnnotationDbi::select(org.Hs.eg.db, colnames(gs_original),"UNIPROT", "SYMBOL")
+    # filter by what is found
+    na.omit(ug_mapping$UNIPROT)
+    ug_mapping_found<-ug_mapping[!is.na(ug_mapping$UNIPROT),]
+    ug_mapping_found$UNIPROT
+    colnames_found<-colnames(gs_uniprot)[colnames(gs_uniprot) %in%  ug_mapping_found$SYMBOL]
+    gs_uniprot_filt<-gs_uniprot[,colnames_found]
+    length(ug_mapping_found$UNIPROT)
+    colnames(gs_uniprot_filt)<-ug_mapping_found$UNIPROT[match(colnames(gs_uniprot_filt),ug_mapping_found$SYMBOL )]
+    colnames(gs_uniprot_filt)
+    return(gs_uniprot_filt)
+}
 
-
-
+grepl('proteomics', mode)
 for (subcategory in c('GO:BP', 'GO:MF' )){
-  if (mode=='proteomics'| mode=='proteomics_csf'| mode=='proteomics_plasma'){
-    gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
-    
+
+  if (grepl('proteomics', mode)){
+      gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+      gs_original<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+      gs<-gs_original
+    if (mode=='proteomics_csf'| mode=='proteomics_plasma'){
+      # untargeted are in uniprot..
+      gs<-get_feature_set_uniprot(gs_original)
+    }
+
   }else{
-    gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
-    
+      gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+      gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+   
   }
-  
-  gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-  colnames(gs)
-  
- 
-  
+
+
   sign_mode='negative'
-  enrich_res_file_neg<-paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' )
-  enrich_res_file_pos<-paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' )
+  subcategory_s<-gsub('\\:', '_', subcategory)
+  enrich_res_file_neg<-paste0(outdir,'/enrichment/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
+  enrich_res_file_pos<-paste0(outdir,'/enrichment/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
   
   if (file.exists(enrich_res_file_neg)){
         res.negative=loadRDS(enrich_res_file_neg)
@@ -164,15 +194,14 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
                                          sign = "positive"
           )
           
-          mode='negative'
-          res_negative_df<-write_enrich(res.negative, sign_mode=mode)
+          sign_mode='negative'
+          res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
           res_negative_df
           saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
- #names(res.negative)
-          mode='positive'
+          sign_mode='positive'
 
-          res_positive_df<-write_enrich(res.positive, sign_mode=mode)
+          res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_negative_df
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
@@ -182,7 +211,6 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           write.csv(res_merged, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
   }
   
-  head(res.positive$feature.statistics)
   
   
   
@@ -191,18 +219,44 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
     #
     T=0.05
   
- 
-  
-  
-  
-  
-  
-  
+
   ##### which factor is related to parkinsons disease in KEGG
   ### PROBLEM: this is based on RNA only!!! 
   
+
+sapply(1:N_FACTORS, function(factor){
+  tryCatch({
+  plot_enrichment_detailed(res.negative, factor)
+  ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
+  width=6, height=4)
+
+  },
+  error = function(e) {an.error.occured <<- TRUE}
+  )
+tryCatch({
+ 
+
+  plot_enrichment_detailed(res.positive, factor)
+  ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
+  width=6, height=4)
+
+  },
+  error = function(e) {an.error.occured <<- TRUE}
+  )
+
+
+}
+
+
+
+)
+
   
 }
+
+
+
+
 sign_mode='negative'
 subcategory<- 'GO:BP'
 T=0.05

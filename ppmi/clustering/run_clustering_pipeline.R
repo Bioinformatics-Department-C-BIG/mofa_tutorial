@@ -21,7 +21,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 # Plotting for mofa run not needed for clustering analysis, excluded  
 
-source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+# source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
@@ -29,6 +29,8 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+
+source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
 
 
@@ -48,11 +50,12 @@ VISIT_COMP='V08'
 TISSUE='CSF'
 TISSUE='Plasma'
 
-DIFF_VAR = 'updrs3_score_on'
 
 DIFF_VAR = 'NP2PTOT_LOG'
 #DIFF_VAR = 'NP2PTOT_LOG'
-#DIFF_VAR = 'moca'
+DIFF_VAR = 'moca'
+DIFF_VAR = 'updrs3_score_on'
+
 process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
@@ -71,7 +74,7 @@ if (run_all){
 for (cell_corr_deseq in c( FALSE)){
 
 
-        for (VISIT_COMP in c('BL', 'V06', 'V04', 'V08')){
+        for (VISIT_COMP in c('V08',  'V06','V04', 'BL')){
            print(VISIT_COMP)
             source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
@@ -106,6 +109,9 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
+
+
+
 
 
 

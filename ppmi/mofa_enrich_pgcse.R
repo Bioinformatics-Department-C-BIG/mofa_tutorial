@@ -3,10 +3,7 @@
 #library('MOFAdata')
 library('MOFA2')
 
-#utils::data(reactomeGS)
-#data(reactomeGS)
 
-#head((reactomeGS))
 
 ## TODO: if enrichment is already run then just load results
 ## load res.positive to be used in the next script

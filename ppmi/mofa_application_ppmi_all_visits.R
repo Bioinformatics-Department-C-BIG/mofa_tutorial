@@ -211,9 +211,10 @@ for (N_FACTORS in c(35)){
 
   data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN,TOP_PN, mofa_params, prot_mode)
   # create multi-assay experiment object 
-  mofa_multi<-create_multi_experiment(data_full, combined_bl)
+  mofa_multi<-create_multi_experiment(data_full, combined_bl_log)
 
   mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+
 
   # select if complete cases are used or samples with missing omics are included.
   # We need the multi assay experiment for other analysis too eg. time omics 
@@ -225,7 +226,6 @@ for (N_FACTORS in c(35)){
   
   MOFAobject@dimensions$K
  
-  N_FACTORS =  MOFAobject@dimensions$K
   
 }
 

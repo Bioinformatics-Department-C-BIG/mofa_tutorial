@@ -32,6 +32,8 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 ### THIS IS ALREADY filtered by cohort and VISIT 
 # 
 # todo: CREATE SE FILT FILES FOR PROTEINS 
+mofa_multi_to_use
+MOFAobject
 prot_vsn_se_filt_file
 datalist<-loadRDS(prot_vsn_se_filt_file)
 vsn_mat<-datalist[[1]]
@@ -59,7 +61,7 @@ if (run_vsn){
 nfeats<-dim(protein_matrix_full)[1]
 
 se_clusters<-se_filt_proteins
-
+se_filt_proteins$PATNO
 
 ### attach mofa clusts to se
 # MOFAobject_clusts<-MOFAobjectPD

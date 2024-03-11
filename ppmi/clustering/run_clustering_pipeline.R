@@ -16,6 +16,7 @@ try(
 #source(paste0(script_dir, 'ppmi/setup_os.R'))
 
 source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
+source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
@@ -57,6 +58,7 @@ DIFF_VAR = 'updrs3_score_on'
 DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 diff_vars<-c('updrs3_score_on','NP2PTOT_LOG', 'moca', 'NP3TOT_LOG' )
+process_mirnas = FALSE 
 process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 

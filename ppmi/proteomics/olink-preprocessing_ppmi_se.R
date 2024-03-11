@@ -55,6 +55,8 @@ for (VISIT in all_visits){
     }else{
         pr_ext<-  '_no_log.csv'
     }
+    p_params_in
+    TISSUE
     in_file_original<-paste0(output_files, 'proteomics_', p_params_in, pr_ext)
 
 
@@ -124,7 +126,7 @@ for (VISIT in all_visits){
 
     #### save all and load 
     ##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
-    datalist=list( vsn_mat, se_filt) # save the vsn summarized experiment and the raw summarized experiment 
+    datalist=list( vsn_mat, se_filt_proteins) # save the vsn summarized experiment and the raw summarized experiment 
     prot_vsn_se_filt_file
     saveRDS(datalist,prot_vsn_se_filt_file)
     meanSdPlot(vsn_mat)

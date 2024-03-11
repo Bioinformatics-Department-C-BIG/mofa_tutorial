@@ -77,10 +77,11 @@ if (run_mofa_complete){
   N_FACTORS=15  ### so far gives the best of the corelations for TOP_GN=0.30, MN=0.5, PN=0.9
 }
 
+drop_factor_threshold = -1
 drop_factor_threshold = 0.001
 
 
-
+print(TOP_PN)
 
 
 
@@ -188,14 +189,16 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 }
 
 # n_factors best=15
+#g_params
+
 for (N_FACTORS in c(35)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
    mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
 
-  out_params<- paste0( 'p_',prot_mode, '_', p_params_mofa, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa), '_pm_' )
+  out_params<- paste0( 'p_',prot_mode, '_',TOP_PN,'_',p_params_plasma,'_', p_params_mofa, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa), '_df_', drop_factor_threshold )
   
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
@@ -206,7 +209,7 @@ for (N_FACTORS in c(35)){
  ## get list of three matrices 
   # TODO: load all time points then filter? 
 
-  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params, prot_mode)
+  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN,TOP_PN, mofa_params, prot_mode)
   # create multi-assay experiment object 
   mofa_multi<-create_multi_experiment(data_full, combined_bl)
 
@@ -272,6 +275,16 @@ samples_metadata(MOFAobject)<-as.data.frame(sm3)
 ## tests 
 cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
 cors_real$r
+
+assay(mofa_multi_to_use[,,'proteomics_plasma'])
+(as.data.frame(t(assay(mofa_multi_to_use[,,'proteomics_plasma']))))
+
+rowVars(assay(mofa_multi_to_use[,,'proteomics_plasma']))
+var(assay(mofa_multi_to_use[,,'proteomics_plasma'])['P07996',])
+
+
+
+#mofa_multi_to_use[,, 'proteomics_csf']
 
 
 

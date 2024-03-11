@@ -78,19 +78,7 @@ if (run_rna_mirna){
     TOP_GN=0.2
     TOP_PN=0.9
     
-    ### OPTIMAL SO FAR 
-    TOP_MN=0.50
-    TOP_GN=0.30
-    TOP_PN=0.9
-    
-    TOP_MN=0.50
-    TOP_GN=0.30
-    TOP_PN=0.9
-    
-    #
-    TOP_MN=0.75
-    TOP_GN=0.30
-    TOP_PN=0.9
+   
     
     #
     TOP_MN=0.50
@@ -108,7 +96,7 @@ if (run_rna_mirna){
     TOP_GN=0.2
     
     
-    TOP_PN=0.9
+    TOP_PN=0.5
     
     
     if (use_signif){
@@ -124,7 +112,7 @@ if (run_rna_mirna){
   
   
 }
-
+    TOP_PN
 # Here select the protein project
 
 if (prot_mode == 't'){

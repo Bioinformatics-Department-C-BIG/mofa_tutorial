@@ -210,16 +210,18 @@ lv='V13_V14';
     }
     
     }
-    
+    cluster_params
+dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
+dir.create(paste0(outdir,'/tr/'))
 ## Plot cell types by COHORT 
-
+dir.create(paste0(outdir,'/tr/'))
 to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
 for (y in  to_plot){
   df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
   df_plot_2k =df_plot_2k[df_plot_2k$INEXPAGE %in% c(sel_subcoh, 'INEXHC'),]
 
-  fname=paste0(outdir,'/trajectories/', clust_name, '_',  y, lv_to_plot  )
+  fname=paste0(outdir,'/tr/', clust_name, '_',  y, lv_to_plot  )
   plot_clinical_trajectory(y, clust_name, df_plot_2k, lv='V12', fname, add_boxplots = TRUE, pal='turbo' )
 
 }
@@ -243,7 +245,6 @@ clust_metric='updrs3_score_on'
 clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
 
 
-
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
   for (clust_metric in clust_metrics){
     for (y in to_plot){
@@ -252,7 +253,10 @@ clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
       fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
       cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
 
-      fname=paste0(outdir, cluster_params, '/trajectories/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
+
+      dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
+
+      fname=paste0(outdir, cluster_params, '/tr/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
       plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
       add_individual_lines=add_individual_lines, 
       add_boxplots = TRUE)

@@ -82,6 +82,8 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
       xlab("") + 
       ggtitle("GO enrichment analysis")
 
+
+    dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
     ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
     }
 
@@ -96,12 +98,13 @@ dir.create(paste0(outdir, '/enrichment/'))
 mode='proteomics'
 mode='proteomics_csf'
 
+
 assay(mofa_multi[,,3])
 
 mode='RNA'
 
 
-
+mode='proteomics_t_csf'
 
    
 features_names(MOFAobject)$RNA
@@ -118,8 +121,10 @@ features_names(MOFAobject_enr)$proteomics_t_csf<-gsub('_proteomics_t_csf','',fea
 library('org.Hs.eg.db')
 library('AnnotationDbi')
 
-mode = 'proteomics_plasma'
 mode='proteomics_t_csf'
+mode = 'proteomics_csf'
+mode = 'proteomics_t_plasma'
+
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
 
 head(my_protein_ids)
@@ -152,7 +157,8 @@ get_feature_set_uniprot<-function(gs_original){
 }
 
 grepl('proteomics', mode)
-for (subcategory in c('GO:BP', 'GO:MF' )){
+# 'GO:MF'
+for (subcategory in c('GO:BP' )){
 
   if (grepl('proteomics', mode)){
       gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
@@ -164,7 +170,9 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
     }
 
   }else{
+    #output_files
       gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+      #gs_file
       gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
    
   }
@@ -172,8 +180,8 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
 
   sign_mode='negative'
   subcategory_s<-gsub('\\:', '_', subcategory)
-  enrich_res_file_neg<-paste0(outdir,'/enrichment/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
-  enrich_res_file_pos<-paste0(outdir,'/enrichment/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
+  enrich_res_file_neg<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
+  enrich_res_file_pos<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
   
   if (file.exists(enrich_res_file_neg)){
         res.negative=loadRDS(enrich_res_file_neg)
@@ -197,18 +205,18 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           sign_mode='negative'
           res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
           res_negative_df
-          saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
+          saveRDS(res.negative, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
           sign_mode='positive'
 
           res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
-          saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
+          saveRDS(res.positive, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_negative_df
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
             by=c('Description','Factor' ))
-          res_merged$pvalue_min<-c(rowMins(as.matrix(res_merged[,c('pvalue_n','pvalue_p')])))
+          #res_merged$pvalue_min<-c(rowMins(as.matrix(res_merged[,c('pvalue_n','pvalue_p')])))
           
-          write.csv(res_merged, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
+          write.csv(res_merged, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
   }
   
   
@@ -222,11 +230,15 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
 
   ##### which factor is related to parkinsons disease in KEGG
   ### PROBLEM: this is based on RNA only!!! 
-  
-
+  alpha=0.05
+dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
 sapply(1:N_FACTORS, function(factor){
   tryCatch({
-  plot_enrichment_detailed(res.negative, factor)
+
+  plot_enrichment_detailed(res.negative, factor, 
+  alpha = alpha
+  )
+  #graphics.off()
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
   width=6, height=4)
 
@@ -236,7 +248,8 @@ sapply(1:N_FACTORS, function(factor){
 tryCatch({
  
 
-  plot_enrichment_detailed(res.positive, factor)
+  plot_enrichment_detailed(res.positive, factor, 
+    alpha = alpha)
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
   width=6, height=4)
 
@@ -261,7 +274,6 @@ sign_mode='negative'
 subcategory<- 'GO:BP'
 T=0.05
 
-res.negative_l$pval
 
 # Make enrichment plots for all factors 
 # threshold on p value to zoom in 

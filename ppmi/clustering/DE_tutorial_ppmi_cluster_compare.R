@@ -31,7 +31,7 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 
 ### THIS IS ALREADY filtered by cohort and VISIT 
 # 
-
+# todo: CREATE SE FILT FILES FOR PROTEINS 
 prot_vsn_se_filt_file
 datalist<-loadRDS(prot_vsn_se_filt_file)
 vsn_mat<-datalist[[1]]
@@ -70,6 +70,7 @@ sm<-samples_metadata(MOFAobject_clusts)
 
 sm$NP2PTOT_LOG_clust
 patnos=se_clusters$PATNO
+y_clust<-DIFF_VAR
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 #se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 se_clusters$kmeans_grouping
@@ -113,7 +114,7 @@ for (cluster_id in  c(1:3)){
 
 
 
-    dir.create(outdir_s_p)
+    dir.create(outdir_s_p, recursive=TRUE)
    # prefix
    rfile<-paste0(outdir_s_p, prefix,TISSUE, '_de_cl',cluster_id,  '_results.csv')
    print(rfile)

@@ -147,14 +147,14 @@ outdir_s<-paste0(outdir_orig, '/single/', param_str_f, des)
 
 
 
-TOP_PN=0.9
+
+TOP_PN_U=0.9
 
 
 
-
-TISSUE='Plasma'
 TISSUE='CSF'
 
+TISSUE='Plasma'
 
 NA_PERCENT=0.9
 
@@ -165,8 +165,9 @@ VISIT_S=paste(VISIT,sep='_',collapse='-')
 
 
 ## VISIT_S to allow this to be more than one visits at once!! 
-TOP_PN<-0.9
 
+TOP_PN<-0.5
+TOP_PN
 #### read in proteomics 
 pr_project_id='9000'
 p_params_in<- paste0( pr_project_id, '_',  TISSUE, '_', NORMALIZED)
@@ -196,14 +197,13 @@ prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
 
 ###### Untargeted proteins
-TYPE = 'Cerebrospinal Fluid'; pr_un_project_id='177'
-prot_untargeted_csf_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',TYPE,  '.csv')
-prot_untargeted_csf_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',TYPE,  'vsn.csv')
+ pr_un_project_id='177'
+prot_untargeted_csf_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Cerebrospinal Fluid',  '.csv')
+prot_untargeted_csf_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Cerebrospinal Fluid',  'vsn.csv')
 
 
-TYPE = 'Plasma'
-prot_untargeted_plasma_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',TYPE,  '.csv')
-prot_untargeted_plasma_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',TYPE, 'vsn.csv')
+prot_untargeted_plasma_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Plasma',  '.csv')
+prot_untargeted_plasma_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Plasma', 'vsn.csv')
 
 
 

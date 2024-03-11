@@ -137,6 +137,7 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
 
 mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
 mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
+
 mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
@@ -1475,23 +1476,29 @@ library(vsn)
 
 preprocess_un_proteomics<-function(proteins_un){
   # vsn proteomics 
-    # convert NaN to na
-    proteins_un<- proteins_un %>% mutate_all(~ifelse(is.nan(.), NA, .))
-  proteins_un<-justvsn(as.matrix(proteins_un))
+  # convert NaN to na
+  proteins_un<- proteins_un %>% mutate_all(~ifelse(is.nan(.), NA, .))
+
+  ## FILTER lowly expressed? 
+ # quantile(data$V1, 0.95)
+
+#datavsn<-justvsn(as.matrix(data)+1)
+
+  proteins_un<-justvsn(as.matrix(proteins_un)+1)
   #proteins_un_plasma_vsn<-log(proteins_un_plasma)
   return(proteins_un)
 
 }
 
 
-prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params, prot_mode='t'){
+prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, TOP_PN,  mofa_params, prot_mode='t'){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 
   # TODO: simplify the reading and setting the feature column to null? 
   #' @param  p_params, param_str_g, param_str_m : these are set by the config.R
   #' 
-  
-  
+  #' 
+
   proteins_outfile = paste0(output_files, p_params_out , '_vsn.csv')
   proteins_outfile_csf = paste0(output_files, p_params_csf , '_vsn.csv')
   proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_vsn.csv')
@@ -1506,6 +1513,7 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   proteins_un_csf<-as.matrix(read.csv2(prot_untargeted_csf_vsn_f, row.names=1, header=TRUE, check.names = FALSE))
   # filter by visit
 
+  
   proteins_un_plasma<-proteins_un_plasma[,grep(VISIT, colnames(proteins_un_plasma))]
   proteins_un_csf<-proteins_un_csf[,grep(VISIT, colnames(proteins_un_csf))]
 
@@ -1515,15 +1523,24 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   highly_variable_proteins_mofa<-  selectMostVariable(proteins_vsn_mat, TOP_PN)
   highly_variable_proteins_mofa_plasma<-selectMostVariable(proteins_plasma_vsn_mat, TOP_PN)
   highly_variable_proteins_mofa_csf<-selectMostVariable(proteins_csf_vsn_mat, TOP_PN)
+
+  dim(proteins_plasma_vsn_mat)
+  dim(proteins_csf_vsn_mat)
+
+  head(proteins_plasma_vsn_mat)
+  head(proteins_csf_vsn_mat)
   
-  highly_variable_proteins_un_mofa_csf<-selectMostVariable(proteins_un_csf, TOP_PN)
-  highly_variable_proteins_un_mofa_plasma<-selectMostVariable(proteins_un_plasma, TOP_PN)
-  
+  highly_variable_proteins_un_mofa_csf<-selectMostVariable(proteins_un_csf, TOP_PN_U)
+  highly_variable_proteins_un_mofa_plasma<-selectMostVariable(proteins_un_plasma, TOP_PN_U)
+
+
+
   ### Start loading mofa data
   proteomics<-as.data.frame(highly_variable_proteins_mofa)
 
   proteomics_t_plasma<-as.data.frame(highly_variable_proteins_mofa_plasma)
   proteomics_t_csf<-as.data.frame(highly_variable_proteins_mofa_csf)
+
   proteomics_un_plasma<-as.data.frame(highly_variable_proteins_un_mofa_plasma)
   proteomics_un_csf<-as.data.frame(highly_variable_proteins_un_mofa_csf)
 
@@ -1562,7 +1579,7 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
                   proteomics_plasma=as.matrix(proteomics_plasma), 
                   proteomics_csf=as.matrix(proteomics_csf), 
                   proteomics_t_plasma=as.matrix(proteomics_t_plasma), 
-                   proteomics_t_csf=as.matrix(proteomics_t_csf)
+                  proteomics_t_csf=as.matrix(proteomics_t_csf)
 
                   )
   

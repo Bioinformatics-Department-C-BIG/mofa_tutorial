@@ -64,7 +64,7 @@ sapply(clust_vars, function(y_clust){
 
     bn_all_fname<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,  '.png')
 
-
+    dir.create(cluster_params_dir, recursive=TRUE)
     diff_variables_to_p<-diff_variables_to_p[diff_variables_to_p %in% colnames(met)] 
 
 
@@ -109,7 +109,7 @@ fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
 cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
 
-
+dir.create(cluster_params_dir, recursive=TRUE)
 outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group, y, '_', color_by, '.png')
 
 # Plot clustering for scales 

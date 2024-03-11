@@ -6,7 +6,10 @@
 library(dplyr)
 library(data.table)
 library(stringr)
+
 source(paste0('ppmi/setup_os.R'))
+source(paste0('ppmi/utils.R'))
+
 #rnas<-read.csv2('ppmi/ppmi_data/rnaseq/featCounts_SL_1239.longRNA_20230217.csv', sep = ',')
 #### too many files so we separate each time points 
 ##### Maybe do them one by one in a function
@@ -246,20 +249,31 @@ prot_bl_tbl$PATNO_EVENT_ID
 
 
   #### duplicates are averaged..... 
-  TYPE='Cerebrospinal Fluid'
-  TYPE='Plasma'
+  tissue_type='Plasma'
+    tissue_type='Cerebrospinal Fluid'
 
-      outname<-paste0(output_files, 'proteomics_',pr_project_id,'_',TYPE,  '.csv')
-      outname_vsn<-paste0(output_files, 'proteomics_',pr_project_id,'_',TYPE,  'vsn.csv')
 
-  prot_bl_tbl_csf<-prot_bl_tbl[prot_bl_tbl$TYPE==TYPE,]
+      outname<-paste0(output_files, 'proteomics_',pr_project_id,'_',tissue_type,  '.csv')
+      outname_vsn<-paste0(output_files, 'proteomics_',pr_project_id,'_',tissue_type,  'vsn.csv')
+
+
+prot_bl_tbl$TYPE==TYPE
+prot_bl_tbl$TYPE
+  prot_bl_tbl_csf = prot_bl_tbl[prot_bl_tbl$TYPE %in% c(TYPE),]; 
+
+  prot_bl_tbl_csf<-prot_bl_tbl %>% filter(TYPE==tissue_type)
+    table(prot_bl_tbl_csf$TYPE)
+dim(prot_bl_tbl_csf)
+
+  unique(prot_bl_tbl_csf$TYPE)
  # prot_bl_tbl_plasma<-prot_bl_tbl[prot_bl_tbl$TYPE=='Plasma',]
 
 prot_bl_tbl_input<-prot_bl_tbl_csf
 
   convert_to_wide_proteins<-function(prot_bl_tbl_input){
 
-      
+      # Convert matrix to wide 
+      # using value var 
       prot_bl_wide<-data.table::dcast(prot_bl_tbl_input,  TESTNAME ~ PATNO_EVENT_ID,
                                       value.var ='TESTVALUE', fun.aggregate = mean)
       
@@ -273,17 +287,18 @@ prot_bl_tbl_input<-prot_bl_tbl_csf
 
   }
   
-  prot_bl_wide
+  
 prot_bl_wide<-convert_to_wide_proteins(prot_bl_tbl_input)
-prot_bl_wide
+
 prot_bl_wide_vsn<-preprocess_un_proteomics(prot_bl_wide)
 prot_bl_wide_vsn
 
 ## Write output both log and not logged
 write.csv2(prot_bl_wide, paste0(outname), row.names = TRUE)
 write.csv2(prot_bl_wide_vsn, paste0(outname_vsn),row.names = TRUE)
-
-
+outname_vsn
+head(prot_bl_wide_vsn)
+#prot_bl_wide_vsn
 hist(as.numeric(as.matrix(prot_bl_wide)))
 hist(as.numeric(log(as.matrix(prot_bl_wide_unlog))))
 
@@ -297,8 +312,8 @@ hist(as.numeric(log(as.matrix(prot_bl_wide_unlog))))
 # TODO: make a function and add parameters: 
 # TISSUE, NORMALIZED, pattern 
 
-TISSUE='Plasma'
 TISSUE='CSF'
+TISSUE='Plasma'
 
 NORMALIZED=TRUE
 output_files<-paste0(data_dir, 'ppmi/output/')

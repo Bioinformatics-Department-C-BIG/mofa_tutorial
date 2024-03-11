@@ -6,17 +6,18 @@ install.packages('devtools')
 
 BiocManager::install("mixOmics")
 
-#remove.packages('BiocManager')
+remove.packages('MOFA2')
 
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 
+.libPaths()
 
-
-  install.packages("BiocManager")
-BiocManager::install("MOFA2")
+install.packages("BiocManager")
+BiocManager::install("MOFA2", force=TRUE, lib='/data8TB/efiath/R/x86_64-pc-linux-gnu-library/4.3')
 BiocManager::install("MOFAdata")
 
-BiocManager::install('Org.Mm.eg.db')
+#BiocManager::install('org.Mm.eg.db')
+install.packages('MOFA2')
 remove.packages("MOFA2")
 install.packages(
   "ggplot2",
@@ -83,7 +84,7 @@ BiocManager::install('MOFA2')
 
 #BiocManager::install('MultiAssayExperiment')
 install.packages("remotes")
-remotes::install_github("bioFAM/MOFA2")
+#remotes::install_github("bioFAM/MOFA2")
 
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
@@ -102,7 +103,7 @@ BiocManager::install("MOFA")
 ### proteins
 BiocManager::install('DEP')
 BiocManager::install('vsn')
-BiocManager::install('MultiAssayExperiment')
+BiocManager::install('MultiAssayExperiment', force=TRUE)
 BiocManager::install('rbioapi')
 
 
@@ -126,10 +127,6 @@ BiocManager::install('org.Hs.eg.db')
 BiocManager::install(c("mixOmics"))
 install.packages('visNetwork')
 install.packages('igraph')
-
-
-
-
 install.packages("remotes")
 remotes::install_github("jmw86069/jamenrich")
 remotes::install_github("jmw86069/jamenrich/multienrichjam")
@@ -183,9 +180,7 @@ BiocManager::install("gplots")
 ## install timeOmics
 BiocManager::install('timeOmics')
 BiocManager::install('propr')
-
-BiocManager::install('randomForest')
-
+BiocManager::install('stats4')
 
 
 
@@ -209,6 +204,17 @@ BiocManager::install('randomForest')
 
 
 
+
+
+
+
+#$ VS CODE 
+
+# R Syntax Highlightning
+install.packages("languageserver") 
+
+# Better plot Outputs for VSCode
+install.packages("httpgd")    
 
 
 

@@ -480,12 +480,13 @@ fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
 
 force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 
-cluster_pairs<-c('1','1_2', '1_3', '2', '3')# Unique in 1: not in 2,3 and also 
-cluster_pairs<-c('1','2', '3') 
-cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2','1_2_3' ) 
+#cluster_pairs<-c('1','1_2', '1_3', '2', '3')# Unique in 1: not in 2,3 and also 
+cluster_pairs<-c('1','2', '3', '1_2_3') 
+#cluster_pairs<-c('1','1_2', '1_3', '2', '3','3_1', '3_2','1_2_3' ) 
 
 
 gene_lists_compare<-gene_lists[cluster_pairs]
+#gene_lists_compare[[4]]
 enrich_compare_path_all<-paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params, 'comp')
 enrich_compare_path <- paste0( enrich_compare_path_all, paste0(names(gene_lists_compare), collapse='-'))
 gse_compare_file<-paste0(enrich_compare_path, '.Rds')
@@ -524,7 +525,8 @@ filt_clusts_all<-list( c('1','1_2', '1_3', '2', '3'), # unique in 1
                         c('3','3_1', '3_2', '1', '2'), # unique in 3
                         c('1','2','3'), 
                         c('1','2','3', '1_2_3')) # just compare with controls 
-filt_clusts_all = filt_clusts_all[c(3,4)]
+
+filt_clusts_all = filt_clusts_all[c(4)]
 lapply(filt_clusts_all, function(filt_clusts){
         # subset and compare 
         # subset 

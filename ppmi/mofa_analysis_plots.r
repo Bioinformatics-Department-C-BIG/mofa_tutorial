@@ -185,7 +185,7 @@ all_diff_variables_prog_conf<-c(biochemical_markers_conf, clinical_scales_conf, 
 
 biochemical_markers_conf
 sm$updrs3_score_on
-variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX', 'NP2PTOT_LOG', 'NP3TOT_LOG', 
+variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX','LEDD', 'NP2PTOT_LOG', 'NP3TOT_LOG', 
 'updrs3_score_on', 'updrs3_score_on_LOG', 'NP3TOT')
    
 sel_factors_conf<-get_factors_for_scales(variables_conf_only_clinical)
@@ -225,18 +225,16 @@ plot_covars_mofa(selected_covars=c(all_diff_variables_prog,colnames(estimations)
 
 plot='log_pval'
 
+#'LEDD'
+#' variables_conf_only_clinical
+variables_conf_only_clinical
 sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG','NP3TOT', 'updrs3_score_on', 'updrs3_score_on_LOG'))
 sel_factors_conf
-sm_pd$updrs3_score_on_LOG
 fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
 
-outdir
-sel_factors_conf
-variables_conf_only_clinical
 
-cors_all_pd$tau_asyn
 fname<-'factors_covariates_strict_PD_conference_clinical'
 plot_covars_mofa(selected_covars=variables_conf_only_clinical,fname,plot='log_pval',
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
@@ -351,7 +349,8 @@ fname<-'factors_covariates_broad_cor_PD'
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot='r',sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 
-
+cur_names<-read.csv2(paste0(data_dir, '/ppmi/output/curated_names.csv'))$Variable
+cur_names
 
 
 
@@ -387,9 +386,38 @@ for (fx in 1:N_FACTORS){
   sig_names<-colnames(sig)[which(t(sig))]
 
   c3<-format(cbind(sig_names,c1,c2), digits=2); c3<-c3[order(c3[,1], decreasing = TRUE),]
+
   write.csv(c3, 
             paste0(outdir, '/covariates/',fx, '.csv'))
 }
+
+top_covariates<-c()
+for (fx in 1:N_FACTORS){
+  print(fx)
+  sig<-cors_all_pd[fx,]>1.5
+  c1<-round(cors_all_pd[fx,][sig], digits=2)
+  c2<-round(cors_pearson_pd[fx,][sig], digits=2)
+  sig_names<-colnames(sig)[which(t(sig))]
+
+  c3<-cbind(c1,c2); 
+  rownames(c3  )<-sig_names
+
+  c3<-as.matrix(c3[order(c3[,1], decreasing = TRUE),])
+   print(head(c3, n=7 )   )
+   top_covariates<-unique(c(top_covariates,rownames(head(c3, n=6))))
+}
+length(top_covariates)
+
+
+
+# fname<-'factors_covariates_top_covariates_PD_all_fs'
+# remove_confounders = c(measured_cells)
+# plot_covars_mofa(top_covariates[! top_covariates %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+
+# fname<-'factors_covariates_top_covariates_PD_cor_all_fs'
+
+# #top_covariates_curated<-top_covariates[top_covariates %in% cur_names]
+# plot_covars_mofa(top_covariates[! top_covariates %in% measured_cells  ],fname,plot='r',1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 
 
@@ -804,10 +832,19 @@ modify_features_for_plotting<-function(MOFAobject){
     ens_ids_full<- features_names(MOFAobject)$RNA
     ens_ids<-gsub('\\..*', '', ens_ids_full)
     features_names(MOFAobject)$RNA<-get_symbols_vector(ens_ids)
+      #
+    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject@expectations$W$proteomics_csf))
+    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', 'p', rownames(MOFAobject@expectations$W$proteomics_plasma))
+
+    rownames(MOFAobject@expectations$W$proteomics_t_csf)<-gsub('proteomics_t_csf', 'tc', rownames(MOFAobject@expectations$W$proteomics_t_csf))
+    rownames(MOFAobject@expectations$W$proteomics_t_plasma)<-gsub('proteomics_t_plasma', 'tp', rownames(MOFAobject@expectations$W$proteomics_t_plasma))
+
     return(MOFAobject)
 
 }
-MOFAobject_gs<-modify_metadata_for_plotting(MOFAobject_gs)
+MOFAobject_gs<-modify_features_for_plotting(MOFAobject)
+rownames(MOFAobject_gs@expectations$W$proteomics_t_csf)
+#MOFAobject_gs<-modify_metadata_for_plotting(MOFAobject_gs)
 
 W <- get_weights(MOFAobject_gs, factors = 1, views = 4, 
                  as.data.frame = TRUE)
@@ -816,11 +853,13 @@ MOFAobject@dimensions$K
 views=names(MOFAobject@data)
 #views=
 
-  for (i in seq(1,MOFAobject@dimensions$M)){
+
+# TODO: create functions!!
+  for (i in seq(3,MOFAobject@dimensions$M)){
   for (ii in seq(1,MOFAobject@dimensions$K)){
    
     nFeatures=20
-    
+    print(i)
     ### oNLY SAVE THE ones with high variance
    # if (high_vars_by_factor[ii, i]){
       print(c(i,ii))
@@ -836,37 +875,34 @@ views=names(MOFAobject@data)
 
           
           if (views[i]=='RNA'){
-            #plot_top_weights2
-            p_ws<-plot_top_weights(MOFAobject_gs,
-                                    view = 'RNA',
-                                    factor = ii,
-                                    nfeatures = nFeatures,     # Top number of features to highlight
-                                    scale = F
-            )
+                  #plot_top_weights2
+                  p_ws<-plot_top_weights(MOFAobject_gs,
+                                          view = 'RNA',
+                                          factor = ii,
+                                          nfeatures = nFeatures,     # Top number of features to highlight
+                                          scale = F
+                  )
 
-          
-            print('rna')
-            p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
-          }
-          
-          if (views[i]=='metabolites'){
-           p_ws<-p_ws+ theme(axis.text.y = element_text(size=7))
-          }
-          
-          #scale_colour_(values=cols) 
-       
-          try(  
-          ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
-                 plot=p_ws, 
-                 width = 3, height=(nFeatures/5)+0.5, dpi=300)
-          )
-          
-          
-          plot_weights(MOFAobject_gs, 
-                       view = views[i], 
-                       factor = ii, 
-                       nfeatures = 30
-          )
+                
+                  print('rna')
+                  p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
+                }
+                
+                if (views[i]=='metabolites'){
+                p_ws<-p_ws+ theme(axis.text.y = element_text(size=7))
+                }
+                
+                #scale_colour_(values=cols) 
+            
+                try(  
+                ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
+                      plot=p_ws, 
+                      width = 3, height=(nFeatures/5)+0.5, dpi=300)
+                )
+                #ii
+           #views[i]
+
+     
          
             
           ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'_',nFeatures, '.png'),

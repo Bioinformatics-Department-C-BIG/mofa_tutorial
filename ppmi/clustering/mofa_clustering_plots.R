@@ -123,7 +123,6 @@ p <- MOFA2::plot_factors(MOFAobjectPD_sel,
 )
 p
 ggsave(outfile_clusters, width = 4, height = 4 )
-dev.off()
 
 
 

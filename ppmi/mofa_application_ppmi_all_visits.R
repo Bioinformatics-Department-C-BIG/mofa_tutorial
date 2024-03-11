@@ -53,6 +53,8 @@ use_signif=FALSE
 process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
+prot_mode = 'u'
+#prot_mode = 't'
 
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
@@ -185,31 +187,26 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
   
 }
 
-
 # n_factors best=15
-for (N_FACTORS in c(30)){
+for (N_FACTORS in c(35)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
    mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
 
-  out_params<- paste0( 'p_', p_params_plasma, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa))
+  out_params<- paste0( 'p_',prot_mode, '_', p_params_mofa, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
+                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa), '_pm_' )
   
   outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
   dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
 
 
-
+#a_multi[,,4])
 
  ## get list of three matrices 
   # TODO: load all time points then filter? 
 
-  # data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
-    data_full=prepare_multi_data(p_params_plasma, p_params_csf, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
-
-
-  colnames(data_full$proteomics_plasma)
+  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params, prot_mode)
   # create multi-assay experiment object 
   mofa_multi<-create_multi_experiment(data_full, combined_bl_log)
 
@@ -229,11 +226,11 @@ for (N_FACTORS in c(30)){
   
 }
 
-mofa_multi_to_use
 
+length(intersect(colnames(assay(mofa_multi_to_use[,,2])),colnames(assay(mofa_multi_to_use[,,4])) ))
+MOFAobject
 
-#Update the n factors 
-N_FACTORS =  MOFAobject@dimensions$K
+MOFA2::plot_data_overview(MOFAobject)
 
 ## attach some extra clinical variables 
 sel_sam=MOFA2::samples_names(MOFAobject)
@@ -264,8 +261,12 @@ sm2<-cbind(samples_metadata(MOFAobject), estimations[match(sm$PATNO_EVENT_ID, ro
 
 
 colnames(estimations) %in% colnames(samples_metadata(MOFAobject))
-samples_metadata(MOFAobject)<-as.data.frame(sm2)
 
+excl<-grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_|SCENT_', colnames(sm2))
+colnames(sm2)
+sm3<-sm2[,!excl]
+colnames(sm3)
+samples_metadata(MOFAobject)<-as.data.frame(sm3)
 
 
 ## tests 
@@ -282,6 +283,11 @@ graphics.off()
 
 MOFA2::samples_names(MOFAobject)
 mofa_multi_to_use[,,3]$PATNO_EVENT_ID
+
+
+
+
+
 
 
 

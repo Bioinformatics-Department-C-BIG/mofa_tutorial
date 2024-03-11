@@ -38,6 +38,9 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
 
+
+plot_data_overview(MOFAobject)
+ggsave(paste0(outdir,'/data_overview.jpeg'))
 write_vars_output(MOFAobject, vars_by_factor) # output plots on var metrics
 
 
@@ -195,7 +198,7 @@ covars_f_pearson_pd<-paste0(covariates_dir, 'pearson_pd.csv' )
 covars_f_pvalue_pd<-paste0(covariates_dir, 'pvalue_pd.csv')
 
  #names(non_na_vars)
- force_cors=FALSE
+ force_cors=FALSE 
 ####TODO: maybe filter out some clinvars or take the most important because it takes a while....!#####
 if (file.exists(covars_f_pearson_pd) & !(force_cors)){
   # Loading covariates from file
@@ -273,6 +276,10 @@ round(cors_pearson[,'COHORT'], digits=2)
 
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
+
+
+
+
 
 
 

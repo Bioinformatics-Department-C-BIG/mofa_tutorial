@@ -230,6 +230,7 @@ merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Descriptio
 # get a merged df per cluster 
 
 
+use_top_mofa=TRUE
 
 length(all_sig_all_clusts)
 
@@ -286,6 +287,7 @@ ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2),
     )
 
   #  title = paste(metric, 'p-adj:', padjust_hm))
+draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
 dev.off()
 
 logFC_merged_df2[10, ]

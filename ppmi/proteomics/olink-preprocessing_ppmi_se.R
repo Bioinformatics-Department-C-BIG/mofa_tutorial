@@ -35,7 +35,7 @@ combined_bl_log<-load_metadata()
 ### TODO: filter out the cohort too before processig !! 
 
 all_visits = c('BL', 'V02', 'V04', 'V06', 'V08')
-
+VISIT = 'V08'
 for (VISIT in all_visits){
     #process_mirnas=FALSE
     #TISSUE='CSF'
@@ -62,16 +62,21 @@ for (VISIT in all_visits){
     prot_bl_wide_unlog<-as.matrix(fread(in_file_original, header=TRUE), rownames=1)
 
     proteomics<-prot_bl_wide_unlog
+    colnames(proteomics)
     #### FILTERING LOW VALUES 
     # Remove rows with 90% NA 
     #### TODO: move this after the selection of the cohort!!! 
 
     raw_counts_all<-pre_process_proteomics(proteomics)
+    colnames(raw_counts_all)
     proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined_bl_log)
     dim(proteomics_se)
-
+    sel_subcoh
+proteomics_se_filt<-proteomics_se[, (proteomics_se$COHORT %in% sel_coh) & (proteomics_se$EVENT_ID %in% VISIT) ]
+proteomics_se_filt$INEXPAGE
     ##### filter here by visits and cohort
-    se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh, sel_ps)
+    se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh)
+    se_filt_proteins
 
     ### TODO: save se filt here : with or without VISIT included..? 
     Sample<-colnames(se_filt_proteins)

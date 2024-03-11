@@ -3,16 +3,11 @@
 #library('MOFAdata')
 library('MOFA2')
 
-#utils::data(reactomeGS)
-#data(reactomeGS)
 
-#head((reactomeGS))
 
 ## TODO: if enrichment is already run then just load results
 ## load res.positive to be used in the next script
-#res.positive$feature.sets
-#res=res.positive
-#es.positive$pval.adj
+
 
 
 write_enrich<-function(res, sign_mode){
@@ -61,8 +56,39 @@ dir.create(paste0(outdir, '/enrichment/'))
 mode='proteomics'
 mode='RNA'
 
+mode='proteomics_csf'
+features_names(MOFAobject)$proteomics_csf
+
+
+features_names(MOFAobject)$proteomics_csf
+modify_feature_names<-function(MOFAobject){
+
+    #original=features_names(MOFAobject)$proteomics_csf
+    features_names(MOFAobject)$proteomics_csf<-gsub('_proteomics_csf', '', features_names(MOFAobject)$proteomics_csf)
+#      features_names(MOFAobject)$proteomics_csf<-gsub('_c', '', features_names(MOFAobject)$proteomics_csf)
+
+    #features_names(MOFAobject)$proteomics_csf<-gsub('_c', '', rownames(MOFAobject@expectations$W$proteomics_csf))
+    features_names(MOFAobject)$proteomics_plasma<-gsub('_proteomics_plasma', '_', features_names(MOFAobject)$proteomics_plasma)
+   return(MOFAobject)
+
+}
+
+
+# rename to match databases 
+MOFAobject_enr<-MOFAobject
+MOFAobject_enr<-modify_feature_names(MOFAobject)
+head(features_names(MOFAobject_enr)$proteomics_csf)
+head(features_names(MOFAobject_enr)$proteomics_plasma)
+
+head(features_names(MOFAobject_enr)$RNA)
+features_names(MOFAobject_enr)$RNA<-sapply(features_names(MOFAobject_enr)$RNA, 
+                                         function(x) {stringr::str_remove(x, '\\..*')}
+  )
+
+
+
 for (subcategory in c('GO:BP', 'GO:MF' )){
-  if (mode=='proteomics'){
+  if (mode=='proteomics_csf'| mode=='proteomics_plasma'){
     gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
     
   }else{
@@ -74,10 +100,7 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
   colnames(gs)
   
   
-  features_names(MOFAobject)$RNA
-  features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
-                                         function(x) {stringr::str_remove(x, '\\..*')}
-  )
+
   
   
   sign_mode='negative'
@@ -90,26 +113,26 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
     
   }else{
           # GSEA on negative weights, with default options
-          res.negative <- run_enrichment(MOFAobject, 
+          res.negative <- run_enrichment(MOFAobject_enr, 
                                          feature.sets = gs, 
                                          view = mode,
                                          sign = "negative"
           )
           
-          res.positive <- run_enrichment(MOFAobject, 
+          res.positive <- run_enrichment(MOFAobject_enr, 
                                          feature.sets = gs, 
                                          view = mode,
                                          sign = "positive"
           )
           
-          mode='negative'
-          res_negative_df<-write_enrich(res.negative, sign_mode=mode)
+          sign_mode='negative'
+          res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
           saveRDS(res.negative, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
 
-          mode='positive'
+          sign_mode='positive'
 
-          res_positive_df<-write_enrich(res.positive, sign_mode=mode)
+          res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
             by=c('Description','Factor' ))
@@ -118,64 +141,20 @@ for (subcategory in c('GO:BP', 'GO:MF' )){
           write.csv(res_merged, paste0(outdir,'/enrichment/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
   }
   
-  head(res.positive$feature.statistics)
-  
-  
-  
-
-    ## TODO: create a function to do for both positive and negative 
-    #
-    T=0.05
-  
  
   
   
   
-  
-  
-  
-  ##### which factor is related to parkinsons disease in KEGG
-  ### PROBLEM: this is based on RNA only!!! 
-  
-  
 }
-sign_mode='negative'
-subcategory<- 'GO:BP'
-T=0.05
-
-res.negative_l$pval
-
-# Make enrichment plots for all factors 
-# threshold on p value to zoom in 
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
-
-plot_enrichment_heatmap(res.positive, 
-                        alpha=0.5, 
-                        cap=0.0005,
-                        colnames=TRUE)
-dev.off()
-
-plot_enrichment_heatmap(res.positive$sigPathways, 
-                        alpha=0.5, cap=0.0005)
-
-#ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
-
-
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
-
-
-#res.negative %>% 
-#  dplyr::filter(pval.adj<0.05)
-plot_enrichment_heatmap(res.negative, 
-                        alpha=0.00000000004, cap=0.00000000005 
-)
-
-dev.off()
 
 
 
 
-###### turn to enrichment result to plot 
+
+
+
+
+
 
 
 

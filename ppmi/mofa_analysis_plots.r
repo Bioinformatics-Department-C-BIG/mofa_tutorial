@@ -777,6 +777,9 @@ data.frame()
 #### 
 
 
+
+
+
 modify_metadata_for_plotting<-function(MOFAobject){
   #'
   #' 

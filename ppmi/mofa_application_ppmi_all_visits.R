@@ -75,7 +75,7 @@ if (run_mofa_complete){
   N_FACTORS=15  ### so far gives the best of the corelations for TOP_GN=0.30, MN=0.5, PN=0.9
 }
 
-drop_factor_threshold = 0.001
+drop_factor_threshold = 0.0001
 
 
 
@@ -205,11 +205,16 @@ for (N_FACTORS in c(30)){
  ## get list of three matrices 
   # TODO: load all time points then filter? 
 
-  data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
+  # data_full=prepare_multi_data(p_params, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
+    data_full=prepare_multi_data(p_params_plasma, p_params_csf, param_str_g_f, param_str_m_f,TOP_GN, TOP_MN, mofa_params)
+
+
+  colnames(data_full$proteomics_plasma)
   # create multi-assay experiment object 
-  mofa_multi<-create_multi_experiment(data_full, combined_bl)
+  mofa_multi<-create_multi_experiment(data_full, combined_bl_log)
 
   mofa_multi_complete_all<-mofa_multi[,complete.cases(mofa_multi)]
+
 
   # select if complete cases are used or samples with missing omics are included.
   # We need the multi assay experiment for other analysis too eg. time omics 
@@ -221,9 +226,14 @@ for (N_FACTORS in c(30)){
   
   MOFAobject@dimensions$K
  
-  N_FACTORS =  MOFAobject@dimensions$K
   
 }
+
+mofa_multi_to_use
+
+
+#Update the n factors 
+N_FACTORS =  MOFAobject@dimensions$K
 
 ## attach some extra clinical variables 
 sel_sam=MOFA2::samples_names(MOFAobject)
@@ -261,6 +271,23 @@ samples_metadata(MOFAobject)<-as.data.frame(sm2)
 ## tests 
 cors_real<-corr.test(sm2$Neutrophils.LD,sm2$Neutrophils....  )
 cors_real$r
+
+
+plot_data_overview(MOFAobject)
+ggsave(paste0(outdir, '/data_over.png'))
+graphics.off()
+
+
+
+
+MOFA2::samples_names(MOFAobject)
+mofa_multi_to_use[,,3]$PATNO_EVENT_ID
+
+
+
+
+
+
 
 
 

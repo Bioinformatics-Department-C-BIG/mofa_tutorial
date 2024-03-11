@@ -205,7 +205,7 @@ load_all_se<-function(){
 }
 
 
-
+#combined=combined_bl_log
 
 getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #'
@@ -217,8 +217,12 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   
   raw_counts_all<-raw_counts_all[,!duplicated(colnames(raw_counts_all), fromLast=TRUE)]
   combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
+  
   ### some samples do not exist in metadata so filter them out 
   ## 
+  colnames(raw_counts_all)
+  combined$PATNO_EVENT_ID
+
   common_samples<-intersect(colnames(raw_counts_all),combined$PATNO_EVENT_ID)
   unique_s<-colnames(raw_counts_all)[!(colnames(raw_counts_all) %in% common_samples)]
   # TODO: replace with function: fetch_metadata_by_patient_visit- test first
@@ -231,8 +235,8 @@ getSummarizedExperimentFromAllVisits<-function(raw_counts_all, combined){
   #subset sample names
 
   se=SummarizedExperiment(raw_counts_filt, colData = metadata_filt)
-  
-  metadata_filt$COHORT_DEFINITION
+  se_V08<-se[, se$EVENT_ID =='V08']
+  unique(se_V08$PATNO_EVENT_ID)
   
   return(se)
   
@@ -578,7 +582,8 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   ##### 2.   start filtering the experiment  to normalize as appropriate 
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
-  
+#  sel_coh
+sel_sub_coh
   
   if (length(sel_subcoh)==1 && sel_subcoh==FALSE){
         se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
@@ -1440,7 +1445,8 @@ selectMostVariable<-function(vsn_mat,q){
 
   }
 
-prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
+
+prepare_multi_data<-function(p_params_plasma,p_params_csf,  param_str_g_f, param_str_m_f, TOP_GN, TOP_MN, mofa_params){
   #### Takes in the parameters of the input files and loads them 
   #' return: data_full: a list with the 3 modalities 
   # TODO: simplify the reading and setting the feature column to null? 
@@ -1448,15 +1454,19 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   #' 
   
   
-  proteins_outfile = paste0(output_files, p_params_out , '_vsn.csv')
+  proteins_outfile = paste0(output_files, p_params_mofa , '_vsn.csv')
   proteins_outfile_csf = paste0(output_files, p_params_csf , '_vsn.csv')
   proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_vsn.csv')
-  
   
   proteins_vsn_mat<-as.matrix(read.csv2(proteins_outfile, row.names=1, header=TRUE, check.names = FALSE))
   proteins_csf_vsn_mat<-as.matrix(read.csv2(proteins_outfile_csf, row.names=1, header=TRUE, check.names = FALSE))
   proteins_plasma_vsn_mat<-as.matrix(read.csv2(proteins_outfile_plasma, row.names=1, header=TRUE, check.names = FALSE))
 
+  colnames(proteins_plasma_vsn_mat)
+    colnames(proteins_plasma_vsn_mat)
+
+  print(paste('Loaded proteins',   proteins_outfile_plasma))
+  print(paste('Loaded proteins',   proteins_outfile_csf))
 
   highly_variable_proteins_mofa<-  selectMostVariable(proteins_vsn_mat, TOP_PN)
   highly_variable_proteins_mofa_plasma<-selectMostVariable(proteins_plasma_vsn_mat, TOP_PN)

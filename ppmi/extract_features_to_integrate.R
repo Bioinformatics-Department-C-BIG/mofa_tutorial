@@ -217,6 +217,13 @@ ppmi_prot=all_frames2
 
 ### remove PPMI- suffix from PATNO column 
 ppmi_prot$PATNO<-str_replace(ppmi_prot$PATNO,'PPMI-', '')
+colnames(ppmi_prot)
+ppmi_prot[, c('PATNO', 'EVENT_ID')]
+ppmi_prot_visits<-ppmi_prot%>%
+filter(EVENT_ID %in% c('BL'))
+length(unique(ppmi_prot_visits[, c('PATNO')]))
+
+table(ppmi_prot_visits$COHORT)
 print(paste0('Unique patients in data: ', length(unique(ppmi_prot$PATNO))))
 prot_bl<-ppmi_prot
   colnames(ppmi_prot)

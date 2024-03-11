@@ -15,13 +15,13 @@ try(
 
 #source(paste0(script_dir, 'ppmi/setup_os.R'))
 
-#source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
+source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 # Plotting for mofa run not needed for clustering analysis, excluded  
 
-source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+#source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
 source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
@@ -50,9 +50,9 @@ TISSUE='Plasma'
 DIFF_VAR = 'moca'
 DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'updrs3_score_on'
-#DIFF_VAR = 'NP2PTOT_LOG'
+DIFF_VAR = 'NP2PTOT_LOG'
 
-process_mirnas = TRUE 
+process_mirnas = FALSE 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
@@ -104,6 +104,45 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time
 source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

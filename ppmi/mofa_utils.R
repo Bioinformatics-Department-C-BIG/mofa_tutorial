@@ -181,7 +181,7 @@ select_top_bottom_perc<-function(MOFAobject, view, factors, top_fr=.01 ){
 
 
 
-
+#MOFAobject
 concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
   # get the top features from multiple factors and add the factor in second column
   f_all<-sapply(factors_all, function(f){
@@ -201,14 +201,15 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
 
 factor=2
 top_p=20
-
+config <- config::get(file = "ppmi/config.yml")
+config$ONT_RNA
 get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20){
   # mofa enrichment file - read the csv file
   # ONT - added now
   
 
-    results_file_mofa = paste0(outdir, '/enrichment/gsego_',ONT, factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
-    results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_', pvalueCutoff, '.csv')
+    results_file_mofa = paste0(outdir, '/enrichment/gsego_',ONT=config$ONT_RNA, factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
+   # results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_', pvalueCutoff, '.csv')
 
     top_pathways<-read.csv(paste0(results_file_mofa ))
     top_pathways<-top_pathways[, c('Description', 'p.adjust')]
@@ -534,5 +535,56 @@ plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALS
   dev.off()
   
   
+}
+
+
+
+
+
+
+plot_mofa_top_weighted_all_views<-function(MOFAobject_gs, nFeatures){
+#' @param       MOFAobject_gs
+#' plots top weighted barplots for all mofa molecules 
+#'   for (i in seq(3,MOFAobject_gs@dimensions$M)){
+  for (ii in seq(1,MOFAobject_gs@dimensions$K)){
+
+      print(c(i,ii))
+      cols <- c( "red", 'red')
+          p_ws<-plot_top_weights(MOFAobject_gs,
+                           view = i,
+                           factor = c(ii),
+                           nfeatures = nFeatures,     # Top number of features to highlight
+                          scale = F
+          )
+          graphics.off()
+          
+
+          
+          if (views[i]=='RNA'){
+                  # formatting different views names different
+                  # genes are in italic 
+                  print('rna')
+                  p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
+                }
+                
+                if (views[i]=='metabolites'){
+                p_ws<-p_ws+ theme(axis.text.y = element_text(size=7))
+                }
+                            
+                try(  
+                ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
+                      plot=p_ws, 
+                      width = 3, height=(0.5+round(log2(nFeatures)))/2, dpi=300)
+                )
+          
+            
+              ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'_',nFeatures, '.png'),
+                 width = 3, height=(0.5+round(log2(nFeatures)))/2, dpi=300)
+      
+          
+
+         
+          
+  }
 }
 

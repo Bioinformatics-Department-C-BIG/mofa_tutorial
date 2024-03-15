@@ -81,6 +81,7 @@ library(cluster)
 #set.seed(123)
 # Compute gap statistic for kmeans
 # we used B = 10 for demo. Recommended value is ~500
+MOFAobject
 
 if (cluster_samples_mofa){
   if (length(sel_coh)>1){
@@ -257,9 +258,9 @@ cors_estim<-cors_all_pd[c(23),  estim_cors]
 cors_estim
 colnames(cors_estim)[cors_estim>0]
 
+write_vars_output(MOFAobject,vars_by_factor , factors=sel_factors_conf)
 
-
-
+write_vars_output
 
 
 
@@ -823,24 +824,47 @@ modify_metadata_for_plotting<-function(MOFAobject){
   return(MOFAobject)
 
 }
-
+MOFAobject
 modify_features_for_plotting<-function(MOFAobject){
   # modify gene names 
     ens_ids_full<- features_names(MOFAobject)$RNA
     ens_ids<-gsub('\\..*', '', ens_ids_full)
     features_names(MOFAobject)$RNA<-get_symbols_vector(ens_ids)
-      #
-    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject@expectations$W$proteomics_csf))
-    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', 'p', rownames(MOFAobject@expectations$W$proteomics_plasma))
 
-    rownames(MOFAobject@expectations$W$proteomics_t_csf)<-gsub('proteomics_t_csf', 'tc', rownames(MOFAobject@expectations$W$proteomics_t_csf))
-    rownames(MOFAobject@expectations$W$proteomics_t_plasma)<-gsub('proteomics_t_plasma', 'tp', rownames(MOFAobject@expectations$W$proteomics_t_plasma))
+    # map uniprot ids to gene symbols 
+   
+
+
+      #  Shorten the rownames 
+    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_proteomics_csf', '', rownames(MOFAobject@expectations$W$proteomics_csf))
+    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('_proteomics_plasma', '', rownames(MOFAobject@expectations$W$proteomics_plasma))
+
+    rownames(MOFAobject@expectations$W$proteomics_t_csf)<-gsub('_proteomics_t_csf', '', rownames(MOFAobject@expectations$W$proteomics_t_csf))
+    rownames(MOFAobject@expectations$W$proteomics_t_plasma)<-gsub('_proteomics_t_plasma', '', rownames(MOFAobject@expectations$W$proteomics_t_plasma))
+
+  
+    uniprot_ids<-rownames(MOFAobject@expectations$W$proteomics_plasma)
+    gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
+# rownames(MOFAobject@expectations$W$proteomics_plasma)
+    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gene_symbols$SYMBOL
+    
+    # replace uniprot
+    rownames(MOFAobject@expectations$W$proteomics_csf)<-get_symbol_from_uniprot(rownames(MOFAobject@expectations$W$proteomics_csf))$SYMBOL
+
+
+
+
+
+
+
 
     return(MOFAobject)
 
 }
+
+
 MOFAobject_gs<-modify_features_for_plotting(MOFAobject)
-rownames(MOFAobject_gs@expectations$W$proteomics_t_csf)
+rownames(MOFAobject_gs@expectations$W$proteomics_csf)
 #MOFAobject_gs<-modify_metadata_for_plotting(MOFAobject_gs)
 
 W <- get_weights(MOFAobject_gs, factors = 1, views = 4, 
@@ -851,79 +875,13 @@ views=names(MOFAobject@data)
 #views=
 
 
-# TODO: create functions!!
-  for (i in seq(3,MOFAobject@dimensions$M)){
-  for (ii in seq(1,MOFAobject@dimensions$K)){
-   
-    nFeatures=20
-    print(i)
-    ### oNLY SAVE THE ones with high variance
-   # if (high_vars_by_factor[ii, i]){
-      print(c(i,ii))
-      cols <- c( "red", 'red')
-          p_ws<-plot_top_weights(MOFAobject_gs,
-                           view = i,
-                           factor = c(ii),
-                           nfeatures = nFeatures,     # Top number of features to highlight
-                           scale = F
-          )
-          graphics.off()
-          
+nFeatures=15
 
-          
-          if (views[i]=='RNA'){
-                  #plot_top_weights2
-                  p_ws<-plot_top_weights(MOFAobject_gs,
-                                          view = 'RNA',
-                                          factor = ii,
-                                          nfeatures = nFeatures,     # Top number of features to highlight
-                                          scale = F
-                  )
-
-                
-                  print('rna')
-                  p_ws<-p_ws+ theme(axis.text.y = element_text(face = "italic"))
-                }
-                
-                if (views[i]=='metabolites'){
-                p_ws<-p_ws+ theme(axis.text.y = element_text(size=7))
-                }
-                
-                #scale_colour_(values=cols) 
-            
-                try(  
-                ggsave(paste0(outdir, 'top_weights/top_weights_','f_', ii,'_',views[i],'_',nFeatures,'.png'), 
-                      plot=p_ws, 
-                      width = 3, height=(nFeatures/5)+0.5, dpi=300)
-                )
-                #ii
-           #views[i]
-
-     
-         
-            
-          ggsave(paste0(outdir, 'top_weights/all_weights_','f_', ii,'_',views[i],'_',nFeatures, '.png'),
-                 width = 3, height=nFeatures/4, dpi=300)
-      
-          
-
-         
-          
-  }
-}
-
-
-
-
-    # top weights
-    # concat all 
-    
-    
- 
-
-
+plot_mofa_top_weighted_all_views(MOFAobject_gs, nFeatures )
 #### 3. Save heatmaps and top weighted feaqtures ####
-
+#round(vars_by_factor[fact,])
+# Variance threshold: >0.1%
+round(vars_by_factor[c(3,13,22),], digits=2)
 
 # rename because value is too long in the legend
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'

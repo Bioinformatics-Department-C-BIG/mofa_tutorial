@@ -324,7 +324,7 @@ preprocess_se_deseq2<-function(se_filt, min.count=10){
 }
 
 
-deseq_by_group<-function(se_filt, formula_deseq, min.count=10,cell_corr_deseq=TRUE, contrast_order = c('1', '2')){
+deseq_by_group<-function(se_filt, formula_deseq, min.count=10, cell_corr_deseq=TRUE, contrast_order = c('1', '2')){
   #'
   #' @param 
   # TODO: add plate and/OR site 
@@ -710,6 +710,17 @@ get_gene_symbol_uniprot<-function(my_protein_ids){
     return(uniprot_results)
 }
 
+
+ get_symbol_from_uniprot<-function(uniprot_ids){
+  #' @param uniprot_ids
+  #' 
+  #' 
+        gene_symbols<-AnnotationDbi::select(org.Hs.eg.db, uniprot_ids,"SYMBOL", "UNIPROT")
+        gene_symbols$SYMBOL[is.na(gene_symbols$SYMBOL)]<-gene_symbols$UNIPROT[is.na(gene_symbols$SYMBOL)]
+        gene_symbols<-gene_symbols[!duplicated(gene_symbols$UNIPROT),]
+        return(gene_symbols)
+    }
+
 ######## DE ANALYSIS #######
 #results_de<-mark_signficant(
   # test
@@ -794,10 +805,10 @@ library('enrichplot' )
 
 
 #deseq2ResDF
-#results_file_cluster
+#results_file = results_file_cluster
 #N_DOT=20, N_EMAP=30 , N_NET=10)
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15){
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15,force_gse=FALSE){
   #'
   #' Get the ordered gene list from a deseq object
   #' @param deseq2ResDF deseq results object 
@@ -810,8 +821,8 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
   gene_list<-get_ordered_gene_list(deseq2ResDF,  order_by_metric, padj_T=1, log2fol_T=0 )
   gene_list_ord=gene_list
   names(gene_list)<-gsub('\\..*', '',names(gene_list))
-  gse=run_enrich_gene_list(gene_list, results_file)
-  
+  gse=run_enrich_gene_list(gene_list, results_file,force_gse=force_gse)
+  print(head(gse@result[, c('Description', 'p.adjust')]))
  
   return(gse)
 }
@@ -861,7 +872,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
   #'
   #' Run enrichment GSEA using an ordered gene list, write, and plot and save the results 
   #' @param gene_list
@@ -874,7 +885,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
     #results_file
 
 
-  if (!file.exists(paste0(results_file, '.Rds'))){
+  if (!file.exists(paste0(results_file, '.Rds'))| force_gse){
     
       gse_full <- clusterProfiler::gseGO(gene_list, 
                                         ont=ONT, 
@@ -1504,11 +1515,11 @@ prepare_multi_data<-function(p_params, param_str_g_f, param_str_m_f, TOP_GN, TOP
   #' 
   
   
-  proteins_outfile = paste0(output_files, p_params_mofa , '_vsn.csv')
+  proteins_outfile = paste0(output_files, p_params_plasma , '_vsn.csv')
   proteins_outfile_csf = paste0(output_files, p_params_csf , '_vsn.csv')
   proteins_outfile_plasma = paste0(output_files, p_params_plasma , '_vsn.csv')
     
-  proteins_vsn_mat<-as.matrix(read.csv2(proteins_outfile, row.names=1, header=TRUE, check.names = FALSE))
+  proteins_vsn_mat<-as.matrix(read.csv2(proteins_outfile_plasma, row.names=1, header=TRUE, check.names = FALSE))
   proteins_csf_vsn_mat<-as.matrix(read.csv2(proteins_outfile_csf, row.names=1, header=TRUE, check.names = FALSE))
   proteins_plasma_vsn_mat<-as.matrix(read.csv2(proteins_outfile_plasma, row.names=1, header=TRUE, check.names = FALSE))
 
@@ -2206,4 +2217,14 @@ pre_process_proteomics<-function(proteomics){
       data_columns=seq(1:dim(proteomics)[2])
       
       return(raw_counts_all)
+}
+
+
+
+get_cluster_params_dir<-function(DIFF_VAR){
+  fact<-get_factors_for_metric(DIFF_VAR); fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+  cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
+  cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+  return(cluster_params_dir)
 }

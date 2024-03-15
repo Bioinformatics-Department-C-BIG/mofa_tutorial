@@ -35,24 +35,41 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 mofa_multi_to_use
 MOFAobject
 prot_vsn_se_filt_file
-datalist<-loadRDS(prot_vsn_se_filt_file)
-vsn_mat<-datalist[[1]]
-se_filt_proteins<-datalist[[2]]
 
+prot_de_mode<-'u' # olink or untargeted 
+VISIT
+prot_untargeted_un_vsn_f
+if (prot_de_mode=='t'){
+    datalist<-loadRDS(prot_vsn_se_filt_file)
+    vsn_mat<-datalist[[1]]
+    se_filt_proteins<-datalist[[2]]
+    tissue = TISSUE
+}else{
+   # proteins_un_plasma<-as.matrix(read.csv2(prot_untargeted_plasma_vsn_f,row.names=1, header=TRUE, check.names = FALSE))
+    prot_un_vsn<-as.matrix(read.csv2(prot_untargeted_un_vsn_f, row.names=1, header=TRUE, check.names = FALSE))
+    tissue = tissue_un
+    vsn_mat = prot_un_vsn
+    prot_vsn_se<-getSummarizedExperimentFromAllVisits(vsn_mat, combined_bl_log) # create sumarized experiment 
+    se_filt_prot_vsn<- filter_se(prot_vsn_se, VISIT, sel_coh)
+    vsn_mat<-assay(se_filt_prot_vsn) # reproduce after filtering by visit
+    se_filt_proteins <- se_filt_prot_vsn
+
+}
+
+se_filt_prot_vsn$EVENT_ID
 cohort_ids<-c(1,2)
 names(cohort_ids)=c('INEXPD', 'INEXHC')
 
 se_filt_proteins$COHORT_orig<-se_filt_proteins$COHORT
-
+se_filt_proteins$INEXPAGE
 # fix the cohort
 if (any(is.na(se_filt_proteins$COHORT))){
-
   se_filt_proteins$COHORT<- cohort_ids[se_filt_proteins$INEXPAGE]
-
 }
 tmp<- assays(se_filt_proteins)[[1]]
 
-
+head(as.matrix(vsn_mat));
+head(as.matrix(tmp))
 if (run_vsn){
   protein_matrix_full<-vsn_mat
 }else{
@@ -73,6 +90,10 @@ sm<-samples_metadata(MOFAobject_clusts)
 sm$NP2PTOT_LOG_clust
 patnos=se_clusters$PATNO
 y_clust<-DIFF_VAR
+
+fact <- get_factors_for_metric(DIFF_VAR)
+cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
+
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 #se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 se_clusters$kmeans_grouping
@@ -98,14 +119,18 @@ for (cluster_id in c(1:3)){
 protein_matrix<-protein_matrices[[1]]
 se_filt_all[[1]]$COHORT
 
-
+jpeg(paste0(outdir, '/boxplots.jpeg'))
+boxplot(protein_matrix)
+dev.off()
 prefix='prot_'
+print(cluster_params_dir)
+
 
 for (cluster_id in  c(1:3)){
       print(cluster_id)
 
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
-        outdir_s_p
+
         se_filt_clust<-se_filt_all[[cluster_id]]
         protein_matrix<-protein_matrices[[cluster_id]]
         results_de<-de_proteins_by_group(se_filt=se_filt_clust, protein_matrix=protein_matrix)
@@ -118,7 +143,7 @@ for (cluster_id in  c(1:3)){
 
     dir.create(outdir_s_p, recursive=TRUE)
    # prefix
-   rfile<-paste0(outdir_s_p, prefix,TISSUE, '_de_cl',cluster_id,  '_results.csv')
+   rfile<-paste0(outdir_s_p, prefix,tissue, '_de_cl',cluster_id,  '_results.csv')
    print(rfile)
     write.csv(results_de, rfile)
 
@@ -128,24 +153,36 @@ for (cluster_id in  c(1:3)){
     # TODO: enhanced volcano
     library(EnhancedVolcano)
     ylim=max(-log10(results_de$adj.P.Val))+0.5
-    ylim
+    xlim=max(abs(results_de$logFC))+0.1
+    colnames(results_de)
+
+
+
+   
+    uniprot_ids<-rownames(results_de)
+ gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
+
+
+
     #results_de<-de_all_groups_proteins[[3]]
     pvol<-EnhancedVolcano(results_de, 
-                    lab = rownames(results_de),
+                    lab = gene_symbols$SYMBOL,
                     x = 'logFC',
-                    y = 'adj.P.Val', 
-                    pCutoff = 10e-2,
-                    FCcutoff = 0.5, 
+                   # y = 'adj.P.Val', 
+                    y = 'P.Value', 
+                    pCutoff = 0.05,
+                    FCcutoff = 0.1, 
                     ylim=c(0,ylim), 
+                    xlim=c(-xlim, xlim), 
                     title='', 
                     subtitle=ns
     )
     pvol
-    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, TISSUE,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 
-results_de
+fname_vol
 #ggsave(fname,pvol, width=6,height=8, dpi=300)
 
 print(fname_vol)
@@ -158,7 +195,7 @@ dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', TISSUE, '/'); dir.create(outdir_s_p_enrich)
+outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', tissue, '/'); dir.create(outdir_s_p_enrich)
 #write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
@@ -176,7 +213,7 @@ outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', TISSUE, '/'); dir.create(outd
 #df_ord<-df[order(df$COHORT),]
 pvol
 order_by_metric<-'padj_reverse'
-if (TISSUE=='CSF' & VISIT_COMP=='V08'){
+if (tissue=='CSF' & VISIT_COMP=='V08'){
   log2fol_T_overall=1
   
 }
@@ -344,7 +381,7 @@ for (cluster_id in 1:3){
 
       outdir_s_p_enrich
       use_pval
-      dir.create(paste0(outdir_s_p, '/enr_prot', TISSUE,'/'), recursive=TRUE)
+      dir.create(paste0(outdir_s_p, '/enr_prot', tissue,'/'), recursive=TRUE)
       outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
                                     '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id )
       res_path<-paste0(outdir_s_p_enrich_file)

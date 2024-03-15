@@ -35,12 +35,14 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on')
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
 
 get_factors_for_metric('updrs3_score_on')
 facet_rows = 2
 
-#write_vars_output(MOFAobject, vars_by_factor, factors=fact)
+
+
+
 
 #### Boxplots ####
 
@@ -56,7 +58,14 @@ sapply(clust_vars, function(y_clust){
     'T.CD8.Naive', 'Neutrophils....'  )
     variates_to_p<-variates_to_p[variates_to_p%in% colnames(met)]
 
+
+
     fact=get_factors_for_metric(y_clust)
+
+
+    # also write vars for each cluster 
+    write_vars_output(MOFAobject, vars_by_factor, factors=fact)
+
     fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
@@ -72,6 +81,7 @@ sapply(clust_vars, function(y_clust){
     height=1+1.5*facet_rows, bn=bn_all_fname, facet_rows = 1, 
     text='')
 
+    file.create(paste0(cluster_params_dir, '/', clust_name ))
 
     bn_all_fname<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'cell_types',  '.png')
     variates_to_p = colnames(estimations)[!colnames(estimations) %in% c('T.gd.Vd2',"Plasmablasts" , 'mDCs', 'Monocytes.NC.I' )] # TODO: check for zero variance to exclude 

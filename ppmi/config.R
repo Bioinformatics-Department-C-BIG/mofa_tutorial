@@ -198,12 +198,23 @@ prot_vsn_se_filt_file<-paste0(output_files, p_params_FILE, '_vsn_se_filt.Rds')
 
 ###### Untargeted proteins
  pr_un_project_id='177'
+
+
 prot_untargeted_csf_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Cerebrospinal Fluid',  '.csv')
 prot_untargeted_csf_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Cerebrospinal Fluid',  'vsn.csv')
 
 
 prot_untargeted_plasma_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Plasma',  '.csv')
 prot_untargeted_plasma_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_','Plasma', 'vsn.csv')
+
+
+
+tissue_un<-'Plasma'
+tissue_un<-'Cerebrospinal Fluid'
+
+prot_untargeted_un_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',tissue_un,  '.csv')
+prot_untargeted_un_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',tissue_un,  'vsn.csv')
+
 
 
 

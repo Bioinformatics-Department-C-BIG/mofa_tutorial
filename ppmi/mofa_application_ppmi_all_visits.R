@@ -224,10 +224,10 @@ for (N_FACTORS in c(35)){
 
   MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
   
-  MOFAobject@dimensions$K
  
   
 }
+N_FACTORS =   MOFAobject@dimensions$K
 
 
 length(intersect(colnames(assay(mofa_multi_to_use[,,2])),colnames(assay(mofa_multi_to_use[,,4])) ))
@@ -282,7 +282,7 @@ assay(mofa_multi_to_use[,,'proteomics_plasma'])
 rowVars(assay(mofa_multi_to_use[,,'proteomics_plasma']))
 var(assay(mofa_multi_to_use[,,'proteomics_plasma'])['P07996',])
 
-
+MOFAobject_orig<-MOFAobject
 
 #mofa_multi_to_use[,, 'proteomics_csf']
 

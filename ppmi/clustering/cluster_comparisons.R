@@ -8,8 +8,8 @@
 source(paste0(script_dir, '/ppmi/utils.R'))
 knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
-
-
+#formula_deseq_format
+cell_corr_deseq
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
@@ -60,11 +60,13 @@ clust_name=paste0(y_clust, '_clust')
 
 # MOFAobject_clusts<-MOFAobjectPD
 # Obtain clustering from mofa
-se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_ps)
+sel_sub_coh=TRUE
+
+se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_sub_coh)
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
-
+se_clusters$kmeans_grouping
 
 
 
@@ -92,15 +94,17 @@ se_filt_all<- vector("list", length = 3);
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 #cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
 
-fact<-get_factors_for_metric(DIFF_VAR); fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
-cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
-cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
-cluster_params_dir
+
+
+get_cluster_params_dir(DIFF_VAR)
+
+
 
 cd <- colData(se_clusters)
 colData(se_clusters)[cd$INEXPAGE%in%'INEXHC','kmeans_grouping']<-'HC'
 
+se_clusters$kmeans_grouping
 
 
 se_clusters$kmeans_grouping<-as.factor(se_clusters$kmeans_grouping)
@@ -155,31 +159,32 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
 
           if (process_mirnas){
             # mirnas 
-            if (cell_corr_deseq) {
+            if (cell_corr_deseq){
 
-              if ((formula_deseq_format)=='n'){
-                formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+                  if ((formula_deseq_format)=='n'){
+                    formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
+                  }else if ((formula_deseq_format)=='all'){
+                    formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
+
+                  } 
               }else{
-                formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-
-              } 
-            }
-          }else {
             # rnas
             if ((formula_deseq_format)=='n'){
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
-              }else{
+              }else if  ((formula_deseq_format)=='all'){
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-              }  
+                }  
            }
+
+          }
   return(formula_deseq)
 }
 
 
+
 formula_deseq<-get_deseq_formula(process_mirnas, cell_corr_deseq, variates_to_correct_s)
 
-
-
+formula_deseq
 deseq_all <- vector("list", length = 0) # holds the significant gene/mirs ids only for each cluster
 deseq_all_names<-vector("list", length = 0)
 gene_lists<-vector("list", length = 0)
@@ -190,6 +195,7 @@ gse_all<-vector("list", length = 0)
 ### deseq_significant_all_groups: list to hold significant 
 #formula_deseq_format
 # if not cell corr ensure that the formula is empty
+#cell_corr_deseq=TRUE
 if (!cell_corr_deseq){
   formula_deseq_format=''
   formula_deseq_format<-''
@@ -199,6 +205,7 @@ if (!cell_corr_deseq){
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
 # since we are at a specific visit 
 deseq_params<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/') 
+deseq_params
 dir.create(paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq),  '/',VISIT_COMP, '/', formula_deseq_format, '/'))
 dir.create(deseq_params, recursive = TRUE)
 dir.create(cluster_params_dir, recursive = TRUE)
@@ -224,6 +231,9 @@ clusters_names<-c('1','2','3','1_2_3')
     se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id)]} )
 
 
+
+
+
   names(se_filt_all)<-clusters_names
 
 se_filt_all<-lapply(se_filt_all, function(se_clust){
@@ -235,13 +245,13 @@ se_filt_all<-lapply(se_filt_all, function(se_clust){
     
   }
 )
-
+se_filt_all[[4]]$kmeans_grouping
 # todo remove the ones below
+formula_deseq
 
 
 
-
-cluster_id_num = 1
+cluster_id_num = 4
 #dir.create(deseq_params, recursive = TRUE)
 for (cluster_id_num in 1:length(clusters_names)){
 
@@ -252,6 +262,12 @@ for (cluster_id_num in 1:length(clusters_names)){
   de_file<-paste0(deseq_params, '/', prefix, 'de_cluster_', cluster_id_name , '.csv')
   de_params_file<-paste0(deseq_params, '/', prefix, make.names(formula_deseq))
 
+    se_clust<-se_filt_all[[cluster_id_name]]
+    
+        
+    print(se_clust$COHORT) 
+
+
    if (file.exists(de_file)){
   #if (FALSE)
     # if de file exists load it - unfiltered de results file
@@ -260,10 +276,9 @@ for (cluster_id_num in 1:length(clusters_names)){
   }else{
     print(de_file)
     # else run the deseq with the design formula specified 
-        se_clust<-se_filt_all[[cluster_id_name]]
-        deseq2ResDF = deseq_by_group(se_clust, formula_deseq, min.count=min.count, contrast_order=deseq_order[[cluster_id_num]])
+        deseq2ResDF = deseq_by_group(se_clust, formula_deseq,cell_corr_deseq=cell_corr_deseq, min.count=min.count, contrast_order=deseq_order[[cluster_id_num]])
         #deseq2ResDF$log2FoldChange
-
+        print(paste(cell_corr_deseq, formula_deseq))
 
         # pipeline
         # 1. run deseq
@@ -303,8 +318,11 @@ for (cluster_id_num in 1:length(clusters_names)){
 deseq_all_names <- lapply(deseq_all, function(x){return(  gsub('\\..*', '',rownames(x))   )  })
 names(deseq_all_names) <-names(deseq_all)
 
-
-
+DIFF_VAR
+#print(head(deseq_all_groups[[4]]))
+print(head(deseq2ResDF))
+print(de_file)
+cluster_id_num
 #### 1. Venn from significant 
 length(deseq_all_names)
 head(deseq_all_names,3)
@@ -360,7 +378,9 @@ if (!process_mirnas){
 
 gse_all_clusters=list()
 
-force_gse=FALSE # SET to true to rerun plots 
+force_gse=FALSE # SET to true to rerun plots
+#print(head(deseq2ResDF)) 
+#print(head(gene_list1))
 #clusters_names
  for (cluster_id_num in 1:length(clusters_names)){
 
@@ -386,7 +406,7 @@ force_gse=FALSE # SET to true to rerun plots
       if (!file.exists(gse_file) | force_gse){
 
           gse1<-run_enrich_per_cluster(deseq2ResDF, results_file_cluster,N_DOT=20, 
-          N_EMAP=30 , N_NET=10)
+          N_EMAP=30 , N_NET=10, force_gse=FALSE)
           saveRDS(gse1,gse_file )
           gse_all_clusters[[cluster_id_name]]<- gse1
           
@@ -397,11 +417,16 @@ force_gse=FALSE # SET to true to rerun plots
     }
 
 } 
+DIFF_VAR
+print(head(gse_all_clusters[[cluster_id_name]]@result$Description))
+print(head(gse_all_clusters[[cluster_id_name]]@result$p.adjust))
 
 #force_gse=TRUE
+
+head(deseq2ResDF)
 if (process_mirnas){
   # run a different test..
-  cluster_id_num=1
+  cluster_id_num=4
   clusters_names
     for (cluster_id_num in 1:length(clusters_names)){
 

@@ -152,7 +152,7 @@ get_feature_set_uniprot<-function(gs_original){
     colnames(gs_uniprot_filt)
     return(gs_uniprot_filt)
 }
-
+#rownames(results_de)
 grepl('proteomics', mode)
 # 'GO:MF'
 for (subcategory in c('GO:BP' )){

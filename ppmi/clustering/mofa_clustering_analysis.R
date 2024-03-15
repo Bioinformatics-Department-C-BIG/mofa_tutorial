@@ -84,6 +84,7 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
     
 
  MOFAobjectPD_sel@samples_metadata$NP3TOT_clust
+ all_fs_diff
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
   #' @param diff_var: variable to cluster by 
@@ -109,7 +110,7 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
 
 
 
-all_clusts_mofa$NP2PTOT_LOG
+
 all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
 
 all_clusts_mofa_true_t<-do.call(cbind,all_clusts_mofa_true)

@@ -1,0 +1,15 @@
+
+
+default: 
+  TOP_PN: 0.9
+  TOP_GN: 0.2
+  TOP_MN: 0.3 
+  ONT_RNA: BP
+
+mofa:
+  TOP_PN: 0.9
+  TOP_GN: 0.2
+  TOP_MN: 0.3
+
+
+

@@ -10,28 +10,51 @@
 # need to run after DE tutorial ppmi cluster_compare.R
 
 #write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
-VISIT_COMP='V06'
-TISSUE
+#VISIT_COMP='V06'
 prefix='prot_'
 # TODO: run all timepoints!!!
-view=paste0('proteomics_', tolower(TISSUE))
-top_fr=0.01
+tissue_un_mofa<-ifelse(tissue_un=='Plasma', 'plasma', 'csf')
+tissue_un
+
+#' @param tissue is a global name that adjusts for targeted or untargeted 
+if (prot_de_mode=='t'){
+        view=paste0('proteomics_t_', tolower(TISSUE))
+        top_fr=0.01
+        tissue=TISSUE
+}else{
+        view=paste0('proteomics_', tolower(tissue_un_mofa))
+        tissue = tissue_un
+        top_fr=0.02
+
+}
+
 top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact, view=view, top_fr=top_fr   )
+top_proteins
 top_proteins$feature<-gsub(paste0('_',view),'', top_proteins$feature)
 top_proteins$feature
 
-de_prot_file
+
 clust_ids<-c('1', '2', '3')
+
+
+
+
+#cluster_params_dir
+# outdir_s_p
+fact = get_factors_for_metric(DIFF_VAR)
+fact
+cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
+cluster_params_dir
 get_de_proteins_per_tp<-function(VISIT_COMP, metric='logFC'){
         de_all<-list()
 
 
         for (cluster_id in clust_ids){
 
-            outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
-            de_prot_file<-paste0(outdir_s_p, prefix,TISSUE,'_de_cl',cluster_id,  '_results.csv')
-            de_results_prot<-read.csv(de_prot_file)
-            
+                outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
+                de_prot_file<-paste0(outdir_s_p, prefix,tissue,'_de_cl',cluster_id,  '_results.csv')
+                de_results_prot<-read.csv(de_prot_file)
+                
                 view=paste0('proteomics_', tolower(TISSUE))
                 # TODO: take the top MOFA proteins from moca 
                
@@ -60,15 +83,15 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric='logFC'){
 }
 #colnames(de_results_prot)
 
-times<-c('BL', 'V06')
-round(vars_by_factor[c(1,11,12),], digits = 2)
-round(vars_by_factor[c(2,12,23),], digits = 2)
-vars_by_factor[c(5,6),]
+times<-c('BL', 'V04' ,'V06', 'V08')
 
 
-
+metric_p<-'adj.P.Val'
+metric_p=='P.Value'
+#colnames(results_de)
 all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp)
-all_clusts_proteins_pval_all_times<-lapply( times, get_de_proteins_per_tp,metric='adj.P.Val' )
+all_clusts_proteins_pval_all_times<-lapply( times, get_de_proteins_per_tp,metric=metric_p )
+
 
 all_clusts_times_logFC_df<-do.call(cbind, all_clusts_proteins_logFC_all_times )
 all_clusts_times_pval_df<-do.call(cbind, all_clusts_proteins_pval_all_times )
@@ -100,8 +123,21 @@ all_clusts_times_pval_df1[all_clusts_times_pval_df<0.05]='*'
 all_clusts_times_pval_df1[all_clusts_times_pval_df>0.05]=''
 
 all_clusts_times_pval_df1
+ uniprot_ids<-rownames( all_clusts_times_logFC_df)
+ gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
 
-jpeg(paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr, '_heatmap_log2FC.jpeg'),  res=200, width=6, height=2+(top_fr*500), units='in')
+rownames( all_clusts_times_logFC_df)<-gene_symbols$SYMBOL
+
+nf<-dim(all_clusts_times_logFC_df)[1]
+#cluster_params_dir
+outdir_s_p_all_vis <- paste0(cluster_params_dir, '/de_c0/')
+outdir_s_p_all_vis
+
+dir.create(outdir_s_p_all_vis,'all_time/')
+hname<-paste0(outdir_s_p_all_vis,'all_time/',tissue,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr, '_heatmap_log2FC.jpeg')
+print(hname)
+jpeg(hname,  res=200, width=6, height=3+log(nf), units='in')
+
 cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
  column_split = rep(1:length(clust_ids), length(times)), 
   col = col_fun, 
@@ -116,8 +152,13 @@ graphics.off()
 
 
 
-print(rownames(as.matrix(all_clusts_times_logFC_df)))
-write.csv(rownames(as.matrix(all_clusts_times_logFC_df)),paste0(outdir_s_p,'/../all_time/',TISSUE,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'prot.csv') )
+#print(rownames(as.matrix(all_clusts_times_logFC_df)))
+#tname<-paste0(outdir_s_p,'../all_time/',tissue,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'prot.csv')
+#print(tname)
+#write.csv(rownames(as.matrix(all_clusts_times_logFC_df)), tname)
+
+
+
 
 
 

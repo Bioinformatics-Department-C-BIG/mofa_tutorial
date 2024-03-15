@@ -71,27 +71,12 @@ for (VISIT in all_visits){
 
     raw_counts_all<-pre_process_proteomics(proteomics)
     colnames(raw_counts_all)
-    proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined_bl_log)
-    dim(proteomics_se)
-    sel_subcoh
-proteomics_se_filt<-proteomics_se[, (proteomics_se$COHORT %in% sel_coh) & (proteomics_se$EVENT_ID %in% VISIT) ]
-proteomics_se_filt$INEXPAGE
+
+    # create a summarized experiment and attach metadata 
+    proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined_bl_log)  
     ##### filter here by visits and cohort
     se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh)
-    se_filt_proteins
-
-    ### TODO: save se filt here : with or without VISIT included..? 
-    Sample<-colnames(se_filt_proteins)
-    sample_info<-DataFrame(Sample=Sample)
-
     tmp<- assays(se_filt_proteins)[[1]]
-
-
-    # Filter and normalize
-    ### ERROR: Error in vsnML(sv) : L-BFGS-B needs finite values of 'fn'
-
-    ### TODO: filter before normalization!!! 
-
 
     # Select the top most variable proteins
     ## TODO: fix the bug in selectMostVariable
@@ -132,7 +117,6 @@ proteomics_se_filt$INEXPAGE
     #### save all and load 
     ##deseq2Results <- results(deseq2Data, contrast=c('COHORT', 1,2))
     datalist=list( vsn_mat, se_filt_proteins) # save the vsn summarized experiment and the raw summarized experiment 
-    prot_vsn_se_filt_file
     saveRDS(datalist,prot_vsn_se_filt_file)
     meanSdPlot(vsn_mat)
 

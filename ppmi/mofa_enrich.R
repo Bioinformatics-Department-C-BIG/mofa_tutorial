@@ -111,7 +111,7 @@ just_load=FALSE
 if (TRUE){
   
       for (factor in sel_factors_to_enrich){
-          for (view in c('RNA', 'proteomics_csf', 'proteomics_plasma')){
+          for (view in c('RNA', 'proteomics_t_csf', 'proteomics_t_plasma')){
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -141,28 +141,28 @@ if (TRUE){
               
                 }
                   ### Run proteins 
-                if (view=='proteomics_csf' & just_load){
+                if (view=='proteomics_t_csf' & just_load){
                   
                  #if (file.exists(paste0(mofa_enrich_rds, 'prot'))){
-                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_csf'))
-                    tissue = 'proteins_csf'
+                    list_proteins<-loadRDS(paste0(mofa_enrich_rds, 'prot_t_csf'))
+                    tissue = 'proteomics_t_csf'
                     
-                }else if  (view=='proteomics_plasma' & just_load){
-                    list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_plasma'))
-                    tissue = 'proteins_plasma'
+                }else if  (view=='proteomics_t_plasma' & just_load){
+                    list_proteins_plasma<-loadRDS(paste0(mofa_enrich_rds, 'prot_t_plasma'))
+                    tissue = 'proteins_t_plasma'
                     
                   }
                     
                     
                     ### set filenames 
        
-                    if (view=='proteomics_csf' ){
+                    if (view=='proteomics_t_csf' ){
                       fname<-paste0(mofa_enrich_rds, 'prot_csf')
                       tissue = 'proteins_csf'
                       
-                    }else if(view=='proteomics_plasma'){
-                      fname<-paste0(mofa_enrich_rds, 'prot_plasma')
-                      tissue = 'proteins_plasma'
+                    }else if(view=='proteomics_t_plasma'){
+                      fname<-paste0(mofa_enrich_rds, 'prot_t_plasma')
+                      tissue = 'proteins_t_plasma'
                       
                                           }
                     

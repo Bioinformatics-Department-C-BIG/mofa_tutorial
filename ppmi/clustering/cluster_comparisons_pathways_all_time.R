@@ -172,7 +172,7 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
  
 }
 
-
+fact=get_factors_for_metric(y_clust)
 
 cluster_id = '2' ; sig_time = 'V08';
 top_paths = 60

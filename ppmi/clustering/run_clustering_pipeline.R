@@ -60,8 +60,8 @@ DIFF_VAR = 'moca'
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
-process_mirnas = FALSE 
 process_mirnas = TRUE 
+process_mirnas = FALSE 
 
 
 formula_deseq_format='n' # so far e only run all for mirnas 

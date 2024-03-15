@@ -45,6 +45,9 @@ fact = get_factors_for_metric(DIFF_VAR)
 fact
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 cluster_params_dir
+
+
+# TODO: top proteins in 
 get_de_proteins_per_tp<-function(VISIT_COMP, metric='logFC'){
         de_all<-list()
 
@@ -123,19 +126,34 @@ all_clusts_times_pval_df1[all_clusts_times_pval_df<0.05]='*'
 all_clusts_times_pval_df1[all_clusts_times_pval_df>0.05]=''
 
 all_clusts_times_pval_df1
- uniprot_ids<-rownames( all_clusts_times_logFC_df)
- gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
 
-rownames( all_clusts_times_logFC_df)<-gene_symbols$SYMBOL
+
+
+ #uniprot_ids<-rownames( all_clusts_times_logFC_df)
+ #gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
+
+
+ 
+   if (prot_de_mode == 'u'){
+    uniprot_ids<-rownames( all_clusts_times_logFC_df)
+    gene_symbols_all<-get_symbol_from_uniprot(uniprot_ids)
+    gene_symbols<-gene_symbols_all$SYMBOL
+   }else{
+    gene_symbols<-rownames( all_clusts_times_logFC_df)
+   }
+
+rownames( all_clusts_times_logFC_df)<-gene_symbols
 
 nf<-dim(all_clusts_times_logFC_df)[1]
+nf
 #cluster_params_dir
+cluster_params_dir
 outdir_s_p_all_vis <- paste0(cluster_params_dir, '/de_c0/')
-outdir_s_p_all_vis
 
-dir.create(outdir_s_p_all_vis,'all_time/')
-hname<-paste0(outdir_s_p_all_vis,'all_time/',tissue,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr, '_heatmap_log2FC.jpeg')
-print(hname)
+
+dir.create(outdir_s_p_all_vis,'all_time/', recursive=TRUE)
+hname<-paste0(outdir_s_p_all_vis,'all_time/',tissue, '_', prot_de_mode,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr, '_heatmap_log2FC.jpeg')
+
 jpeg(hname,  res=200, width=6, height=3+log(nf), units='in')
 
 cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 

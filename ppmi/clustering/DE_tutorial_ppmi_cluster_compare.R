@@ -32,13 +32,9 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 ### THIS IS ALREADY filtered by cohort and VISIT 
 # 
 # todo: CREATE SE FILT FILES FOR PROTEINS 
-mofa_multi_to_use
-MOFAobject
-prot_vsn_se_filt_file
-
-prot_de_mode<-'u' # olink or untargeted 
-VISIT
-prot_untargeted_un_vsn_f
+ # olink or untargeted 
+prot_de_mode = 't' # TODO: fix some CLUSTERS have zero patients 
+prot_de_mode<-'u'
 if (prot_de_mode=='t'){
     datalist<-loadRDS(prot_vsn_se_filt_file)
     vsn_mat<-datalist[[1]]
@@ -56,7 +52,6 @@ if (prot_de_mode=='t'){
 
 }
 
-se_filt_prot_vsn$EVENT_ID
 cohort_ids<-c(1,2)
 names(cohort_ids)=c('INEXPD', 'INEXHC')
 
@@ -106,12 +101,14 @@ de_all_groups_proteins<-list()
 # TODO: ensure that this is also run for all subjects together
 
 length(se_filt_all)
-
+se_clusters$kmeans_grouping 
 for (cluster_id in c(1:3)){
 
   se_clusters
   se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id,'HC')
+  se_cluster_ind
   se_filt_all[[cluster_id]]<-se_clusters[,se_cluster_ind]
+  se_filt_all[[1]]$COHORT
   protein_matrices[[cluster_id]]<-protein_matrix_full[,se_cluster_ind ]
 
 }
@@ -125,10 +122,10 @@ dev.off()
 prefix='prot_'
 print(cluster_params_dir)
 
-
+se_filt_clust$COHORT
 for (cluster_id in  c(1:3)){
       print(cluster_id)
-
+        
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
 
         se_filt_clust<-se_filt_all[[cluster_id]]
@@ -141,9 +138,9 @@ for (cluster_id in  c(1:3)){
 
 
 
-    dir.create(outdir_s_p, recursive=TRUE)
+    suppressWarnings(dir.create(outdir_s_p, recursive=TRUE))
    # prefix
-   rfile<-paste0(outdir_s_p, prefix,tissue, '_de_cl',cluster_id,  '_results.csv')
+   rfile<-paste0(outdir_s_p, prefix,tissue,'_', prot_de_mode, '_de_cl',cluster_id,  '_results.csv')
    print(rfile)
     write.csv(results_de, rfile)
 
@@ -158,15 +155,20 @@ for (cluster_id in  c(1:3)){
 
 
 
-   
+   if (prot_de_mode == 'u'){
     uniprot_ids<-rownames(results_de)
- gene_symbols<-get_symbol_from_uniprot(uniprot_ids)
+    gene_symbols_all<-get_symbol_from_uniprot(uniprot_ids)
+    gene_symbols<-gene_symbols_all$SYMBOL
+   }else{
+    gene_symbols<-rownames(results_de)
+   }
+
 
 
 
     #results_de<-de_all_groups_proteins[[3]]
     pvol<-EnhancedVolcano(results_de, 
-                    lab = gene_symbols$SYMBOL,
+                    lab = gene_symbols,
                     x = 'logFC',
                    # y = 'adj.P.Val', 
                     y = 'P.Value', 
@@ -178,7 +180,7 @@ for (cluster_id in  c(1:3)){
                     subtitle=ns
     )
     pvol
-    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_', prot_de_mode,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 
@@ -195,7 +197,7 @@ dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
 #dir.create(outdir_s_p)
-outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', tissue, '/'); dir.create(outdir_s_p_enrich)
+outdir_s_p_enrich<-paste0(outdir_s_p, '/enr_prot', tissue,'_', prot_de_mode, '/'); dir.create(outdir_s_p_enrich)
 #write.csv(common_de, paste0(outdir_s_p, 'common_de.csv'))
 
 
@@ -219,7 +221,7 @@ if (tissue=='CSF' & VISIT_COMP=='V08'){
 }
 log2fol_T_overall=0
 log2fol_T_hm=0
-padj_T_overall=0.05
+padj_T_overall_prot=0.05
 padj_T_hm=0.05
 
 results_de
@@ -332,6 +334,7 @@ for (cluster_id in 1:3){
 
       log2fol_T_mofa<-0
       padj_T_mofa<-.05
+      
       signif_proteins_mofa<-mark_significant(results_de,padj_T = padj_T_mofa, log2fol_T = log2fol_T_mofa, 
                                           padj_name ='adj.P.Val',log2fc_name = 'logFC' , outdir_single = outdir_s_p  )
 
@@ -345,10 +348,17 @@ for (cluster_id in 1:3){
       gene_list1<-results_de[,order_statistic]
       names(gene_list1)<-rownames(results_de)
       gene_list_ord=gene_list1[order(-gene_list1)]
-      gene_list_ord
-      gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
-      gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<T]
 
+
+      
+      pval_T_overall<-0.05
+      gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
+      gene_list_limma_significant_pval=rownames(results_de)[results_de$P.Value<pval_T_overall]
+      gene_list_limma_significant_pval
+
+
+      
+      #gene_list_limma_significant
 
       run_anova=FALSE
       run_ORA=TRUE; 
@@ -357,42 +367,45 @@ for (cluster_id in 1:3){
 
 
       pvalueCutoff_sig=0.1
-      if (run_anova){
-        order_statistic<-'statistic'
-        gene_list2<-pull(anova_results_oneway, statistic)
-        names(gene_list2)<-anova_results_oneway$Assay
-        gene_list_ord=gene_list2[order(-gene_list2)]
-        
-        
-      }
+   
       length(gene_list_ord)
+      #gene_list_limma_significant
       gene_list_ora=gene_list_limma_significant
       if (use_protein_pval){
         gene_list_ora=gene_list_limma_significant_pval
         
       }
       gene_list_ora
+
+      rownames(gene_list_ord)
+         if (prot_de_mode == 'u'){
+          uniprot_ids<-names(gene_list_ord)
+          gene_symbols_all<-get_symbol_from_uniprot(uniprot_ids)
+          gene_symbols_all
+          gene_symbols<-gene_symbols_all$SYMBOL
+          names(gene_list_ord)<-gene_symbols
+         }
+          
+    #  }else{
+     ##     gene_symbols<-gene_list_ora
+     # }
       ONT='BP'
 
-      gene_list_ord
+
 
       pvalueCutoff=1
       #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
 
-      outdir_s_p_enrich
-      use_pval
-      dir.create(paste0(outdir_s_p, '/enr_prot', tissue,'/'), recursive=TRUE)
+      dir.create(paste0(outdir_s_p, '/enr_prot', tissue,'_', prot_de_mode,'/'), recursive=TRUE)
       outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
                                     '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id )
       res_path<-paste0(outdir_s_p_enrich_file)
 
       outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, 'cl', cluster_id)
       outdir_s_p_enrich_file
-      #if (file.exists(res_path)){
-      #  gse_protein_full=loadRDS(res_path)
-      #}else{run_ORA
+
       run_ORA=TRUE
-      force_gse=FALSE
+      force_gse=TRUE
       # TODO: run per cluster 
       # Input:  gene_list_ord per cluster (coming from DE limma results )
       # 
@@ -403,12 +416,6 @@ for (cluster_id in 1:3){
                       print('skip')
                 }
               else{
-                
-              
-          
-                
-                
-                
 
                 gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord, results_file_ora =outdir_s_p_enrich_file  )
                   saveRDS(gse_protein_full, paste0(outdir_s_p_enrich_file))
@@ -423,4 +430,7 @@ for (cluster_id in 1:3){
 
 
 }
+
+
+
 

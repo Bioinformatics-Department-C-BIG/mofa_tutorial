@@ -92,12 +92,8 @@ se_filt_all<- vector("list", length = 3);
 # Correct for blood cell proportions of neutrophils and lymphocytes 
 
 nclusts = length(table(se_clusters$kmeans_grouping));nclusts
-#cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
-
-
-
-
-get_cluster_params_dir(DIFF_VAR)
+cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
+cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 
 
 
@@ -201,6 +197,7 @@ if (!cell_corr_deseq){
   formula_deseq_format<-''
   print(formula_deseq_format)
 }
+cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 
 deseq_params_all<-paste0(cluster_params_dir, '/de_c', as.numeric(cell_corr_deseq))
 # since we are at a specific visit 
@@ -417,13 +414,12 @@ force_gse=FALSE # SET to true to rerun plots
     }
 
 } 
-DIFF_VAR
-print(head(gse_all_clusters[[cluster_id_name]]@result$Description))
-print(head(gse_all_clusters[[cluster_id_name]]@result$p.adjust))
 
 #force_gse=TRUE
 
 head(deseq2ResDF)
+
+pvalueCutoff = 0.05
 if (process_mirnas){
   # run a different test..
   cluster_id_num=4

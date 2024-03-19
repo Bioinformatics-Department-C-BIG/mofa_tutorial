@@ -33,8 +33,8 @@ source(paste0(script_dir,'/bladder_cancer/preprocessing.R'))
 # 
 # todo: CREATE SE FILT FILES FOR PROTEINS 
  # olink or untargeted 
-prot_de_mode = 't' # TODO: fix some CLUSTERS have zero patients 
-prot_de_mode<-'u'
+ # TODO: fix some CLUSTERS have zero patients 
+
 if (prot_de_mode=='t'){
     datalist<-loadRDS(prot_vsn_se_filt_file)
     vsn_mat<-datalist[[1]]
@@ -101,15 +101,26 @@ de_all_groups_proteins<-list()
 # TODO: ensure that this is also run for all subjects together
 
 length(se_filt_all)
-se_clusters$kmeans_grouping 
-for (cluster_id in c(1:3)){
+clusters_indices= list( c('1', 'HC'),c('2', 'HC'),c('3', 'HC'), c('1','2','3', 'HC')) 
 
-  se_clusters
-  se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id,'HC')
-  se_cluster_ind
-  se_filt_all[[cluster_id]]<-se_clusters[,se_cluster_ind]
+
+
+
+for (cluster_id_num in 1:length(clusters_indices)){
+
+
+
+  print(paste('cluster:',cluster_id_num))
+  cluster_id_index=clusters_indices[[cluster_id_num]]
+  #cluster_id_name=clusters_names[[cluster_id_num]]
+
+
+  se_cluster_ind<-se_clusters$kmeans_grouping %in% c(cluster_id_index,'HC')
+
+  
+  se_filt_all[[cluster_id_num]]<-se_clusters[,se_cluster_ind]
   se_filt_all[[1]]$COHORT
-  protein_matrices[[cluster_id]]<-protein_matrix_full[,se_cluster_ind ]
+  protein_matrices[[cluster_id_num]]<-protein_matrix_full[,se_cluster_ind ]
 
 }
 
@@ -122,17 +133,19 @@ dev.off()
 prefix='prot_'
 print(cluster_params_dir)
 
-se_filt_clust$COHORT
-for (cluster_id in  c(1:3)){
-      print(cluster_id)
-        
+
+for (cluster_id_num in  c(1:4)){
+      print(cluster_id_num)
+        cluster_id_index=clusters_indices[[cluster_id_num]]
+
         outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
 
-        se_filt_clust<-se_filt_all[[cluster_id]]
-        protein_matrix<-protein_matrices[[cluster_id]]
+        se_filt_clust<-se_filt_all[[cluster_id_num]]
+        protein_matrix<-protein_matrices[[cluster_id_num]]
         results_de<-de_proteins_by_group(se_filt=se_filt_clust, protein_matrix=protein_matrix)
         #results_de<-topTable(fit.cont, coef='COHORT' ) 
-        de_all_groups_proteins[[cluster_id]]<-results_de
+        de_all_groups_proteins[[cluster_id_num]]<-results_de
+        print(se_filt_clust$COHORT)
         #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
@@ -140,7 +153,7 @@ for (cluster_id in  c(1:3)){
 
     suppressWarnings(dir.create(outdir_s_p, recursive=TRUE))
    # prefix
-   rfile<-paste0(outdir_s_p, prefix,tissue,'_', prot_de_mode, '_de_cl',cluster_id,  '_results.csv')
+   rfile<-paste0(outdir_s_p, prefix,tissue,'_', prot_de_mode, '_de_cl',cluster_id_num,  '_results.csv')
    print(rfile)
     write.csv(results_de, rfile)
 
@@ -180,7 +193,7 @@ for (cluster_id in  c(1:3)){
                     subtitle=ns
     )
     pvol
-    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_', prot_de_mode,'_',VISIT_COMP,'_cluster_',cluster_id, '.jpeg')
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_', prot_de_mode,'_',VISIT_COMP,'_cluster_',cluster_id_num, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 
@@ -295,22 +308,14 @@ fname
 
 
 
-
-
-
-
-
-
-
-
 ################# ENRICHMENT - GSEA-GO #############
 
 order_statistic<-'logFC'
 #TODO: need to clean up remove gsea 
 
-for (cluster_id in 1:3){
+for (cluster_id_num in 1:4){
 
-      results_de = de_all_groups_proteins[[cluster_id]]
+      results_de = de_all_groups_proteins[[cluster_id_num]]
       #order_statistic<-'log2pval_not_adj' - NO RESULTS 
       results_de$pval_reverse<- -results_de$P.Value ## this prob does not work with gsea because there are no negative values 
 
@@ -349,7 +354,8 @@ for (cluster_id in 1:3){
       names(gene_list1)<-rownames(results_de)
       gene_list_ord=gene_list1[order(-gene_list1)]
 
-
+      
+      
       
       pval_T_overall<-0.05
       gene_list_limma_significant=rownames(results_de)[results_de$adj.P.Val<padj_T_overall]
@@ -366,24 +372,30 @@ for (cluster_id in 1:3){
       use_pval=TRUE  ### WHAT TO PLOT## these do not work well with false so keep it and mark the number of sig in the legend
 
 
-      pvalueCutoff_sig=0.1
+      pvalueCutoff_sig=0.05
    
       length(gene_list_ord)
-      #gene_list_limma_significant
+
       gene_list_ora=gene_list_limma_significant
       if (use_protein_pval){
         gene_list_ora=gene_list_limma_significant_pval
         
       }
-      gene_list_ora
 
-      rownames(gene_list_ord)
+      gene_list_ora
+        gene_list_ord_sig<-gene_list_ord[names(gene_list_ord) %in% gene_list_ora]
+          
+          
+        if (length(gene_list_ord_sig)>1){
+
+        
          if (prot_de_mode == 'u'){
-          uniprot_ids<-names(gene_list_ord)
+          uniprot_ids<-names(gene_list_ord_sig);
+          uniprot_ids
           gene_symbols_all<-get_symbol_from_uniprot(uniprot_ids)
           gene_symbols_all
           gene_symbols<-gene_symbols_all$SYMBOL
-          names(gene_list_ord)<-gene_symbols
+          names(gene_list_ord_sig)<-gene_symbols
          }
           
     #  }else{
@@ -398,10 +410,10 @@ for (cluster_id in 1:3){
 
       dir.create(paste0(outdir_s_p, '/enr_prot', tissue,'_', prot_de_mode,'/'), recursive=TRUE)
       outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT,  '_', order_statistic, '_ora_', run_ORA, 'ppval_', use_protein_pval, 
-                                    '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id )
+                                    '_anova_', run_anova, 'pval_', use_pval, 'cl_', cluster_id_num )
       res_path<-paste0(outdir_s_p_enrich_file)
 
-      outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, 'cl', cluster_id)
+      outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, 'cl', cluster_id_num)
       outdir_s_p_enrich_file
 
       run_ORA=TRUE
@@ -416,10 +428,13 @@ for (cluster_id in 1:3){
                       print('skip')
                 }
               else{
-
-                gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord, results_file_ora =outdir_s_p_enrich_file  )
+#gene_list_ord_sig
+#gene_list_ord_sig
+                 if (length(gene_list_ord_sig)>0){
+                  print('Running gse proteins')
+                gse_protein_full = run_ora_gene_list(  gene_list_ord = gene_list_ord_sig, results_file_ora =outdir_s_p_enrich_file  )
                   saveRDS(gse_protein_full, paste0(outdir_s_p_enrich_file))
-
+                 }
 
               }
               
@@ -427,7 +442,7 @@ for (cluster_id in 1:3){
         
       #}outdir_s_p_enrich_file
 
-
+        }
 
 }
 

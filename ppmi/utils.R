@@ -382,9 +382,12 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10, cell_corr_deseq=T
   return(deseq2ResDF)
 }
 
+#cluster_id_num
+#se_filt_clust<-se_filt_all[[cluster_id_num]]
+#protein_matrix<-protein_matrices[[cluster_id_num]]
 
 #se_filt<-se_filt_clust
-#protein_matrix<-protein_matrices[[cluster_id]]
+
 de_proteins_by_group<-function(se_filt, protein_matrix){
     #' Differential abundance using limma
     #' 
@@ -413,9 +416,11 @@ de_proteins_by_group<-function(se_filt, protein_matrix){
     # specify the design 
     design <- model.matrix(as.formula(formula_deseq_test) )
     design <- model.matrix(~0+AGE_AT_VISIT+SEX+COHORT )
-    design
-    contrast <- makeContrasts( COHORT1 - COHORT2, levels=design)
 
+    # design <- model.matrix(~AGE_AT_VISIT+SEX+COHORT )
+
+    
+    contrast <- makeContrasts( COHORT1 - COHORT2, levels=design)
 
     # run the model
     fit <- lmFit(protein_matrix, design = design)
@@ -424,12 +429,13 @@ de_proteins_by_group<-function(se_filt, protein_matrix){
 
     summa.fit <- decideTests(fit.cont)
     
-    print(colnames(fit.cont$design))
+    #print(colnames(fit.cont$design))
     fit.cont$design
     design_params<-colnames(fit.cont$design)
     
     #coh_design<-design_params[grep('COHORT', design_params)]
     results_de<-topTable(fit.cont, number = nfeats)
+    results_de$adj.P.Val
 
 
     return(results_de)  

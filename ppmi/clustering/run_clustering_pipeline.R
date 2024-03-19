@@ -15,6 +15,23 @@ try(
 
 #source(paste0(script_dir, 'ppmi/setup_os.R'))
 
+DIFF_VAR= 'NP2PTOT_LOG'
+DIFF_VAR= 'moca'
+
+
+prot_de_mode<-'u'
+
+
+tissue_un<-'Cerebrospinal Fluid'
+tissue_un<-'Plasma'
+
+prot_de_mode = 't'
+TISSUE='Plasma';tissue_un<-'Plasma'
+tissue ='Plasma'; tissue_un<-'Plasma'
+DIFF_VAR= 'NP3TOT_LOG'
+
+
+
 source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
@@ -61,7 +78,6 @@ diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
 process_mirnas = TRUE 
-process_mirnas = FALSE 
 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
@@ -71,19 +87,21 @@ cell_corr_deseq=TRUE
 formula_deseq_format='n' # so far we only run all for mirnas 
 
 ONT='BP'
+process_mirnas = TRUE 
+
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 
 VISIT_COMP
 vis_comps<-c('V08',  'V06','V04', 'BL')
 #vis_comps<-c('V08')
-cell_corr_deseq = TRUE
+cell_corr_deseq = FALSE
 DIFF_VAR
 run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c( TRUE)){
+        for (cell_corr_deseq in c( FALSE,TRUE)){
 
 
                 for (VISIT_COMP in vis_comps){
@@ -111,8 +129,34 @@ if (run_all){
 #DIFF_VAR
 diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
+diff_vars<-c( 'NP2PTOT_LOG', 'moca','NP3TOT_LOG')
+
+DIFF_VAR= 'NP2PTOT_LOG'
+DIFF_VAR= 'moca'
+
+
+
+
+tissue_un<-'Plasma'
+
+
+tissue ='Plasma'; tissue_un<-'Plasma'
+
+
+tissue<-'Cerebrospinal Fluid'; 
+
+prot_de_mode<-'u'
+prot_de_mode = 't';
+
+TISSUE='Plasma'; tissue_un<-'Plasma'
+tissue_un<-'Cerebrospinal Fluid'
 
 DIFF_VAR= 'NP3TOT_LOG'
+DIFF_VAR= 'NP2PTOT_LOG'
+
+#TISSUE='CSF'
+
+DIFF_VAR
 
     for (DIFF_VAR in c(diff_vars)){
 
@@ -134,6 +178,7 @@ DIFF_VAR= 'NP3TOT_LOG'
 
 # Run the proteins too 
 # Concatenates all time points 
+
 
 
 

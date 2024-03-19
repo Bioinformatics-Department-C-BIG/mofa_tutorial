@@ -120,6 +120,14 @@
   return(my_pheatmap)
 }
 
+get_limits<-function(x){
+        xmax<-max(x, na.rm = TRUE)
+        xmin<-min(x,na.rm = TRUE)
+        max_all<-max(c(abs(xmax), abs(xmin)))
+        xmax
+        return(c(-max_all, max_all))
+}
+
 
 create_heatmap_proteins<-function(hm,se_filt, fname,coldata_to_plot=c()){
   #' 

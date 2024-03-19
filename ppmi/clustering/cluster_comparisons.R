@@ -370,12 +370,12 @@ enrich_compare_path=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_par
 
 
 # run enrichment only for RNAs 
-
+force_gse=FALSE 
 if (!process_mirnas){
 
 gse_all_clusters=list()
 
-force_gse=FALSE # SET to true to rerun plots
+# SET to true to rerun plots
 #print(head(deseq2ResDF)) 
 #print(head(gene_list1))
 #clusters_names

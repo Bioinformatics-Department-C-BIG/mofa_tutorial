@@ -35,8 +35,11 @@ if (prot_de_mode=='t'){
 
 
 }
+#                view=paste0('proteomics_', tolower(TISSUE))
 
 #fact2 = c(13,22)
+
+# TODO: update also for mirnas here 
 top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact, view=view, top_fr=top_fr   )
 #top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact2, view=view, top_fr=top_fr   )
 
@@ -53,9 +56,8 @@ clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
 #cluster_params_dir
 # outdir_s_p
 fact = get_factors_for_metric(DIFF_VAR)
-fact
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
-cluster_params_dir
+
 
 
 
@@ -91,6 +93,27 @@ de_sig_all_top<-unique(unlist(de_sig_all))
 de_sig_all_top
 # TODO: separate to get top 
 cluster_params_dir
+view
+
+
+get_cluster_de_result_file<-function(outdir_s_p, view){
+
+
+                    if (grepl('prot', view)){
+                        de_file_cluster<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+
+                    }else if (view == 'RNA'){
+                        de_file_cluster<-paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv')
+
+                    }else if (view == 'miRNA'){
+                        de_file_cluster<-paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv')
+
+                    }
+                    return(de_file_cluster)
+                }
+
+
+
 get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, de_sig_all_top){
         #' 
         #' @param  VISIT_COMP
@@ -102,15 +125,10 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 
                 outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
                 # 
-                de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
-                get_cluster_de(, view='')
+                de_prot_file<-get_cluster_de_result_file(outdir_s_p, view)
 
-                de_results_prot<-read.csv(de_prot_file)
-                
-                view=paste0('proteomics_', tolower(TISSUE))
-
-
-                de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
+                de_results_prot<-read.csv(de_prot_file) # read the file 
+               de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
 
                de_results_prot_top<-de_results_prot[match(unique(top_proteins$feature), de_results_prot$X),]
                 # TODO: print only significant 

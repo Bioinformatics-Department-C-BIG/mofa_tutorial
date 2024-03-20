@@ -97,6 +97,8 @@ vis_comps<-c('V08',  'V06','V04', 'BL')
 #vis_comps<-c('V08')
 cell_corr_deseq = FALSE
 DIFF_VAR
+sig_only =FALSE
+
 run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
@@ -140,27 +142,38 @@ DIFF_VAR= 'moca'
 tissue_un<-'Plasma'
 
 
-tissue ='Plasma'; tissue_un<-'Plasma'
 
 
-tissue<-'Cerebrospinal Fluid'; 
+
+
+
+
 
 prot_de_mode<-'u'
-prot_de_mode = 't';
 
-TISSUE='Plasma'; tissue_un<-'Plasma'
-tissue_un<-'Cerebrospinal Fluid'
+#tissue_un<-'Plasma';tissue ='Plasma';
+
 
 DIFF_VAR= 'NP3TOT_LOG'
 DIFF_VAR= 'NP2PTOT_LOG'
+TISSUE='Plasma';
 
-#TISSUE='CSF'
+prot_de_mode = 'u';
+TISSUE='Plasma';
 
-DIFF_VAR
+
+TISSUE='CSF'
+tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
+tissue_un<-'Plasma'
+
+visit_comps = c('V06', 'BL', 'V04', 'V08')
+visit_comps  = c('V08' )
+DIFF_VAR;tissue_un;prot_de_mode
+sig_only =FALSE
 
     for (DIFF_VAR in c(diff_vars)){
 
-        for (VISIT_COMP in c('V06', 'BL', 'V04', 'V08')){
+        for (VISIT_COMP in visit_comps){
         #for (VISIT_COMP in c( 'V04', 'V08')){
             # compares each time point separatelty 
             source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
@@ -178,6 +191,11 @@ DIFF_VAR
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
 
 
 

@@ -152,9 +152,10 @@ TOP_PN_U=0.9
 
 
 
-TISSUE='CSF'
 
-TISSUE='Plasma'
+#TISSUE='Plasma'
+#TISSUE='CSF'
+
 
 NA_PERCENT=0.9
 
@@ -209,8 +210,8 @@ prot_untargeted_plasma_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_i
 
 
 
-tissue_un<-'Plasma'
-tissue_un<-'Cerebrospinal Fluid'
+#tissue_un<-'Cerebrospinal Fluid'
+#tissue_un<-'Plasma'
 
 prot_untargeted_un_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',tissue_un,  '.csv')
 prot_untargeted_un_vsn_f<-paste0(output_files, 'proteomics_',pr_un_project_id,'_',tissue_un,  'vsn.csv')

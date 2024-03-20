@@ -420,7 +420,7 @@ gse_all_clusters=list()
 head(deseq2ResDF)
 
 pvalueCutoff = 0.05
-if (process_mirnas){
+if (process_mirnas & FALSE){
   # run a different test..
   cluster_id_num=4
   clusters_names
@@ -490,14 +490,6 @@ if (!process_mirnas){
 
 gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
 fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
-
-#if (length(gse_sig_all_clusters)>0){
-#  create_venn(venn_list = gse_sig_all_clusters, fname_venn =fname_venn,
-#main =paste0( ' DE pathways for each molecular cluster' ) )
-#}
-
-
-
 
 force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 

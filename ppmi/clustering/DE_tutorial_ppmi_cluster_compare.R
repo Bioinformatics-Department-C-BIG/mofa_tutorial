@@ -131,6 +131,7 @@ jpeg(paste0(outdir, '/boxplots.jpeg'))
 boxplot(protein_matrix)
 dev.off()
 prefix='prot_'
+prefix_full =  paste0(prefix, tissue,'_', prot_de_mode)
 print(cluster_params_dir)
 
 
@@ -152,8 +153,7 @@ for (cluster_id_num in  c(1:4)){
 
 
     suppressWarnings(dir.create(outdir_s_p, recursive=TRUE))
-   # prefix
-   rfile<-paste0(outdir_s_p, prefix,tissue,'_', prot_de_mode, '_de_cl',cluster_id_num,  '_results.csv')
+   rfile<-paste0(outdir_s_p, prefix_full, '_de_cl',cluster_id_num,  '_results.csv')
    print(rfile)
     write.csv(results_de, rfile)
 
@@ -193,7 +193,7 @@ for (cluster_id_num in  c(1:4)){
                     subtitle=ns
     )
     pvol
-    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix, tissue,'_', prot_de_mode,'_',VISIT_COMP,'_cluster_',cluster_id_num, '.jpeg')
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix_full,'_',VISIT_COMP,'_cluster_',cluster_id_num, '.jpeg')
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 

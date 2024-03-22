@@ -825,6 +825,17 @@ modify_metadata_for_plotting<-function(MOFAobject){
 
 }
 MOFAobject
+
+
+      #  Shorten the rownames 
+view = 'proteomics_plasma'
+names_vec =   rownames(MOFAobject@expectations$W[[view]])
+names_vec
+
+
+    modify_prot_names(names_vec, view, conv_uniprot = TRUE)
+   
+
 modify_features_for_plotting<-function(MOFAobject){
   # modify gene names 
     ens_ids_full<- features_names(MOFAobject)$RNA
@@ -835,7 +846,7 @@ modify_features_for_plotting<-function(MOFAobject){
    
 
 
-      #  Shorten the rownames 
+
     rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_proteomics_csf', '', rownames(MOFAobject@expectations$W$proteomics_csf))
     rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('_proteomics_plasma', '', rownames(MOFAobject@expectations$W$proteomics_plasma))
 

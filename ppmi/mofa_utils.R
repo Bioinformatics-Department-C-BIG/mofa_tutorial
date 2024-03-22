@@ -159,40 +159,96 @@ run_mofa_wrapper<-function(MOFAobject, outdir, force=FALSE, N_FACTORS=15, drop_f
 
 
 
-
-select_top_bottom_perc<-function(MOFAobject, view, factors, top_fr=.01 ){
+select_top_bottom_perc<-function(MOFAobject, view, factors, top_fr=.01, weight_T=0,return_weights=FALSE ){
   #'select top bottom features 
   #'#'
   #'factors
   #'factors
 #  factors=1;view='RNA'
+
+  if (length(factors)>1){
+    print('Warning supply one factor')
+  }
   ws<-get_weights(MOFAobject, views = view, factors=factors)[[1]]
 
   high<-apply(abs(ws),2, function(x){ ll<-as.data.frame(x) %>%
     top_frac(top_fr)
   return(rownames(ll))})
 
- ws_union<- ws[high,]
-  
+  ws_union<- ws[high,]
+  ws_union
+  weight_T
+  #abs(ws_union)>weight_T
+  #ws_union_cut<-ws_union[abs(ws_union)>weight_T]
+  #print(ws_union_cut)
+  ws_union[order(ws_union)]
+  if (return_weights){
+      return(ws_union[order(ws_union)])
 
-  return(names(ws_union[order(ws_union)]))
+  }else{
+    return(names(ws_union[order(ws_union)]))
+
+  }
+
 }
 
 
 
 
 #MOFAobject
-concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr){
+
+concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr, weight_T=0,return_weights=FALSE, pivot_wide=FALSE){
   # get the top features from multiple factors and add the factor in second column
-  f_all<-sapply(factors_all, function(f){
-    select_top_bottom_perc(MOFAobject=MOFAobject,view=view, factors=f, top_fr=top_fr )
+  # TODO: options 
+  #' @param pivot_wide returns a binary matrix 
+  #' @param threshold cut 
+  # 1. return the weights or not
+  # 2. return both entries if in both factors 
+  # 3. apply threshold 
+  f_all<-lapply(factors_all, function(f){
+      # use lapply might be different lengths
+      weight=select_top_bottom_perc(MOFAobject=MOFAobject,view=view, factors=f, top_fr=top_fr, weight_T=weight_T, return_weights = TRUE )
+      weight = as.data.frame(weight)
+      weight$Factor<-f
+    return(weight)
     }
     )
-    colnames(f_all)<-factors_all
-  f_features<-reshape2::melt(f_all)[,2:3]
-  colnames(f_features)<-c('Factor', 'feature')
-  f_features$Factor
-  return(f_features)
+
+        f_all
+        f_features<-do.call(rbind,f_all)
+f_features
+        if (weight_T){
+          f_features<-f_features[f_features$weight>weight_T,]
+        }
+        f_features$weight=NULL
+    
+        f_features2<-f_features
+        f_features2
+        f_features2$feature<-rownames(f_features)
+        rownames(f_features2)=NULL
+
+          if (pivot_wide){
+
+              top_ws_hm<-f_features2 %>% pivot_wider(feature,names_from = Factor,
+                                      values_from = Factor,
+                                      values_fn = list(Factor=length), 
+                                      values_fill = list(Factor=0)) %>%
+                                      as.data.frame()
+
+              rownames(top_ws_hm)<-top_ws_hm$feature;top_ws_hm$feature =NULL
+
+
+            return(top_ws_hm)
+          }else{
+      
+            return(f_features2)
+
+          }
+
+
+  
+  
+
   
   
 }
@@ -237,6 +293,25 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
     top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
     return(top_pathways_all_factors)
 }
+
+# Feature names #### 
+
+ modify_prot_names<-function(names_vec, view, conv_uniprot = FALSE){
+        #'
+        #' @param  names_vec
+
+
+
+        names_vec_short<-gsub(paste0('_',view), '', names_vec)
+        if (conv_uniprot){
+            names_vec_short_symbol<-get_symbol_from_uniprot(names_vec_short)$SYMBOL
+            return(names_vec_short_symbol)
+
+        }else{
+          return(names_vec_short)
+        }
+
+    }
 
 
 #object=MOFAobjectPD

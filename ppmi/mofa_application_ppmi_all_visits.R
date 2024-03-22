@@ -63,7 +63,7 @@ source(paste0(script_dir,'ppmi/utils.R'))
 
 combined_bl_log<-load_metadata()
 combined_bl <- combined_bl_log
-decon<-loadRDS(paste0(output_files, '/decon.RDS'))
+decon<-loadRDS(paste0(script_dir, 'ppmi/output/decon.RDS'))
 scale_views=TRUE
 
 
@@ -191,7 +191,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 # n_factors best=15
 #g_params
 
-for (N_FACTORS in c(35)){
+for (N_FACTORS in c(35,50)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))

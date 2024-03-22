@@ -159,6 +159,7 @@ BiocManager::install('psych')
 
 BiocManager::install('ggpubr')
 BiocManager::install('R.filesets')
+BiocManager::install('config')
 
 
 

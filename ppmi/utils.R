@@ -135,14 +135,14 @@ selected_covars2_progression<-c( 'AGE', 'SEX',
 
 
 
-mt_kv<-read.csv(paste0(output_files, 'metadata_key_value.csv'), header = FALSE)
+mt_kv<-read.csv(paste0(script_dir, '/ppmi/output/metadata_key_value.csv'), header = FALSE)
 mt_kv$V1<-gsub(' |\'|\"','',mt_kv$V1 )
 
 mt_kv$V2<-gsub(' |\'|\"','',mt_kv$V2 )
 
 
 ## GENES RELATED TO THE BATCH EFFECT
-filtered_genes<-read.csv(paste0(data_dir,'/ppmi/output/filteredGenes.csv'))
+filtered_genes<-read.csv(paste0(script_dir,'/ppmi/output/filteredGenes.csv'))
 
 remaining<-read.csv(paste0(data_dir,'/ppmi/output/remaining_genes.csv'), header = FALSE)
 remaining_genes<-gsub( '\\..*', '', remaining$V1)

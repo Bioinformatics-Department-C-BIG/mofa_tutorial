@@ -63,6 +63,8 @@ get_decon_methods()[4:7]
 
 # deconvolute input data using all available methods by default
 decon_file<-paste0(output_files, '/decon.RDS')
+decon_file<-paste0(script_dir, 'ppmi/output/decon.RDS')
+
 if (file.exists(decon_file)){
   decon<-loadRDS(decon_file)}else{
   decon <- deconvolute(m = bulkRNAseq, sigMatrix = sigList, methods=get_decon_methods()[4:7])

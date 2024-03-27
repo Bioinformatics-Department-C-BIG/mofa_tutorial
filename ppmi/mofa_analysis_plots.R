@@ -149,17 +149,6 @@ plot="log_pval"
 # conference poster 
 
 
-get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
-  #''
-  #' @param
-  #'
-  #'
-  vars_to_plot<-vars_to_plot[vars_to_plot %in% colnames(cors_all)]
-    all_cors_diff<-cors_all[, vars_to_plot]
-  sel_factors<-which(rowSums(all_cors_diff)>0)
-  return(sel_factors)
-  
-}
 
 MOFAobject@samples_metadata$tau_asyn
 
@@ -535,6 +524,9 @@ x_cor_t=2
 
 i=111
 #### Factor plots ####
+
+dir.create(file.path(paste0(outdir,'/factor_plots/2D/')), showWarnings = FALSE, recursive = TRUE)
+
 to_remove_regex=''
 positive_cors_to_plot<-positive_cors[,!grepl(tolower(to_remove_regex),tolower(colnames(positive_cors))) ]
 positive_cors_to_plot<-positive_cors[,colnames(positive_cors) %in% c(clinical_scales, selected_covars2, selected_covars_broad)]
@@ -811,7 +803,7 @@ modify_metadata_for_plotting<-function(MOFAobject){
   #' 
 
     rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('proteomics_csf', 'c', rownames(MOFAobject@expectations$W$proteomics_csf))
-    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_c', '', rownames(MOFAobject@expectations$W$proteomics_csf))
+   # rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_c', '', rownames(MOFAobject@expectations$W$proteomics_csf))
     rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('proteomics_plasma', '_p', rownames(MOFAobject@expectations$W$proteomics_plasma))
     
     
@@ -844,8 +836,7 @@ modify_features_for_plotting<-function(MOFAobject){
 
     # map uniprot ids to gene symbols 
    
-
-
+    
 
     rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_proteomics_csf', '', rownames(MOFAobject@expectations$W$proteomics_csf))
     rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('_proteomics_plasma', '', rownames(MOFAobject@expectations$W$proteomics_plasma))
@@ -861,13 +852,6 @@ modify_features_for_plotting<-function(MOFAobject){
     
     # replace uniprot
     rownames(MOFAobject@expectations$W$proteomics_csf)<-get_symbol_from_uniprot(rownames(MOFAobject@expectations$W$proteomics_csf))$SYMBOL
-
-
-
-
-
-
-
 
     return(MOFAobject)
 
@@ -907,16 +891,13 @@ exclude_vars_rec<-colnames(sm)[grep('REC_ID',colnames(sm))]
 exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st', 'REC_ID',exclude_vars_rec)
 
 MOFAobject_hm=MOFAobjectPD
-MOFAobject_hm<-modify_features_for_plotting(MOFAobject_hm)
+#MOFAobject_hm<-modify_features_for_plotting(MOFAobject_hm)
+rownames(MOFAobject_hm@expectations$W$proteomics_t_plasma)
+rownames(MOFAobject_hm@expectations$W$proteomics_csf)
+
 
 #MOFAobject_hm<-modify_metadata_for_plotting(MOFAobject_hm)
 # Modify the mofa object 
-dim(MOFAobject_hm@samples_metadata)
-
-colnames(estimations) %in% colnames(MOFAobject_hm@samples_metadata)
-colnames(estimations) %in% colnames(cors_all_pd)
-
-
 ii=3
 # Settings 
 cor_p_T<-0.1
@@ -927,9 +908,21 @@ vps
 
 
 MOFAobject_hm
-MOFAobject_hm@samples_metadata<-MOFAobject_hm@samples_metadata[,!duplicated(colnames(MOFAobject_hm@samples_metadata))]
-i=2
-for (i in seq(1,vps)){
+#MOFAobject_hm@samples_metadata<-MOFAobject_hm@samples_metadata[,!duplicated(colnames(MOFAobject_hm@samples_metadata))]
+#i=2
+
+
+
+rownames(MOFAobject_hm@expectations$W$proteomics_csf)<-modify_prot_names(rownames(MOFAobject_hm@expectations$W$proteomics_csf), 
+  view='proteomics_csf', conv_uniprot = TRUE)
+
+rownames(MOFAobject_hm@expectations$W$proteomics_plasma)<-modify_prot_names(rownames(MOFAobject_hm@expectations$W$proteomics_plasma), 
+  view='proteomics_plasma', conv_uniprot = TRUE)
+rownames(MOFAobject@expectations$W$proteomics_plasma)
+
+
+
+for (i in seq(4,vps)){
   for (ii in seq(1,fps)){
  #   for (ii in seq(1,1)){
     print(paste('Modality', i, 'factor', ii))
@@ -998,6 +991,7 @@ for (i in seq(1,vps)){
     patients_in_hm
     plot_heatmap_flag=TRUE
     cors_sig<-cors_sig[cors_sig %in% colnames(MOFAobject_hm@samples_metadata)]
+    cors_sig
     MOFAobject_hm@samples_metadata[,cors_sig]
    
     MOFAobject_hm@samples_metadata[,cors_sig]<-sapply(MOFAobject_hm@samples_metadata[,cors_sig], as.numeric)
@@ -1031,6 +1025,11 @@ length(    cors_sig_non_na)
                   FT, 'den_', denoise, groups, '.jpeg')
 
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
+
+  MOFAobject_hm
+
+
+
     tryCatch({
       p<-plot_data_heatmap(MOFAobject_hm, 
                           view = views[i], 

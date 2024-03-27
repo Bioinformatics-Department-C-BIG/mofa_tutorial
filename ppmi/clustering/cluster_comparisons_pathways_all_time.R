@@ -35,7 +35,7 @@ dir.create(deseq_params_all, '/all_time/enr/')
     formula_deseq_format=''
   }
 
-    times_sel<-c('BL', 'V06', 'V08')
+    times_sel<-c('BL', 'V04','V06', 'V08')
     gse_compare_all_vis <-list()
      cluster_id='1'
 
@@ -187,14 +187,16 @@ gse_compare_cl=gse_compare_all_vis[[1]]
 #' decide on pathways to keep 
 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
+metric_p = 'p.adjust'
 metric='NES';
 metric = 'logFC'
-metric_p = 'p.adjust'
 
 # holds all timepoints all, clusters 
 #
 padjust_hm<-1
+names(gse_compare_all_vis)
 
+names(log_fcs_all_tps_all_clusts)
 
 
 
@@ -217,6 +219,12 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
 
       log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls ) # calculates the average logFC per pathway
       merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) , padjust_cutoff = padjust_hm)
+      
+
+    
+    colnames(merged_df_lfc) <- mapvalues(colnames(merged_df_lfc), from = names(EVENT_MAP_YEAR), 
+          to =unlist(EVENT_MAP_YEAR ))
+
       # add cluster name to the time point to merge 
       colnames(merged_df_lfc)<-paste0(colnames(merged_df_lfc), '_', list_names[[i]]) 
       colnames(merged_df_lfc)[1]<-'Description'
@@ -235,7 +243,7 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
 
 
 merged_df_all_tps_all_clusts <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric)
-
+merged_df_all_tps_all_clusts
 merged_df_all_tps_all_clusts_pvals <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric=metric_p)
 
 dim(merged_df_all_tps_all_clusts_pvals)
@@ -285,8 +293,11 @@ rownames(pvals_sign_merged_df2)<-pvals_sign_merged_df2$Description
 pvals_sign_merged_df2$Description<-NULL
 pvals_sign_merged_df2
 pvals_merged_df2$Description=NULL
-
+pvals_merged_df2
 pvals_sign_merged_df2[pvals_merged_df2<0.05]<-'*'
+pvals_sign_merged_df2[pvals_merged_df2<0.01]<-'**'
+pvals_sign_merged_df2[pvals_merged_df2<0.001]<-'***'
+
 pvals_sign_merged_df2[pvals_merged_df2>0.05]<-''
 pvals_sign_merged_df2[is.na(pvals_merged_df2)]<-''
 dim(pvals_sign_merged_df2)
@@ -310,19 +321,26 @@ row_an<-top_paths_all_factors[match( rownames(logFC_merged_df2), top_paths_all_f
 row_an2<-as.factor(row_an$factor); names(row_an2)<-row_an$Description
 
 row_ha = rowAnnotation( factor=row_an2)
-colnames(pvals_sign_merged_df2); colnames(logFC_merged_df2)
-dim(pvals_sign_merged_df2); dim(logFC_merged_df2)
-logFC_merged_df2
+
+
+xminxmax<-get_limits(logFC_merged_df2)
+xminxmax
+col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
+
+
 dir.create(paste0(deseq_params_all, '/all_time/enr/'), recursive = TRUE)
 
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
     column_split = rep(1:3, each=3), 
     right_annotation = row_ha, 
+    cluster_cols = FALSE,
+      col = col_fun, 
+
     heatmap_legend_param  = list(direction = "horizontal"), 
       display_numbers = as.matrix(pvals_sign_merged_df2)
     )
-png(fname, width=20*100, height=20*100, res=200)
+png(fname, width=30*100, height=30*100, res=300)
 
 
     #
@@ -332,7 +350,8 @@ draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
 #draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
 dev.off()
 
-logFC_merged_df2[10, ]
+draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
+
 
 
 

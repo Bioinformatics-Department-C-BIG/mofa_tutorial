@@ -49,6 +49,21 @@ source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 
 #source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
+ round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
+  round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
+
+which(cors_all_pd[, 'NP2PTOT_LOG']>1.3)
+
+  round(cors_all_pd[, 'NP2PTOT_LOG'][cors_all_pd[, 'NP2PTOT_LOG']>1.3], digits=2)
+
+  round(cors_all_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
+  round(cors_all_pd[, 'updrs2_score_LOG'][cors_all_pd[, 'updrs2_score_LOG']>1.3], digits=2)
+
+
+
+
+  round(cors_all_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
+  round(cors_pearson_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
 
 
 VISIT_COMP='BL'
@@ -77,33 +92,35 @@ DIFF_VAR = 'moca'
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
-process_mirnas = TRUE 
+DIFF_VAR = 'NP3TOT_LOG'
+
 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
 
-cell_corr_deseq=TRUE
+cell_corr_deseq=FALSE
 formula_deseq_format='n' # so far we only run all for mirnas 
 
 ONT='BP'
-process_mirnas = TRUE 
+process_mirnas = FALSE 
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 
-VISIT_COMP
+
 vis_comps<-c('V08',  'V06','V04', 'BL')
 #vis_comps<-c('V08')
 cell_corr_deseq = FALSE
-DIFF_VAR
+
 sig_only =FALSE
+
 
 run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c( FALSE,TRUE)){
+        for (cell_corr_deseq in c( FALSE)){
 
 
                 for (VISIT_COMP in vis_comps){
@@ -144,18 +161,14 @@ tissue_un<-'Plasma'
 
 
 
-
-
-
-
-
 prot_de_mode<-'u'
 
 #tissue_un<-'Plasma';tissue ='Plasma';
 
 
-DIFF_VAR= 'NP3TOT_LOG'
 DIFF_VAR= 'NP2PTOT_LOG'
+DIFF_VAR= 'NP3TOT_LOG'
+
 TISSUE='Plasma';
 
 prot_de_mode = 'u';
@@ -163,13 +176,15 @@ TISSUE='Plasma';
 
 
 TISSUE='CSF'
-tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 tissue_un<-'Plasma'
+
+tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 
 visit_comps = c('V06', 'BL', 'V04', 'V08')
 visit_comps  = c('V08' )
 DIFF_VAR;tissue_un;prot_de_mode
 sig_only =FALSE
+VISIT_COMP='V06'
 
     for (DIFF_VAR in c(diff_vars)){
 
@@ -191,6 +206,14 @@ sig_only =FALSE
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
 
 
 

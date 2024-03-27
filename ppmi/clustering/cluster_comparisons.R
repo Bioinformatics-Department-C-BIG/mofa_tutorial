@@ -10,10 +10,12 @@ knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
 #formula_deseq_format
 cell_corr_deseq
+#rm(se_rnas)
+#rm(se_mirs)
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
-se_mirs
+se_rnas
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 

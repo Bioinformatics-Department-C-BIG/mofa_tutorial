@@ -275,7 +275,39 @@ samples_metadata(MOFAobject)[selected_covars2]
     )
 
   
+
+
 }
+
+
+
+
+## Split Mofa objects by cluster 
+diff_var='sft'
+clust_name<-paste0(diff_var,'_clust')
+clust_id=3
+fact<-get_factors_for_metric(diff_var)
+
+graphics.off()
+for (clust_id in c(1,2,3)){
+
+
+      sm<-MOFAobject_sel@samples_metadata
+      sel_group<-sm$PATNO_EVENT_ID[sm[, clust_name] %in% c(clust_id)]
+      sel_group
+
+      MOFAobject_cl<-subset_samples(MOFAobject_sel, sel_group)
+
+      plot_data_overview(MOFAobject_cl)
+      do_name<-paste0(outdir, '/clustering/',paste0(fact_s, collapse='_'),  '/data_overview' ,clust_id, '.jpeg' )
+      jpeg(do_name)
+      pl<-plot_data_overview(MOFAobject_cl)
+      show(pl)
+      dev.off()
+}
+
+do_name
+
 
 
 

@@ -22,6 +22,17 @@ get_correlations<-function(MOFAobject,covariates=c('CONCOHORT') ){
 
 
 
+get_factors_for_scales<-function(vars_to_plot, cors_all=cors_all_pd){
+  #''
+  #' @param
+  #'
+  #'
+  vars_to_plot<-vars_to_plot[vars_to_plot %in% colnames(cors_all)]
+    all_cors_diff<-cors_all[, vars_to_plot]
+  sel_factors<-which(rowSums(all_cors_diff)>0)
+  return(sel_factors)
+  
+}
 
 
 correlate_factors_with_covariates_categ<-function(MOFAobject, covariates){
@@ -216,9 +227,8 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr, weight
 
         f_all
         f_features<-do.call(rbind,f_all)
-f_features
         if (weight_T){
-          f_features<-f_features[f_features$weight>weight_T,]
+          f_features<-f_features[abs(f_features$weight)>weight_T,]
         }
         f_features$weight=NULL
     
@@ -236,6 +246,11 @@ f_features
                                       as.data.frame()
 
               rownames(top_ws_hm)<-top_ws_hm$feature;top_ws_hm$feature =NULL
+
+            # some factors did not pass the threshold 
+            nulls<-factors_all[which(!factors_all %in% colnames(top_ws_hm))]
+            top_ws_hm[,nulls ]<-0
+            top_ws_hm = top_ws_hm[, factors_all]# reorder! 
 
 
             return(top_ws_hm)
@@ -298,7 +313,10 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
 
  modify_prot_names<-function(names_vec, view, conv_uniprot = FALSE){
         #'
+        #' Cuts the 'view' string if added to the feature name 
+        #' if uniprot --> gets symbol
         #' @param  names_vec
+        #' @
 
 
 

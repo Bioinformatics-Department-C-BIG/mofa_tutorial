@@ -135,7 +135,7 @@ for (diff_var in names(all_clusts_mofa)){
 
 
 
-
+#grep('clust',colnames(MOFAobject_sel@samples_metadata))
 
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 

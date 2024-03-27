@@ -178,13 +178,13 @@ for (cluster_id_num in  c(1:4)){
 
 
 
-
+  yvol = 'adj.P.Val'
+     ## y = 'P.Value', 
     #results_de<-de_all_groups_proteins[[3]]
     pvol<-EnhancedVolcano(results_de, 
                     lab = gene_symbols,
                     x = 'logFC',
-                   # y = 'adj.P.Val', 
-                    y = 'P.Value', 
+                    y = yvol,               
                     pCutoff = 0.05,
                     FCcutoff = 0.1, 
                     ylim=c(0,ylim), 
@@ -193,14 +193,13 @@ for (cluster_id_num in  c(1:4)){
                     subtitle=ns
     )
     pvol
-    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix_full,'_',VISIT_COMP,'_cluster_',cluster_id_num, '.jpeg')
+    fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix_full,'_',VISIT_COMP,'_cluster_',cluster_id_num,'.jpeg')
+    print(fname_vol)
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 
-fname_vol
 #ggsave(fname,pvol, width=6,height=8, dpi=300)
 
-print(fname_vol)
 ## Create a p-adjusted
 ## how many total proteins?
 dim(vsn_mat)

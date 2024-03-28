@@ -16,7 +16,7 @@ os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/'
 if (Sys.info()['sysname']=='Darwin'){
   setwd(os_dir)
   os_dir='/Volumes/GoogleDrive/Other computers/My computer (1) (1)/mofa_tutorial/'
-  os_dir='/Users/efiathieniti/Downloads/'
+ # os_dir='/Users/efiathieniti/Downloads/'
 
   script_dir<-'/Users/efiathieniti/Documents/GitHub/mofa_tutorial/ppmi/../'
   ppmi_data<-'/Users/efiathieniti/Documents/ppmi_data/'

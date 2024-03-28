@@ -1745,13 +1745,19 @@ standardize_go_names<-function(descriptions){
 ### PREDICTIONS ON SUMMARIZED EXPERIMENT 
 ## predict on each or on multi assay?
 
-clipping_values<-function(x){
+library('fsbrain')
+install.packages('fsbrain')
+
+
+clipping_values<-function(x, high=0.99){
   #'
   #'
   #' @param 
   #'
-  higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.01, na.rm=TRUE)
+  #' 
+  low = 1-high
+  higher_val<-quantile(x, high, na.rm=TRUE)
+  lower_quant<-quantile(x, low, na.rm=TRUE)
   non_zero_min=min(x[which(x>0)], na.rm = TRUE)
   
   lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
@@ -1763,6 +1769,9 @@ clipping_values<-function(x){
   return(x)
   
 }
+
+
+
 
 
 
@@ -2292,5 +2301,117 @@ attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
         return(df_to_attach)
 
 
+
+}
+
+### DE RESULTS  ####
+# rnas
+
+  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  
+          prefix, cluster_id ){
+    #' returns the deseq results pathway for 
+    #' @param VISIT
+    #' @param formula_deseq_format
+    #' @param prefix
+    #' @param cluster_id
+    #' 
+            return(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'))
+        }
+
+
+# read top of 3 clusters # get top genes union by pvalue
+  sel_vis=c('BL', 'V06','V08' )
+
+get_de_rnas_union<-function(sel_vis){
+          sel_clusts = c(1,2,3)
+
+
+      de_rnas_files<- sapply(sel_vis, function(sel_vis_1){
+        sapply(sel_clusts, function(cl_id){
+            get_de_results_path(deseq_params_all, VISIT=sel_vis_1, formula_deseq_format,  prefix, cluster_id = cl_id)
+            
+        })
+      })
+        
+
+      
+    de_rnas_files = unlist(de_rnas_files)
+
+        rnas_sig<-sapply(de_rnas_files, function(file){
+            de_results_rnas<-read.csv(file)
+            de_results_rnas_sig<-de_results_rnas[de_results_rnas$padj<0.05 & abs(de_results_rnas$log2FoldChange)>0.1,]
+            return(de_results_rnas_sig$X)
+
+
+        })
+    return(rnas_sig)
+
+
+
+}
+
+
+
+get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, de_sig_all_top){
+        #' 
+        #' @param  VISIT_COMP
+        #' @param metric_p metric to use to cut 
+        #' @param sig_only filter the significant otherwise the top in mofa 
+
+        de_all<-list()
+        for (cluster_id in clust_ids){
+
+                outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
+                # 
+                de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+                get_cluster_de(, view='')
+
+                de_results_prot<-read.csv(de_prot_file)
+                
+                view=paste0('proteomics_', tolower(TISSUE))
+
+
+                de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
+
+               de_results_prot_top<-de_results_prot[match(unique(top_proteins$feature), de_results_prot$X),]
+                # TODO: print only significant 
+                #print(paste('SIG in f',de_results_prot_sig$X %in% top_proteins$feature))
+
+
+                if (sig_only){
+                        # filter the ones that are de 
+#
+                        de_results_prot_top<-de_results_prot[match( unique(de_sig_all_top),de_results_prot$X),]
+
+                }
+
+
+                # get also the pvalue 
+                de_all[[cluster_id]]<-as.data.frame(de_results_prot_top[, c(metric_p)])
+               print(de_results_prot_top$X)
+             
+
+
+        #        print(length(de_all[[cluster_id]]))
+        }
+
+        names(de_all)
+        de_all
+        # TODO: add top prot
+        names(de_all)<-paste0(VISIT_COMP,'_',c(1:length(clust_ids)))
+        de_all[[1]]
+        
+
+        all_clusts_proteins_logFC<-do.call(cbind,de_all )
+        
+
+       
+        all_clusts_proteins_logFC<-as.data.frame(all_clusts_proteins_logFC)
+        all_clusts_proteins_logFC
+        rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
+        colnames(all_clusts_proteins_logFC)<-names(de_all)
+
+
+        return(all_clusts_proteins_logFC)
 
 }

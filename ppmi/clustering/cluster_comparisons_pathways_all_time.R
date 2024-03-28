@@ -2,17 +2,10 @@
 
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
-  get_de_results_path<-function(deseq_params_all=deseq_params_all, VISIT=VISIT, formula_deseq_format=formula_deseq_format,  
-          prefix=prefix, cluster_id=cluster_id ){
-    #' returns the deseq results pathway for 
-    #' @param VISIT
-    #' @param formula_deseq_format
-    #' @param prefix
-    #' @param cluster_id
-    #' 
-            return(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'))
-        }
 
+
+get_de_results_path(deseq_params_all, VISIT='V08', formula_deseq_format,  
+          prefix, cluster_id )
 #Apply to current combinations 
 # Clust comparisons for RNA/mirna
 

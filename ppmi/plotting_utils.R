@@ -253,6 +253,108 @@ plotVolcano_proteins<-function(results_de, se_filt, title='', xlim=NULL, lab=NUL
 
 
 
+
+ my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
+                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
+                                   factor_labels=factor_labels,draw_all_times = draw_all_times)
+
+vsd_filt=vsd
+ sigGenes = sigGenes2  
+   df=df
+   remove_cn=FALSE
+
+                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
+                                   factor_labels=factor_labels,draw_all_times = draw_all_times
+
+
+
+plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
+                            cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
+                            factor_labels=NULL, draw_all_times=FALSE){
+  
+  
+  
+  #'
+  #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
+  #' @param hm: heatmap data nfeats X nsamples 
+  #' @param sigGenes: select genes to plot description
+  #' @param factor_labels if not NULL it splits the heatmap into rows of factors  description
+  #' 
+  #' 
+  #' 
+  #' 
+ #ARRANGE
+  #vsd_filt=vsd
+  
+  #@draw_all_times=TRUE
+      sigGenes = make.names(sigGenes)
+      sigGenes
+      rownames(vsd_filt) = make.names(rownames(vsd_filt))
+      vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+      ## turn to sumbol? 
+      
+      
+      ### Add the annotations 
+      meta_single<-colData(vsd_filt_genes)
+      
+        ## HEATMAP OPTIONS 
+
+      hm<-assay(vsd_filt_genes); dim(hm);dim(df)
+      
+      hm_ord=hm
+      
+      ### SCALE!! 
+      hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
+      #jpeg(fname, width=2000, height=1500, res=200)
+      if(process_mirnas){
+        lab=rownames(rowData(vsd_filt_genes)) }else{
+          lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+
+      
+
+    cl=2
+    df$cluster_m
+    vsd_filt_genes = vsd_filt_genes[,!vsd_filt_genes$EVENT_ID %in% c('V04')]
+    vsd_filt_genes_scaled<-vsd_filt_genes
+
+
+    assay(vsd_filt_genes_scaled)<-assay(vsd_filt_genes)  %>% t() %>% scale() %>% t()
+  assay(vsd_filt_genes_scaled) = clip.data(assay(vsd_filt_genes_scaled), lower = 0.025, upper = 0.975)
+
+
+    get_hm_per_clust<-function(cl){
+
+      vsd_filt_genes_cl1<-vsd_filt_genes_scaled[,colData(vsd_filt_genes_scaled)$cluster_m %in% c(cl)]
+      df_cl1<-df[df$cluster_m %in% c(cl),]
+
+
+      cm<-ComplexHeatmap::pheatmap(assay(vsd_filt_genes_cl1), 
+      column_split = vsd_filt_genes_cl1$EVENT_ID
+          )
+        return(cm)
+    }
+    cm1=get_hm_per_clust(1)
+    cm2=get_hm_per_clust(2)
+    cm3=get_hm_per_clust(3)
+    cm4=get_hm_per_clust(NA)
+    cm1
+  draw(cm1 + cm2+cm3+cm4)
+
+
+    jpeg(paste0(outdir, '/clusters_heatmap.jpeg'), units='in', width=30, height=20, res=200)
+    draw(cm1 + cm2+cm3+cm4)
+    dev.off()
+
+
+
+
+
+}
+
+
+plot_heatmap_time_clusters(vsd_filt=vsd,  sigGenes = sigGenes2 ,  df=df, remove_cn=FALSE )
+
+
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
                             factor_labels=NULL, draw_all_times=FALSE){
@@ -476,6 +578,14 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   return(hm_draw)
 }
+
+
+
+
+
+
+
+
 
 
 #BiocManager::install('ComplexHeatmap')

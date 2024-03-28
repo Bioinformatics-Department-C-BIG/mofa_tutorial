@@ -41,7 +41,7 @@ DIFF_VAR= 'NP3TOT_LOG'
 # source(paste0(script_dir, 'ppmi/estimate_cell_types.R'))
 
 
-source(paste0(script_dir, 'ppmi/utils.R'))
+#source(paste0(script_dir, 'ppmi/utils.R'))
 
 source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
@@ -115,7 +115,7 @@ formula_deseq_format='all' # so far we only run all for mirnas
 cell_corr_deseq=FALSE
 formula_deseq_format='n' # so far we only run all for mirnas 
 
-ONT='MF'
+ONT='BP'
 process_mirnas = FALSE 
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
@@ -124,6 +124,7 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 
 vis_comps<-c('V08',  'V06','V04', 'BL')
+VISIT_COMP='V08'
 #vis_comps<-c('V08')
 cell_corr_deseq = FALSE
 

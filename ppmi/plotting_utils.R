@@ -173,10 +173,11 @@ create_heatmap_proteins<-function(hm,se_filt, fname,coldata_to_plot=c()){
 #order_by_hm=c('PATNO_EVENT_ID')
 
 
+10e-2
 
 
-
-plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj', FCcutoff=0.1,pCutoff=10e-2){
+plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj',
+ FCcutoff=0.1,pCutoff=10e-2){
   #'
   #'
   #' Take a sumarized experiment and deseq results 

@@ -153,9 +153,10 @@ diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD_sel))
 
 clust_name=paste0(DIFF_VAR, '_clust')
 diff_variables_to_p
-col_data<-samples_metadata(MOFAobjectPD_sel)[c(diff_variables_to_p,clust_name, 'PATNO')]
+col_data<-samples_metadata(MOFAobjectPD_sel)[c(diff_variables_to_p,clust_name,'PATNO')]
 col_data$nfl_serum<-as.numeric(col_data$nfl_serum)
 col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
+
 
 
 
@@ -168,7 +169,7 @@ plot_heatmap_median_by_cluster<-function(col_data){
 
 
 
-      # Get the median per cluster and scale it for the ehatmap 
+      # Get the median per cluster and scale it for the heatmap 
       col_data_t<-tibble(col_data)
 
 

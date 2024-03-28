@@ -2151,6 +2151,33 @@ get_covariates_cells<-function(y_clust, thresh=0){
 
 
 
+
+get_variables_by_cluster_all_time<-function(df_plot_mol, cluster ){
+  #'
+  #' @param df_plot_mol
+  #' @param cluster cluster_name to get ids from mofa
+
+  #'  #
+        all_times_all_vars<-df_plot_mol[, c(diff_variables_to_p, 'EVENT_ID', cluster)]
+        all_times_all_vars$cluster = all_times_all_vars[, cluster]
+
+    # medians
+        all_times_all_vars_medians<-all_times_all_vars %>%
+                    group_by(cluster, EVENT_ID) %>%
+                    filter(EVENT_ID %in% times_sel) %>%
+                    mutate_if(is.character, as.numeric) %>%
+          summarise_all( funs(median(., na.rm = TRUE)))%>%
+    #         summarise_all( median=median, na.rm = TRUE)%>%
+
+           # as.data.frame() %>% dplyr::select(-cluster) %>% 
+            as.data.frame()
+
+          return(all_times_all_vars_medians)
+
+}
+
+
+
 library('RColorBrewer')
 create_venn<-function(venn_list, fname_venn, main){
   
@@ -2234,4 +2261,36 @@ get_cluster_params_dir<-function(DIFF_VAR){
   cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
   cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
   return(cluster_params_dir)
+}
+
+
+
+# clustering
+
+attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
+
+
+    for (diff_var in names(all_clusts_mofa)){
+
+        if (!is.null(all_clusts_mofa[[diff_var]])){
+   
+        clust_name = paste0(diff_var, '_clust')
+         #print(clust_name)
+        clusters_ids<-all_clusts_mofa[[diff_var]]
+        names_patnos<-gsub('\\_.*','',rownames(clusters_ids))
+        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names_patnos )]
+        
+        df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
+       # print(df_to_attach[,clust_name])
+        }
+
+
+
+
+}
+
+        return(df_to_attach)
+
+
+
 }

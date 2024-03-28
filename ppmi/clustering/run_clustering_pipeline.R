@@ -99,7 +99,9 @@ TISSUE='Plasma'
 DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 
-diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
+diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP3TOT_LOG')
+diff_vars<-c( 'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
+
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
 DIFF_VAR = 'NP3TOT_LOG'
@@ -112,10 +114,11 @@ formula_deseq_format='all' # so far we only run all for mirnas
 cell_corr_deseq=FALSE
 formula_deseq_format='n' # so far we only run all for mirnas 
 
-ONT='BP'
+ONT='MF'
 process_mirnas = FALSE 
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
+
 
 
 

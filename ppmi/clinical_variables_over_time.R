@@ -5,6 +5,9 @@ to_plot<-c(scale_vars_diff)
 all_event_ids_p<-c('BL','V04','V06','V08','V10','V12','V14','V16', 'V18')
 all_event_ids_p<-c('BL','V08','V10','V12','V14','V16', 'V18')
 
+all_event_ids_match_molecular<-c('BL','V04','V06' ,'V08')
+
+
 ## metadata to select PATNOs FROM 
 
 mofa_filter<-TRUE
@@ -20,14 +23,20 @@ sm_sel=sm
 
 
 ### obtain all patient event ids to get one row per patient! 
-patno_event_ids = sapply(all_event_ids_p, function(event_id){
+patno_event_ids = unlist(sapply(all_event_ids_p, function(event_id){
                   return(paste0(sm_sel$PATNO,'_', event_id ))
-})
-  
-patno_event_ids=unlist(patno_event_ids)
+}))
+
+patno_event_ids_mol = unlist(sapply(all_event_ids_match_molecular, function(event_id){
+                  return(paste0(sm_sel$PATNO,'_', event_id ))
+}))
+
 # select data for the requested patiennts 
 #combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids ) # todo - filter selection on or off 
+
+combined_bl_log_sel_mol<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids_mol ) # todo - filter selection on or off 
+
 
 
 curated_mofa<-combined_bl_log_sel %>%
@@ -52,23 +61,16 @@ combined_bl_log_sel<-cbind(combined_bl_log_sel,estimations_matched_all_combined)
 # 1. Select the patients eg. by mofa groups 
 df_to_attach<-combined_bl_log_sel
 
+names(all_clusts_mofa)
 
-for (diff_var in names(all_clusts_mofa)){
-
-        if (!is.null(all_clusts_mofa[[diff_var]])){
-   
-        clust_name = paste0(diff_var, '_clust')
-         #print(clust_name)
-        clusters_ids<-all_clusts_mofa[[diff_var]]
-        names_patnos<-gsub('\\_.*','',rownames(clusters_ids))
-        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names_patnos )]
-        
-        df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
-       # print(df_to_attach[,clust_name])
-        }
-}
+df_to_attach<-attach_cluster_ids(df_to_attach, all_clusts_mofa)
+combined_bl_log_sel_mol<-attach_cluster_ids(combined_bl_log_sel_mol, all_clusts_mofa)
+combined_bl_log_sel_mol$NP3TOT_clust
 
 combined_bl_log_sel<-df_to_attach
+
+
+
 
 combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
 combined_bl_log_sel$month=factor(combined_bl_log_sel$months)
@@ -77,9 +79,7 @@ df_plot<-combined_bl_log_sel
 ## fetch grouping from MOFA 
 
 df_plot_2k<-df_plot
-df_plot_2k$COHORT
 
-df_plot_2k$NP2PTOT_LOG_clust
 
 df_plot
 PDSTATE_SEL=NULL
@@ -98,7 +98,26 @@ lv='V13_V14';
   clust_name='COHORT_DEFINITION'
     clust_name='INEXPAGE'
   
-  df_plot_2k$PATNO
+
+times_sel = c('BL','V04', 'V06', 'V08')
+diff_variables_to_p
+cluster='NP3TOT_clust'
+
+df_plot_mol<-combined_bl_log_sel_mol
+
+combined_bl_log_sel_mol$NP3TOT
+
+
+clust_name
+medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, 'NP3TOT_LOG_clust')
+medians_all_clusts$cluster
+
+col_data_t<-tibble(col_data)
+
+     # rownames(means_by_cluster)<-means_by_cluster$cluster
+
+
+
 
 
 

@@ -2,7 +2,8 @@
 
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
-  get_de_results_path<-function(deseq_params_all=deseq_params_all, VISIT=VISIT, formula_deseq_format=formula_deseq_format,  prefix=prefix, cluster_id=cluster_id ){
+  get_de_results_path<-function(deseq_params_all=deseq_params_all, VISIT=VISIT, formula_deseq_format=formula_deseq_format,  
+          prefix=prefix, cluster_id=cluster_id ){
     #' returns the deseq results pathway for 
     #' @param VISIT
     #' @param formula_deseq_format
@@ -35,7 +36,7 @@ dir.create(deseq_params_all, '/all_time/enr/')
     formula_deseq_format=''
   }
 
-    times_sel<-c('BL', 'V04','V06', 'V08')
+    times_sel<-c('BL','V06', 'V08')
     gse_compare_all_vis <-list()
      cluster_id='1'
 
@@ -60,6 +61,7 @@ dir.create(deseq_params_all, '/all_time/enr/')
         return(gene_list1)
         }
       )
+
 
       # Cluster compare for each cluster - compare the time points 
       dir.create(paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format), recursive = TRUE)
@@ -173,7 +175,9 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
 }
 
 fact=get_factors_for_metric(y_clust)
-
+fact=fact[!fact %in% c(13)]
+#fact<-fact[!fact %in% c(13)]
+fact
 cluster_id = '2' ; sig_time = 'V08';
 top_paths = 60
 
@@ -188,15 +192,13 @@ gse_compare_cl=gse_compare_all_vis[[1]]
 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
 metric_p = 'p.adjust'
-metric='NES';
+metric='NES'
 metric = 'logFC'
 
 # holds all timepoints all, clusters 
 #
 padjust_hm<-1
-names(gse_compare_all_vis)
 
-names(log_fcs_all_tps_all_clusts)
 
 
 
@@ -204,7 +206,7 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
   #' @param 
   #' @param
   #' gse_compare_cl<-[[cluster_id]]
-  #' 
+  #' @param gse_compare_all_vis a gsea compare result object from cluster profiler with all visits and all clusters 
   #' @return merged_df_lfc a dataframe with logFC/NES for all timepoints (n paths x n timepoints)
   #' 
   #' 
@@ -243,7 +245,7 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
 
 
 merged_df_all_tps_all_clusts <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric)
-merged_df_all_tps_all_clusts
+
 merged_df_all_tps_all_clusts_pvals <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric=metric_p)
 
 dim(merged_df_all_tps_all_clusts_pvals)
@@ -254,7 +256,6 @@ colnames(merged_df_all_tps_all_clusts)[1]
 # get a merged df per cluster 
 use_top_mofa=TRUE
 
-length(all_sig_all_clusts)
 
 logFC_merged_df2<-merged_df_all_tps_all_clusts
 use_mofa_paths = TRUE
@@ -307,8 +308,21 @@ rownames(pvals_sign_merged_df2)
 
 
 
+## TODO: attach metrics of age_scaled, sex, NP3TOT 
+
+# TODO: select by diff var
 
 
+medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
+
+
+medians_all_clusts$year<-mapvalues(medians_all_clusts$EVENT_ID, names(EVENT_MAP_YEAR), 
+                                    to=unlist(EVENT_MAP_YEAR))
+
+medians_all_clusts$year_clust<-paste0(medians_all_clusts$year,'_',medians_all_clusts$cluster )
+colnames(logFC_merged_df2)
+
+medians_all_clusts
 
 graphics.off()
 
@@ -325,26 +339,44 @@ row_ha = rowAnnotation( factor=row_an2)
 
 xminxmax<-get_limits(logFC_merged_df2)
 xminxmax
-col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
+#col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
 
 
 dir.create(paste0(deseq_params_all, '/all_time/enr/'), recursive = TRUE)
+length(rep(1:length(clusters_indices), each=3))
+
+
+
+
+
+medians_all_clusts_matched<-medians_all_clusts[match(colnames(logFC_merged_df2), medians_all_clusts$year_clust),]
+medians_all_clusts_matched
+
+
+metric
+ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
+
 
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
-    column_split = rep(1:3, each=3), 
+    column_split = rep(1:length(clusters_indices), each=length(times_sel)), 
     right_annotation = row_ha, 
     cluster_cols = FALSE,
-      col = col_fun, 
+    top_annotation=ha,
 
-    heatmap_legend_param  = list(direction = "horizontal"), 
+    
+    #  col = col_fun, 
+
+    heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ',metric)), 
       display_numbers = as.matrix(pvals_sign_merged_df2)
     )
 png(fname, width=30*100, height=30*100, res=300)
 
 
     #
-draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
+draw(ch, heatmap_legend_side="bottom", 
+  annotation_legend_side  = "bottom", 
+    padding = unit(c(2, 2, 2, 70), "mm"))
 #ch
   #  title = paste(metric, 'p-adj:', padjust_hm))
 #draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
@@ -371,7 +403,7 @@ Reduce(intersect,union_all_clusts)
 # Choose union or intersection to compare
 unique_partitions<-VennDiagram::get.venn.partitions(union_all_clusts)
 
-unique_partitions
+
 
 
 

@@ -112,7 +112,7 @@ clust_name
 medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, 'NP3TOT_LOG_clust')
 medians_all_clusts$cluster
 
-col_data_t<-tibble(col_data)
+
 
      # rownames(means_by_cluster)<-means_by_cluster$cluster
 
@@ -229,7 +229,6 @@ col_data_t<-tibble(col_data)
     }
     
     }
-    cluster_params
 dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
 dir.create(paste0(outdir,'/tr/'))

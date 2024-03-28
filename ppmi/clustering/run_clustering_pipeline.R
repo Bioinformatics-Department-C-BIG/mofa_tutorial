@@ -41,6 +41,7 @@ DIFF_VAR= 'NP3TOT_LOG'
 # source(paste0(script_dir, 'ppmi/estimate_cell_types.R'))
 
 
+source(paste0(script_dir, 'ppmi/utils.R'))
 
 source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
@@ -55,9 +56,9 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-#source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
  round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
   round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
@@ -133,7 +134,7 @@ run_all=TRUE
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c( FALSE)){
+        for (cell_corr_deseq in c( FALSE, TRUE)){
 
 
                 for (VISIT_COMP in vis_comps){

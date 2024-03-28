@@ -4,6 +4,8 @@ cell_corr_deseq = TRUE
 #VISIT='V08'
 print(paste('wd: ',getwd()))
 
+
+
 try(
     source(paste0('ppmi/setup_os.R'))
 )
@@ -29,6 +31,14 @@ prot_de_mode = 't'
 TISSUE='Plasma';tissue_un<-'Plasma'
 tissue ='Plasma'; tissue_un<-'Plasma'
 DIFF_VAR= 'NP3TOT_LOG'
+
+
+#source(paste0(script_dir, 'ppmi/extract_metadata.R'))
+#source(paste0(script_dir, 'ppmi/analyse_clinical_vars.R'))
+
+
+# Estimation of cell types from VSN rna data
+# source(paste0(script_dir, 'ppmi/estimate_cell_types.R'))
 
 
 

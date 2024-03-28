@@ -5,6 +5,7 @@
 library(data.table)
 
 input_data<-paste0(data_dir,'/ppmi/ppmi_data/')
+input_data<-ppmi_data
 output_files<-'ppmi/output/'
 source('ppmi/utils.R')
 #all_files<-list.files(paste0(input_data, 'characteristics/Medical/'), full.names = TRUE)
@@ -188,7 +189,7 @@ combined$PATNO_EVENT_ID<-paste0(combined$PATNO, '_',combined$EVENT_ID)
 
 combined<-merge(combined, rnaseq_meta,by=c('PATNO_EVENT_ID'), suffixes = c("", '_rseq'),  all=TRUE)
 any(duplicated(rnaseq_meta_qc$PATNO_EVENT_ID))
-
+output_files
 metadata_output_all<-paste0(output_files, 'combined',  '.csv')
 combined$Plate
 

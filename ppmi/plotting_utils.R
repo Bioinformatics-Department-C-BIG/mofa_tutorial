@@ -1,4 +1,4 @@
-
+library(xtable)
 
 
 ### Complex heatmap 
@@ -254,18 +254,12 @@ plotVolcano_proteins<-function(results_de, se_filt, title='', xlim=NULL, lab=NUL
 
 
 
- my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
-                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
-                                   factor_labels=factor_labels,draw_all_times = draw_all_times)
+#vsd_filt=vsd
+ #sigGenes = sigGenes2  
+ 
+  # remove_cn=FALSE
 
-vsd_filt=vsd
- sigGenes = sigGenes2  
-   df=df
-   remove_cn=FALSE
-
-                                   show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
-                                   factor_labels=factor_labels,draw_all_times = draw_all_times
-
+   
 
 
 plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
@@ -352,7 +346,6 @@ plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, sh
 }
 
 
-plot_heatmap_time_clusters(vsd_filt=vsd,  sigGenes = sigGenes2 ,  df=df, remove_cn=FALSE )
 
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 

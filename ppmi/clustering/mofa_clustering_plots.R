@@ -45,6 +45,9 @@ facet_rows = 2
 
 
 #### Boxplots ####
+clust_vars=c('NP3TOT_LOG')
+
+y_clust = 'NP3TOT_LOG'
 
 sapply(clust_vars, function(y_clust){
   clust_name = paste0(y_clust, '_clust')
@@ -88,6 +91,151 @@ sapply(clust_vars, function(y_clust){
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=8+length(c(variates_to_p))/facet_rows , bn=bn_all_fname, facet_rows = facet_rows, 
     text='')
 
+
+
+
+
+
+    #### medians write csv
+  diff_variables_to_p
+  library(rstatix)
+  sm$np3tot_v14
+  diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa', 'Neutrophil.Lymphocyte', 'SEX')
+  sm$NP3TOT_V14
+  col_data<-samples_metadata(MOFAobject_sel)[c(diff_variables_box,clust_name,'PATNO', colnames(estimations))]
+
+
+
+  col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
+    col_data$cluster[col_data$cluster %in% c('HC')]<-0
+      col_data$cluster<-as.numeric(col_data$cluster)
+
+
+      col_data_t<-tibble(col_data)
+      col_data_t_melt <- reshape2::melt(col_data_t, id.vars=c('cluster'))
+      colnames(col_data_t)
+      col_data_t_melt_not_na<-col_data_t_melt[!is.na(col_data_t_melt$value),]
+  col_data_t_melt_not_na[is.na(col_data_t_melt_not_na) | col_data_t_melt_not_na=="Inf"] = NA
+  col_data_t_melt_not_na<- na.omit(col_data_t_melt_not_na)
+
+## ANALYSIS OF VARIANCE
+variable = 'T.gd.Vd2'
+
+aov_res_ll<-sapply(c(diff_variables_box, colnames(estimations)),function(variable){
+  print(variable)
+        col_data_t[c('cluster', variable)]
+        col_data_t_1<-col_data_t[c('cluster', variable)]
+        col_data_t_1[,'var'] = col_data_t_1[,variable]
+        col_data_t_1
+
+        tryCatch({
+          na.omit(col_data_t_1[c('cluster', 'var')]$var)
+               res.aov<-col_data_t_1[c('cluster', 'var')] %>%
+        anova_test(cluster ~ var) 
+        res.aov
+        }, 
+        error = function(cond){ NA}
+        )
+     
+        return(res.aov)
+      }
+)
+
+# Choose boxplots based on AOV? 
+aov_sig<-t(data.frame(aov_res_ll)[c('p', 'p<.05'),])
+print(aov_sig)
+aov_sig_names=rownames(aov_sig[aov_sig[,'p<.05'] == '*',])
+print(aov_sig_names)
+
+
+write.csv(t(aov_res_ll), paste0(cluster_params_dir,'/aov.csv'))
+# wilcox - compare with controls
+
+# medians
+sel_group
+medians_fname = paste0(cluster_params_dir, '/medians.csv')
+medians_fname_tex = paste0(cluster_params_dir, '/medians.tex')
+
+medians_cells_fname= paste0(cluster_params_dir, '/medians_cells.csv')
+
+DataControl  = col_data %>%
+            filter(cluster==0) 
+DataControl
+
+ var_x = 'moca'
+pvals_all<-lapply(diff_variables_box, function(var_x){
+  DataControl$Value = DataControl[, var_x]
+  col_data$Value = col_data[,var_x]
+  col_data<-as.data.frame(apply(col_data,2,as.numeric))
+  col_data$cluster
+  DataControl$moca
+
+  WILC<-col_data %>% tibble() %>%
+  filter(cluster!=0) %>%
+  group_by(cluster)
+  
+  
+  pvals<-tryCatch({WILC %>% summarise(p_value = wilcox.test(DataControl$Value, Value, exact = FALSE)$p.value)}, 
+  error = function(cond){
+    NA
+  })
+  return(pvals)
+
+
+}
+)
+#names(pvals_all)<-diff_variables_box
+pvals_all
+
+
+          means_by_cluster <- col_data_t %>% 
+          #      dplyr::select(-PATNO) %>%
+                group_by(cluster) %>%
+                mutate_if(is.character, as.numeric) %>%
+            summarise_all( funs(median(., na.rm = TRUE)))%>% t()%>%
+            as.data.frame() # %>%  dplyr::select(-cluster) %>%
+          # as.data.frame()
+
+    #      means_by_cluster[diff_variables_box,]<-round(means_by_cluster[diff_variables_box,])
+
+          
+          sex_means<-t(col_data_t %>% 
+          group_by(cluster) %>% 
+            mutate_if(is.character, as.numeric) %>%
+                summarize_all(mean)) %>%  t()%>%
+            as.data.frame()*100 
+          
+
+         write.csv(round(means_by_cluster[aov_sig_names,]),medians_fname )
+         write.csv(means_by_cluster[colnames(estimations),],medians_cells_fname )
+         rbind(means_by_cluster[aov_sig_names,], SEX= round(sex_means$SEX ))
+         means_by_cluster['SEX',]= round(sex_means$SEX )
+
+         round(means_by_cluster[diff_variables_box,], digits=0)
+          print(xtable( format(means_by_cluster[c(aov_sig_names,'AGE','SEX'),], digits=1),
+          type = "latex", 
+          file = medians_fname_tex ))
+
+          # separated to print with 2 digits
+        aov_sig_names_cells<-aov_sig_names[aov_sig_names %in% colnames(estimations)]
+            print(xtable( format(means_by_cluster[c('Neutrophil.Lymphocyte',aov_sig_names_cells),], digits=2),
+          type = "latex", 
+          file = medians_fname_tex ))
+
+
+
+
+
+
+# 1. medians
+# 2. get signifince  with zero cluster - wilcoxon
+# 3. 
+          IQR_by_cluster <- col_data_t %>% 
+                dplyr::select(-PATNO) %>%
+                group_by(cluster) %>%
+                mutate_if(is.character, as.numeric) %>%
+            summarise_all( funs(IQR(., na.rm = TRUE)))%>%
+            as.data.frame() # %>%  dplyr::select(-cluster) %>
 
     }else{
       print(paste0(clust_name, '_clust does not exist'))
@@ -151,11 +299,6 @@ outfile_cl_heatmap<-paste0(cluster_params_dir, '/heatmap_means' ,  '.png')
 diff_variables_to_p %in% colnames(samples_metadata(MOFAobjectPD_sel))
 
 
-clust_name=paste0(DIFF_VAR, '_clust')
-diff_variables_to_p
-col_data<-samples_metadata(MOFAobjectPD_sel)[c(diff_variables_to_p,clust_name,'PATNO')]
-col_data$nfl_serum<-as.numeric(col_data$nfl_serum)
-col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
 
 
 

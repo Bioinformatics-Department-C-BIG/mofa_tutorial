@@ -58,7 +58,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+#source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
  round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
   round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
@@ -221,6 +221,7 @@ VISIT_COMP='V06'
 
 # Run the proteins too 
 # Concatenates all time points 
+
 
 
 

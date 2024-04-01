@@ -625,9 +625,18 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 }
 
 
+mt_kv
+
+mt_kv_list<-mt_kv[,2]
+names(mt_kv_list) <- mt_kv[,1]
+
+mt_kv_list_labeller <- function(variable){
+  return(mt_kv_list[variable])
+}
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1, text=''){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=5,
+ width=10,facet_rows=1, text='', plot_box = TRUE, add_caption=TRUE){
   #'
   #' Create boxplot by cluster 
   #' 
@@ -654,6 +663,18 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   tot_med<-as.matrix(table(met[,c(clust_name, "td_pigd")])); paste_tdpigd<-paste('td/pigd:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
   tot_med<-as.matrix(table(met[,c(clust_name, "NHY")])); paste_nhy<-paste('H&Y:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
   
+
+  if (add_caption){
+    caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
+                          paste_med, ',  ',
+                          paste_sex, ' ',
+                          #paste_state,  ',\n',
+                          # paste_tdpigd,' '
+                          text)
+  }else{
+    caption=''
+  }
+
   k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
   k_centers
   ## Add kruskal wallis to the total plot and separately to each one 
@@ -662,40 +683,45 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
 
 
   met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
+  to_replace<-colnames(met_diff)[colnames(met_diff) %in% mt_kv[,1]]
+  colnames(met_diff)[colnames(met_diff) %in% to_replace]<-mt_kv$V2[match(to_replace ,mt_kv$V1)]
 
   met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
   met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
 #  num_log<-is.numeric(met_diff_val)
 
-  #met_diff_val[,num_log]<-sapply(met_diff_val[,num_log], clipping_values)
 
 
 
-    p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
-    geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
+    p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))
+
+    if (plot_box){
+           p<-p+geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
                              fill=clust_name, y='value'), alpha=0.9, 
-                             outlier.shape = NA)+
+                             outlier.shape = NA)
+    } else{
+         p<-p+geom_violin(aes_string( x=clust_name,# color=clust_name, 
+                                  fill=clust_name, y='value'), alpha=0.9, 
+                                  outlier.shape = NA)
+    }
+ 
+
+ 
 
   
-    facet_wrap(~variable, scales='free',#, labeller=labeller(
-      #variable=labeller_clinical
+    p<-p+facet_wrap(~variable, scales='free',
       nrow=facet_rows)+
     geom_pwc( tip.length = 0,
       method = "wilcox_test", label = "p.adj.signif", label.size = 2)+   
     scale_color_viridis_d(option="turbo")+
-       scale_fill_viridis_d(option="turbo")+
+       scale_fill_viridis_d(option="turbo")
   
     
     
-  labs(#title = paste(y),  
+  p<-p+labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
-         caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
-                          paste_med, ',  ',
-                          paste_sex, ' ',
-                          #paste_state,  ',\n',
-                          # paste_tdpigd,' '
-                          text), 
+         caption = caption, 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
     theme(text =element_text(size=15), axis.title.y=element_blank())+
@@ -705,7 +731,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   p
 
   print(bn)
-  ggsave(bn, dpi=200, width=width, height = height, units='in')
+  ggsave(bn, plot = p,dpi=300, width=width, height = height, units='in')
   graphics.off()
   ## TODO: WILCOX TEST BY GROUP
   

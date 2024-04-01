@@ -35,7 +35,9 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',   
-               'V08'='year 3')
+               'V08'='year 3', 'V10'='year 4', 'V12' = 'year 5', 'V14' = 'year 7')
+               EVENT_MAP_YEAR_NUM = list( 'BL' =  '0', 'V04'='1', 'V06'='2',   
+               'V08'='3', 'V10'='4', 'V12' = '5', 'V14' = '7')
 
 
 #grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_')
@@ -1746,7 +1748,7 @@ standardize_go_names<-function(descriptions){
 ## predict on each or on multi assay?
 
 library('fsbrain')
-install.packages('fsbrain')
+# install.packages('fsbrain')
 
 
 clipping_values<-function(x, high=0.99){

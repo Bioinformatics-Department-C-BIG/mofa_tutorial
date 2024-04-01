@@ -45,8 +45,8 @@ curated_mofa<-combined_bl_log_sel %>%
 
 require(plyr)
 combined_bl_log_sel$months <-as.numeric( mapvalues(combined_bl_log_sel$EVENT_ID, 
-                               from= names(EVENT_MAP), 
-                               to=unlist(EVENT_MAP, use.names=FALSE)))
+                               from= names(EVENT_MAP_YEAR_NUM), 
+                               to=unlist(EVENT_MAP_YEAR_NUM, use.names=FALSE)))
 
 lv_to_plot='V12'
 combined_bl_log_sel$PDMEDYN_V14
@@ -135,7 +135,7 @@ medians_all_clusts$cluster
     #'  Created parameters: clust_name, grouping variable,
     #' 
 
-    df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP[lv_to_plot],]
+    df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP_YEAR_NUM[lv_to_plot],]
     df_plot_2k$PATNO %in% samples_metadata(MOFAobject)$PATNO
 
     
@@ -211,7 +211,7 @@ medians_all_clusts$cluster
         guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
         
         
-        labs(y=y_name, caption = paste0('group numbers: ', paste0(nums)))
+        labs(y=y_name,x='year', caption = paste0('group numbers: ', paste0(nums)))
       
       p<-p+ theme(axis.title.y =element_text(face='bold'))
 
@@ -258,7 +258,7 @@ lv_to_plot = 'V08'
 to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 lv_to_plot = 'V14'
 
-to_plot=c('updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
+to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
 clust_metric='updrs3_score_on'
 clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
 

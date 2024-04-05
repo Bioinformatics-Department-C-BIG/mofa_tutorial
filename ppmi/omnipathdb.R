@@ -6,22 +6,27 @@ library('OmnipathR')
 library(OmnipathR)
 library(tidyr)
 library(dnet)
-library(gprofiler2)
+#library(gprofiler2)
 # interactions - proteins
-outdir<-'/Volumes/GoogleDrive/Other computers/My computer (1) (1)/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUEruv_1_split_FALSE (1)/'
+#outdir<-'/Volumes/GoogleDrive/Other computers/My computer (1) (1)/ppmi/plots/p_V08_CSF_0.9_T_1-2INEXPDvsn_TNA_0.9g_0.2_100_m_0.5_10_15_sig_FALSEcompleteFALSE_coh_1-2_V08_TRUEruv_1_split_FALSE (1)/'
 mofa_cluster_id<-2
 
 VISIT_COMP<-'V08'
-rnas_V08<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/','V08' ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+prefix = 'rnas_'
+de_results_path<-get_de_results_path(deseq_params_all, VISIT = 'V08', formula_deseq_format,  prefix, cluster_id = mofa_cluster_id)
+rnas_V08<-read.csv(de_results_path)
 rnas_sig_V08<-rnas_V08%>% dplyr::filter(mofa_sign == 'Significant')
 
+
 vis2='V08'
-rnas_2<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',vis2 ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+de_results_path<-get_de_results_path(deseq_params_all, VISIT = vis2, formula_deseq_format,  prefix, cluster_id = mofa_cluster_id)
+
+rnas_2<-read.csv(de_results_path)
 rnas_sig_2<-rnas_2%>% dplyr::filter(mofa_sign == 'Significant')
 
 intersect(rnas_sig_2$GENE_SYMBOL, rnas_sig_V08$GENE_SYMBOL)
-
-rnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/',VISIT_COMP ,  '/rnas_de_cluster_', mofa_cluster_id, '.csv'))
+de_results_path<-get_de_results_path(deseq_params_all, VISIT = VISIT_COMP, formula_deseq_format,  prefix, cluster_id = mofa_cluster_id)
+rnas<-read.csv(de_results_path)
 
 dim(rnas)
 
@@ -32,8 +37,9 @@ dim(rnas_sig)
 rnas_sig$padj
 
 
+de_results_path<-get_de_results_path(deseq_params_all, VISIT = VISIT_COMP, formula_deseq_format,  prefix='mirnas_', cluster_id = mofa_cluster_id)
 
-mirnas<-read.csv(paste0(outdir,'/clustering/NP2PTOT_LOG_clust/3/TRUE/de_c0/', VISIT_COMP ,  '/mirnas_de_cluster_',mofa_cluster_id, '.csv'))
+mirnas<-read.csv(de_results_path)
 mirnas
 mirnas$GENE_SYMBOL<-mirnas$X
 mirnas

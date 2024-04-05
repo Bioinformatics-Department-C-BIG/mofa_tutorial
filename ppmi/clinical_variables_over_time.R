@@ -229,11 +229,11 @@ medians_all_clusts$cluster
     }
     
     }
-dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
-dir.create(paste0(outdir,'/tr/'))
+dir.create(paste0(cluster_params_dir, '/tr/clinical/'), recursive = TRUE)
+
+
 ## Plot cell types by COHORT 
-dir.create(paste0(outdir,'/tr/'))
 to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
 for (y in  to_plot){
   df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]

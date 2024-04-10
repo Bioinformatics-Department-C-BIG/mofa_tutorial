@@ -58,7 +58,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 # source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-#source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
  round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
   round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
@@ -115,6 +115,8 @@ formula_deseq_format='all' # so far we only run all for mirnas
 
 formula_deseq_format='n' # so far we only run all for mirnas 
 formula_deseq_format = 'age'
+formula_deseq_format='age' # so far we only run all for mirnas 
+
 ONT='BP'
 cell_corr_deseq = TRUE;
 process_mirnas = TRUE; 
@@ -124,6 +126,8 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
 
 vis_comps<-c('V08',  'V06','V04', 'BL')
+#vis_comps<-c('V08', 'BL')
+
 VISIT_COMP='V08'
 #vis_comps<-c('V08')
 
@@ -134,7 +138,7 @@ run_all=TRUE
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c( FALSE, TRUE)){
+        for (cell_corr_deseq in c(  FALSE)){
 
 
                 for (VISIT_COMP in vis_comps){

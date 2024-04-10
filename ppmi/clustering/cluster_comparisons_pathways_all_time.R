@@ -3,7 +3,7 @@
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
 
-
+cluster_id = 1
 get_de_results_path(deseq_params_all, VISIT='V08', formula_deseq_format,  
           prefix, cluster_id )
 #Apply to current combinations 
@@ -194,7 +194,7 @@ padjust_hm<-1
 
 
 
-
+return_abs = FALSE
 extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
   #' @param 
   #' @param
@@ -204,7 +204,7 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
   #' 
   #' 
   list_names<-names(gse_compare_all_vis)
-
+    i=3
     log_fcs_all_tps_all_clusts <- lapply(1:length(gse_compare_all_vis), function(i){
 
 
@@ -212,7 +212,7 @@ extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
       gse_compare_cl = gse_compare_all_vis[[i]]
       gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
 
-      log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls ) # calculates the average logFC per pathway
+      log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls , return_abs = return_abs) # calculates the average logFC per pathway
       merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) , padjust_cutoff = padjust_hm)
       
 
@@ -305,7 +305,7 @@ rownames(pvals_sign_merged_df2)
 
 # TODO: select by diff var
 
-
+combined_bl_log_sel_mol[, clust_name]
 medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
 
 
@@ -349,7 +349,7 @@ medians_all_clusts_matched
 metric
 ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
 
-
+logFC_merged_df2['regulation of innate immune response', ]
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
     column_split = rep(1:length(clusters_indices), each=length(times_sel)), 
@@ -358,7 +358,7 @@ ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2),
     top_annotation=ha,
 
     
-    #  col = col_fun, 
+     # col = col_fun, 
 
     heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ',metric)), 
       display_numbers = as.matrix(pvals_sign_merged_df2)

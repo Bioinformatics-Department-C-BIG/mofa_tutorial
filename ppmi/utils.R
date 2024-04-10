@@ -180,35 +180,26 @@ load_se_all_visits<-function(input_file, combined){
 
 
 
-load_all_se<-function(){
+load_all_se<-function(process_mirnas){
   #'
   #' load summarized experiment for rnas and mirnas 
   #' @param
   #' @return se_rnas, se_mirnas 
 
 
-      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-
+       process_mirnas = process_mirnas
 
       source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-      if (!base::exists(quote(se_mirs))){
-        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      #if (!base::exists(quote(se_mirs))){
+        se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+       return(se)
+     # }
 
-      }
 
+   
 
-      # hist(head(assay(se_mirs_norm),10)[10:50])
-
-      process_mirnas=FALSE
-      source(paste0(script_dir, '/ppmi/config.R'))
-      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-      if (!base::exists(quote(se_rnas)) ){
-
-        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-      }
-
-      return(list(se_rnas, se_mirs))
+     
 
 }
 
@@ -817,7 +808,7 @@ library('enrichplot' )
 #results_file = results_file_cluster
 #N_DOT=20, N_EMAP=30 , N_NET=10)
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15,force_gse=FALSE){
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=20,force_gse=FALSE){
   #'
   #' Get the ordered gene list from a deseq object
   #' @param deseq2ResDF deseq results object 
@@ -835,7 +826,6 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
  
   return(gse)
 }
-
 
 
 
@@ -881,7 +871,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, N_NET = 20, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
   #'
   #' Run enrichment GSEA using an ordered gene list, write, and plot and save the results 
   #' @param gene_list
@@ -915,7 +905,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
     if  (dim(gse)[1]>2 ){
       # check if the enrichment returned more than one resulting paths before plotting!
 
-      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
+      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=N_NET,
           run_ORA=FALSE, geneList = gene_list)
     }
   

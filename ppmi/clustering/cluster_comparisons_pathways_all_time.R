@@ -142,7 +142,7 @@ sig_time = 'V08'
 
 get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig_time ){
 
-  # return the top significant pathways by cluster
+  # return the top significant pathways by cluster in a cluster compare object 
   # sig_time: for a specific time point
      top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
     gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
@@ -173,9 +173,9 @@ fact=get_factors_for_metric(y_clust)
 fact
 cluster_id = '2' ; sig_time = 'V08';
 top_paths = 50
-
-top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
-dim(top_paths_all_factors)
+fact
+top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths, prefix='mirnas_')
+top_paths_all_factors
 top_paths_all_factors$Description
 #'  @param metric
 

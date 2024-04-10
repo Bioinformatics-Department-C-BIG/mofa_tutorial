@@ -12,10 +12,10 @@ knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 cell_corr_deseq
 #rm(se_rnas)
 #rm(se_mirs)
-all_se_list<-load_all_se()
-se_rnas = all_se_list[[1]]
-se_mirs = all_se_list[[2]]
-se_rnas
+se_mirs =NULL
+se_rnas = load_all_se(process_mirnas = FALSE)
+se_mirs = load_all_se(process_mirnas = TRUE)
+
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -31,7 +31,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clustering of the last visit
 # do not remove these because in the loading..
 #process_mirnas= FALSE
 
-
+se_mirs
 
 if (process_mirnas){
   se_sel = se_mirs
@@ -164,7 +164,10 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
                   }else if ((formula_deseq_format)=='all'){
                     formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-                  } 
+                  }   else if ((formula_deseq_format)=='age'){
+                   formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT','+COHORT')
+
+                }
               }else{
             # rnas
             if ((formula_deseq_format)=='n'){
@@ -425,11 +428,15 @@ gse_all_clusters=list()
 head(deseq2ResDF)
 
 pvalueCutoff = 0.05
-if (process_mirnas & FALSE){
+order_by_metric
+# MIRNAS enrichment analysis 
+if (process_mirnas ){
   # run a different test..
   cluster_id_num=4
   clusters_names
-    for (cluster_id_num in 1:length(clusters_names)){
+
+  clusters_indices
+    for (cluster_id_num in 1:length(clusters_indices)){
 
           print(paste('cluster:',cluster_id_num))
           cluster_id_index=clusters_indices[[cluster_id_num]]
@@ -446,15 +453,18 @@ if (process_mirnas & FALSE){
           results_file_cluster=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params_mirs, 'cl', cluster_id_name)
           gse_file<-paste0(results_file_cluster, '.Rds')
 
-        # if (TRUE){
-           
+        # if (TRUE){gene_list1
+           gene_list1
           if (!file.exists(gse_file) | force_gse){
 
-      
+
               gse1<-run_enrich_mirnas(gene_list1, pvalueCutoff = pvalueCutoff, test_type='GSEA')
               saveRDS(gse1,gse_file )
+              
               gse_all_clusters[[cluster_id_name]]<- gse1
            
+              if (dim(gse1)[1]>1){     
+                # continue if there are any results returned     
               mieaa_res<-mirna_enrich_res_postprocessing(gse1, mir_results_file=results_file_cluster)# convert to enrich result 
               enr_full=mieaa_res[[2]]
                gse_mofa_sig=write_filter_gse_results(enr_full, results_file_cluster, pvalueCutoff)
@@ -463,6 +473,7 @@ if (process_mirnas & FALSE){
                                                       results_file=results_file_cluster, 
                                                       N_DOT=20, N_EMAP = 50)    
                   
+                }
                 }
 
 

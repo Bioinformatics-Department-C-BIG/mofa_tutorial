@@ -126,9 +126,9 @@ if (TRUE){
                             
                           }else{
                           gene_list_ora<-gene_list_ord[order(abs(gene_list_ord))]
-                          results_file_mofa = paste0(outdir, '/enrichment/gsego_', ONT, factor,'_' )
+                          results_file_mofa = paste0(outdir, '/enrichment/rnas_/gsego_', ONT, '_',factor,'_' )
                           
-                          gse_mofa<-run_enrich_gene_list(gene_list_ord, results_file=results_file_mofa )
+                          gse_mofa<-run_enrich_gene_list(gene_list_ord, results_file=results_file_mofa,N_NET=20  )
                                
                               
                                 list1[[factor]]<-gse_mofa
@@ -279,8 +279,8 @@ if (run_plots){
           list1_genes
           
           for (factor in sel_factors_to_p){
-            results_file_mofa = paste0(outdir, '/enrichment/mirnas/gsego_',ONT,'_' ,factor,'_')
-            suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas/')))
+            results_file_mofa = paste0(outdir, '/enrichment/mirnas_/gsego_',ONT,'_' ,factor,'_')
+            suppressWarnings(dir.create(paste0(outdir, '/enrichment/mirnas_/')))
             gse_mofa_mirs=list_mirs[[factor]]
             
             mieaa_all_gsea=gse_mofa_mirs

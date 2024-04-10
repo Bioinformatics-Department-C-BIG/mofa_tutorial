@@ -56,7 +56,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-# source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+ source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
@@ -128,7 +128,7 @@ source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 vis_comps<-c('V08',  'V06','V04', 'BL')
 #vis_comps<-c('V08', 'BL')
 
-VISIT_COMP='V08'
+VISIT_COMP='V04'
 #vis_comps<-c('V08')
 
 sig_only =FALSE

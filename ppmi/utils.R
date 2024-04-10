@@ -2366,19 +2366,23 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
                 outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
                 # 
                 de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
-                get_cluster_de(, view='')
 
                 de_results_prot<-read.csv(de_prot_file)
-                
                 view=paste0('proteomics_', tolower(TISSUE))
 
 
-                de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
+                match(unique(top_proteins$feature), de_results_prot$X)
 
-               de_results_prot_top<-de_results_prot[match(unique(top_proteins$feature), de_results_prot$X),]
+                
+                de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                
+
+                top_factor_feat<-match(unique(de_AND_in_factor), de_results_prot$X)
+                top_factor_feat<-top_factor_feat[!is.na(top_factor_feat)]
+                de_results_prot_top<-de_results_prot[top_factor_feat,]
+
+
                 # TODO: print only significant 
-                #print(paste('SIG in f',de_results_prot_sig$X %in% top_proteins$feature))
-
 
                 if (sig_only){
                         # filter the ones that are de 
@@ -2390,7 +2394,7 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 
                 # get also the pvalue 
                 de_all[[cluster_id]]<-as.data.frame(de_results_prot_top[, c(metric_p)])
-               print(de_results_prot_top$X)
+                 print(de_results_prot_top$X)
              
 
 
@@ -2398,9 +2402,11 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
         }
 
         names(de_all)
-        de_all
+
         # TODO: add top prot
-        names(de_all)<-paste0(VISIT_COMP,'_',c(1:length(clust_ids)))
+       
+
+        names(de_all)<-paste0(EVENT_MAP_YEAR[[VISIT_COMP]],'_',c(1:length(clust_ids)))
         de_all[[1]]
         
 
@@ -2410,6 +2416,8 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
        
         all_clusts_proteins_logFC<-as.data.frame(all_clusts_proteins_logFC)
         all_clusts_proteins_logFC
+
+        de_results_prot_top$X
         rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
         colnames(all_clusts_proteins_logFC)<-names(de_all)
 

@@ -56,7 +56,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+# source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 #source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
@@ -102,6 +102,7 @@ DIFF_VAR = 'moca'
 
 diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP3TOT_LOG')
 diff_vars<-c( 'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
+diff_vars<-c( 'NP3TOT_LOG')
 
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
@@ -112,24 +113,22 @@ DIFF_VAR = 'NP3TOT_LOG'
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
 
-cell_corr_deseq=FALSE
 formula_deseq_format='n' # so far we only run all for mirnas 
-
+formula_deseq_format = 'age'
 ONT='BP'
-process_mirnas = FALSE 
+cell_corr_deseq = TRUE;
+process_mirnas = TRUE; 
+cell_corr_deseq=FALSE
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
-
-
 
 
 vis_comps<-c('V08',  'V06','V04', 'BL')
 VISIT_COMP='V08'
 #vis_comps<-c('V08')
-cell_corr_deseq = FALSE
 
 sig_only =FALSE
-
+DIFF_VAR
 
 run_all=TRUE 
 if (run_all){
@@ -163,10 +162,6 @@ if (run_all){
 #DIFF_VAR
 diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
-diff_vars<-c( 'NP2PTOT_LOG', 'moca','NP3TOT_LOG')
-
-DIFF_VAR= 'NP2PTOT_LOG'
-DIFF_VAR= 'moca'
 
 
 
@@ -180,18 +175,19 @@ prot_de_mode<-'u'
 
 #tissue_un<-'Plasma';tissue ='Plasma';
 
+diff_vars<-c('NP3TOT_LOG')
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'NP3TOT_LOG'
 
 TISSUE='Plasma';
 
-prot_de_mode = 'u';
 TISSUE='Plasma';
 
 
 TISSUE='CSF'
 tissue_un<-'Plasma'
+prot_de_mode = 'u';
 
 tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 
@@ -200,7 +196,7 @@ visit_comps  = c('V08' )
 DIFF_VAR;tissue_un;prot_de_mode
 sig_only =FALSE
 VISIT_COMP='V06'
-
+DIFF_VAR
     for (DIFF_VAR in c(diff_vars)){
 
         for (VISIT_COMP in visit_comps){
@@ -221,6 +217,11 @@ VISIT_COMP='V06'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
 
 
 

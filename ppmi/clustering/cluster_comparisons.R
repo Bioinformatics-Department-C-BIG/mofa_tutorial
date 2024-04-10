@@ -171,7 +171,10 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else if  ((formula_deseq_format)=='all'){
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-                }  
+                } else if ((formula_deseq_format)=='age'){
+                   formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT','+COHORT')
+
+                }
            }
 
           }

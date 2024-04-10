@@ -65,7 +65,8 @@ cluster_params_dir
 
 de_sig_all<-list()
 VISIT_COMP_SIG = 'V06'
-
+T_p
+metric_p
   for (cluster_id in clust_ids){
         for (VISIT_COMP_SIG in c('BL', 'V06', 'V04', 'V08')){
 
@@ -88,34 +89,38 @@ VISIT_COMP_SIG = 'V06'
 
   }
 de_sig_all_top<-unique(unlist(de_sig_all))
-de_sig_all_top
 # TODO: separate to get top 
-cluster_params_dir
 
 #colnames(de_results_prot)
 
 times<-c('BL', 'V04' ,'V06', 'V08')
 
 
-#colnames(results_de)
 
-all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp, sig_only=sig_only, de_sig_all_top = de_sig_all_top)
+#colnames(results_de)
+de_sig_all_top
+metric_p
+all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp,sig_only=sig_only,metric='logFC', de_sig_all_top = de_sig_all_top)
 all_clusts_proteins_logFC_all_times
 
 all_clusts_proteins_pval_all_times<-lapply( times, get_de_proteins_per_tp,sig_only=sig_only,metric=metric_p, de_sig_all_top = de_sig_all_top )
+
 all_clusts_proteins_pval_all_times
-
-
 
 all_clusts_times_logFC_df<-do.call(cbind, all_clusts_proteins_logFC_all_times )
 all_clusts_times_pval_df<-do.call(cbind, all_clusts_proteins_pval_all_times )
 dim(all_clusts_times_pval_df)
 dim(all_clusts_times_logFC_df)
-
+all_clusts_times_logFC_df
 x = all_clusts_times_logFC_df
+filter_si<-apply(all_clusts_times_pval_df,1, function(x){
+                any(x<0.05)})
 
+filter_si_names<-names(which(filter_si))
+filter_si_names
 
-
+all_clusts_times_pval_df<-all_clusts_times_pval_df[rownames(all_clusts_times_pval_df) %in% filter_si_names,]
+all_clusts_times_logFC_df<-all_clusts_times_logFC_df[rownames(all_clusts_times_logFC_df) %in% filter_si_names,]
 
 
 colnames(all_clusts_times_logFC_df)
@@ -162,7 +167,6 @@ dir.create(outdir_s_p_all_vis,'all_time/', recursive=TRUE)
 all_clusts_times_logFC_df[is.na(all_clusts_times_logFC_df)]<-0
 all_clusts_times_pval_df1[is.na(all_clusts_times_pval_df1)]<-''
 
-all_clusts_times_logFC_df
 
 xminxmax<-get_limits(all_clusts_times_logFC_df)
 xminxmax
@@ -175,11 +179,14 @@ prot_de_mode
 
 prot_de_mode_s=ifelse(prot_de_mode=='u','untargeted', 'targeted' )
 column_title = paste(tissue, prot_de_mode_s,',',  metric_p, '<', T_p, ',',  'DE only:', sig_only )
+column_title =''
+
 hname<-paste0(outdir_s_p_all_vis,'all_time/',tissue_s[1], '_', prot_de_mode,'_c',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'_s',
                  as.numeric(sig_only), 'p_', metric_p,T_p,'_hm_log2FC.jpeg')
 print(hname)
+nf
 height=1+log(nf)
-
+height
 cluster_cols=FALSE
 all_clusts_times_logFC_df
 as.matrix(all_clusts_times_logFC_df)

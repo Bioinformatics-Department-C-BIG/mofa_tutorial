@@ -168,11 +168,11 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
 }
 
 fact=get_factors_for_metric(y_clust)
-fact=fact[!fact %in% c(13)]
+#fact=fact[!fact %in% c(13)]
 #fact<-fact[!fact %in% c(13)]
 fact
 cluster_id = '2' ; sig_time = 'V08';
-top_paths = 60
+top_paths = 50
 
 top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
 dim(top_paths_all_factors)
@@ -254,7 +254,7 @@ logFC_merged_df2<-merged_df_all_tps_all_clusts
 use_mofa_paths = TRUE
 
 if (use_mofa_paths){
-  top_paths = 40
+  top_paths = 35
 
   top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
     dim(top_paths_all_factors)
@@ -369,6 +369,7 @@ png(fname, width=30*100, height=30*100, res=300)
     #
 draw(ch, heatmap_legend_side="bottom", 
   annotation_legend_side  = "bottom", 
+  merge_legend = TRUE,
     padding = unit(c(2, 2, 2, 70), "mm"))
 #ch
   #  title = paste(metric, 'p-adj:', padjust_hm))

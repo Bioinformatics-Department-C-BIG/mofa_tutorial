@@ -200,6 +200,7 @@ gse_all<-vector("list", length = 0)
 #formula_deseq_format
 # if not cell corr ensure that the formula is empty
 #cell_corr_deseq=TRUE
+formula_deseq_format
 if (!cell_corr_deseq){
   formula_deseq_format=''
   formula_deseq_format<-''

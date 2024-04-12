@@ -297,8 +297,6 @@ get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20, pr
 
 }
 
-get_top_pathways_by_factor(factor=13, pvalueCutoff = pvalueCutoff, top_p = top_p, prefix=prefix)
-
 
 
 concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_'){

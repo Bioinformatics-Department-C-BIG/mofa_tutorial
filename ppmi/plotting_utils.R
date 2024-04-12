@@ -637,6 +637,9 @@ mt_kv_list_labeller <- function(variable){
 
 boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=5,
  width=10,facet_rows=1, text='', plot_box = TRUE, add_caption=TRUE){
+
+
+  
   #'
   #' Create boxplot by cluster 
   #' 
@@ -645,6 +648,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   #'  
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
+  factors = fact
   
 
   as.numeric(met[,clust_metric])
@@ -665,7 +669,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   
 
   if (add_caption){
-    caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
+    caption = paste0( '\n', 'factors: ',fact, ',  ', freqs,',  ', 
                           paste_med, ',  ',
                           paste_sex, ' ',
                           #paste_state,  ',\n',

@@ -64,56 +64,62 @@ y_clust = 'NP3TOT_LOG'
     # for each cluster create boxplot 
 
 
+    fact = get_factors_for_metric(y_clust)
+
+
+    # also write vars for each cluster 
+
+    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
+    cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+
+
+          #### medians write csv ####
+          # 1. anova -  which are the significant variables? 
+        library(rstatix)
+        diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa', 'Neutrophil.Lymphocyte', 'SEX')
+        col_data<-samples_metadata(MOFAobject_sel)[c(diff_variables_box,clust_name,'PATNO', colnames(estimations))]
+
+
+
+        col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
+        col_data$cluster[col_data$cluster %in% c('HC')]<-0
+        col_data$cluster<-as.numeric(col_data$cluster)
+
+
+          col_data_t<-tibble(col_data)
+          col_data_t_melt <- reshape2::melt(col_data_t, id.vars=c('cluster'))
+          col_data_t_melt_not_na<-col_data_t_melt[!is.na(col_data_t_melt$value),]
+        col_data_t_melt_not_na[is.na(col_data_t_melt_not_na) | col_data_t_melt_not_na=="Inf"] = NA
+        col_data_t_melt_not_na<- na.omit(col_data_t_melt_not_na)
 
 
 
 
+      ## ANALYSIS OF VARIANCE ### find out the sig varibles 
+      variable = 'T.gd.Vd2'
+      #' @param aov_sig_names the variables that are sig between the 4 groups  - including controls!! 
+      #' pass on to the box plots etc. 
 
-    #### medians write csv ####
-    # 1. anova -  which are the significant variables? 
-  library(rstatix)
-  diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa', 'Neutrophil.Lymphocyte', 'SEX')
-  col_data<-samples_metadata(MOFAobject_sel)[c(diff_variables_box,clust_name,'PATNO', colnames(estimations))]
+      aov_res_ll<-sapply(c(diff_variables_box, colnames(estimations)),function(variable){
+        print(variable)
+              col_data_t[c('cluster', variable)]
+              col_data_t_1<-col_data_t[c('cluster', variable)]
+              col_data_t_1[,'var'] = col_data_t_1[,variable]
+              col_data_t_1
 
-
-
-  col_data$cluster<-col_data[, clust_name]; col_data[, clust_name]<-NULL
-  col_data$cluster[col_data$cluster %in% c('HC')]<-0
-  col_data$cluster<-as.numeric(col_data$cluster)
-
-
-    col_data_t<-tibble(col_data)
-    col_data_t_melt <- reshape2::melt(col_data_t, id.vars=c('cluster'))
-    col_data_t_melt_not_na<-col_data_t_melt[!is.na(col_data_t_melt$value),]
-  col_data_t_melt_not_na[is.na(col_data_t_melt_not_na) | col_data_t_melt_not_na=="Inf"] = NA
-  col_data_t_melt_not_na<- na.omit(col_data_t_melt_not_na)
-
-
-
-
-## ANALYSIS OF VARIANCE ### find out the sig varibles 
-variable = 'T.gd.Vd2'
-#' @param aov_sig_names the variables that are sig between the 4 groups  - including controls!! 
-#' pass on to the box plots etc. 
-
-aov_res_ll<-sapply(c(diff_variables_box, colnames(estimations)),function(variable){
-  print(variable)
-        col_data_t[c('cluster', variable)]
-        col_data_t_1<-col_data_t[c('cluster', variable)]
-        col_data_t_1[,'var'] = col_data_t_1[,variable]
-        col_data_t_1
-
-        tryCatch({
-          na.omit(col_data_t_1[c('cluster', 'var')]$var)
-               res.aov<-col_data_t_1[c('cluster', 'var')] %>%
-        anova_test(cluster ~ var) 
-        res.aov
-        }, 
-        error = function(cond){ NA}
-        )
-     
-        return(res.aov)
-      }
+              tryCatch({
+                na.omit(col_data_t_1[c('cluster', 'var')]$var)
+                    res.aov<-col_data_t_1[c('cluster', 'var')] %>%
+              anova_test(cluster ~ var) 
+              res.aov
+              }, 
+              error = function(cond){ NA}
+              )
+          
+              return(res.aov)
+            }
 )
 
 # Choose boxplots based on AOV? 
@@ -121,10 +127,13 @@ aov_sig<-t(data.frame(aov_res_ll)[c('p', 'p<.05'),])
 print(aov_sig)
 aov_sig_names=rownames(aov_sig[aov_sig[,'p<.05'] == '*',])
 print(aov_sig_names)
+
+
+
 write.csv(t(aov_res_ll), paste0(cluster_params_dir,'/aov.csv'))
 
 
-
+cluster_params_dir
 
 ## wilcox - compare with controls each cluster ##
 # medians

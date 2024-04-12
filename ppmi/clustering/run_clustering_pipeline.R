@@ -56,37 +56,16 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
- source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+# source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
- round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
-  round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
-
-which(cors_all_pd[, 'NP2PTOT_LOG']>1.3)
-
-  round(cors_all_pd[, 'NP2PTOT_LOG'][cors_all_pd[, 'NP2PTOT_LOG']>1.3], digits=2)
-
-  round(cors_all_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
-  round(cors_all_pd[, 'updrs2_score_LOG'][cors_all_pd[, 'updrs2_score_LOG']>1.3], digits=2)
-
-
-
-
-  round(cors_all_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
-  round(cors_pearson_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
-
-
-VISIT_COMP='BL'
-VISIT_COMP='V08'
-
+ 
 formula_deseq_format='n'
 
 cell_corr_deseq<-TRUE
 
-VISIT_COMP='BL'
-VISIT_COMP='V06'
-VISIT_COMP='BL'
+
 VISIT_COMP='V08'
 #VISIT='V08'
 #prefix='mirnas_'
@@ -100,12 +79,10 @@ TISSUE='Plasma'
 DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 
-diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP3TOT_LOG')
 diff_vars<-c( 'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
-diff_vars<-c( 'NP3TOT_LOG')
+diff_vars<-c( 'NP3TOT_LOG', 'sft')
 
 DIFF_VAR= 'updrs3_score_on_LOG'
-DIFF_VAR = 'moca'
 DIFF_VAR = 'NP3TOT_LOG'
 
 
@@ -119,8 +96,9 @@ formula_deseq_format='age' # so far we only run all for mirnas
 
 ONT='BP'
 cell_corr_deseq = TRUE;
-process_mirnas = TRUE; 
-cell_corr_deseq=FALSE
+process_mirnas = FALSE; 
+cell_corr_deseq=TRUE
+VISIT_COMP='BL'
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 
@@ -138,7 +116,7 @@ run_all=TRUE
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c(  FALSE)){
+        for (cell_corr_deseq in c(  TRUE)){
 
 
                 for (VISIT_COMP in vis_comps){

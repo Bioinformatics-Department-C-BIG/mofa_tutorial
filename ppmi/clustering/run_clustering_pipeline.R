@@ -56,9 +56,8 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
  round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
   round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
@@ -101,11 +100,12 @@ DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 
 diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP3TOT_LOG')
-diff_vars<-c( 'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
+diff_vars<-c('NP2PTOT_LOG','sft' ,'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
+#diff_vars<-c('sft' )
 
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
-DIFF_VAR = 'NP3TOT_LOG'
+DIFF_VAR = 'sft'
 
 
 
@@ -117,12 +117,12 @@ formula_deseq_format='n' # so far we only run all for mirnas
 formula_deseq_format='age' # so far we only run all for mirnas 
 
 ONT='BP'
-process_mirnas = TRUE 
+process_mirnas = FALSE 
 source(paste0(script_dir, 'ppmi/config.R'))
 VISIT_COMP='V08'
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
-
+se_clust$kmeans_grouping
 
 
 
@@ -151,6 +151,8 @@ if (run_all){
 
 
         }
+         source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+
         source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time.R'))
 
 }

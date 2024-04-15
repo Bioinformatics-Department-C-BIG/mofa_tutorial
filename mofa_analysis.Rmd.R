@@ -31,6 +31,7 @@ plot_factors(MOFAobject,
              dot_size = 2.5
 )
 
+
 plot_weights(MOFAobject,
              view = "proteomics",
              factor = 1,
@@ -46,7 +47,7 @@ plot_weights(MOFAobject,
 
 p<-plot_factor(MOFAobject, 
             factors = 1, 
-            color_by = "Grade",
+            color_by = "EORTC.risk",
             add_violin = TRUE,
             dodge = TRUE,
             show_missing = FALSE

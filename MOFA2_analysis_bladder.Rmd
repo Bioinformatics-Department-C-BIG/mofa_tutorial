@@ -1,0 +1,39 @@
+---
+title: "Applying MOFA to the Chronic Lymphocytic Leukemia cohort"
+author: 
+  name: "Ricard Argelaguet and Britta Velten"
+  affiliation: "European Bioinformatics Institute, Cambridge, UK"
+  email: "ricard@ebi.ac.uk"
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2
+---
+
+# Introduction
+
+The data set consists of N=200 samples from a cohort of Chronic Lymphocytic Leukemia (CLL) patients where four omics were profiled from blood samples: DNA methylation (450K Illumina microarray), bulk RNA-seq, somatic mutations and drug response data from blood for N=200 patients with. The data set was introduced in detail [in this article](https://www.jci.org/articles/view/93801) and can be downloaded [here](http://bioconductor.org/packages/release/data/experiment/html/BloodCancerMultiOmics2017.html). The MOFA analysis was originally published [here](https://msb.embopress.org/cgi/doi/10.15252/msb.20178124)
+
+# Load libraries
+
+Make sure that you have installed the [MOFA2](https://github.com/bioFAM/MOFA2#installation) and the [MOFAdata](https://www.bioconductor.org/packages/release/data/experiment/html/MOFAdata.html) package.
+```{r, message=FALSE}
+library(data.table)
+library(ggplot2)
+library(tidyverse)
+BiocManager::install('MOFA2')
+library(MOFA2)
+library(MOFAdata)
+```
+
+
+
+
+```{r}
+MOFAobject
+correlate_factors_with_covariates(MOFAobject, 
+  covariates = c("Sex","Grade","Age"), 
+  plot = "log_pval"
+)
+```

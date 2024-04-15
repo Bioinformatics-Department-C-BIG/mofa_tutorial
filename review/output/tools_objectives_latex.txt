@@ -1,35 +1,35 @@
 name display & Year & Var1 & objectives_concat & Tool/Method & x
-miodin & 2019 & other tools & UN & R package, Workflow & \\
-MetaboAnalyst v5.0 & 2021 & other tools & UN & Webtool & \\
-Mousse & 2021 & other tools & SI & NA & \\
-Movics & 2020 & other tools & DR & R package, Workflow & \\
-SNF & NA & network-based - similarity network fusion & SI, SI & R package & \\
-absnf & NA & network-based - similarity network fusion & SI, BM & R package & \\
-NetDx & 2019 & network-based & UN, SI, DI & R package & \\
-Nem-Tar & 2021 & network-based & UN, DI & NA & \\
-smccnet & NA & network-based & UN, BM & R package & \\
-netics & 2018 & network-based & UN & Matlab implementation & \\
-xmwas & 2018 & network-based & UN & R package & \\
-genie3 & 2019 & network-based & UN & NA & \\
-BiomeNED & NA & network-based & BM & NA & \\
+miodin & NA & other tools & UN & R package, Workflow & \\
+MetaboAnalyst v5.0 & 2021 & other tools & UN & NA & \\
+Mousse & NA & other tools & SI & NA & \\
+NetDx & 2019 & network analysis & UN, SI, DI & R package & \\
+smccnet & NA & network analysis & UN, BM & R package & \\
+netics & 2018 & network analysis & UN & Matlab implementation & \\
+xmwas & 2018 & network analysis & UN & R package & \\
+genie3 & 2019 & network analysis & UN & NA & \\
+BiomeNED & NA & nb & BM & NA & \\
+timeg & 2021 & NA & NA & NA & \\
+Movics & 2020 & NA & DR & R package, Workflow & \\
 IPA & NA & multiomics pathway analysis & UN, PA & Commercial license & \\
 PathCNN & 2021 & ml classification & DI & R package, Workflow & \\
-MOGONET & 2021 & jdr - nl & SI, BM & Python Implementation & \\
-deepdcr convolutional neural network & NA & jdr - nl & DR & Python Implementation available on github & \\
-cdrscan & 2018 & jdr - nl & DR & Python Implementation & \\
-multi view factorization autoencoder MAE & 2019 & jdr - nl & DI & NA & \\
-deepomix & 2021 & jdr - nl & DI & Python Implementation & \\
-PLS & NA & jdr - ln - partial least squares & UN, DR, DI, CO, BM & R package, method & \\
-opls da & NA & jdr - ln - partial least squares & UN & NA & \\
-MOFA & 2018 & jdr - ln - matrix factorization & UN, UN, SI, BM & R package, framework & \\
-IntNMF & 2017 & jdr - ln - matrix factorization & SI & R package & \\
-pathwaypca & 2020 & jdr - ln - matrix factorization & PA & R package & \\
-PinsPlus & 2019 & jdr - ln & SI & R package & \\
-nemo clustering & 2019 & jdr - ln & SI & NA & \\
-MANAclust & 2021 & jdr - ln & SI & Webtool & \\
-iClusterPlus & 2013 & jdr - ln & SI & NA & \\
-MKpLMM & 2020 & jdr - ln & DR, CO & NA & \\
-MixOmics CCA & NA & jdr - correlation & UN, SI, BM & R package & \\
-PathME & NA & NA & SI & NA & \\
-timeg & 2021 & NA & NA & NA & \\
-DIVERSE & 2021 & NA & DR, BM & NA & \\
+PLS & NA & jdr - partial least squares & UN, DR, DI, CO, BM & R package, method & \\
+opls da & NA & jdr - partial least squares & UN & NA & \\
+MOGONET & 2021 & jdr - nonlinear & SI, BM & NA & \\
+PathME & NA & jdr - nonlinear & SI & NA & \\
+deepdcr convolutional neural network & NA & jdr - nonlinear & DR & Python Implementation available on github & \\
+cdrscan & 2018 & jdr - nonlinear & DR & Python Implementation & \\
+multi view factorization autoencoder MAE & 2019 & jdr - nonlinear & DI & NA & \\
+deepomix & 2021 & jdr - nonlinear & DI & NA & \\
+MOFA & 2018 & jdr - linear - mf & UN, UN, SI, BM & R package, framework & \\
+IntNMF & 2017 & jdr - linear - mf & SI & R package & \\
+pathwaypca & 2020 & jdr - linear - mf & PA & R package & \\
+DIVERSE & 2021 & jdr - linear - mf & DR, BM & NA & \\
+PinsPlus & 2019 & jdr - linear & SI & R package & \\
+nemo clustering & 2019 & jdr - linear & SI & NA & \\
+MANAclust & 2021 & jdr - linear & SI & Webtool & \\
+iClusterPlus & 2013 & jdr - linear & SI & NA & \\
+MKpLMM & 2020 & jdr - linear & DR, CO & NA & \\
+MixOmics CCA & NA & jdr - correlation-based & UN, SI, BM & R package & \\
+Nem-Tar & 2021 & graph-based & UN, DI & NA & \\
+SNF & NA & graph-based & SI, SI & R package & \\
+absnf & NA & graph-based & SI, BM & R package & \\

@@ -150,19 +150,19 @@ v_set
 outdir2
 
 ens_ids2
-?network
+#?network
 blocks=c(1,2,3,4)[1:dims_x]
 
 #png(paste0(outdir2, 'diablo_plot',param_str, '.png'))
 network(MyResult.diablo, blocks = blocks,
-        color.node = c('darkorchid', 'brown1', 'lightgreen'), 
+        color.node = c('darkorchid', 'brown1', 'lightgreen', 'lightblue'), 
         cutoff = 0.85, save = 'jpeg', name.save = 'DIABLOnetwork')
 
 #dev.off()
 
 cutoff=0.85
 network(MyResult.diablo, blocks = blocks,
-        color.node = c('darkorchid', 'brown1', 'lightgreen'), 
+        color.node = c('darkorchid', 'brown1', 'lightgreen', 'lightblue'), 
         lwd.edge = 2,
         cutoff = cutoff, 
         cex.node.name	=0.8,

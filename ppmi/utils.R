@@ -187,11 +187,12 @@ load_all_se<-function(){
   #' @return se_rnas, se_mirnas 
 
 
-      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-
-
-      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+  
       if (!base::exists(quote(se_mirs))){
+        process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
+        source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+
+
         se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
 
@@ -200,10 +201,11 @@ load_all_se<-function(){
 
       # hist(head(assay(se_mirs_norm),10)[10:50])
 
-      process_mirnas=FALSE
-      source(paste0(script_dir, '/ppmi/config.R'))
+     
       #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
       if (!base::exists(quote(se_rnas)) ){
+         process_mirnas=FALSE
+         source(paste0(script_dir, '/ppmi/config.R'))
 
         se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       }
@@ -364,7 +366,8 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10, cell_corr_deseq=T
   
   #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
   
-  deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
+  #deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
+  deseq2Data <- DESeq(ddsSE)
 
   
   #deseq2Results<-results(deseq2Data)

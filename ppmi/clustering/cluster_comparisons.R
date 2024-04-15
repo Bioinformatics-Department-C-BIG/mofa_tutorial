@@ -15,7 +15,9 @@ cell_corr_deseq
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
+#se_rnas=NULL
 se_rnas
+se_mirs
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -30,7 +32,7 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clustering of the last visit
 
 # do not remove these because in the loading..
 #process_mirnas= FALSE
-
+process_mirnas
 
 
 if (process_mirnas){
@@ -41,7 +43,7 @@ if (process_mirnas){
   prefix='rnas_'
 
 }
-  print(prefix)
+se_mirs
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 
@@ -80,14 +82,14 @@ se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
 
 
-
+se_clusters$kmeans_grouping
 ## Outputs 
 # 1. DE files 
 # 2. Venns 
 # 3. Volcano plot
 # 4. Enrichment analysis 
 
-
+ 
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
@@ -164,14 +166,21 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
                   }else if ((formula_deseq_format)=='all'){
                     formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-                  } 
+                  }   else if((formula_deseq_format)=='age'){
+                    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE:COHORT+COHORT' # basic formula if no cell coreection
+
+                } 
+
               }else{
             # rnas
             if ((formula_deseq_format)=='n'){
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else if  ((formula_deseq_format)=='all'){
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-                }  
+                }else if((formula_deseq_format)=='age'){
+                    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT+COHORT' # basic formula if no cell coreection
+
+                }
            }
 
           }

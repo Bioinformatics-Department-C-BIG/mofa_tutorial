@@ -1,9 +1,9 @@
-install.packages('ggsankey')
+#install.packages('ggsankey')
 library(nycflights13)
 library('ggsankey')
-
-install.packages("remotes")
-remotes::install_github("davidsjoberg/ggsankey")
+library('ggplot2')
+#install.packages("remotes")
+#remotes::install_github("davidsjoberg/ggsankey")
 library(ggsankey)
 
 df <- mtcars %>%
@@ -57,3 +57,4 @@ ggplot(data = fly, aes(x = type, stratum = stratum, alluvium = alluvium, y = n))
     legend.position = "none"
   ) +
   scale_fill_viridis_d()
+

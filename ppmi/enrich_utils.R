@@ -1,7 +1,8 @@
-
+# 
+#gse_all_cls = gse_all_cls
 
 # Cluster profiler enrichment analysis utils
-calculate_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc', return_abs = FALSE){
+calculate_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), metric='logfc', return_metric = 'median'){
     # for a set of gene lists and their logFCs 
     # calculate average logFC
     #' @param gse_all_cls the gse_compare list of results
@@ -22,14 +23,18 @@ calculate_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), m
 
         genes_in_spec_path<-unlist(genes_in_path[paths %in% 'regulation of innate immune response'])
 
-        print(gene_list_cluster_1[genes_in_spec_path])
+       # print(gene_list_cluster_1[genes_in_spec_path])
         # logFC per pathway 
         log_fcs<-lapply(genes_in_path,function(genes){
-                if (return_abs){
+                if (return_metric == 'median_abs_logFC'){
                     return(median(abs(gene_list_cluster_1[genes]), na.rm=TRUE))
 
-                }else{
+                }else if(return_metric == 'median_logFC'){
                   return(median(gene_list_cluster_1[genes], na.rm=TRUE))
+
+                }else if(return_metric == 'sum_logFC') {              
+                  # combined logFC from Minadakis et.al  2021
+                 return(  sum(gene_list_cluster_1[genes])/length(gene_list_cluster_1[genes])) 
 
                 }
 

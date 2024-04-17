@@ -100,7 +100,7 @@ lv='V13_V14';
   
 
 times_sel = c('BL','V04', 'V06', 'V08')
-diff_variables_to_p
+
 cluster='NP3TOT_clust'
 
 df_plot_mol<-combined_bl_log_sel_mol
@@ -109,10 +109,10 @@ combined_bl_log_sel_mol$NP3TOT
 
 
 clust_name
-medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, 'NP3TOT_LOG_clust')
+medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, paste0(DIFF_VAR, '_clust'))
 medians_all_clusts$cluster
 
-
+medians_all_clusts
 
      # rownames(means_by_cluster)<-means_by_cluster$cluster
 

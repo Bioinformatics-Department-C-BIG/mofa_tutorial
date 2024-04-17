@@ -306,8 +306,7 @@ plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, sh
 
       
 
-    cl=2
-    df$cluster_m
+
     vsd_filt_genes = vsd_filt_genes[,!vsd_filt_genes$EVENT_ID %in% c('V04')]
     vsd_filt_genes_scaled<-vsd_filt_genes
 
@@ -346,6 +345,24 @@ plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, sh
 }
 
 
+  
+  filter_heatmap<-function(hm_scaled, df_ord,sel_pats=NULL, sel_pats_event_ids=NULL){
+    # some inds are NA deal with it by subseting by patient 
+    if (!is.null(sel_pats)){
+      sel_pats=sel_pats[!is.na(sel_pats)]
+      d_ind<-df_ord$PATNO %in% sel_pats
+      
+    }else{
+      sel_pats_event_ids=sel_pats_event_ids[!is.na(sel_pats_event_ids)]
+      d_ind<-df_ord$PATNO_EVENT_ID %in% sel_pats_event_ids
+    }
+    
+    hm_scaled_filt<-hm_scaled[,d_ind]
+    df_ord_filt<-df_ord[d_ind, ]
+    return(list(hm_scaled_filt, df_ord_filt))
+  }
+  
+
 
 
 plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
@@ -364,7 +381,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #' 
   #' 
  #ARRANGE
-  #vsd_filt=vsd
+#  vsd_filt=vsd
   
   #@draw_all_times=TRUE
   sigGenes = make.names(sigGenes)
@@ -374,9 +391,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   ## turn to sumbol? 
   
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-  
-  
-  dim(vsd_filt_genes)
+
   
   ### Add the annotations 
   meta_single<-colData(vsd_filt_genes)
@@ -385,7 +400,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   #get_symbols_vector
   ## HEATMAP OPTIONS 
-  cluster_cols=cluster_cols;   
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
   #fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
@@ -405,24 +419,13 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
 
   
   
-  filter_heatmap<-function(hm_scaled, df_ord,sel_pats=NULL, sel_pats_event_ids=NULL){
-    # some inds are NA deal with it by subseting by patient 
-    if (!is.null(sel_pats)){
-      sel_pats=sel_pats[!is.na(sel_pats)]
-      d_ind<-df_ord$PATNO %in% sel_pats
-      
-    }else{
-      sel_pats_event_ids=sel_pats_event_ids[!is.na(sel_pats_event_ids)]
-      d_ind<-df_ord$PATNO_EVENT_ID %in% sel_pats_event_ids
-    }
-    
-    hm_scaled_filt<-hm_scaled[,d_ind]
-    df_ord_filt<-df_ord[d_ind, ]
-    return(list(hm_scaled_filt, df_ord_filt))
+  if (remove_cn){
+   sel_pats<-df_ord[(df_ord$COHORT %in% c(1)), 'PATNO']; # filter by cohort?
+
+  }else{
+    sel_pats<-df_ord[(df_ord$COHORT %in% c(1,2)), 'PATNO']; # filter by cohort?
+
   }
-  
-  
-  sel_pats<-df_ord[(df_ord$COHORT ==1), 'PATNO']; 
   if (!is.null(sel_samples)){
     sel_pats<-sel_pats[sel_pats%in%sel_samples]
   }
@@ -506,15 +509,30 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   df1<-df_ord_V08; hm1<-hm_scaled_v08
   remove_from_hm<-c('PATNO_EVENT_ID', 'PATNO', 'COHORT')
-  hm_timepoint<-function(df1, hm1, tp_name, cluster_columns=TRUE){
+  hm_timepoint<-function(df1, hm1, tp_name, cluster_columns=cluster_cols){
     #'
     #'
     #'
     df1<-df1[, !colnames(df1) %in% remove_from_hm]
+  if (draw_all_times){
+    column_split = NULL
+  }else{
+    column_split=df1$cluster
+  }
+
+   # if ('cluster' %in% colnames(df1)){
+
+      #column_split = df1$cluster
+
+    #}else{
+     # column_split = NULL
+   # }
     ha1<-ComplexHeatmap::HeatmapAnnotation(df=df1)
     hm_t<-ComplexHeatmap::Heatmap(hm1, 
                                     top_annotation = ha1, 
                                     col=f1, 
+                                    column_split = column_split,
+
                                   cluster_columns=cluster_columns,
                                   
                                   name=tp_name)
@@ -522,18 +540,25 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   }
   
   ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08, tp_name='V08')
+ draw(ht_V08)
   ### padd V08 order to BL
 
-  order_v08<-colnames(ht_V08@matrix)[column_order(ht_V08)]
-  order_v08<-gsub('\\_.*','', order_v08)
+
+  if (draw_all_times){
+    # add baseline and match to V08
+
   
-  df_ord_BL_match<-df_ord_BL[match(order_v08,df_ord_BL$PATNO ),]
-  bl_names<-gsub('\\_.*','',colnames(hm_scaled_BL))
-  hm_scaled_BL_match<-hm_scaled_BL[,match(order_v08,bl_names )]
-  
-  
-  ht_BL<-hm_timepoint(df_ord_BL_match, hm_scaled_BL_match,tp_name='BL', cluster_columns=FALSE)
-  
+
+      order_v08<-colnames(ht_V08@matrix)[column_order(ht_V08)]
+      order_v08<-gsub('\\_.*','', order_v08)
+      
+      df_ord_BL_match<-df_ord_BL[match(order_v08,df_ord_BL$PATNO ),]
+      bl_names<-gsub('\\_.*','',colnames(hm_scaled_BL))
+      hm_scaled_BL_match<-hm_scaled_BL[,match(order_v08,bl_names )]
+      
+      
+      ht_BL<-hm_timepoint(df_ord_BL_match, hm_scaled_BL_match,tp_name='BL', cluster_columns=FALSE)
+  }
   #if (!is.null(df_ord_V06)){
   #  ht_V06<-hm_timepoint(df_ord_V06, hm_scaled_V06)
     
@@ -554,8 +579,10 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
     hboth<-ht_V08+anno
     
   }
-  
-  
+ # hboth
+ # factor_labels
+ length(factor_labels)
+ 
   if (!is.null(factor_labels)){
     hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE, main_heatmap='V08')
     
@@ -566,8 +593,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   #dev.off()
-  
-
+  hm_draw
   
   return(hm_draw)
 }

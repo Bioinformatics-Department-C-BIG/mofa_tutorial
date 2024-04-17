@@ -12,7 +12,7 @@
 #write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 #VISIT_COMP='V06'
 prefix='prot_'
-DIFF_VAR
+
 # TODO: run all timepoints!!!
 tissue_un_mofa<-ifelse(tissue_un=='Plasma', 'plasma', 'csf')
 tissue_un
@@ -23,7 +23,9 @@ if (prot_de_mode=='t'){
         top_fr=0.01
         tissue=TISSUE
         metric_p='P.Value';  T_p=0.001
-                metric_p<-'adj.P.Val'; T_p=0.05 
+        metric_p<-'adj.P.Val'; T_p=0.05 
+        metric_p<-'P.Value'; T_p=0.05 
+
 
 
 }else{
@@ -61,11 +63,10 @@ cluster_params_dir
 
 
 
-
+get_cluster_params_dir
 
 de_sig_all<-list()
 VISIT_COMP_SIG = 'V06'
-T_p
 metric_p
   for (cluster_id in clust_ids){
         for (VISIT_COMP_SIG in c('BL', 'V06', 'V04', 'V08')){
@@ -74,13 +75,12 @@ metric_p
                 outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP_SIG, '/' )
                 de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
                 de_results_prot<-read.csv(de_prot_file)
-                print(de_results_prot[,metric_p ])
+                print(de_results_prot[,metric_p])
                 
                 view=paste0('proteomics_', tolower(TISSUE))
                 # TODO: take the top MOFA proteins from moca 
               
                 #}
-                de_results_prot_sig<-de_results_prot[de_results_prot$P.Value<0.01,] # take only the union of all at the end 
                 de_results_prot_sig<-de_results_prot[de_results_prot[,metric_p]<T_p,] # take only the union of all at the end 
 
 
@@ -94,12 +94,14 @@ de_sig_all_top<-unique(unlist(de_sig_all))
 #colnames(de_results_prot)
 
 times<-c('BL', 'V04' ,'V06', 'V08')
+times<-c('BL', 'V04' , 'V08')
 
 
 
 #colnames(results_de)
 de_sig_all_top
 metric_p
+
 all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp,sig_only=sig_only,metric='logFC', de_sig_all_top = de_sig_all_top)
 all_clusts_proteins_logFC_all_times
 
@@ -113,17 +115,21 @@ dim(all_clusts_times_pval_df)
 dim(all_clusts_times_logFC_df)
 all_clusts_times_logFC_df
 x = all_clusts_times_logFC_df
-filter_si<-apply(all_clusts_times_pval_df,1, function(x){
-                any(x<0.05)})
 
-filter_si_names<-names(which(filter_si))
-filter_si_names
+# filter by pvalue? 
+#all_clusts_times_pval_df
+#filter_si<-apply(all_clusts_times_pval_df,1, function(x){
+#                any(x<0.05)})
 
-all_clusts_times_pval_df<-all_clusts_times_pval_df[rownames(all_clusts_times_pval_df) %in% filter_si_names,]
-all_clusts_times_logFC_df<-all_clusts_times_logFC_df[rownames(all_clusts_times_logFC_df) %in% filter_si_names,]
+#filter_si_names<-names(which(filter_si))
+#filter_si_names
+
+#all_clusts_times_pval_df<-all_clusts_times_pval_df[rownames(all_clusts_times_pval_df) %in% filter_si_names,]
+#all_clusts_times_logFC_df<-all_clusts_times_logFC_df[rownames(all_clusts_times_logFC_df) %in% filter_si_names,]
 
 
 colnames(all_clusts_times_logFC_df)
+all_clusts_times_logFC_df
 # add factor annotation 
 #top_proteins
 row_an<-as.factor(top_proteins$Factor[match(rownames(all_clusts_times_logFC_df),top_proteins$feature)])

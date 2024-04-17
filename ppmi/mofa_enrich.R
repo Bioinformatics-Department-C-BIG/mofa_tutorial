@@ -29,32 +29,7 @@ vars_by_factor_all
 dir.create(paste0(outdir, '/enrichment/'))
 mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
 
-#cors_pearson_l<-read.csv(paste0(outdir, '/covariate_corelations_pearson.csv'))
-cors_pearson_l<-correlate_factors_with_covariates(MOFAobject,
-                                  covariates = c('CONCOHORT', 'INEXPAGE'), 
-                                  plot = "r", 
-                                  return_data = TRUE
-                                  
-)
-cors_pval<-correlate_factors_with_covariates(MOFAobject,
-                                                  covariates = c('CONCOHORT','INEXPAGE'), 
-                                                  plot = "log_pval", 
-                                                  return_data = TRUE
-                                                  
-)
 
-cors<-cors_pval[,'CONCOHORT'] # TODO: LOAD or recalc
-cohort_cors<-cors_pearson_l[,'CONCOHORT'] # TODO: LOAD or recalc
-cors_pearson_l[,'INEXPAGE'] 
-cor_t=0.15
-sel_factors<-which(abs(cohort_cors)>cor_t)
-sel_factors
-cohort_cors[sel_factors]
-## select by correlation? 
-sel_factors<-which(cors>-log10(0.05))
-sel_factors
-
-vars_by_factor_all$r2_per_factor$group1[sel_factors,]
 
 ONT='BP'
 # todo: add ONT in results file settings 
@@ -98,9 +73,7 @@ mofa_enrich_rds<-paste0(outdir, '/enrichment/gse_results_mofa')
   
 #}else{
 ### ONLY run on the server as rstudio script , there is a problem in Rstudio
-sel_factors_to_enrich<-sel_factors
-sel_factors_to_enrich=1:15
-sel_factors_to_enrich<-sel_factors
+
 sel_factors_to_enrich=1:N_FACTORS
 #BiocManager::install("fgsea")
 
@@ -108,10 +81,15 @@ sel_factors_to_enrich=1:N_FACTORS
 just_load=FALSE
 just_load=FALSE
 
+dir.create(paste0(outdir, '/enrichment/rnas_/'))
+
 if (TRUE){
   
+
       for (factor in sel_factors_to_enrich){
-          for (view in c('RNA', 'proteomics_t_csf', 'proteomics_t_plasma')){
+          #for (view in c( 'RNA','proteomics_t_csf', 'proteomics_t_plasma')){
+          for (view in c( 'RNA')){
+
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
                     #factor=4;view='proteomics'
@@ -168,7 +146,7 @@ if (TRUE){
                     
                     
                     
-                    if (view=='proteomics_csf'|| view=='proteomics_plasma' ){
+                    if (view=='proteomics_t_csf'|| view=='proteomics_t_plasma' ){
                     
                     
                         run_ORA=TRUE

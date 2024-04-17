@@ -36,7 +36,8 @@ cell_corr_deseq=TRUE
 #  N_FACTORS=8
 #}
 VISIT=c('BL');
-
+TISSUE='CSF'
+tissue_un='Plasma'
 
 
 

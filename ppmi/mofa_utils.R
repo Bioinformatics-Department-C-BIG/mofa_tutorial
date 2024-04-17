@@ -684,3 +684,15 @@ plot_mofa_top_weighted_all_views<-function(MOFAobject_gs, nFeatures){
   }
 }
 
+get_factors_for_metric<-function(diff_var){
+
+  # get associated factors, remove the ones related to confounding
+  fact <- which(all_fs_diff[,diff_var])
+
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
+
+        }
+       
+        return(fact)
+        }

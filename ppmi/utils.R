@@ -576,7 +576,9 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
         
  }
 
+#se=proteomics_se
 ## Create the summarized experiment by selecting VISITS and cohorts 
+
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   
   #' Takes the raw file with all counts
@@ -588,27 +590,30 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
 #  sel_coh
-sel_sub_coh
   
-  if (length(sel_subcoh)==1 && sel_subcoh==FALSE){
+  if (sel_subcoh==FALSE){
         se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
     
   }else{
       se_visit<-se[,se$EVENT_ID %in% VISIT]
-
+      ids = c()
+      ids_control = c()
       if (1 %in% sel_coh){ 
         ids<-c(se_visit$INEXPAGE %in% sel_subcoh ) ## filter the ids in parkinsons 
       }
       if (2 %in% sel_coh){
-        ids<- c(ids | se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+        ids_control<-c( se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+   
         
       }
-      se_filt<-se_visit[, ids]
+
+      ids_all<- c(ids | ids_control) # if in pd or hc take it 
+
+      se_filt<-se_visit[, ids_all]
       
       
     
   }
-     
   dim(se_filt)     
 
   
@@ -2299,9 +2304,9 @@ attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
 ### DE RESULTS  ####
 # rnas
 
-  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  
-          prefix, cluster_id ){
+  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id ){
     #' returns the deseq results pathway for 
+    #' for now works for genes and mirs? 
     #' @param VISIT
     #' @param formula_deseq_format
     #' @param prefix
@@ -2312,14 +2317,19 @@ attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
 
 
 # read top of 3 clusters # get top genes union by pvalue
-  sel_vis=c('BL', 'V06','V08' )
+sel_vis=c('BL', 'V06','V08' )
 
 get_de_rnas_union<-function(sel_vis){
-          sel_clusts = c(1,2,3)
+  #' returns the significant molecules for each MOFA cluster 
+  #' finds the path with the de results file, reads it , and checks for significance 
+  #' @param sel_vis: which visits to return 
+      # clusters to return
+      sel_clusts = c(1,2,3)
 
 
       de_rnas_files<- sapply(sel_vis, function(sel_vis_1){
         sapply(sel_clusts, function(cl_id){
+          # get the paths for all visits all clusters 
             get_de_results_path(deseq_params_all, VISIT=sel_vis_1, formula_deseq_format,  prefix, cluster_id = cl_id)
             
         })
@@ -2364,10 +2374,18 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
                 match(unique(top_proteins$feature), de_results_prot$X)
 
                 
-                de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+
+                if (sig_only){
+                    de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = de_AND_in_factor
+                }else{
+                    #de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = top_proteins$feature
+
+                }
                 
 
-                top_factor_feat<-match(unique(de_AND_in_factor), de_results_prot$X)
+                top_factor_feat<-match(unique(proteins_to_use), de_results_prot$X)
                 top_factor_feat<-top_factor_feat[!is.na(top_factor_feat)]
                 de_results_prot_top<-de_results_prot[top_factor_feat,]
 

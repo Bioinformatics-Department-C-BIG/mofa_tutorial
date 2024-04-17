@@ -16,18 +16,7 @@ PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_m
 MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 
 
-get_factors_for_metric<-function(diff_var){
 
-  # get associated factors, remove the ones related to confounding
-  fact <- which(all_fs_diff[,diff_var])
-
-        if (remove_cell_factors){
-          fact<-fact[!(fact %in% fact_neutro_pd)]
-
-        }
-       
-        return(fact)
-        }
 
 
 #### Create the MOFA clusters with the same K ####
@@ -151,7 +140,7 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 
 #other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
 
-diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
+diff_variables_to_p=c('NP2PTOT', 'NP3TOT_LOG', 'NP2PTOT_LOG',  'NP3TOT',  'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'

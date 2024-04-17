@@ -185,199 +185,212 @@ gse_compare_cl=gse_compare_all_vis[[1]]
 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
 metric_p = 'p.adjust'
-metric='NES'
-metric = 'logFC'
 
+metric = 'logFC'
+metric='NES'
 # holds all timepoints all, clusters 
 #
 padjust_hm<-1
 
 
+return_metrics = c('sum_logFC', 'median_abs_logFC', 'median_logFC')
+return_metric = 'sum_logFC'
 
-return_abs = FALSE
-extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
-  #' @param 
-  #' @param
-  #' gse_compare_cl<-[[cluster_id]]
-  #' @param gse_compare_all_vis a gsea compare result object from cluster profiler with all visits and all clusters 
-  #' @return merged_df_lfc a dataframe with logFC/NES for all timepoints (n paths x n timepoints)
-  #' 
-  #' 
-  list_names<-names(gse_compare_all_vis)
-    i=3
-    log_fcs_all_tps_all_clusts <- lapply(1:length(gse_compare_all_vis), function(i){
+for (return_metric in return_metrics ){
 
 
 
-      gse_compare_cl = gse_compare_all_vis[[i]]
-      gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
-
-      log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls , return_abs = return_abs) # calculates the average logFC per pathway
-      merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) , padjust_cutoff = padjust_hm)
-      
-
-    
-    colnames(merged_df_lfc) <- mapvalues(colnames(merged_df_lfc), from = names(EVENT_MAP_YEAR), 
-          to =unlist(EVENT_MAP_YEAR ))
-
-      # add cluster name to the time point to merge 
-      colnames(merged_df_lfc)<-paste0(colnames(merged_df_lfc), '_', list_names[[i]]) 
-      colnames(merged_df_lfc)[1]<-'Description'
-
-      return(merged_df_lfc)
-      })
-      log_fcs_all_tps_all_clusts
-      names(log_fcs_all_tps_all_clusts)<-list_names
-      # merge all dfs for all clusters
-      merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Description', all=TRUE), log_fcs_all_tps_all_clusts)
+    extract_pathway_metrics_clusters<-function(gse_compare_all_vis, metric){
+      #' @param 
+      #' @param
+      #' gse_compare_cl<-[[cluster_id]]
+      #' @param gse_compare_all_vis a gsea compare result object from cluster profiler with all visits and all clusters 
+      #' @return merged_df_lfc a dataframe with logFC/NES for all timepoints (n paths x n timepoints)
+      #' 
+      #' 
+      list_names<-names(gse_compare_all_vis)
+        i=3
+        log_fcs_all_tps_all_clusts <- lapply(1:length(gse_compare_all_vis), function(i){
 
 
-      return(merged_df_all_tps_all_clusts)
+
+          gse_compare_cl = gse_compare_all_vis[[i]]
+          gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
+
+          log_fcs_all_tps_list<-calculate_log_fcs(gse_all_cls , return_metric = return_metric) # calculates the average logFC per pathway
+          merged_df_lfc<-get_pathway_metrics_df(log_fcs_all_tps_list,metric=metric, clust_names=names(gse_all_cls) , padjust_cutoff = padjust_hm)
+          
+
+        
+        colnames(merged_df_lfc) <- mapvalues(colnames(merged_df_lfc), from = names(EVENT_MAP_YEAR), 
+              to =unlist(EVENT_MAP_YEAR ))
+
+          # add cluster name to the time point to merge 
+          colnames(merged_df_lfc)<-paste0(colnames(merged_df_lfc), '_', list_names[[i]]) 
+          colnames(merged_df_lfc)[1]<-'Description'
+
+          return(merged_df_lfc)
+          })
+          log_fcs_all_tps_all_clusts
+          names(log_fcs_all_tps_all_clusts)<-list_names
+          # merge all dfs for all clusters
+          merged_df_all_tps_all_clusts <-Reduce(function(x, y) merge(x, y,  by='Description', all=TRUE), log_fcs_all_tps_all_clusts)
+
+
+          return(merged_df_all_tps_all_clusts)
+    }
+
+
+
+    merged_df_all_tps_all_clusts <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric)
+
+    merged_df_all_tps_all_clusts_pvals <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric=metric_p)
+
+    dim(merged_df_all_tps_all_clusts_pvals)
+    colnames(merged_df_all_tps_all_clusts_pvals)[1]
+    colnames(merged_df_all_tps_all_clusts)[1]
+
+
+    # get a merged df per cluster 
+    use_top_mofa=TRUE
+
+
+    logFC_merged_df2<-merged_df_all_tps_all_clusts
+    use_mofa_paths = TRUE
+
+    if (use_mofa_paths){
+      top_paths = 40
+
+      top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
+        dim(top_paths_all_factors)
+
+      top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts,]
+      dim(top_paths_all_factors)
+      selected_paths<-top_paths_all_factors$Description
+
+
+    }else{
+      top_paths=15
+      top_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis,  top_paths = top_paths,sig_time=sig_time))
+
+      selected_paths<-top_sig_all_clusts
+    }
+
+    # filter top 
+    logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
+    logFC_merged_df2[is.na(logFC_merged_df2)]<-0
+    rownames(logFC_merged_df2)<-logFC_merged_df2$Description
+    logFC_merged_df2$Description<-NULL
+
+
+
+
+    # same matrix but with pvals to overlay 
+    pvals_merged_df2<-merged_df_all_tps_all_clusts_pvals[merged_df_all_tps_all_clusts_pvals$Description %in% selected_paths,]
+    pvals_sign_merged_df2<-pvals_merged_df2
+    rownames(pvals_sign_merged_df2)<-pvals_sign_merged_df2$Description
+    pvals_sign_merged_df2$Description<-NULL
+    pvals_sign_merged_df2
+    pvals_merged_df2$Description=NULL
+    pvals_merged_df2
+    pvals_sign_merged_df2[pvals_merged_df2<0.05]<-'*'
+    pvals_sign_merged_df2[pvals_merged_df2<0.01]<-'**'
+    pvals_sign_merged_df2[pvals_merged_df2<0.001]<-'***'
+
+    pvals_sign_merged_df2[pvals_merged_df2>0.05]<-''
+    pvals_sign_merged_df2[is.na(pvals_merged_df2)]<-''
+    dim(pvals_sign_merged_df2)
+    rownames(pvals_sign_merged_df2)
+
+
+
+
+
+    ## TODO: attach metrics of age_scaled, sex, NP3TOT 
+
+    # TODO: select by diff var
+
+    combined_bl_log_sel_mol[, clust_name]
+    clust_name = paste0(DIFF_VAR, '_clust')
+    medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
+
+
+    medians_all_clusts$year<-mapvalues(medians_all_clusts$EVENT_ID, names(EVENT_MAP_YEAR), 
+                                        to=unlist(EVENT_MAP_YEAR))
+
+    medians_all_clusts$year_clust<-paste0(medians_all_clusts$year,'_',medians_all_clusts$cluster )
+    colnames(logFC_merged_df2)
+
+    medians_all_clusts
+
+    graphics.off()
+
+    enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
+    enrich_compare_path_all_clusts
+
+    fname= paste0(enrich_compare_path_all_clusts,'clall_' , metric,'mofa_',as.numeric(use_mofa_paths),'_', top_paths,'_abs_',return_metric, '_heatmap.png')
+    fname
+    row_an<-top_paths_all_factors[match( rownames(logFC_merged_df2), top_paths_all_factors$Description  ), ] 
+    row_an2<-as.factor(row_an$factor); names(row_an2)<-row_an$Description
+
+    row_ha = rowAnnotation( factor=row_an2)
+
+
+    xminxmax<-get_limits(logFC_merged_df2)
+    xminxmax
+    #col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
+
+
+    dir.create(paste0(deseq_params_all, '/all_time/enr/'), recursive = TRUE)
+    length(rep(1:length(clusters_indices), each=3))
+
+
+
+
+
+    medians_all_clusts_matched<-medians_all_clusts[match(colnames(logFC_merged_df2), medians_all_clusts$year_clust),]
+    medians_all_clusts_matched
+
+
+    metric
+    ?HeatmapAnnotation
+    ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, DIFF_VAR = medians_all_clusts_matched[, DIFF_VAR], 
+    annotation_label  = c('AGE', DIFF_VAR))
+
+
+    logFC_merged_df2['regulation of innate immune response', ]
+    ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
+        show_rownames=TRUE, 
+        column_split = rep(1:length(clusters_indices), each=length(times_sel)), 
+        right_annotation = row_ha, 
+        cluster_cols = FALSE,
+        top_annotation=ha,
+
+        
+        # col = col_fun, 
+
+        # heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ', metric)), 
+        heatmap_legend_param  = list(direction = "horizontal", title=paste0( return_metric)), 
+
+          display_numbers = as.matrix(pvals_sign_merged_df2)
+        )
+    png(fname, width=30*100, height=30*100, res=300)
+
+
+        #
+    draw(ch, heatmap_legend_side="bottom", 
+      annotation_legend_side  = "bottom", 
+      merge_legend = TRUE,
+        padding = unit(c(2, 2, 2, 70), "mm"))
+    #ch
+      #  title = paste(metric, 'p-adj:', padjust_hm))
+    #draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
+    dev.off()
+
+    draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
+
+
 }
-
-
-
-merged_df_all_tps_all_clusts <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric)
-
-merged_df_all_tps_all_clusts_pvals <-  extract_pathway_metrics_clusters(gse_compare_all_vis, metric=metric_p)
-
-dim(merged_df_all_tps_all_clusts_pvals)
-colnames(merged_df_all_tps_all_clusts_pvals)[1]
-colnames(merged_df_all_tps_all_clusts)[1]
-
-
-# get a merged df per cluster 
-use_top_mofa=TRUE
-
-
-logFC_merged_df2<-merged_df_all_tps_all_clusts
-use_mofa_paths = TRUE
-
-if (use_mofa_paths){
-  top_paths = 35
-
-  top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
-    dim(top_paths_all_factors)
-
-  top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts,]
-   dim(top_paths_all_factors)
-  selected_paths<-top_paths_all_factors$Description
-
-
-}else{
-  top_paths=15
-  top_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis,  top_paths = top_paths,sig_time=sig_time))
-
-  selected_paths<-top_sig_all_clusts
-}
-
-# filter top 
-logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
-logFC_merged_df2[is.na(logFC_merged_df2)]<-0
-rownames(logFC_merged_df2)<-logFC_merged_df2$Description
-logFC_merged_df2$Description<-NULL
-
-
-
-
-# same matrix but with pvals to overlay 
-pvals_merged_df2<-merged_df_all_tps_all_clusts_pvals[merged_df_all_tps_all_clusts_pvals$Description %in% selected_paths,]
-pvals_sign_merged_df2<-pvals_merged_df2
-rownames(pvals_sign_merged_df2)<-pvals_sign_merged_df2$Description
-pvals_sign_merged_df2$Description<-NULL
-pvals_sign_merged_df2
-pvals_merged_df2$Description=NULL
-pvals_merged_df2
-pvals_sign_merged_df2[pvals_merged_df2<0.05]<-'*'
-pvals_sign_merged_df2[pvals_merged_df2<0.01]<-'**'
-pvals_sign_merged_df2[pvals_merged_df2<0.001]<-'***'
-
-pvals_sign_merged_df2[pvals_merged_df2>0.05]<-''
-pvals_sign_merged_df2[is.na(pvals_merged_df2)]<-''
-dim(pvals_sign_merged_df2)
-rownames(pvals_sign_merged_df2)
-
-
-
-
-
-## TODO: attach metrics of age_scaled, sex, NP3TOT 
-
-# TODO: select by diff var
-
-combined_bl_log_sel_mol[, clust_name]
-medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
-
-
-medians_all_clusts$year<-mapvalues(medians_all_clusts$EVENT_ID, names(EVENT_MAP_YEAR), 
-                                    to=unlist(EVENT_MAP_YEAR))
-
-medians_all_clusts$year_clust<-paste0(medians_all_clusts$year,'_',medians_all_clusts$cluster )
-colnames(logFC_merged_df2)
-
-medians_all_clusts
-
-graphics.off()
-
-enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
-enrich_compare_path_all_clusts
-
-fname= paste0(enrich_compare_path_all_clusts,'clall_' , metric,'mofa_',as.numeric(use_mofa_paths),'_', top_paths, '_heatmap.png')
-fname
-row_an<-top_paths_all_factors[match( rownames(logFC_merged_df2), top_paths_all_factors$Description  ), ] 
-row_an2<-as.factor(row_an$factor); names(row_an2)<-row_an$Description
-
-row_ha = rowAnnotation( factor=row_an2)
-
-
-xminxmax<-get_limits(logFC_merged_df2)
-xminxmax
-#col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
-
-
-dir.create(paste0(deseq_params_all, '/all_time/enr/'), recursive = TRUE)
-length(rep(1:length(clusters_indices), each=3))
-
-
-
-
-
-medians_all_clusts_matched<-medians_all_clusts[match(colnames(logFC_merged_df2), medians_all_clusts$year_clust),]
-medians_all_clusts_matched
-
-
-metric
-ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
-
-logFC_merged_df2['regulation of innate immune response', ]
-ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
-    show_rownames=TRUE, 
-    column_split = rep(1:length(clusters_indices), each=length(times_sel)), 
-    right_annotation = row_ha, 
-    cluster_cols = FALSE,
-    top_annotation=ha,
-
-    
-     # col = col_fun, 
-
-    heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ',metric)), 
-      display_numbers = as.matrix(pvals_sign_merged_df2)
-    )
-png(fname, width=30*100, height=30*100, res=300)
-
-
-    #
-draw(ch, heatmap_legend_side="bottom", 
-  annotation_legend_side  = "bottom", 
-  merge_legend = TRUE,
-    padding = unit(c(2, 2, 2, 70), "mm"))
-#ch
-  #  title = paste(metric, 'p-adj:', padjust_hm))
-#draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
-dev.off()
-
-draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
-
 
 
 

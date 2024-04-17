@@ -58,7 +58,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 # source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+#source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
  
 formula_deseq_format='n'
@@ -79,25 +79,25 @@ TISSUE='Plasma'
 DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 
-diff_vars<-c( 'NP3TOT_LOG', 'moca' ,'NP2PTOT_LOG')
-diff_vars<-c( 'NP3TOT_LOG', 'sft')
+diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP2PTOT_LOG')
+diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca')
 
 DIFF_VAR= 'updrs3_score_on_LOG'
-DIFF_VAR = 'NP3TOT_LOG'
+DIFF_VAR = 'sft'
 
 
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
 
-formula_deseq_format='n' # so far we only run all for mirnas 
 formula_deseq_format = 'age'
 formula_deseq_format='age' # so far we only run all for mirnas 
+formula_deseq_format='n' # so far we only run all for mirnas 
 
 ONT='BP'
 cell_corr_deseq = TRUE;
 process_mirnas = FALSE; 
-cell_corr_deseq=TRUE
+cell_corr_deseq=FALSE
 VISIT_COMP='BL'
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
@@ -116,7 +116,7 @@ run_all=TRUE
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
-        for (cell_corr_deseq in c(  TRUE)){
+        for (cell_corr_deseq in c(FALSE,  TRUE)){
 
 
                 for (VISIT_COMP in vis_comps){
@@ -127,6 +127,9 @@ if (run_all){
 
 
         }
+        source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+
+
         source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time.R'))
 
 }
@@ -143,8 +146,9 @@ if (run_all){
 #prefix='prot_'
 #DIFF_VAR
 diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
-diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
+diff_vars<-c( 'NP2PTOT_LOG')
 
+source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
 
 
@@ -159,17 +163,17 @@ prot_de_mode<-'u'
 
 diff_vars<-c('NP3TOT_LOG')
 
-DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'NP3TOT_LOG'
+DIFF_VAR= 'NP2PTOT_LOG'
 
 TISSUE='Plasma';
 
 TISSUE='Plasma';
 
 
-TISSUE='CSF'
+TISSUE='Plasma'
 tissue_un<-'Plasma'
-prot_de_mode = 'u';
+prot_de_mode = 't';
 
 tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 
@@ -179,6 +183,8 @@ DIFF_VAR;tissue_un;prot_de_mode
 sig_only =FALSE
 VISIT_COMP='V06'
 DIFF_VAR
+
+# targeted plasma: not enough samples from cluster 1
     for (DIFF_VAR in c(diff_vars)){
 
         for (VISIT_COMP in visit_comps){
@@ -199,6 +205,7 @@ DIFF_VAR
 
 # Run the proteins too 
 # Concatenates all time points 
+
 
 
 

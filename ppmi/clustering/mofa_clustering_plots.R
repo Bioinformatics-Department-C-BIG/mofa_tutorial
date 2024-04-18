@@ -31,7 +31,7 @@ paste0(DIFF_VAR,'_BL')
 ### Select group for plotting
 met<-samples_metadata(MOFAobject_sel)
 sel_group=4
-
+  
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
@@ -42,18 +42,22 @@ facet_rows = 2
 
 
 
+library(gridExtra)
 
 
+grid_plots = list()
 #### Boxplots ####
-clust_vars=c('NP3TOT_LOG')
+clust_vars=c('NP2PTOT_LOG','NP3TOT_LOG')
 
 y_clust = 'NP3TOT_LOG'
-
+clust_vars
 #sapply(clust_vars, function(y_clust){
 
   for (y_clust in  clust_vars){
   clust_name = paste0(y_clust, '_clust')
   ## check if there are clusters for this variable
+
+
 
 
 
@@ -78,7 +82,7 @@ y_clust = 'NP3TOT_LOG'
           #### medians write csv ####
           # 1. anova -  which are the significant variables? 
         library(rstatix)
-        diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa', 'Neutrophil.Lymphocyte', 'SEX')
+        diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa','abeta', 'Neutrophil.Lymphocyte', 'SEX')
         col_data<-samples_metadata(MOFAobject_sel)[c(diff_variables_box,clust_name,'PATNO', colnames(estimations))]
 
 
@@ -280,9 +284,12 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
     variates_to_p = intersect(pvals_sig_any_true_names, aov_sig_names_cells)
 
+    facet_rows=1
+
+     # KEEP THE SIGNIFICANT only 
     bn_all_fname_sig<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'_sig',  '.png')
     variates_to_p  = aov_sig_names[!aov_sig_names %in% c(colnames(estimations), 'scopa', 'NP3TOT_V14')]
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
+    bn_all_sig = boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
      bn=bn_all_fname_sig, facet_rows = facet_rows,     height=4,
 
     text='')
@@ -292,11 +299,23 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
   variates_to_p = variates_to_p[!variates_to_p %in% c('Basophils.LD', 'T.CD8.Naive', 'T.gd.non.Vd2')]
   facet_rows = 1
     bn_all_fname_sig<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'_cells_sig',  '.png')
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
+    bn_all_cells_sig<-boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
     height=4,
-     bn=bn_all_fname_sig, facet_rows = facet_rows, 
+     bn=bn_all_fname_sig, facet_rows = 1, 
     text='', plot_box=FALSE, add_caption = FALSE)
+    bn_all_cells_sig
 
+
+#4+length(c(variates_to_p))/facet_rows
+
+
+    
+    grid_plot = ggarrange(bn_all_sig,bn_all_cells_sig ,common.legend = TRUE, ncol=2)
+    grid_plot
+
+
+    grid_plots[[y_clust]] = grid_plot
+    
 
 
 
@@ -304,7 +323,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
   }
 
-
+ grid_plots[[y_clust]] 
 
 # 2. Plot the clusters on the factor plot  ####
 #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score

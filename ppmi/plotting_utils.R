@@ -763,6 +763,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   print(bn)
   ggsave(bn, plot = p,dpi=300, width=width, height = height, units='in')
   graphics.off()
+
+  return(p)
   ## TODO: WILCOX TEST BY GROUP
   
   

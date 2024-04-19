@@ -261,23 +261,30 @@ lv_to_plot = 'V08'
 to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 lv_to_plot = 'V14'
 
-to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
-clust_metric='updrs3_score_on'
-clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'sft')
+to_plot=c('NP3TOT')
 
+to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
+
+clust_metric='updrs3_score_on'
+#clust_vars=c('COHORT','moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'sft' )
+#clust_vars=c('NP3TOT_diff_V14')
 
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
 library(ggpubr)
 
  to_plot
- clust_metric = 'NP3TOT_LOG'
-  for (clust_metric in clust_metrics){
+ list_plots = list()
+ clust_metric = 'COHORT'
+ y
+ clust_metric
+  for (clust_metric in clust_vars){
     for (y in to_plot){
 
       clust_name<-paste0(clust_metric, '_clust')
       fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
+      #fact
       cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
-
+      cluster_params
 
       dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
@@ -298,9 +305,10 @@ library(ggpubr)
     # create the publication ready combined plot with visit 8 and all visits  #### 
       e1<-list_plots[[clust_metric]][['NP2PTOT']]
       e2<-list_plots[[clust_metric]][['NP3TOT']]
+      e3<-list_plots[[clust_metric]][['sft']]
 
      
-      g2 = ggarrange(e1,e2 ,common.legend = TRUE, ncol=2)
+      g2 = ggarrange(e1,e2,e3 ,common.legend = TRUE, ncol=3)
 
 
 
@@ -308,10 +316,10 @@ library(ggpubr)
 
       pall<-grid.arrange(grid_plots[[clust_metric]],g2,  ncol=1)
       
-      fname_all<-paste0(outdir, cluster_params, '/tr/clinical/traj_')
+      fname_all<-paste0(outdir, cluster_params, '/tr/clinical/traj_', clust_metric)
       # TODO: select the time variables that we want to extract 
       print(paste0(fname_all, '_all.jpeg'))
-      ggsave(paste0(fname_all, '_all.jpeg'),plot=pall, width=10, height=10)
+      ggsave(paste0(fname_all, '_all.jpeg'),plot=pall, width=12, height=10)
 
 
 

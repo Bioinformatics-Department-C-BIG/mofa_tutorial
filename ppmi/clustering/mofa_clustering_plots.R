@@ -35,11 +35,10 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
+clust_vars<-c('COHORT','NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
 
-get_factors_for_metric('updrs3_score_on')
+get_factors_for_metric('COHORT')
 facet_rows = 2
-
 
 
 library(gridExtra)
@@ -47,10 +46,19 @@ library(gridExtra)
 
 grid_plots = list()
 #### Boxplots ####
-clust_vars=c('NP2PTOT_LOG','NP3TOT_LOG')
 
 y_clust = 'NP3TOT_LOG'
 clust_vars
+clust_vars = c('COHORT')
+clust_vars<-c('COHORT','NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
+clust_vars=c( 'NP3TOT_diff_V14', 'NP3TOT_V14', 'NP2PTOT_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_LOG','NP3TOT_LOG', 'sft', 'moca')
+
+
+clust_vars=c('NP3TOT_diff_V14', 'NP2PTOT_diff_V14' )
+clust_vars = c( 'NP3TOT_diff_V14',  'NP3TOT_V14', 'sft_V14', 'sft_V12')
+clust_vars=c( 'sft', 'moca', 'scopa', 'NP3TOT_V14', 'NP2PTOT_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_LOG','NP3TOT_LOG')
+
+colnames(met)
 #sapply(clust_vars, function(y_clust){
 
   for (y_clust in  clust_vars){
@@ -77,6 +85,7 @@ clust_vars
 
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+    dir.create(cluster_params_dir, recursive=TRUE)
 
 
           #### medians write csv ####
@@ -528,7 +537,7 @@ for (clust_id in c(1,2,3)){
       dev.off()
 }
 
-do_name
+
 
 
 

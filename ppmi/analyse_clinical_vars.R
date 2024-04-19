@@ -270,11 +270,12 @@ colnames(df_log)<-paste0(colnames(df_log),'_LOG')
 df_log<-cbind(df_log, df_log2)
 
 combined_new<-cbind(combined, df_log)
+colnames(df_log)
 
 metadata_output_all<-paste0(output_files, 'combined_log',  '.csv')
 
 
-combined_new
+combined_new$NP3TOT_LOG
 
 #### ADD FUTURE VISIT #####
 
@@ -288,7 +289,7 @@ combined_new
 ## here draw from the original..? 
 
 clinical_scales<-c("NP3TOT" ,  "NP2PTOT"  ,"RBD_TOT",  "MCATOT" ,  "SCAU_TOT", 'NP3TOT_LOG', 'NP2PTOT_LOG', 'updrs3_score', 'updrs2_score', 
-                   'updrs3_score_on', 'updrs2_score_LOG',
+                   'updrs3_score_on', 'updrs2_score_LOG', 'NP3TOT_LOG', 'NP2PTOT_LOG', 
                    'updrs3_score_LOG', 'updrs3_score_on_LOG' )
 selected_future_vars<-c('PATNO', 'EVENT_ID', 'PDMEDYN', clinical_scales)
 
@@ -297,7 +298,7 @@ cols_fut_visit<-colnames(curated_total_new_cols) # could subselect SOME variable
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V10');
 c(cols_fut_visit, selected_future_vars) %in% colnames(combined_new)
 combined_future_V10<- fetch_metadata_by_patient_visit(patno_event_ids_future, combined=combined_new)[,c(cols_fut_visit, selected_future_vars)];
-
+'NP3TOT_LOG' %in% colnames(combined_future_V10)
 
 #imaging_variables_diff
 patno_event_ids_future<-paste0(combined_new$PATNO, '_', 'V12');
@@ -357,4 +358,12 @@ combined_new<-cbind(combined_new,combined_BL_all )
 
 write.csv2(combined_new,metadata_output_all, row.names = FALSE)
 #combined_bl_log<-combined_new
+
+#combined_new$NP2PTOT_LOG_diff_V14
+#combined_new[,'NP2PTOT_LOG_diff_V14']
+
+
+
+
+
 

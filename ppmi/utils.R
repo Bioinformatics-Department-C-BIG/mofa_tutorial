@@ -46,6 +46,7 @@ EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',
 #diff_vars<-diff_vars[!grepl('clust',diff_vars)]
 #diff_vars
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
+                          'NP3TOT_diff_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V10', 'NP3TOT_diff_V10','sft_V14',
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
                          'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
@@ -515,7 +516,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
 
  imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
                            'updrs2_score', 'updrs2_score_LOG', 'moca' , 'scopa')
- scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+ scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
  
  
  get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){

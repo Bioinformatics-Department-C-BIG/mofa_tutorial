@@ -56,7 +56,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-# source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 #source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
@@ -80,12 +80,15 @@ DIFF_VAR = 'NP2PTOT_LOG'
 DIFF_VAR = 'moca'
 
 diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP2PTOT_LOG')
-diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca')
 
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'sft'
+diff_vars<-c( 'COHORT')
+diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca', 'NP3TOT_LOG_diff_V14', 'NP3TOT_LOG_V14')
+diff_vars<-c( 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V14', 'sft_V12', 'NP2PTOT_V14')
 
-
+DIFF_VAR = 'COHORT'
+DIFF_VAR = 'NP3TOT_LOG_diff_V14'
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
@@ -146,7 +149,7 @@ if (run_all){
 #prefix='prot_'
 #DIFF_VAR
 diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
-diff_vars<-c( 'NP2PTOT_LOG')
+
 
 source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
 
@@ -205,6 +208,14 @@ DIFF_VAR
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
 
 
 

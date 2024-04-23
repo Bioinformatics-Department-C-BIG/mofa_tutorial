@@ -5,6 +5,9 @@ to_plot<-c(scale_vars_diff)
 all_event_ids_p<-c('BL','V04','V06','V08','V10','V12','V14','V16', 'V18')
 all_event_ids_p<-c('BL','V08','V10','V12','V14','V16', 'V18')
 
+all_event_ids_match_molecular<-c('BL','V04','V06' ,'V08')
+
+
 ## metadata to select PATNOs FROM 
 
 mofa_filter<-TRUE
@@ -20,14 +23,20 @@ sm_sel=sm
 
 
 ### obtain all patient event ids to get one row per patient! 
-patno_event_ids = sapply(all_event_ids_p, function(event_id){
+patno_event_ids = unlist(sapply(all_event_ids_p, function(event_id){
                   return(paste0(sm_sel$PATNO,'_', event_id ))
-})
-  
-patno_event_ids=unlist(patno_event_ids)
+}))
+
+patno_event_ids_mol = unlist(sapply(all_event_ids_match_molecular, function(event_id){
+                  return(paste0(sm_sel$PATNO,'_', event_id ))
+}))
+
 # select data for the requested patiennts 
 #combined_bl_log<-combined_new
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids ) # todo - filter selection on or off 
+
+combined_bl_log_sel_mol<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids_mol ) # todo - filter selection on or off 
+
 
 
 curated_mofa<-combined_bl_log_sel %>%
@@ -36,8 +45,8 @@ curated_mofa<-combined_bl_log_sel %>%
 
 require(plyr)
 combined_bl_log_sel$months <-as.numeric( mapvalues(combined_bl_log_sel$EVENT_ID, 
-                               from= names(EVENT_MAP), 
-                               to=unlist(EVENT_MAP, use.names=FALSE)))
+                               from= names(EVENT_MAP_YEAR_NUM), 
+                               to=unlist(EVENT_MAP_YEAR_NUM, use.names=FALSE)))
 
 lv_to_plot='V12'
 combined_bl_log_sel$PDMEDYN_V14
@@ -52,23 +61,16 @@ combined_bl_log_sel<-cbind(combined_bl_log_sel,estimations_matched_all_combined)
 # 1. Select the patients eg. by mofa groups 
 df_to_attach<-combined_bl_log_sel
 
+names(all_clusts_mofa)
 
-for (diff_var in names(all_clusts_mofa)){
-
-        if (!is.null(all_clusts_mofa[[diff_var]])){
-   
-        clust_name = paste0(diff_var, '_clust')
-         #print(clust_name)
-        clusters_ids<-all_clusts_mofa[[diff_var]]
-        names_patnos<-gsub('\\_.*','',rownames(clusters_ids))
-        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names_patnos )]
-        
-        df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
-       # print(df_to_attach[,clust_name])
-        }
-}
+df_to_attach<-attach_cluster_ids(df_to_attach, all_clusts_mofa)
+combined_bl_log_sel_mol<-attach_cluster_ids(combined_bl_log_sel_mol, all_clusts_mofa)
+combined_bl_log_sel_mol$NP3TOT_clust
 
 combined_bl_log_sel<-df_to_attach
+
+
+
 
 combined_bl_log_sel$VISIT=factor(combined_bl_log_sel$EVENT_ID)
 combined_bl_log_sel$month=factor(combined_bl_log_sel$months)
@@ -77,9 +79,7 @@ df_plot<-combined_bl_log_sel
 ## fetch grouping from MOFA 
 
 df_plot_2k<-df_plot
-df_plot_2k$COHORT
 
-df_plot_2k$NP2PTOT_LOG_clust
 
 df_plot
 PDSTATE_SEL=NULL
@@ -98,7 +98,26 @@ lv='V13_V14';
   clust_name='COHORT_DEFINITION'
     clust_name='INEXPAGE'
   
-  df_plot_2k$PATNO
+
+times_sel = c('BL','V04', 'V06', 'V08')
+
+cluster='NP3TOT_clust'
+
+df_plot_mol<-combined_bl_log_sel_mol
+
+combined_bl_log_sel_mol$NP3TOT
+
+
+clust_name
+medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, paste0(DIFF_VAR, '_clust'))
+medians_all_clusts$cluster
+
+medians_all_clusts
+
+     # rownames(means_by_cluster)<-means_by_cluster$cluster
+
+
+
 
 
 
@@ -116,7 +135,7 @@ lv='V13_V14';
     #'  Created parameters: clust_name, grouping variable,
     #' 
 
-    df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP[lv_to_plot],]
+    df_plot_2k<- df_plot_2k[df_plot_2k$months <=  EVENT_MAP_YEAR_NUM[lv_to_plot],]
     df_plot_2k$PATNO %in% samples_metadata(MOFAobject)$PATNO
 
     
@@ -192,9 +211,11 @@ lv='V13_V14';
         guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
         
         
-        labs(y=y_name, caption = paste0('group numbers: ', paste0(nums)))
+        labs(y=y_name,x='year', caption = paste0('group numbers: ', paste0(nums)))
       
-      p<-p+ theme(axis.title.y =element_text(face='bold'))
+      p<-p+ theme(axis.title.y =element_text(face='bold'))+
+          theme(text =element_text(size=15)) # same as other plot
+
 
       p
       warnings()
@@ -206,16 +227,16 @@ lv='V13_V14';
 
       ggsave(paste0(fname,  '.jpeg'), 
              width=width, height=height, dpi=300)
+      return(p)
       
     }
     
     }
-    cluster_params
-dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
-dir.create(paste0(outdir,'/tr/'))
+dir.create(paste0(cluster_params_dir, '/tr/clinical/'), recursive = TRUE)
+
+
 ## Plot cell types by COHORT 
-dir.create(paste0(outdir,'/tr/'))
 to_plot<-c(colnames(estimations), 'Lymphocytes....', 'Neutrophils....')
 for (y in  to_plot){
   df_plot_2k =df_plot_2k[!df_plot_2k$COHORT==4,]
@@ -240,35 +261,76 @@ lv_to_plot = 'V08'
 to_plot=c( 'Lymphocytes....', 'Neutrophils....','Neutrophils.LD', 'T.CD4.Naive', 'B.Memory', 'T.CD8.Memory')
 lv_to_plot = 'V14'
 
-to_plot=c('updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'NP3TOT')
-clust_metric='updrs3_score_on'
-clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
+to_plot=c('NP3TOT')
 
+to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'con_putamen_V10')
+
+clust_metric='updrs3_score_on'
+#clust_vars=c('COHORT','moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'sft' )
+#clust_vars=c('NP3TOT_diff_V14')
 
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
-  for (clust_metric in clust_metrics){
+library(ggpubr)
+
+ to_plot
+ list_plots = list()
+ clust_metric = 'COHORT'
+ y
+ clust_metric
+  for (clust_metric in clust_vars){
     for (y in to_plot){
 
       clust_name<-paste0(clust_metric, '_clust')
       fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
+      #fact
       cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
-
+      cluster_params
 
       dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
       fname=paste0(outdir, cluster_params, '/tr/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
-      plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
+      time_plot<-plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
       add_individual_lines=add_individual_lines, 
       add_boxplots = TRUE)
+
+      time_plot
+      list_plots[[clust_metric]][[y]]<-time_plot
     
     
     }
 
     graphics.off()
-  }
 
-  
-fname
+
+    # create the publication ready combined plot with visit 8 and all visits  #### 
+      e1<-list_plots[[clust_metric]][['NP2PTOT']]
+      e2<-list_plots[[clust_metric]][['NP3TOT']]
+      e3<-list_plots[[clust_metric]][['sft']]
+
+     
+      g2 = ggarrange(e1,e2,e3 ,common.legend = TRUE, ncol=3)
+
+
+
+
+
+      pall<-grid.arrange(grid_plots[[clust_metric]],g2,  ncol=1)
+      
+      fname_all<-paste0(outdir, cluster_params, '/tr/clinical/traj_', clust_metric)
+      # TODO: select the time variables that we want to extract 
+      print(paste0(fname_all, '_all.jpeg'))
+      ggsave(paste0(fname_all, '_all.jpeg'),plot=pall, width=12, height=10)
+
+
+
+
+
+  }
+ 
+
+
+#DIFF_VAR = 'NP3TOT_LOG'
+
 
 
 #### ###################

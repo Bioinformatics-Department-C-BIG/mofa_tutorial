@@ -1,6 +1,7 @@
 
 
 source(paste0('ppmi/setup_os.R'))
+library(org.Hs.eg.db)
 
 #install.packages('R.filesets') ; install.packages(c("factoextra", "FactoMineR"))
 
@@ -8,24 +9,26 @@ source(paste0('ppmi/setup_os.R'))
 ### disconnect from mofa and other scripts 
 VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V06' ,'V08');
-VISIT=c('BL','V04', 'V06',  'V08');
 VISIT=c('BL', 'V08');
+VISIT=c('BL','V04', 'V06',  'V08');
 
 process_mirnas=FALSE
 
-source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
+
+source(paste0(script_dir,'ppmi/deseq_analysis_setup.R')) # this will load the required vsd 
+#source(paste0(script_dir,'ppmi/deseq_analysis.R')) # this will load the required vsd 
+
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 source(paste0(script_dir,'ppmi/time_utils.R'))
 
 
 
-write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
+#write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
 deseq2ResDF$log2pval<-deseq2ResDF$log2FoldChange*-log10(deseq2ResDF$padj)
 deseq2ResDF$abslog2pval<-abs(deseq2ResDF$log2pval)
-min(deseq2ResDF$padj)
-write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
+#write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 
 
@@ -39,41 +42,18 @@ if (process_mirnas){
 ### Up to here output can be used for other reasons
 ##
 
-ddsSE@design
-
-deseq2Results@metadata
 
 RUN_DESEQ_ANALYSIS=FALSE
 
-# 
-run_ma<-FALSE
-if (run_ma){
-  jpeg(paste0(outdir_s, '/MA_plot_results.jpeg'))
-  plotMA(deseq2Results)
-  dev.off()
-}
-
-
-
-#, ylim=c(-1,10), xlim=c(0,5))
 
 
 
 
 library(ggplot2)
-
-
 library(scales) # needed for oob parameter
 library(viridis)
-#install.packages('viridis')
-#install.packages('gridExtra')
-
 
 # Coerce to a data frame
-
-### TODO: what is lfcShrink? 
-
-library(org.Hs.eg.db)
 #BiocManager::install('org.Hs.eg.db')
 ###  TODO: turn to gene symbols 
 if (!process_mirnas){
@@ -88,16 +68,11 @@ if (!process_mirnas){
   
   
 }
-write.csv(deseq2ResDF, paste0(outdir_s, '/results_df.csv'))
 
 log2fol_T<-0.25
 padj_T<-.0005
 
-deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
-deseq2ResDF_strict<-mark_significant(deseq2ResDF, padj_T, log2fol_T)
 
-signif_genes_strict<-rownames(deseq2ResDF_strict[!is.na(deseq2ResDF_strict$significant),])
-signif_genes_strict
 
 ####### MOFA deseq2  
 
@@ -117,7 +92,6 @@ vsd_mat <- assay(vsd)
 log2fol_T_overall<-0.1
 padj_T_overall<-.05
 deseq2ResDF
-deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, outdir_single = outdir_s)
 
 
 
@@ -125,6 +99,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
 
 ######## HEATMAP #######
   vsd_filt=vsd
+  vsd
  
   #Convert the VST counts to long format for ggplot2
   library(reshape2)
@@ -136,13 +111,7 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
   assay(vsd_filt)
   
   
-  colDataToPlot<-c('NP1RTOT','NP2_TOT', 'rigidity', 'td_pigd_old_on', 'moca' , 'RBD_TOT', 'NP3_TOT')
-  colDataToPlot<-c('NP2_TOT', 'td_pigd_old_on',  'RBD_TOT', 'NP3_TOT', 'con_putamen', 'con_putamen_V10')
-  colDataToPlot<-c('updrs3_score', 'td_pigd_old_on',  'RBD_TOT', 'updrs2_score', 'con_putamen', 
-                   'updrs3_score_diff_V10', 'moca_diff_V10',  'updrs2_score_diff_V10',  'updrs3_score_V12', 'NP3_TOT_V16', 'con_putamen_V10', 
-                   'con_putamen_diff_V10', 'PUTAMEN_R_V10', 
-                   'mean_striatum_V10', 'abeta', 
-                   'hi_putamen_V10')
+ 
   
   colDataToPlot<-c('updrs3_score','updrs3_score_V12', 'NP3_TOT_V16',   'updrs2_score', 
                    'con_putamen','con_putamen_V10', 'NP3_TOT_diff_V16', 'NP2_TOT_diff_V16',
@@ -160,39 +129,53 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
   
   
   # 1. Annotation 
-  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
-  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
-  diff_variables= c('updrs2_score_diff_V12', 'NP2PTOT_diff_V14')
-  colData_change<-c('updrs3_score', 'con_putamen', 'hi_putamen', 'updrs2_score', 'moca')
-  sm<-MOFAobject@samples_metadata
-  df_all<-cbind(df_all,sm[match(df_all$PATNO_EVENT_ID, sm$PATNO_EVENT_ID ),c(diff_variables, 'INEXPAGE') ])
+  
   y='NP2PTOT_LOG'
+  y='NP3TOT_LOG'
+    y='NP3TOT_LOG'
+  y='sft'
+
+  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
+  df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
+  diff_variables= c('NP2PTOT_V14','NP3TOT_V14', 'NP2PTOT_diff_V14')
+
+
+  diff_variables= c(paste0(gsub('_LOG','',y), '_V14'), gsub('_LOG','',y))
+
+  sm<-MOFAobjectPD_sel@samples_metadata
+  df_all<-cbind(df_all,sm[match(df_all$PATNO_EVENT_ID, sm$PATNO_EVENT_ID ),c(diff_variables, 'INEXPAGE') ])
+
+
+  
   y_clust<-paste0(y, '_clust')
   #y_diff=paste0(y, '_diff_V12')
   
-  choose<-c(y,diff_variables,'scopa', "COHORT", "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PATNO_EVENT_ID','PDMEDYN')
+  choose<-c(y,diff_variables, "COHORT", "SEX", 'AGE', 'NHY','PATNO', 'EVENT_ID','PATNO_EVENT_ID')
   df<-as.data.frame(df_all[,choose])
 
 
   
   # 2.  CHOOSE FACTORS 
   # 2. and fetch features either from time diff or other diff
+  all_fs_diff[,y]
   heatmap_factors=which(all_fs_diff[,y]);heatmap_factors
   
+  Factor_variance_T = 0.5
 
+  vars_by_factor[heatmap_factors,sel_view]
+  heatmap_factors=heatmap_factors[vars_by_factor[heatmap_factors,sel_view]>Factor_variance_T]
+  heatmap_factors
   ### Plot MOFA too
  # if (length(VISIT)>1){
     remove_cn=FALSE
     cluster_cols=TRUE
     cluster_id = c(1,2)
-    #sel_samples=names(which(groups_kmeans3$cluster%in% c(1,2)))
 
     
     #sel_samples
     mt<-colData(vsd)
-    table(mt[mt$PATNO %in% sel_samples, 'NHY'])
     order_by_hm=c('PATNO_EVENT_ID')
-
+    heatmap_factors
     
     ### TODO: source from molecular trajectories 
     #sigGenes_wil<-all_sig_genes2[grepl('ENS', all_sig_genes2$symbol),]
@@ -203,27 +186,51 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     #sel_view
     # THE LOGIC IS to get the top genes from each factor 
     # TODO: what happens if one gene is in the top of two factors? get the highest rank/ normalized weight
-    if (sel_view=='RNA'){top_fr=0.00955}else{top_fr=0.05}
-    heatmap_factors
-    f_features=concatenate_top_features(MOFAobject=MOFAobject,view=sel_view, factors_all=heatmap_factors,top_fr=0.9)
-    #f_features=concatenate_top_features(view=sel_view, heatmap_factors,top_fr=0.9)
-
-    f_features
-    f_features$feature<-gsub('\\..*', '',f_features$feature)
-    f_features=f_features[!duplicated(f_features$feature),]
-    f_features
+    if (sel_view=='RNA'){top_fr=0.01}else{top_fr=0.05}
     
-    factor_labels<-f_features$Factor; names(factor_labels)<-f_features$feature
-    table(factor_labels)
     
-    sigGenes=f_features$feature
-    sigGenes
+      f_features=concatenate_top_features(MOFAobject=MOFAobject,view=sel_view, factors_all=heatmap_factors,top_fr=top_fr)
 
+      f_features$feature<-gsub('\\..*', '',f_features$feature)
+      f_features=f_features[!duplicated(f_features$feature),]
+      
+    
+      ## Filter mofa features check if they are DE ####
+    
+      sigGenes_f=f_features$feature
+      f_features
+      rnas_time<-get_de_rnas_union(sel_vis)
+      rnas_time_all = unique(unlist(rnas_time))
+      rnas_time_all = gsub('\\..*','', rnas_time_all)
+      rnas_time_all
+      #sigGenes2<-intersect(sigGenes_f, rnas_time_all)
+      # filter here 
+      rnas_time_all
+      length(f_features$feature)
+      f_features<-f_features[f_features$feature %in% rnas_time_all,]
+      length(f_features$feature)
+
+      # filter the significant 
+
+      factor_labels<-f_features$Factor; names(factor_labels)<-f_features$feature
+       table(factor_labels)
+
+  #plot_heatmap_time_clusters(vsd_filt=vsd,  sigGenes = sigGenes2 ,  df=df, remove_cn=FALSE )
+
+
+     # obtain the clusters
+    sm_pd<-MOFAobjectPD_sel@samples_metadata
+    sm_pd<-MOFAobject_sel@samples_metadata
     #### Which clusters? add to config
     clust_name<-paste0(y)
     clust_for_metric<-all_clusts_mofa[[clust_name]]
-    df$cluster_m<-as.factor(clust_for_metric[match(df$PATNO_EVENT_ID, names(clust_for_metric))] )
-    df$cluster_m
+    clust_name
+ 
+
+    sm[,paste0(clust_name, '_clust') ]
+    df$cluster_m<-as.factor(sm_pd[,paste0(clust_name, '_clust') ][match(df$PATNO, sm_pd$PATNO)] )
+    vsd$cluster_m<-as.factor(sm_pd[,paste0(clust_name, '_clust') ][match(vsd$PATNO, sm_pd$PATNO)] )
+    vsd$cluster_m
     graphics.off()
 
     colnames(df)
@@ -244,34 +251,56 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     # filter out samples here
     ## PROBLEM: cannot filter 
 
-    sm_pd<-MOFAobjectPD@samples_metadata
-    sm_pd$NP2PTOT_clust
-    sel_clusts<-c(1,3)
-    sel_samples=sm_pd[sm_pd[,'NP2PTOT_clust'] %in% sel_clusts,]$PATNO
 
-    draw_all_times=TRUE; wf<-100
-    sm_pd=MOFAobjectPD@samples_metadata
-    sel_cluster_ids=c(1,2,3)
-    sel_cluster_ids=c(1,2)
+
     
+    sel_clusts<-c(1,2,3, 'HC')
+    sm_pd[sm_pd[,clust_name] %in% sel_clusts,]
+    sel_samples=sm_pd[sm_pd[,paste0(y, '_clust')] %in% sel_clusts,]$PATNO
+
+    sm_pd$COHORT
+#sel_samples
+
+    draw_all_times=FALSE; wf<-100
+   # sel_cluster_ids=c(1,2)
+    sel_cluster_ids=c(1,2,3, 'HC')
+
     sel_cluster_ids_s=paste0(sel_cluster_ids, collapse='_')
     
-    fname=paste0(outdir_s, '/heatmap_time', '_f_',paste(heatmap_factors, collapse='_'),'clust_', sel_cluster_ids_s,draw_all_times, '.jpeg')
+
+    suppressWarnings(dir.create(paste0(outdir, '/heatmaps_single/')))
+    remove_cn = FALSE
+
+    vsd$COHORT 
+    fname=paste0(outdir, '/heatmaps_single/heatmap_time',y, '_f_',paste(heatmap_factors, collapse='_'),'clust_', 
+      sel_cluster_ids_s,draw_all_times,'_',  top_fr ,'.jpeg')
     #  fname=paste0(outdir_s, '/heatmap/heatmap_time', '_f_',factor, '.jpeg')
     
     graphics.off()
+    df$cluster_m
+    sigGenes = f_features$feature
     
+    factor_labels =  f_features$Factor
+    factor_labels
+    if (startsWith(rownames(vsd)[1], 'ENS')){
+
     
-    sel_samples=sm_pd[sm_pd[, y_clust] %in% sel_cluster_ids,'PATNO' ]
-    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=FALSE,
+    rownames(vsd)<-gsub('\\..*', '', rownames(vsd))
+    }
+    #vsd_filt = vsd
+   #  vsd
+    my_pheatmap<-plot_heatmap_time(vsd_filt=vsd, sigGenes = sigGenes  ,  df=df, remove_cn=remove_cn,
                                    show_rownames = show_rownames,cluster_cols = TRUE, sel_samples=sel_samples, 
                                    factor_labels=factor_labels,draw_all_times = draw_all_times)
     
     
-
-    jpeg(fname, width=30*wf, height=12*200, res=200)
-    
     my_pheatmap
+    graphics.off()
+
+    dim(vsd)
+    jpeg(fname, width=30*wf, height=3500, res=300)
+    
+    show(my_pheatmap)
     dev.off()
       
       
@@ -288,7 +317,111 @@ deseq2ResDF<-mark_significant(deseq2ResDF, padj_T_overall, log2fol_T_overall, ou
     
     # 1. match the clusters 
     # 2. deseq the clusters
-    colData(se_filt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

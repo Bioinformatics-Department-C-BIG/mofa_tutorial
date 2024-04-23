@@ -51,20 +51,7 @@ cluster_samples_mofa=TRUE
 set.seed(123)
 set.seed(1239)
 
-Z <- get_factors(MOFAobjectPD, factors = c(factors_to_clust))[[1]];
-as.data.frame(Z)
-#Z_scaled<-apply(as.data.frame(Z), 2, scale);
 
-Z_scaled<-Z
-graphics.off()
-fviz_nbclust(Z_scaled, kmeans, method = "wss",  k.max = 15 )#
-  #geom_vline(xintercept = 3, linetype = 2)
-fviz_nbclust(Z_scaled, kmeans, method = "silhouette", k.max = 15 )
-
-gap_stat <- clusGap(Z_scaled , FUN = kmeans, nstart = 25,
-                    K.max =10 , B = 10)
-print(gap_stat, method = "globalmax")
-fviz_gap_stat(gap_stat)
 
 
 
@@ -206,6 +193,13 @@ plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells, 'Mult
 
 
 
+fname<-'factors_covariates_broad_HC'
+plot_covars_mofa(selected_covars = c(colnames(estimations),measured_cells, 'Multimapped....', 'Uniquely.mapped....', 'Usable_bases_SCALE'),fname,plot,factors=1:20,
+                    labels_col=FALSE, MOFAobject_to_plot =MOFAobjectHC , alpha=0.01)
+
+
+
+
 fname<-'factors_covariates_only_nonzero_strict_PD'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot,factors=sel_factors,
                     labels_col=FALSE, MOFAobject_to_plot =MOFAobjectPD_sel )
@@ -321,8 +315,8 @@ plot_covars_mofa(selected_covars=c(selected_covars2, 'COHORT'),fname,plot,factor
 
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
 
-
-
+samples_metadata(MOFAobjectHC)$COHORT
+samples_metadata(MOFAobjectPD)$CSFSAA
 
 
 # Plot 1: some more non motor that we discovered
@@ -332,8 +326,14 @@ MOFAobjectPD@samples_metadata$Lymphocytes....
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
 
 fname<-'factors_covariates_broad_PD_all_fs'
-names(selected_covars_broad)
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+
+
+fname<-'factors_covariates_broad_HC_all_fs'
+selected_covars_broad
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectHC  )
+
+
 
 fname<-'factors_covariates_broad_cor_PD'
 plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot='r',sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
@@ -882,21 +882,23 @@ round(vars_by_factor[c(3,13,22),], digits=2)
 MOFAobject@samples_metadata$CONCOHORT_DEFINITION[MOFAobject@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 MOFAobject_gs@samples_metadata$CONCOHORT_DEFINITION[MOFAobject_gs@samples_metadata$CONCOHORT==0]<-'non-PD, non-Prod, non-HC'
 
-cors_heatmap=cors_all_pd
-colnames(cors_all_pd['Factor1',])[cors_all_pd['Factor1',]>2]
-cors_all_pd[3, ]
+
+
 graphics.off()
 
 exclude_vars_rec<-colnames(sm)[grep('REC_ID',colnames(sm))]
 exclude_vars= c('LAST_UPDATE_M4', 'INFODT_M4', 'NTEXAMTM', 'REC_ID_moca', 'REC_ID_st', 'REC_ID',exclude_vars_rec)
 
+
+# plot only for PD samples 
+# Settings for the heatmaps 
+# Should we add the clust names? 
 MOFAobject_hm=MOFAobjectPD
-#MOFAobject_hm<-modify_features_for_plotting(MOFAobject_hm)
-rownames(MOFAobject_hm@expectations$W$proteomics_t_plasma)
-rownames(MOFAobject_hm@expectations$W$proteomics_csf)
+cors_heatmap=cors_all_pd
 
 
-#MOFAobject_hm<-modify_metadata_for_plotting(MOFAobject_hm)
+MOFAobjectPD_sel@samples_metadata$PATNO_EVENT_ID
+MOFAobjectPD@samples_metadata$NP3TOT_clust<-MOFAobjectPD_sel@samples_metadata$NP3TOT_clust
 # Modify the mofa object 
 ii=3
 # Settings 
@@ -905,12 +907,6 @@ cor_T<-ifelse(run_mofa_complete,  1.5, 1.3 )
 cor_T
 ii=1
 vps
-
-
-MOFAobject_hm
-#MOFAobject_hm@samples_metadata<-MOFAobject_hm@samples_metadata[,!duplicated(colnames(MOFAobject_hm@samples_metadata))]
-#i=2
-
 
 
 rownames(MOFAobject_hm@expectations$W$proteomics_csf)<-modify_prot_names(rownames(MOFAobject_hm@expectations$W$proteomics_csf), 
@@ -922,7 +918,7 @@ rownames(MOFAobject@expectations$W$proteomics_plasma)
 
 
 
-for (i in seq(4,vps)){
+for (i in seq(3,4)){
   for (ii in seq(1,fps)){
  #   for (ii in seq(1,1)){
     print(paste('Modality', i, 'factor', ii))
@@ -991,7 +987,12 @@ for (i in seq(4,vps)){
     patients_in_hm
     plot_heatmap_flag=TRUE
     cors_sig<-cors_sig[cors_sig %in% colnames(MOFAobject_hm@samples_metadata)]
-    cors_sig
+    
+    # TODO: add some metrics without 
+    # NP3TOT_clust cluster 
+    cors_sig<-c(cors_sig, 'NP3TOT_clust' )
+
+
     MOFAobject_hm@samples_metadata[,cors_sig]
    
     MOFAobject_hm@samples_metadata[,cors_sig]<-sapply(MOFAobject_hm@samples_metadata[,cors_sig], as.numeric)
@@ -1011,12 +1012,13 @@ for (i in seq(4,vps)){
     }else{
       cors_sig_non_na=cors_sig 
     }
-length(    cors_sig_non_na)
 
     if( length(cors_sig_non_na)==0){
       cors_sig_non_na=c()
     }
     denoise=FALSE
+
+    cors_sig_non_na = c(cors_sig_non_na, 'NP3TOT_clust')
     #cors_sig_non_na=cors_sig
     groups='all';groups=2; 
     groups=1
@@ -1026,7 +1028,7 @@ length(    cors_sig_non_na)
 
     #View(MOFAobject_gs@samples_metadata[cors_sig_non_na])
 
-  MOFAobject_hm
+  
 
 
 
@@ -1143,47 +1145,24 @@ if (n_groups>1){
 
 
 library(gridExtra)
-#grid.arrange(arrangeGrob(grobs=list(p1, p2), nrow = 1, top="Main Title"))
-#do.call('grid.arrange', c(list(p1,p2)) )
-
-#dev.off()
 
 
-plot_data_heatmap(MOFAobject, 
-                  view = "miRNA",
-                  factor = 2,  
-                  features = 30,
-                  cluster_rows = FALSE, cluster_cols = TRUE,
-                  show_rownames = TRUE, show_colnames = FALSE,
-                  scale = "row"
-)
-#
-#plot_data_heatmap(MOFAobject, 
-#                  view = "proteomics",
-#                  factor = 3,  
-#                  features = 100,
-#                  cluster_rows = FALSE, cluster_cols = TRUE,
-#                  show_rownames = TRUE, show_colnames = FALSE,
-#                  scale = "row"
-#)
 
 
-### So multi omics factors are more related to Stage than to subtype!!
-##How?? plot on the factors and color by stage
 
-p <- plot_factors(MOFAobject, 
-                  factors = c(1,2), 
-                  color_by = "NP3BRADY",
-                  shape_by = "NP3BRADY",
-                  dot_size = 2.5,
-                  show_missing = T
-)
 
-#p <- p + 
-#  geom_hline(yintercept=-1, linetype="dashed") +
-#  geom_vline(xintercept=(-0.5), linetype="dashed")
-print(p)
-ggsave(paste0(outdir,'factor_plot','.png'), width = 4, height=4, dpi=120)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

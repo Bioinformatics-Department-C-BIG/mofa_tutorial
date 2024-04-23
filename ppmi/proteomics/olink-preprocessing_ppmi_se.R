@@ -35,8 +35,13 @@ combined_bl_log<-load_metadata()
 ### TODO: filter out the cohort too before processig !! 
 
 all_visits = c('BL', 'V02', 'V04', 'V06', 'V08')
+all_visits = c( 'V06','V08')
+
 VISIT = 'V08'
+TISSUE
+
 for (VISIT in all_visits){
+  for (TISSUE in c('CSF', 'Plasma')){
     #process_mirnas=FALSE
     #TISSUE='CSF'
 
@@ -73,9 +78,11 @@ for (VISIT in all_visits){
     colnames(raw_counts_all)
 
     # create a summarized experiment and attach metadata 
-    proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined_bl_log)  
+    proteomics_se<-getSummarizedExperimentFromAllVisits(raw_counts_all, combined_bl_log) 
+     proteomics_se
     ##### filter here by visits and cohort
     se_filt_proteins<- filter_se(proteomics_se, VISIT, sel_coh)
+    se_filt_proteins
     tmp<- assays(se_filt_proteins)[[1]]
 
     # Select the top most variable proteins
@@ -83,6 +90,7 @@ for (VISIT in all_visits){
 
     p_params_out<- paste0(VISIT_S, '_',pr_project_id, '_', TISSUE, '_', substr(NORMALIZED,1,1), '_', sel_coh_s,sel_subcoh_s, 'vsn_', substr(run_vsn,1,1), 'NA_', NA_PERCENT)
     p_params_out
+    tmp
     normalized_data<-justvsn(tmp)
     vsn::meanSdPlot(normalized_data)
 
@@ -135,8 +143,8 @@ for (VISIT in all_visits){
     }
 
 
+  }
 }
-
 
 
 

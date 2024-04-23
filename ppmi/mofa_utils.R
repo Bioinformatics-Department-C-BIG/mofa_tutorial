@@ -270,21 +270,25 @@ concatenate_top_features<-function(MOFAobject, factors_all, view, top_fr, weight
 
 #pvalueCutoff=0.05
 
-factor=2
+factor=13
 top_p=20
 config <- config::get(file = "ppmi/config.yml")
-config$ONT_RNA
-get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20){
+
+get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_'){
   # mofa enrichment file - read the csv file
   # ONT - added now
-  
 
-    results_file_mofa = paste0(outdir, '/enrichment/gsego_',ONT=config$ONT_RNA, factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
+      sel_cols<-c('Description', 'p.adjust')
+
+ 
+#sel_cols[2]
+    results_file_mofa = paste0(outdir, '/enrichment/', prefix, '/gsego_',ONT=config$ONT_RNA,'_', factor,'_', pvalueCutoff, '.csv') # USE THIS if rerun enrichment 
    # results_file_mofa = paste0(outdir, '/enrichment/gsego_',factor,'_', pvalueCutoff, '.csv')
-
+    print(results_file_mofa)
     top_pathways<-read.csv(paste0(results_file_mofa ))
-    top_pathways<-top_pathways[, c('Description', 'p.adjust')]
-    top_pathways<-top_pathways %>% arrange(p.adjust) %>% as.data.frame()
+    colnames(top_pathways)
+    top_pathways<-top_pathways[, sel_cols]
+    top_pathways<-top_pathways %>% arrange(sel_cols[2]) %>% as.data.frame()
     top_pathways <- top_pathways[1:top_p,]
     top_pathways$factor<-factor
     return(top_pathways)
@@ -294,16 +298,15 @@ get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20){
 }
 
 
-concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20){
+
+concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_'){
     #'
     #' @param factors 
-    #' @param top_p: top number of pathways to extract
-    #'  
+    #' @param top_p: top number of pathways to extract from mofa factors 
+    #' 
 
-
-    
     top_pathways_all_factors<-lapply(factors, 
-      get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p)
+      get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p, prefix=prefix)
 
     top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
     return(top_pathways_all_factors)
@@ -681,3 +684,15 @@ plot_mofa_top_weighted_all_views<-function(MOFAobject_gs, nFeatures){
   }
 }
 
+get_factors_for_metric<-function(diff_var){
+
+  # get associated factors, remove the ones related to confounding
+  fact <- which(all_fs_diff[,diff_var])
+
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
+
+        }
+       
+        return(fact)
+        }

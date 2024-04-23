@@ -1,4 +1,4 @@
-
+library(xtable)
 
 
 ### Complex heatmap 
@@ -173,10 +173,11 @@ create_heatmap_proteins<-function(hm,se_filt, fname,coldata_to_plot=c()){
 #order_by_hm=c('PATNO_EVENT_ID')
 
 
+10e-2
 
 
-
-plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj', FCcutoff=0.1,pCutoff=10e-2){
+plotVolcano<-function(deseq2ResDF, se_filt, title='', xlim=NULL, lab=NULL,x='log2FoldChange', y= 'padj',
+ FCcutoff=0.1,pCutoff=10e-2){
   #'
   #'
   #' Take a sumarized experiment and deseq results 
@@ -252,7 +253,16 @@ plotVolcano_proteins<-function(results_de, se_filt, title='', xlim=NULL, lab=NUL
 
 
 
-plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
+
+#vsd_filt=vsd
+ #sigGenes = sigGenes2  
+ 
+  # remove_cn=FALSE
+
+   
+
+
+plot_heatmap_time_clusters<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
                             cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
                             factor_labels=NULL, draw_all_times=FALSE){
   
@@ -271,6 +281,109 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   #vsd_filt=vsd
   
   #@draw_all_times=TRUE
+      sigGenes = make.names(sigGenes)
+      sigGenes
+      rownames(vsd_filt) = make.names(rownames(vsd_filt))
+      vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
+      ## turn to sumbol? 
+      
+      
+      ### Add the annotations 
+      meta_single<-colData(vsd_filt_genes)
+      
+        ## HEATMAP OPTIONS 
+
+      hm<-assay(vsd_filt_genes); dim(hm);dim(df)
+      
+      hm_ord=hm
+      
+      ### SCALE!! 
+      hm_scaled <- as.matrix(hm_ord) %>% t() %>% scale() %>% t()
+      #jpeg(fname, width=2000, height=1500, res=200)
+      if(process_mirnas){
+        lab=rownames(rowData(vsd_filt_genes)) }else{
+          lab=as.character(rowData(vsd_filt_genes)$SYMBOL)}
+
+      
+
+
+    vsd_filt_genes = vsd_filt_genes[,!vsd_filt_genes$EVENT_ID %in% c('V04')]
+    vsd_filt_genes_scaled<-vsd_filt_genes
+
+
+    assay(vsd_filt_genes_scaled)<-assay(vsd_filt_genes)  %>% t() %>% scale() %>% t()
+  assay(vsd_filt_genes_scaled) = clip.data(assay(vsd_filt_genes_scaled), lower = 0.025, upper = 0.975)
+
+
+    get_hm_per_clust<-function(cl){
+
+      vsd_filt_genes_cl1<-vsd_filt_genes_scaled[,colData(vsd_filt_genes_scaled)$cluster_m %in% c(cl)]
+      df_cl1<-df[df$cluster_m %in% c(cl),]
+
+
+      cm<-ComplexHeatmap::pheatmap(assay(vsd_filt_genes_cl1), 
+      column_split = vsd_filt_genes_cl1$EVENT_ID
+          )
+        return(cm)
+    }
+    cm1=get_hm_per_clust(1)
+    cm2=get_hm_per_clust(2)
+    cm3=get_hm_per_clust(3)
+    cm4=get_hm_per_clust(NA)
+    cm1
+  draw(cm1 + cm2+cm3+cm4)
+
+
+    jpeg(paste0(outdir, '/clusters_heatmap.jpeg'), units='in', width=30, height=20, res=200)
+    draw(cm1 + cm2+cm3+cm4)
+    dev.off()
+
+
+
+
+
+}
+
+
+  
+  filter_heatmap<-function(hm_scaled, df_ord,sel_pats=NULL, sel_pats_event_ids=NULL){
+    # some inds are NA deal with it by subseting by patient 
+    if (!is.null(sel_pats)){
+      sel_pats=sel_pats[!is.na(sel_pats)]
+      d_ind<-df_ord$PATNO %in% sel_pats
+      
+    }else{
+      sel_pats_event_ids=sel_pats_event_ids[!is.na(sel_pats_event_ids)]
+      d_ind<-df_ord$PATNO_EVENT_ID %in% sel_pats_event_ids
+    }
+    
+    hm_scaled_filt<-hm_scaled[,d_ind]
+    df_ord_filt<-df_ord[d_ind, ]
+    return(list(hm_scaled_filt, df_ord_filt))
+  }
+  
+
+
+
+plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownames=TRUE, 
+                            cluster_cols=FALSE, order_by_hm='COHORT', sel_samples, 
+                            factor_labels=NULL, draw_all_times=FALSE){
+  
+  
+  
+  #'
+  #' @param vsd_filt: annotation dataframe nsamples X ncoldata 
+  #' @param hm: heatmap data nfeats X nsamples 
+  #' @param sigGenes: select genes to plot description
+  #' @param factor_labels if not NULL it splits the heatmap into rows of factors  description
+  #' 
+  #' 
+  #' 
+  #' 
+ #ARRANGE
+#  vsd_filt=vsd
+  
+  #@draw_all_times=TRUE
   sigGenes = make.names(sigGenes)
   rownames(vsd_filt) = make.names(rownames(vsd_filt))
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
@@ -278,9 +391,7 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   ## turn to sumbol? 
   
   vsd_filt_genes <- vsd_filt[rownames(vsd_filt) %in% sigGenes,]
-  
-  
-  dim(vsd_filt_genes)
+
   
   ### Add the annotations 
   meta_single<-colData(vsd_filt_genes)
@@ -289,7 +400,6 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   #get_symbols_vector
   ## HEATMAP OPTIONS 
-  cluster_cols=cluster_cols;   
   
   #colnames(assay(vsd_filt_genes))==vsd_filt_genes$PATNO_EVENT_ID
   #fname<-paste0(outdir_s, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
@@ -309,24 +419,13 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
 
   
   
-  filter_heatmap<-function(hm_scaled, df_ord,sel_pats=NULL, sel_pats_event_ids=NULL){
-    # some inds are NA deal with it by subseting by patient 
-    if (!is.null(sel_pats)){
-      sel_pats=sel_pats[!is.na(sel_pats)]
-      d_ind<-df_ord$PATNO %in% sel_pats
-      
-    }else{
-      sel_pats_event_ids=sel_pats_event_ids[!is.na(sel_pats_event_ids)]
-      d_ind<-df_ord$PATNO_EVENT_ID %in% sel_pats_event_ids
-    }
-    
-    hm_scaled_filt<-hm_scaled[,d_ind]
-    df_ord_filt<-df_ord[d_ind, ]
-    return(list(hm_scaled_filt, df_ord_filt))
+  if (remove_cn){
+   sel_pats<-df_ord[(df_ord$COHORT %in% c(1)), 'PATNO']; # filter by cohort?
+
+  }else{
+    sel_pats<-df_ord[(df_ord$COHORT %in% c(1,2)), 'PATNO']; # filter by cohort?
+
   }
-  
-  
-  sel_pats<-df_ord[(df_ord$COHORT ==1), 'PATNO']; 
   if (!is.null(sel_samples)){
     sel_pats<-sel_pats[sel_pats%in%sel_samples]
   }
@@ -410,15 +509,30 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   df1<-df_ord_V08; hm1<-hm_scaled_v08
   remove_from_hm<-c('PATNO_EVENT_ID', 'PATNO', 'COHORT')
-  hm_timepoint<-function(df1, hm1, tp_name, cluster_columns=TRUE){
+  hm_timepoint<-function(df1, hm1, tp_name, cluster_columns=cluster_cols){
     #'
     #'
     #'
     df1<-df1[, !colnames(df1) %in% remove_from_hm]
+  if (draw_all_times){
+    column_split = NULL
+  }else{
+    column_split=df1$cluster
+  }
+
+   # if ('cluster' %in% colnames(df1)){
+
+      #column_split = df1$cluster
+
+    #}else{
+     # column_split = NULL
+   # }
     ha1<-ComplexHeatmap::HeatmapAnnotation(df=df1)
     hm_t<-ComplexHeatmap::Heatmap(hm1, 
                                     top_annotation = ha1, 
                                     col=f1, 
+                                    column_split = column_split,
+
                                   cluster_columns=cluster_columns,
                                   
                                   name=tp_name)
@@ -426,18 +540,25 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   }
   
   ht_V08<-hm_timepoint(df_ord_V08, hm_scaled_v08, tp_name='V08')
+ draw(ht_V08)
   ### padd V08 order to BL
 
-  order_v08<-colnames(ht_V08@matrix)[column_order(ht_V08)]
-  order_v08<-gsub('\\_.*','', order_v08)
+
+  if (draw_all_times){
+    # add baseline and match to V08
+
   
-  df_ord_BL_match<-df_ord_BL[match(order_v08,df_ord_BL$PATNO ),]
-  bl_names<-gsub('\\_.*','',colnames(hm_scaled_BL))
-  hm_scaled_BL_match<-hm_scaled_BL[,match(order_v08,bl_names )]
-  
-  
-  ht_BL<-hm_timepoint(df_ord_BL_match, hm_scaled_BL_match,tp_name='BL', cluster_columns=FALSE)
-  
+
+      order_v08<-colnames(ht_V08@matrix)[column_order(ht_V08)]
+      order_v08<-gsub('\\_.*','', order_v08)
+      
+      df_ord_BL_match<-df_ord_BL[match(order_v08,df_ord_BL$PATNO ),]
+      bl_names<-gsub('\\_.*','',colnames(hm_scaled_BL))
+      hm_scaled_BL_match<-hm_scaled_BL[,match(order_v08,bl_names )]
+      
+      
+      ht_BL<-hm_timepoint(df_ord_BL_match, hm_scaled_BL_match,tp_name='BL', cluster_columns=FALSE)
+  }
   #if (!is.null(df_ord_V06)){
   #  ht_V06<-hm_timepoint(df_ord_V06, hm_scaled_V06)
     
@@ -458,8 +579,10 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
     hboth<-ht_V08+anno
     
   }
-  
-  
+ # hboth
+ # factor_labels
+ length(factor_labels)
+ 
   if (!is.null(factor_labels)){
     hm_draw<-draw(hboth, row_km = 1, row_split =factor_labels, cluster_rows = TRUE, main_heatmap='V08')
     
@@ -470,11 +593,18 @@ plot_heatmap_time<-function(vsd_filt, sigGenes,  df,remove_cn=FALSE, show_rownam
   
   
   #dev.off()
-  
-
+  hm_draw
   
   return(hm_draw)
 }
+
+
+
+
+
+
+
+
 
 
 #BiocManager::install('ComplexHeatmap')
@@ -521,9 +651,21 @@ plot_molecular_trajectories<-function(merged_melt_filt_most_sig){
 }
 
 
+mt_kv
+
+mt_kv_list<-mt_kv[,2]
+names(mt_kv_list) <- mt_kv[,1]
+
+mt_kv_list_labeller <- function(variable){
+  return(mt_kv_list[variable])
+}
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=10/1.5, width=10,facet_rows=1, text=''){
+boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=5,
+ width=10,facet_rows=1, text='', plot_box = TRUE, add_caption=TRUE){
+
+
+  
   #'
   #' Create boxplot by cluster 
   #' 
@@ -532,6 +674,7 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   #'  
   #' 
   clust_metric<-gsub('_clust', '', clust_name)
+  factors = fact
   
 
   as.numeric(met[,clust_metric])
@@ -550,6 +693,18 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   tot_med<-as.matrix(table(met[,c(clust_name, "td_pigd")])); paste_tdpigd<-paste('td/pigd:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
   tot_med<-as.matrix(table(met[,c(clust_name, "NHY")])); paste_nhy<-paste('H&Y:' ,paste0(format(tot_med[,2]/ rowSums(tot_med), digits=2), collapse=',' ) )
   
+
+  if (add_caption){
+    caption = paste0( '\n', 'factors: ',fact, ',  ', freqs,',  ', 
+                          paste_med, ',  ',
+                          paste_sex, ' ',
+                          #paste_state,  ',\n',
+                          # paste_tdpigd,' '
+                          text)
+  }else{
+    caption=''
+  }
+
   k_centers<-max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
   k_centers
   ## Add kruskal wallis to the total plot and separately to each one 
@@ -558,40 +713,45 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
 
 
   met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
+  to_replace<-colnames(met_diff)[colnames(met_diff) %in% mt_kv[,1]]
+  colnames(met_diff)[colnames(met_diff) %in% to_replace]<-mt_kv$V2[match(to_replace ,mt_kv$V1)]
 
   met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
   met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
 #  num_log<-is.numeric(met_diff_val)
 
-  #met_diff_val[,num_log]<-sapply(met_diff_val[,num_log], clipping_values)
 
 
 
-    p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))+
-    geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
+    p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))
+
+    if (plot_box){
+           p<-p+geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
                              fill=clust_name, y='value'), alpha=0.9, 
-                             outlier.shape = NA)+
+                             outlier.shape = NA)
+    } else{
+         p<-p+geom_violin(aes_string( x=clust_name,# color=clust_name, 
+                                  fill=clust_name, y='value'), alpha=0.9, 
+                                  outlier.shape = NA)
+    }
+ 
+
+ 
 
   
-    facet_wrap(~variable, scales='free',#, labeller=labeller(
-      #variable=labeller_clinical
+    p<-p+facet_wrap(~variable, scales='free',
       nrow=facet_rows)+
     geom_pwc( tip.length = 0,
       method = "wilcox_test", label = "p.adj.signif", label.size = 2)+   
     scale_color_viridis_d(option="turbo")+
-       scale_fill_viridis_d(option="turbo")+
+       scale_fill_viridis_d(option="turbo")
   
     
     
-  labs(#title = paste(y),  
+  p<-p+labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
-         caption = paste0( '\n', 'factors: ',factors, ',  ', freqs,',  ', 
-                          paste_med, ',  ',
-                          paste_sex, ' ',
-                          #paste_state,  ',\n',
-                          # paste_tdpigd,' '
-                          text), 
+         caption = caption, 
          x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
     theme(text =element_text(size=15), axis.title.y=element_blank())+
@@ -601,8 +761,10 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   p
 
   print(bn)
-  ggsave(bn, dpi=200, width=width, height = height, units='in')
+  ggsave(bn, plot = p,dpi=300, width=width, height = height, units='in')
   graphics.off()
+
+  return(p)
   ## TODO: WILCOX TEST BY GROUP
   
   

@@ -162,9 +162,16 @@ HC_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_m
 HC_samples_only
 
 
-MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
+if (length(PD_samples_only)>0){
+  MOFAobjectPD <- subset_samples(MOFAobject, samples=PD_samples_only)
+
+}else{
+  MOFAobjectPD = MOFAobject
+
+}
 
 MOFAobjectHC <- subset_samples(MOFAobject, samples=HC_samples_only)
+
 
 sel_group=4
 groups_names(MOFAobject)
@@ -261,14 +268,21 @@ all_diff_variables=c(all_diff_variables,'NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2
 
                      # variables to create clusters 
 all_diff_variables=c('NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3TOT','NP3TOT_LOG', 'updrs3_score', 'updrs2_score',
+                      'NP3TOT_diff_V14', 'NP2PTOT_diff_V14','NP3TOT_V14', 'NP2PTOT_V14', #  NP2PTOT_V14 -no significance
+
                      'updrs2_score_LOG', 'updrs3_score_LOG', 'updrs3_score_on','updrs3_score_on_LOG',
                      'scopa', 'rem', 'upsit', 'moca', 'sft',
-                     'abeta', 'sft_V12')
-
+                     'abeta', 'sft_V12', 'COHORT', 'sft_V12', 'sft_V14')
+             
+colnames(sm)
 
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
-#round(cors_all_pd[,'moca'], digits=2)
+
+which(round(cors_all_pd[,'sft'], digits=2)>0)
+colnames(cors_all_pd)
+#which(round(cors_all_pd[,'NP3TOT_LOG_diff_V12'], digits=2)>0)
+
 #round(cors_all_pd[,'NP2PTOT_LOG'], digits=2)
 #round(cors_pearson_pd[,'NP2PTOT_LOG'], digits=2)
 
@@ -277,6 +291,19 @@ all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
 #round(cors_pearson[,'COHORT'], digits=2)
 
 # HERE CHOOSE THE FACTORS THAT ACTUALLY ASSOCIATE with the longterm differences 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

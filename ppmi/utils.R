@@ -35,7 +35,9 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'ST' = -6)
 
 EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',   
-               'V08'='year 3')
+               'V08'='year 3', 'V10'='year 4', 'V12' = 'year 5', 'V14' = 'year 7')
+               EVENT_MAP_YEAR_NUM = list( 'BL' =  '0', 'V04'='1', 'V06'='2',   
+               'V08'='3', 'V10'='4', 'V12' = '5', 'V14' = '7')
 
 
 #grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_')
@@ -44,6 +46,7 @@ EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',
 #diff_vars<-diff_vars[!grepl('clust',diff_vars)]
 #diff_vars
 selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
+                          'NP3TOT_diff_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V10', 'NP3TOT_diff_V10','sft_V14',
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
                          'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
@@ -57,7 +60,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'con_putamen', 
                          'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 'LEDD', 
                          'rigidity','months', 
-                         'con_putamen', 'con_putamen_V10', 
+                         'con_putamen', 'con_putamen_V10', 'mean_striatum_V10',
                          'change', 
                          # biochemical
                          'asyn', 'CSFSAA', 'ptau', 'ptau_asyn', 'ptau_tau', 'abeta', 'ab_asyn', 'asyn', 'hemo', 
@@ -178,35 +181,26 @@ load_se_all_visits<-function(input_file, combined){
 
 
 
-load_all_se<-function(){
+load_all_se<-function(process_mirnas){
   #'
   #' load summarized experiment for rnas and mirnas 
   #' @param
   #' @return se_rnas, se_mirnas 
 
 
-      process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-
+       process_mirnas = process_mirnas
 
       source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-      if (!base::exists(quote(se_mirs))){
-        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      #if (!base::exists(quote(se_mirs))){
+        se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+       return(se)
+     # }
 
-      }
 
+   
 
-      # hist(head(assay(se_mirs_norm),10)[10:50])
-
-      process_mirnas=FALSE
-      source(paste0(script_dir, '/ppmi/config.R'))
-      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-      if (!base::exists(quote(se_rnas)) ){
-
-        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-      }
-
-      return(list(se_rnas, se_mirs))
+     
 
 }
 
@@ -522,7 +516,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
 
  imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
                            'updrs2_score', 'updrs2_score_LOG', 'moca' , 'scopa')
- scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+ scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
  
  
  get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){
@@ -583,7 +577,9 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
         
  }
 
+#se=proteomics_se
 ## Create the summarized experiment by selecting VISITS and cohorts 
+
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   
   #' Takes the raw file with all counts
@@ -595,27 +591,30 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
 #  sel_coh
-sel_sub_coh
   
-  if (length(sel_subcoh)==1 && sel_subcoh==FALSE){
+  if (sel_subcoh==FALSE){
         se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
     
   }else{
       se_visit<-se[,se$EVENT_ID %in% VISIT]
-
+      ids = c()
+      ids_control = c()
       if (1 %in% sel_coh){ 
         ids<-c(se_visit$INEXPAGE %in% sel_subcoh ) ## filter the ids in parkinsons 
       }
       if (2 %in% sel_coh){
-        ids<- c(ids | se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+        ids_control<-c( se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+   
         
       }
-      se_filt<-se_visit[, ids]
+
+      ids_all<- c(ids | ids_control) # if in pd or hc take it 
+
+      se_filt<-se_visit[, ids_all]
       
       
     
   }
-     
   dim(se_filt)     
 
   
@@ -815,7 +814,7 @@ library('enrichplot' )
 #results_file = results_file_cluster
 #N_DOT=20, N_EMAP=30 , N_NET=10)
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15,force_gse=FALSE){
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=20,force_gse=FALSE){
   #'
   #' Get the ordered gene list from a deseq object
   #' @param deseq2ResDF deseq results object 
@@ -833,7 +832,6 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
  
   return(gse)
 }
-
 
 
 
@@ -879,7 +877,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, N_NET = 20, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
   #'
   #' Run enrichment GSEA using an ordered gene list, write, and plot and save the results 
   #' @param gene_list
@@ -913,7 +911,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
     if  (dim(gse)[1]>2 ){
       # check if the enrichment returned more than one resulting paths before plotting!
 
-      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
+      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=N_NET,
           run_ORA=FALSE, geneList = gene_list)
     }
   
@@ -1745,13 +1743,19 @@ standardize_go_names<-function(descriptions){
 ### PREDICTIONS ON SUMMARIZED EXPERIMENT 
 ## predict on each or on multi assay?
 
-clipping_values<-function(x){
+library('fsbrain')
+# install.packages('fsbrain')
+
+
+clipping_values<-function(x, high=0.99){
   #'
   #'
   #' @param 
   #'
-  higher_val<-quantile(x, 0.99, na.rm=TRUE)
-  lower_quant<-quantile(x, 0.01, na.rm=TRUE)
+  #' 
+  low = 1-high
+  higher_val<-quantile(x, high, na.rm=TRUE)
+  lower_quant<-quantile(x, low, na.rm=TRUE)
   non_zero_min=min(x[which(x>0)], na.rm = TRUE)
   
   lower_val<-ifelse(non_zero_min>lower_quant,non_zero_min,lower_quant)
@@ -1763,6 +1767,9 @@ clipping_values<-function(x){
   return(x)
   
 }
+
+
+
 
 
 
@@ -2151,6 +2158,33 @@ get_covariates_cells<-function(y_clust, thresh=0){
 
 
 
+
+get_variables_by_cluster_all_time<-function(df_plot_mol, cluster ){
+  #'
+  #' @param df_plot_mol
+  #' @param cluster cluster_name to get ids from mofa
+
+  #'  #
+        all_times_all_vars<-df_plot_mol[, c(diff_variables_to_p, 'EVENT_ID', cluster)]
+        all_times_all_vars$cluster = all_times_all_vars[, cluster]
+
+    # medians
+        all_times_all_vars_medians<-all_times_all_vars %>%
+                    group_by(cluster, EVENT_ID) %>%
+                    filter(EVENT_ID %in% times_sel) %>%
+                    mutate_if(is.character, as.numeric) %>%
+          summarise_all( funs(median(., na.rm = TRUE)))%>%
+    #         summarise_all( median=median, na.rm = TRUE)%>%
+
+           # as.data.frame() %>% dplyr::select(-cluster) %>% 
+            as.data.frame()
+
+          return(all_times_all_vars_medians)
+
+}
+
+
+
 library('RColorBrewer')
 create_venn<-function(venn_list, fname_venn, main){
   
@@ -2234,4 +2268,169 @@ get_cluster_params_dir<-function(DIFF_VAR){
   cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
   cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
   return(cluster_params_dir)
+}
+
+
+
+# clustering
+
+attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
+
+
+    for (diff_var in names(all_clusts_mofa)){
+
+        if (!is.null(all_clusts_mofa[[diff_var]])){
+   
+        clust_name = paste0(diff_var, '_clust')
+         #print(clust_name)
+        clusters_ids<-all_clusts_mofa[[diff_var]]
+        names_patnos<-gsub('\\_.*','',rownames(clusters_ids))
+        df_to_attach[,clust_name]<-clusters_ids[match(df_to_attach$PATNO,names_patnos )]
+        
+        df_to_attach[(df_to_attach$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
+       # print(df_to_attach[,clust_name])
+        }
+
+
+
+
+}
+
+        return(df_to_attach)
+
+
+
+}
+
+### DE RESULTS  ####
+# rnas
+
+  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id ){
+    #' returns the deseq results pathway for 
+    #' for now works for genes and mirs? 
+    #' @param VISIT
+    #' @param formula_deseq_format
+    #' @param prefix
+    #' @param cluster_id
+    #' 
+            return(paste0(deseq_params_all,'/', VISIT, '/' ,formula_deseq_format, '/', prefix, 'de_cluster_', cluster_id , '.csv'))
+        }
+
+
+# read top of 3 clusters # get top genes union by pvalue
+sel_vis=c('BL', 'V06','V08' )
+
+get_de_rnas_union<-function(sel_vis){
+  #' returns the significant molecules for each MOFA cluster 
+  #' finds the path with the de results file, reads it , and checks for significance 
+  #' @param sel_vis: which visits to return 
+      # clusters to return
+      sel_clusts = c(1,2,3)
+
+
+      de_rnas_files<- sapply(sel_vis, function(sel_vis_1){
+        sapply(sel_clusts, function(cl_id){
+          # get the paths for all visits all clusters 
+            get_de_results_path(deseq_params_all, VISIT=sel_vis_1, formula_deseq_format,  prefix, cluster_id = cl_id)
+            
+        })
+      })
+        
+
+      
+    de_rnas_files = unlist(de_rnas_files)
+
+        rnas_sig<-sapply(de_rnas_files, function(file){
+            de_results_rnas<-read.csv(file)
+            de_results_rnas_sig<-de_results_rnas[de_results_rnas$padj<0.05 & abs(de_results_rnas$log2FoldChange)>0.1,]
+            return(de_results_rnas_sig$X)
+
+
+        })
+    return(rnas_sig)
+
+
+
+}
+
+
+
+get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, de_sig_all_top){
+        #' 
+        #' @param  VISIT_COMP
+        #' @param metric_p metric to use to cut 
+        #' @param sig_only filter the significant otherwise the top in mofa 
+
+        de_all<-list()
+        for (cluster_id in clust_ids){
+
+                outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
+                # 
+                de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+
+                de_results_prot<-read.csv(de_prot_file)
+                view=paste0('proteomics_', tolower(TISSUE))
+
+
+                match(unique(top_proteins$feature), de_results_prot$X)
+
+                
+
+                if (sig_only){
+                    de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = de_AND_in_factor
+                }else{
+                    #de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = top_proteins$feature
+
+                }
+                
+
+                top_factor_feat<-match(unique(proteins_to_use), de_results_prot$X)
+                top_factor_feat<-top_factor_feat[!is.na(top_factor_feat)]
+                de_results_prot_top<-de_results_prot[top_factor_feat,]
+
+
+                # TODO: print only significant 
+
+                if (sig_only){
+                        # filter the ones that are de 
+#
+                        de_results_prot_top<-de_results_prot[match( unique(de_sig_all_top),de_results_prot$X),]
+
+                }
+
+
+                # get also the pvalue 
+                de_all[[cluster_id]]<-as.data.frame(de_results_prot_top[, c(metric_p)])
+                 print(de_results_prot_top$X)
+             
+
+
+        #        print(length(de_all[[cluster_id]]))
+        }
+
+        names(de_all)
+
+        # TODO: add top prot
+       
+
+        names(de_all)<-paste0(EVENT_MAP_YEAR[[VISIT_COMP]],'_',c(1:length(clust_ids)))
+        de_all[[1]]
+        
+
+        all_clusts_proteins_logFC<-do.call(cbind,de_all )
+        
+
+       
+        all_clusts_proteins_logFC<-as.data.frame(all_clusts_proteins_logFC)
+        all_clusts_proteins_logFC
+
+        de_results_prot_top$X
+        rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
+        colnames(all_clusts_proteins_logFC)<-names(de_all)
+
+
+        return(all_clusts_proteins_logFC)
+
 }

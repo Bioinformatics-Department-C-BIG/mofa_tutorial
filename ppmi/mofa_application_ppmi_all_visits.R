@@ -78,6 +78,7 @@ if (run_mofa_complete){
 }
 
 drop_factor_threshold = -1
+drop_factor_threshold = -1
 drop_factor_threshold = 0.001
 
 
@@ -191,7 +192,7 @@ run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
 # n_factors best=15
 #g_params
 
-for (N_FACTORS in c(35,50)){
+for (N_FACTORS in c(35)){
   ## MOFA parameters, set directory 
   #'  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
   ruv_s<-(as.numeric(ruv))
@@ -227,6 +228,16 @@ for (N_FACTORS in c(35,50)){
  
   
 }
+
+
+mofa_multi
+
+inters_csf_rna<-intersectColumns(mofa_multi[, , c(2,3)])
+inters_csf_rna$PATNO_EVENT_ID
+mofa_multi[,,3]$PATNO_EVENT_ID %in% inters_csf_rna$PATNO_EVENT_ID
+mofa_multi[,,3]$PATNO_EVENT_ID[!mofa_multi[,,3]$PATNO_EVENT_ID %in% inters_csf_rna$PATNO_EVENT_ID]
+
+
 N_FACTORS =   MOFAobject@dimensions$K
 
 
@@ -285,6 +296,8 @@ var(assay(mofa_multi_to_use[,,'proteomics_plasma'])['P07996',])
 MOFAobject_orig<-MOFAobject
 
 #mofa_multi_to_use[,, 'proteomics_csf']
+
+
 
 
 

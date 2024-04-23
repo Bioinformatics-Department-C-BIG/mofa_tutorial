@@ -53,7 +53,13 @@ if (sel_group_cors){
 
 
 cors_both_clinical<-get_correlations(MOFAobjectPD_cors, all_diff_in_cors)
-cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]])
+cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]); 
+ cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]]) # extract corelations for pd patients 
+                      # also add the controls in the clustering ? 
+                      
+
+
+ cors_all_pd_clinical
 ## choose if the clu
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
@@ -135,7 +141,7 @@ for (diff_var in names(all_clusts_mofa)){
 
 
 
-
+#grep('clust',colnames(MOFAobject_sel@samples_metadata))
 
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 

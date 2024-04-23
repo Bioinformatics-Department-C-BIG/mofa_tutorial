@@ -34,7 +34,8 @@ EVENT_MAP=list('SC' = -3,  'BL' =  0,  'V01'=3,    'V02'=6,    'V03'=9,    'V04'
                'V08'=36,    'V09'=42,    'V10'=48,    'V11'=54,   'V12'=60,   'V13'=72,   'V14'=84,   'V15'=96, 'V16'=108, 'V17'=120,'V18'=132,'V19'=144 , 
                'ST' = -6)
 
-
+EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',   
+               'V08'='year 3')
 
 
 #grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_')
@@ -200,7 +201,7 @@ load_all_se<-function(){
       process_mirnas=FALSE
       source(paste0(script_dir, '/ppmi/config.R'))
       #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-      if (!base::exists(quote(se_rnas))){
+      if (!base::exists(quote(se_rnas)) ){
 
         se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       }

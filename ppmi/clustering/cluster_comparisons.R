@@ -10,10 +10,12 @@ knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 
 #formula_deseq_format
 cell_corr_deseq
+#rm(se_rnas)
+#rm(se_mirs)
 all_se_list<-load_all_se()
 se_rnas = all_se_list[[1]]
 se_mirs = all_se_list[[2]]
-se_mirs
+se_rnas
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -169,7 +171,10 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else if  ((formula_deseq_format)=='all'){
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-                }  
+                }  else if ((formula_deseq_format)=='age'){
+                   formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT','+COHORT')
+
+                }
            }
 
           }

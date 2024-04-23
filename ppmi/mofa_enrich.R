@@ -264,7 +264,7 @@ list_all=list(list1,list_proteins, list_mirs_enrich)
 
 #### Now run the prot view ? 
 # TODO: PASS 
-run_plots=FALSE
+run_plots=TRUE
 run_plots=TRUE
 sel_factors_to_p
                 

@@ -132,10 +132,8 @@ padj_T_hm=0.05
 
 results_de
 gene_list_limma_significant_heatmap=rownames(results_de)[results_de$adj.P.Val<padj_T_hm & 
-                                                           results_de$logFC>log2fol_T_hm]
-gene_list_limma_significant_heatmap
+                                                           abs(results_de$logFC)>log2fol_T_hm]
 
-length(gene_list_limma_significant_heatmap)
 ids<-rownames(vsn_mat) %in% gene_list_limma_significant_heatmap
 
 
@@ -147,26 +145,18 @@ results_de$padj_reverse<--results_de$adj.P.Val
 
 df<-as.data.frame(colData(se_filt)[c('COHORT', 'SEX', 'AGE', 'PATNO_EVENT_ID' )]); rownames(df)<-df$PATNO_EVENT_ID
 df$PATNO_EVENT_ID<-NULL
-colnames(vsn_mat)
-rownames(df)
 #rownames(df)<-se_filt$PATNO_EVENT_ID
 se_filt$COHORT
-dim(df)
-dim(hm)
 
-#hm_ord<-hm[,order(df$COHORT)]
 
 #<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, '_', n_sig_f,'.jpeg')
 filter_highly_var=FALSE; most_var_t=FALSE
 cluster_cols=TRUE
-n_sig_f=30
 fname<-paste0(outdir_s_p, '/heatmap3', '_',padj_T_hm,'_', log2fol_T_hm ,order_by_metric, 'high_var_' ,
               filter_highly_var,    '_', most_var_t, '_',  n_sig_f, cluster_cols, '.jpeg')
-fname
 graphics.off()
 library(ggplot2)
 jpeg(fname, res = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
-
         my_pheatmap<-pheatmap(hm, 
                               #labels_row=lab,
                               cluster_rows=TRUE, 
@@ -181,7 +171,7 @@ jpeg(fname, res = 200, width=dim(hm)[2]/5+2, height=dim(hm)[1]/10+4)
 
 show(my_pheatmap)
 dev.off()
-fname
+
 
 
 

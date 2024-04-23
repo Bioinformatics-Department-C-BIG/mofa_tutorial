@@ -1,10 +1,14 @@
 
 
-source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
-source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+#source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
+#source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+library('OmnipathR')
 
-
-
+grn <-
+    import_transcriptional_interactions(
+        resources = c('DoRothEA')
+    )
+tfs<-unique(grn$source_genesymbol)
 # Plot heatmap with dotted line for information of different groups 
 # Factor X 
 # Obtain for mofa plots 
@@ -15,7 +19,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 
 
 estimations_in_df<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
-clinical_in_df<-c('NP2PTOT_LOG', 'NP3TOT_LOG',  'moca')
+clinical_in_df<-c('NP2PTOT_LOG', 'NP3TOT_LOG',  'moca', 'sft')
 covars_age<-c('AGE_SCALED', 'SEX', 'LEDD')
 sel_facts<-get_factors_for_scales(clinical_in_df)
 #sel_facts<-sel_facts[!sel_facts %in% c(3)]
@@ -24,6 +28,8 @@ sel_facts<-sel_facts[!sel_facts %in% c(3)]
 
 # Correlations: Clinical 
 cors_cell_types<-t(cors_all_pd[sel_facts,estimations_in_df])
+cors_cell_types_all<-t(cors[sel_facts,estimations_in_df])
+
 
 # Correlations: Cell types  
 cors_clinical <-t(cors_all_pd[sel_facts,clinical_in_df])
@@ -45,24 +51,47 @@ length(cors_clinical)
 
 ########## Factor top weights ####
 
-names(sel_facts)
-select_top_bottom_perc(MOFAobject,view=1,   factors=21, top_fr=0.01)
 
 # two options
 
-MOFAobject
-concatenate_top_features
-top_ws_hm<-concatenate_top_features(MOFAobject, factors_all = names(sel_facts),view=1,top_fr = 0.01,weight_T = 0, pivot_wide = TRUE)
+
+top_ws_hm<-concatenate_top_features(MOFAobject, factors_all = names(sel_facts),view=1,top_fr = 0.01,weight_T = 0.01, pivot_wide = TRUE)
 dim(top_ws_hm)
+
+# Only TFS 
+only_tfs=FALSE
+
+top_fr = ifelse(only_tfs, 0.02, 0.002 )
+top_fr
+top_ws_hm_rna<-concatenate_top_features(MOFAobject, factors_all = names(sel_facts),view=2,top_fr = top_fr,weight_T = 0.1, pivot_wide = TRUE)
+dim(top_ws_hm_rna)
+ens_orig<-rownames(top_ws_hm_rna)
+
+symbs_orig<-get_symbols_vector(rownames(top_ws_hm_rna))
+
+symbs<-symbs_orig
+symbs[duplicated(symbs)]<-paste0(symbs[duplicated(symbs)], '_1')
+symbs[duplicated(symbs)]<-paste0(symbs[duplicated(symbs)], '_1')
+rownames(top_ws_hm_rna)<-symbs
+
+dim(top_ws_hm_rna); colnames(top_ws_hm_rna)
+
+if (only_tfs){
+       top_ws_hm_rna<- top_ws_hm_rna[symbs %in% tfs,]
+
+}
+# which are TFs OR regulons? ? 
+
+
+
+
+
 view = 'proteomics_csf'
 
-top_ws_hm_prot<-concatenate_top_features(MOFAobject, factors_all = names(sel_facts),view=view,top_fr = 0.025,weight_T = 0.001, pivot_wide = TRUE)
-names_vec =   rownames(top_ws_hm_prot)
+top_ws_hm_prot<-concatenate_top_features(MOFAobject, factors_all = names(sel_facts),view=view,top_fr = 0.01,weight_T = 0.01, pivot_wide = TRUE)
+rownames(top_ws_hm_prot) =  modify_prot_names(rownames(top_ws_hm_prot), view, conv_uniprot = TRUE)
 dim(top_ws_hm_prot)
 
-
-rownames(top_ws_hm_prot) =  modify_prot_names(names_vec, view, conv_uniprot = TRUE)
-rownames(top_ws_hm_prot) 
 
 
 
@@ -99,25 +128,30 @@ cm4<-ComplexHeatmap::pheatmap(vars_factors, col =col_fun4, heatmap_legend_param 
 ))
 
 top_ws_hm
-cm5<-ComplexHeatmap::pheatmap(as.matrix(top_ws_hm),col =col_fun5, cluster_rows =  FALSE,
+cm5<-ComplexHeatmap::pheatmap(as.matrix(top_ws_hm),col =col_fun5, clustering_method = 'median',
  heatmap_legend_param = list(
         title='Top features'
 ))
 
-cm6<-ComplexHeatmap::pheatmap(as.matrix(top_ws_hm_prot),col =col_fun5, cluster_rows =  FALSE,
+cm6<-ComplexHeatmap::pheatmap(as.matrix(top_ws_hm_prot),col =col_fun5, clustering_method = 'median',
  heatmap_legend_param = list(
         title='Top features'
 ))
 
-
-
+cm7<-ComplexHeatmap::pheatmap(as.matrix(top_ws_hm_rna),col =col_fun5, cluster_rows =  TRUE, 
+clustering_method = 'median',
+ heatmap_legend_param = list(
+        title='Top features'
+))
+cm7
 graphics.off()
-jpeg(paste0(outdir, '/heatmap_factor_info.jpeg'), res=300, width=6, height=12, units='in')
-ht_list<- cm1 %v% cm2 %v% cm3 %v% cm4%v% cm5%v% cm6
+jpeg(paste0(outdir, '/heatmap_factor_info',only_tfs, '.jpeg'), res=300, width=6, height=13, units='in')
+ht_list<-cm2  %v% cm1 %v% cm3 %v%  cm4 %v% cm7 %v% cm5%v% cm6 
 draw(ht_list)
 
 dev.off()
 
+draw(ht_list)
 
 
 
@@ -128,10 +162,87 @@ dev.off()
 
 
 
+### More annotations 
+library('hpar')
+
+library('hpar')
+ens_orig1<-gsub('\\..*', '',ens_orig )
+symbs<-get_symbols_vector(ens_orig)
+
+import_omnipath_annotations(
+  proteins = ens_orig1,
+  resources = c('HPA_tissue'),
+  wide = TRUE
+  ) 
+
+# import omnipath annotation : which tissue is the gene enriched? 
+all_hpa<-import_omnipath_annotations(
+  resources = c('HPA_tissue'),
+  wide = TRUE
+  ) 
+
+
+
+colnames(all_hpa)
+length(symbs)
+gene_annotations<-all_hpa[all_hpa$genesymbol  %in% symbs,]
+unique(gene_annotations$level)
+gene_annotations<-gene_annotations[gene_annotations$status %in% c('Enhanced', 'Approved'),]
+
+gene_annotations <-gene_annotations%>% 
+                dplyr::filter(status %in% c('Enhanced', 'Approved') )  %>%
+                dplyr::filter(!level %in% c('Not detected') ) 
+
+gene_annotations <-gene_annotations%>% 
+                dplyr::filter(status %in% c('Enhanced', 'Approved') )  %>%
+                dplyr::filter(level %in% c('High', 'Medium') ) 
+
+print(gene_annotations, n=100)
+unique(gene_annotations$genesymbol)
+table(gene_annotations$tissue)
+colnames(gene_annotations)
+print(gene_annotations,n=20)
+gene_annotations
+print(gene_annotations[grep('Purkinje|neur',gene_annotations$tissue ),], n=50)
+
+gan_long<-gene_annotations[, c('genesymbol', 'tissue', 'level')]
+
+gan_long2<-gan_long[!duplicated(gan_long),]
+gan_long2$level[gan_long2$level=='High']=1
+gan_long2$level[gan_long2$level=='Medium']=0.5
+gan_long2$level<-as.numeric(gan_long2$level)
+
+gan_long2<-gan_long2[!duplicated(gan_long2[,c('tissue', 'genesymbol')]),]
 
 
 
 
+gan_long_wide<-gan_long2 %>% pivot_wider(names_from ='tissue', 
+        values_from ='level') %>% as.data.frame()
+
+
+rownames(gan_long_wide)<-gan_long_wide$genesymbol
+gan_long_wide$genesymbol<-NULL
+gan_long_wide[is.na(gan_long_wide)]=0
+#apply(gan_long_wide, 2, as.numeric)
+
+gan_long_wide
+gan_long_wide[,grep('Purkinje',colnames(gan_long_wide))]
+#gan_long_wide<-as.data.frame(gan_long_wide)
+dim(gan_long_wide)
+
+
+gan_long_wide2<-sapply(gan_long_wide,as.numeric)
+rownames(gan_long_wide2)<-rownames(gan_long_wide)
+rownames(gan_long_wide)
+
+
+gan_long_wide2[,grep('Purkinje',colnames(gan_long_wide2))]
+
+
+jpeg(paste0(outdir, '/gene_annotations.jpeg'), units='in', res=90, width=10,height=10)
+pheatmap(t(gan_long_wide2), show_rownames = TRUE)
+dev.off()
 
 
 

@@ -56,7 +56,7 @@ clust_vars=c( 'NP3TOT_diff_V14', 'NP3TOT_V14', 'NP2PTOT_V14', 'NP2PTOT_diff_V14'
 
 clust_vars=c('NP3TOT_diff_V14', 'NP2PTOT_diff_V14' )
 clust_vars = c( 'NP3TOT_diff_V14',  'NP3TOT_V14', 'sft_V14', 'sft_V12')
-clust_vars=c( 'sft', 'moca', 'scopa', 'NP3TOT_V14', 'NP2PTOT_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_LOG','NP3TOT_LOG')
+clust_vars=c('NP3TOT_LOG', 'sft', 'moca', 'scopa', 'NP3TOT_V14',  'NP2PTOT_diff_V14', 'NP2PTOT_LOG')
 
 colnames(met)
 #sapply(clust_vars, function(y_clust){
@@ -91,7 +91,7 @@ colnames(met)
           #### medians write csv ####
           # 1. anova -  which are the significant variables? 
         library(rstatix)
-        diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa','abeta', 'Neutrophil.Lymphocyte', 'SEX')
+        diff_variables_box= c('NP3TOT','NP3TOT_V14','NP2PTOT', 'sft', 'moca', 'AGE', 'scopa','abeta', 'Neutrophil.Lymphocyte', 'SEX', 'con_putamen_V10')
         col_data<-samples_metadata(MOFAobject_sel)[c(diff_variables_box,clust_name,'PATNO', colnames(estimations))]
 
 

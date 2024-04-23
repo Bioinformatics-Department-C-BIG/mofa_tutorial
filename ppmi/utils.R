@@ -60,7 +60,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'con_putamen', 
                          'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 'LEDD', 
                          'rigidity','months', 
-                         'con_putamen', 'con_putamen_V10', 
+                         'con_putamen', 'con_putamen_V10', 'mean_striatum_V10',
                          'change', 
                          # biochemical
                          'asyn', 'CSFSAA', 'ptau', 'ptau_asyn', 'ptau_tau', 'abeta', 'ab_asyn', 'asyn', 'hemo', 

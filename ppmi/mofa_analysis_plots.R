@@ -211,8 +211,9 @@ plot='log_pval'
 
 #'LEDD'
 #' variables_conf_only_clinical
-variables_conf_only_clinical
-sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG','NP3TOT', 'updrs3_score_on', 'updrs3_score_on_LOG'))
+
+sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca','sft', 'scopa', 'NP3TOT_LOG','NP3TOT', 
+'updrs3_score_on', 'updrs3_score_on_LOG', 'updrs_totscore', 'con_putamen_diff_V10_perc'))
 sel_factors_conf
 fname<-'factors_covariates_strict_PD_conference'
 plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
@@ -316,27 +317,27 @@ plot_covars_mofa(selected_covars=c(selected_covars2, 'COHORT'),fname,plot,factor
 all_diff_variables_prog_in_cors<-all_diff_variables_prog[all_diff_variables_prog %in% colnames(cors_pearson_pd)]
 
 samples_metadata(MOFAobjectHC)$COHORT
-samples_metadata(MOFAobjectPD)$CSFSAA
+samples_metadata(MOFAobjectPD)$l_striatum_V12
+
 
 
 # Plot 1: some more non motor that we discovered
 selected_covars_broad=unique(selected_covars_broad)
 fname<-'factors_covariates_broad_PD'
-MOFAobjectPD@samples_metadata$Lymphocytes....
-plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject_to_plot=MOFAobjectPD_sel  )
 
 fname<-'factors_covariates_broad_PD_all_fs'
-plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject_to_plot=MOFAobjectPD_sel  )
 
 
 fname<-'factors_covariates_broad_HC_all_fs'
 selected_covars_broad
-plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectHC  )
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot,1:N_FACTORS,labels_col=TRUE, height=1500, MOFAobject_to_plot=MOFAobjectHC  )
 
 
 
 fname<-'factors_covariates_broad_cor_PD'
-plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot='r',sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject=MOFAobjectPD_sel  )
+plot_covars_mofa(selected_covars_broad[! selected_covars_broad %in% measured_cells  ],fname,plot='r',sel_factors_conf,labels_col=TRUE, height=1500, MOFAobject_to_plot=MOFAobjectPD_sel  )
 
 
 cur_names<-read.csv2(paste0(data_dir, '/ppmi/output/curated_names.csv'))$Variable
@@ -370,7 +371,7 @@ plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='r',factors,l
 dir.create(paste0(outdir, '/covariates/'))
 write.csv(cors_pearson, paste0(outdir, '/covariates/covariate_corelations_pearson.csv'))
 for (fx in 1:N_FACTORS){
-  sig<-cors[fx,]>1.5
+  sig<-cors[fx,]>1.3
   c1<-cors[fx,][sig];
    c2<-cors_pearson[fx,][sig]
   sig_names<-colnames(sig)[which(t(sig))]
@@ -384,7 +385,7 @@ for (fx in 1:N_FACTORS){
 top_covariates<-c()
 for (fx in 1:N_FACTORS){
   print(fx)
-  sig<-cors_all_pd[fx,]>1.5
+  sig<-cors_all_pd[fx,]>1.3
   c1<-round(cors_all_pd[fx,][sig], digits=2)
   c2<-round(cors_pearson_pd[fx,][sig], digits=2)
   sig_names<-colnames(sig)[which(t(sig))]
@@ -394,7 +395,7 @@ for (fx in 1:N_FACTORS){
 
   c3<-as.matrix(c3[order(c3[,1], decreasing = TRUE),])
    print(head(c3, n=7 )   )
-   top_covariates<-unique(c(top_covariates,rownames(head(c3, n=6))))
+   top_covariates<-unique(c(top_covariates,rownames(head(c3, n=8))))
 }
 length(top_covariates)
 

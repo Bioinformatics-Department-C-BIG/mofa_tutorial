@@ -570,22 +570,22 @@ get_labels<-function(selected_covars, labels_col=FALSE){
 
 
 
-#selected_covars = c('COHORT', 'CONCOHORT')
+#selected_covars = selected_covars_broad
 #MOFAobject_to_plot  = MOFAobject_sel
 #selected_covars=variables_conf_only_clinical;
 #plot='log_pval';
 #factors = sel_factors_conf;
 #labels_col=TRUE;
-# MOFAobject_to_plot=MOFAobjectPD_sel  ;
+#MOFAobject_to_plot=MOFAobjectPD_sel  ;
 #alpha=0.05
 plot_covars_mofa<-function(selected_covars, fname, plot, factors,labels_col=FALSE, height=1000, 
-                           MOFAobject_to_plot=MOFAobject, res=200, alpha=0.05){
+                           MOFAobject_to_plot=MOFAobject, res=100, alpha=0.05){
   
   # filter if some do not exist in the colnames of metadata
   # first check if the requested names exist in the metadata 
   selected_covars = unique(selected_covars)
   selected_covars=selected_covars[selected_covars %in% colnames(MOFAobject_to_plot@samples_metadata) ]
-  
+  #MOFAobject_to_plot@samples_metadata[,selected_covars]
   
   sds<-apply(MOFAobject_to_plot@samples_metadata[,selected_covars], 2, sd, na.rm=TRUE)
   sd_na<-c(is.na(sds)|sds==0)

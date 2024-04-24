@@ -45,7 +45,7 @@ EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',
 #diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
 #diff_vars<-diff_vars[!grepl('clust',diff_vars)]
 #diff_vars
-selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
+selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP3TOT_LOG','updrs3_score_on', 
                           'NP3TOT_diff_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V10', 'NP3TOT_diff_V10','sft_V14',
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
@@ -69,7 +69,11 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
                          'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 'RIN', 
-                         'Uniquely.mapped'
+                         'Uniquely.mapped', 'updrs_totscore',
+
+                         # high scoring
+                          'con_putamen_diff_V10_perc', 'DRMVIVID_rbd', 'PD_MED_USE_V10','NP3TOT_LOG_V10', 
+                          'rigidity_on'
                          
                          )
                    #      diff_vars)
@@ -721,6 +725,8 @@ get_gene_symbol_uniprot<-function(my_protein_ids){
   #' @param uniprot_ids
   #' 
   #' 
+     uniprot_ids = gsub('_proteomics_csf', '', uniprot_ids)
+     
         gene_symbols<-AnnotationDbi::select(org.Hs.eg.db, uniprot_ids,"SYMBOL", "UNIPROT")
         gene_symbols$SYMBOL[is.na(gene_symbols$SYMBOL)]<-gene_symbols$UNIPROT[is.na(gene_symbols$SYMBOL)]
         gene_symbols<-gene_symbols[!duplicated(gene_symbols$UNIPROT),]
@@ -746,6 +752,8 @@ mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_n
   # Examine this data frame
   # Order the significant to save as a new output file 
   head(de_res)
+
+
   which(de_res$significant=='Significant')
   # LARGER ONE not saved 
   sign_only<-de_res[de_res$sign_lfc=='Significant',]
@@ -1004,7 +1012,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, pvalueCutoff_sig=0.05){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, dpi=150, pvalueCutoff_sig=0.05){
   
   ### GSE COMPARE ANALYSIS 
   enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
@@ -1019,12 +1027,12 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   # Dotplot - signed and unsigned
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   ggsave(dt_path, plot=dot_comp,
-         dpi=250, width=wh_dot[1], height=wh_dot[2], 
+         dpi=dpi, width=wh_dot[1], height=wh_dot[2], 
   )
 
    dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
   ggsave(dt_u_path, plot=dot_comp,
-         dpi=250, width=wh_dot_u[1], height=wh_dot_u[2], 
+         dpi=dpi, width=wh_dot_u[1], height=wh_dot_u[2], 
   )
   
    
@@ -1035,7 +1043,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(emap_path, plot=emap_comp,
-         dpi=250, width=10, height=10, units='in')
+         dpi=dpi, width=10, height=10, units='in')
   
 
 
@@ -1049,7 +1057,7 @@ cnet_comp<-cnetplot(gse_compare.orig, showCategory = 10,
          cex.params = cex.params)
 
 ggsave(cnet_path, plot=cnet_comp,
-         dpi=200)
+         dpi=dpi)
   
   
 }
@@ -1743,7 +1751,7 @@ standardize_go_names<-function(descriptions){
 ### PREDICTIONS ON SUMMARIZED EXPERIMENT 
 ## predict on each or on multi assay?
 
-library('fsbrain')
+#library('fsbrain')
 # install.packages('fsbrain')
 
 
@@ -2434,3 +2442,24 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
         return(all_clusts_proteins_logFC)
 
 }
+
+
+
+
+library(digest)
+#install.packages('digest')
+# 
+
+
+shorten_path <- function(directory_path) {
+
+  # hash table to shorten paths 
+  hashed <- digest(directory_path, algo = "crc32")  # You can choose different algorithms
+  shortened <- substr(hashed, 1, 8)  # Adjust the length of the shortened path as needed
+  return(shortened)
+}
+
+# Example usage:
+long_path <- outdir
+shortened_path <- shorten_path(long_path)
+print(shortened_path)

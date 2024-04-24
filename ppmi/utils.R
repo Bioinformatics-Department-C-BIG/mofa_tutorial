@@ -2459,7 +2459,4 @@ shorten_path <- function(directory_path) {
   return(shortened)
 }
 
-# Example usage:
-long_path <- outdir
-shortened_path <- shorten_path(long_path)
-print(shortened_path)
+

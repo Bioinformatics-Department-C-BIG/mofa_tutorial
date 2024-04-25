@@ -14,8 +14,8 @@ fact<-get_factors_for_metric(DIFF_VAR)
 
 fact
 view='miRNA'
-view='proteomics_csf'
 view='RNA'
+view='proteomics_csf'
 
 top_fr=0.2
 MOFAobjectPD
@@ -78,7 +78,7 @@ x='cor',
 y='V2', 
 lab=rownames(result_cor), 
 pCutoff = 0.05, 
-FCcutoff = 0.1,
+FCcutoff = 0.1,s
 xlim =xlim, 
 ylim= c(0, max_pval), 
 xlab = bquote(correlation)

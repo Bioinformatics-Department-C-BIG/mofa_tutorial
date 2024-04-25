@@ -83,12 +83,14 @@ just_load=FALSE
 
 dir.create(paste0(outdir, '/enrichment/rnas_/'))
 
+
+sel_factors_to_enrich = c(sel_facts)
 if (TRUE){
   
 
       for (factor in sel_factors_to_enrich){
           #for (view in c( 'RNA','proteomics_t_csf', 'proteomics_t_plasma')){
-          for (view in c( 'RNA')){
+          for (view in c( 'proteomics_t_plasma')){
 
           #view='RNA'; factor=3
                     print(paste0(view,' ', factor ))
@@ -152,15 +154,25 @@ if (TRUE){
                         run_ORA=TRUE
                          # TODO: DECIDE on the number
                           if (run_ORA){
+                            top_p = config$top_p_mofa
+                            top_p = 30
+
+                            mofa_weight_T = 0.05
                             names(gene_list_ord) = gsub('_proteomics.*', '',names(gene_list_ord))
-                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',ONT, factor,'_')
+                            results_file_mofa = paste0(outdir, '/enrichment/', tissue,'/ora/gsego_',ONT, factor,'_top_p_', top_p)
                             dir.create(paste0(outdir, '/enrichment/', tissue,'/ora/'), recursive = TRUE)
+                            length(gene_list_ord)
+
+                            gene_list_ord = gene_list_ord[gene_list_ord>mofa_weight_T]
+                            print(length(gene_list_ord))
+                            if (length(gene_list_ord)>0){
+
                             
+                                gse_protein_full_enrich =   run_ora_gene_list(gene_list_ord,results_file=results_file_mofa, top_p=top_p)
                             
-                            gse_protein_full_enrich =   run_ora_gene_list(gene_list_ord,results_file=results_file_mofa)
-                          
-                            list_proteins_enrich[[factor]]<-gse_protein_full_enrich
-                            saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
+                                list_proteins_enrich[[factor]]<-gse_protein_full_enrich
+                                saveRDS(list_proteins_enrich, paste0(mofa_enrich_rds, 'prot_enrich_go'))
+                            }
                           
                                                     
                            

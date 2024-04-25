@@ -297,19 +297,71 @@ get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20, pr
 
 }
 
+#subcategory
+##factors = sel_facts
+#sel_facts
+top_p = 3
+#view = 'proteomics_t_plasma'
+#pvalueCutoff=0.05
+config$subcategory
+
+grepl('prot', view)
 
 
-concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_'){
+concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view=FALSE, subcategory='GO:BP'){
     #'
     #' @param factors 
     #' @param top_p: top number of pathways to extract from mofa factors 
     #' 
+    #' 
 
-    top_pathways_all_factors<-lapply(factors, 
+      if (  grepl('prot', view)){
+        # take the pcgse results, concatenate the positive and negative 
+        mode = view
+        
+        T=pvalueCutoff
+        neg<-read.csv(paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                       mode, '_enrichment', sign_mode,'_', T, '.csv'))
+        pos<-read.csv(paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                       mode, '_enrichment', 'positive','_', T, '.csv'))
+
+        neg = bind_rows(neg, pos)
+
+#        neg<-pos
+        neg$Factor = gsub('Factor', '',neg$Factor  )
+        # cut and select the top       
+        #factors
+        neg_sel <- neg[neg$Factor %in% factors, ]
+
+        
+        neg_sel<-neg_sel %>%  group_by(Factor) %>% slice_max(order_by = -p.adjust, n = top_p) %>% as.data.frame()
+        print(neg_sel[neg_sel$Factor==22,])
+
+        neg_sel$factor = neg_sel$Factor
+        neg_sel$X=NULL
+        neg_sel$pvalue=NULL; neg_sel$Factor=NULL
+       return(neg_sel)
+
+
+    }else if (prefix == '_rnas'){
+
+      top_pathways_all_factors<-lapply(factors, 
       get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p, prefix=prefix)
 
-    top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
-    return(top_pathways_all_factors)
+      top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
+      return(top_pathways_all_factors)
+
+
+    }
+    
+
+
+
+
+
+
+
+
 }
 
 # Feature names #### 
@@ -333,6 +385,8 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
         }
 
     }
+
+
 
 
 #object=MOFAobjectPD

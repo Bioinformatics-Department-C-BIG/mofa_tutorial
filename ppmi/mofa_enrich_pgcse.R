@@ -12,7 +12,7 @@ library('MOFA2')
 #es.positive$pval.adj
 #res=res.negative
 
-write_enrich<-function(res, sign_mode){
+write_enrich<-function(res, sign_mode, mode){
   #' 
   #'' @res res.negative result from mofa enrichment 
   #'
@@ -54,6 +54,8 @@ write_enrich<-function(res, sign_mode){
       write.csv(format(all_fs_merged2_pval2, digits=3),paste0(neg_file,  '.csv' ), row.names = TRUE)
       all_fs_merged2_pval2_sig=all_fs_merged2_pval2[ all_fs_merged2_pval2$p.adjust<T,]
       write.csv(format(all_fs_merged2_pval2_sig, digits=3),paste0(neg_file, '_', T,  '.csv' ))
+
+      print(paste('Wrote result to: ', neg_file))
       return(all_fs_merged2_pval2_sig)
       
 }
@@ -82,6 +84,11 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
 
     dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
     ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
+
+
+
+
+
     }
 
 
@@ -102,6 +109,7 @@ mode='RNA'
 
 
 mode='proteomics_t_csf'
+#mode='proteomics_t_plasma'
 
    
 features_names(MOFAobject)$RNA
@@ -200,13 +208,13 @@ for (subcategory in c('GO:BP' )){
           )
           
           sign_mode='negative'
-          res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
+          res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode, mode=mode)
           res_negative_df
           saveRDS(res.negative, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
           
           sign_mode='positive'
 
-          res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
+          res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode, mode=mode)
           saveRDS(res.positive, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
           res_negative_df
           res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),

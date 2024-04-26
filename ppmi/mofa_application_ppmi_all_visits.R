@@ -7,8 +7,7 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit to run mofa: ALL, V02, V04, V06, V08 
-TISSUE='Plasma'
-tissue_un='Plasma'
+
 
 library(MOFA2)
 library(tidyverse)
@@ -37,7 +36,8 @@ cell_corr_deseq=TRUE
 #  N_FACTORS=8
 #}
 VISIT=c('BL');
-
+TISSUE='CSF'
+tissue_un='Plasma'
 
 
 
@@ -88,7 +88,7 @@ print(TOP_PN)
 
 
 
-run_mofa_get_cors<-function(mofa_multi_to_use, N_FACTORS, force=FALSE){
+run_mofa_get_cors<-function(mofa_multi_to_use,  N_FACTORS, force=FALSE, outdir){
   ### run mofa and write stats of corelation to file!! 
   #'
   #'
@@ -202,9 +202,14 @@ for (N_FACTORS in c(35)){
   out_params<- paste0( 'p_',prot_mode, '_',TOP_PN,'_',p_params_plasma,'_', p_params_mofa, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
                        as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa), '_df_', drop_factor_threshold )
   
-  outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
-  dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
+  outdir_full = paste0(out_params, '_split_', as.numeric(split ));
 
+  # create shorterpath 
+  outdir = paste0(outdir_orig,shorten_path(outdir_full))
+
+
+  dir.create(outdir, showWarnings = FALSE); outdir = paste0(outdir,'/' );outdir
+  file.create(paste0(outdir, '/',outdir_full ))
 
 #a_multi[,,4])
 
@@ -224,7 +229,7 @@ for (N_FACTORS in c(35)){
     mofa_multi_to_use=mofa_multi
   }
 
-  MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE)
+  MOFAobject=run_mofa_get_cors(mofa_multi_to_use, N_FACTORS, force=FALSE, outdir=outdir)
   
  
   

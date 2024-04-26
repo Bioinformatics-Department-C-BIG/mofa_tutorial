@@ -12,6 +12,9 @@ suppressWarnings(library(dplyr))
 library(SummarizedExperiment)
 
 
+config <- config::get(file = "ppmi/config.yml")
+
+
 library('WGCNA') # needƒ empiricalBayesLM
 suppressWarnings(library(R.filesets))
 ## Utils 
@@ -40,12 +43,17 @@ EVENT_MAP_YEAR = list( 'BL' =  'year 0', 'V04'='year 1', 'V06'='year 2',
                'V08'='3', 'V10'='4', 'V12' = '5', 'V14' = '7')
 
 
+
+               
+
+
 #grepl( 'LAST_UPDATE|INFO_DT|TM|DT|ORIG_ENTRY|DATE|REC_ID|PAG_')
 
 #diff_vars<-colnames(samples_metadata(MOFAobject))[grep('diff', colnames(samples_metadata(MOFAobject)))]
 #diff_vars<-diff_vars[!grepl('clust',diff_vars)]
 #diff_vars
-selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'updrs3_score_on', 
+selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', 'NP3TOT_LOG','updrs3_score_on', 
+                          'NP3TOT_diff_V14', 'NP2PTOT_diff_V14', 'NP2PTOT_diff_V10', 'NP3TOT_diff_V10','sft_V14',
                          'NP1_TOT', 'NP2_TOT','NP3_TOT', 'NP4_TOT',
                          'NHY', 'NP3BRADY',
                          'NP3RIGN', 'SCAU5', 'MCATOT','moca', 
@@ -59,7 +67,7 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'con_putamen', 
                          'td_pigd_old_on', 'PD_MED_USE' , 'Outcome', 'LEDD', 
                          'rigidity','months', 
-                         'con_putamen', 'con_putamen_V10', 
+                         'con_putamen', 'con_putamen_V10', 'mean_striatum_V10',
                          'change', 
                          # biochemical
                          'asyn', 'CSFSAA', 'ptau', 'ptau_asyn', 'ptau_tau', 'abeta', 'ab_asyn', 'asyn', 'hemo', 
@@ -68,7 +76,11 @@ selected_covars_broad<-c('COHORT', 'AGE', 'SEX','NP1RTOT', 'NP2PTOT','NP3TOT', '
                          'con_putamen_diff_V10', 'hi_putamen_diff_V10',
                          'MCA_TOT_diff_V16', 'SITE', 'Plate','Usable_bases_SCALE', 
                          'Neutrophils....', 'Lymphocytes....', 'Neutrophils.Lymphocytes', 'RIN', 
-                         'Uniquely.mapped'
+                         'Uniquely.mapped', 'updrs_totscore',
+
+                         # high scoring
+                          'con_putamen_diff_V10_perc', 'DRMVIVID_rbd', 'PD_MED_USE_V10','NP3TOT_LOG_V10', 
+                          'rigidity_on'
                          
                          )
                    #      diff_vars)
@@ -180,37 +192,26 @@ load_se_all_visits<-function(input_file, combined){
 
 
 
-load_all_se<-function(){
+load_all_se<-function(process_mirnas){
   #'
   #' load summarized experiment for rnas and mirnas 
   #' @param
   #' @return se_rnas, se_mirnas 
 
 
-  
-      if (!base::exists(quote(se_mirs))){
-        process_mirnas = TRUE; # reload mirs !!  # DO NOT CHANGE THIS!! 
-        source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+       process_mirnas = process_mirnas
 
-
-        se_mirs=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
+      source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
+      #if (!base::exists(quote(se_mirs))){
+        se=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
       # se_mirs_norm=load_se_all_visits(input_file = input_file_mirs, combined=combined_bl_log);
+       return(se)
+     # }
 
-      }
 
-
-      # hist(head(assay(se_mirs_norm),10)[10:50])
+   
 
      
-      #source(paste0(script_dir, '/ppmi/deseq2_vst_preprocessing_mirnas_all_visits2.R'))
-      if (!base::exists(quote(se_rnas)) ){
-         process_mirnas=FALSE
-         source(paste0(script_dir, '/ppmi/config.R'))
-
-        se_rnas=load_se_all_visits(input_file = input_file, combined=combined_bl_log); 
-      }
-
-      return(list(se_rnas, se_mirs))
 
 }
 
@@ -366,8 +367,7 @@ deseq_by_group<-function(se_filt, formula_deseq, min.count=10, cell_corr_deseq=T
   
   #vsd <- varianceStabilizingTransformation(ddsSE, blind=FALSE)
   
-  #deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
-  deseq2Data <- DESeq(ddsSE)
+  deseq2Data <- DESeq(ddsSE, parallel=TRUE, BPPARAM = safeBPParam())
 
   
   #deseq2Results<-results(deseq2Data)
@@ -527,7 +527,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
 
  imaging_variables_diff<-c('updrs3_score', 'updrs3_score_on', 'updrs3_score_LOG', 'updrs3_score_on_LOG', 'con_putamen', 'hi_putamen',
                            'updrs2_score', 'updrs2_score_LOG', 'moca' , 'scopa')
- scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT' )### todo add upsit and other scales? 
+ scale_vars_diff=c('NP3TOT', 'NP2PTOT', 'RBD_TOT', 'MCATOT' ,'SCAU_TOT', 'NP3TOT_LOG', 'NP2PTOT_LOG' )### todo add upsit and other scales? 
  
  
  get_diff_zscores<-function(patno_event_ids,imaging_variables_diff,scale_vars_diff ){
@@ -588,7 +588,9 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
         
  }
 
+#se=proteomics_se
 ## Create the summarized experiment by selecting VISITS and cohorts 
+
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   
   #' Takes the raw file with all counts
@@ -600,27 +602,30 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
 #  sel_coh
-sel_sub_coh
   
-  if (length(sel_subcoh)==1 && sel_subcoh==FALSE){
+  if (sel_subcoh==FALSE){
         se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
     
   }else{
       se_visit<-se[,se$EVENT_ID %in% VISIT]
-
+      ids = c()
+      ids_control = c()
       if (1 %in% sel_coh){ 
         ids<-c(se_visit$INEXPAGE %in% sel_subcoh ) ## filter the ids in parkinsons 
       }
       if (2 %in% sel_coh){
-        ids<- c(ids | se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+        ids_control<-c( se_visit$INEXPAGE %in% 'INEXHC') ## also extract controls 
+   
         
       }
-      se_filt<-se_visit[, ids]
+
+      ids_all<- c(ids | ids_control) # if in pd or hc take it 
+
+      se_filt<-se_visit[, ids_all]
       
       
     
   }
-     
   dim(se_filt)     
 
   
@@ -727,6 +732,8 @@ get_gene_symbol_uniprot<-function(my_protein_ids){
   #' @param uniprot_ids
   #' 
   #' 
+     uniprot_ids = gsub('_proteomics_csf', '', uniprot_ids)
+     
         gene_symbols<-AnnotationDbi::select(org.Hs.eg.db, uniprot_ids,"SYMBOL", "UNIPROT")
         gene_symbols$SYMBOL[is.na(gene_symbols$SYMBOL)]<-gene_symbols$UNIPROT[is.na(gene_symbols$SYMBOL)]
         gene_symbols<-gene_symbols[!duplicated(gene_symbols$UNIPROT),]
@@ -752,6 +759,8 @@ mark_significant<-function(de_res, padj_T, log2fol_T, padj_name='padj', log2fc_n
   # Examine this data frame
   # Order the significant to save as a new output file 
   head(de_res)
+
+
   which(de_res$significant=='Significant')
   # LARGER ONE not saved 
   sign_only<-de_res[de_res$sign_lfc=='Significant',]
@@ -820,7 +829,7 @@ library('enrichplot' )
 #results_file = results_file_cluster
 #N_DOT=20, N_EMAP=30 , N_NET=10)
 
-run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=15,force_gse=FALSE){
+run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, N_NET=20,force_gse=FALSE){
   #'
   #' Get the ordered gene list from a deseq object
   #' @param deseq2ResDF deseq results object 
@@ -838,7 +847,6 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
  
   return(gse)
 }
-
 
 
 
@@ -884,7 +892,7 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
 
 
 
-run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
+run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, N_NET = 20, pvalueCutoff_sig=0.05, pvalueCutoff=1, force_gse=FALSE){
   #'
   #' Run enrichment GSEA using an ordered gene list, write, and plot and save the results 
   #' @param gene_list
@@ -918,7 +926,7 @@ run_enrich_gene_list<-function(gene_list, results_file, N_DOT=15,N_EMAP=30, pval
     if  (dim(gse)[1]>2 ){
       # check if the enrichment returned more than one resulting paths before plotting!
 
-      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=15,
+      enrich_plots <- run_enrichment_plots(gse=gse,results_file=results_file, N_DOT=N_DOT, N_EMAP=N_EMAP, N_NET=N_NET,
           run_ORA=FALSE, geneList = gene_list)
     }
   
@@ -1011,7 +1019,7 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, pvalueCutoff_sig=0.05){
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, dpi=150, pvalueCutoff_sig=0.05){
   
   ### GSE COMPARE ANALYSIS 
   enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
@@ -1026,12 +1034,12 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   # Dotplot - signed and unsigned
   dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT, split=".sign") + facet_grid(.~.sign)
   ggsave(dt_path, plot=dot_comp,
-         dpi=250, width=wh_dot[1], height=wh_dot[2], 
+         dpi=dpi, width=wh_dot[1], height=wh_dot[2], 
   )
 
    dot_comp<-clusterProfiler::dotplot(gse_compare, showCategory=N_DOT_U) 
   ggsave(dt_u_path, plot=dot_comp,
-         dpi=250, width=wh_dot_u[1], height=wh_dot_u[2], 
+         dpi=dpi, width=wh_dot_u[1], height=wh_dot_u[2], 
   )
   
    
@@ -1042,7 +1050,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
                       cex.params = list(category_label = 0.9) ) 
   emap_comp
   ggsave(emap_path, plot=emap_comp,
-         dpi=250, width=10, height=10, units='in')
+         dpi=dpi, width=10, height=10, units='in')
   
 
 
@@ -1056,7 +1064,7 @@ cnet_comp<-cnetplot(gse_compare.orig, showCategory = 10,
          cex.params = cex.params)
 
 ggsave(cnet_path, plot=cnet_comp,
-         dpi=200)
+         dpi=dpi)
   
   
 }
@@ -1750,7 +1758,7 @@ standardize_go_names<-function(descriptions){
 ### PREDICTIONS ON SUMMARIZED EXPERIMENT 
 ## predict on each or on multi assay?
 
-library('fsbrain')
+#library('fsbrain')
 # install.packages('fsbrain')
 
 
@@ -2312,9 +2320,9 @@ attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
 ### DE RESULTS  ####
 # rnas
 
-  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  
-          prefix, cluster_id ){
+  get_de_results_path<-function(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id ){
     #' returns the deseq results pathway for 
+    #' for now works for genes and mirs? 
     #' @param VISIT
     #' @param formula_deseq_format
     #' @param prefix
@@ -2325,14 +2333,19 @@ attach_cluster_ids<-function(df_to_attach, all_clusts_mofa){
 
 
 # read top of 3 clusters # get top genes union by pvalue
-  sel_vis=c('BL', 'V06','V08' )
+sel_vis=c('BL', 'V06','V08' )
 
 get_de_rnas_union<-function(sel_vis){
-          sel_clusts = c(1,2,3)
+  #' returns the significant molecules for each MOFA cluster 
+  #' finds the path with the de results file, reads it , and checks for significance 
+  #' @param sel_vis: which visits to return 
+      # clusters to return
+      sel_clusts = c(1,2,3)
 
 
       de_rnas_files<- sapply(sel_vis, function(sel_vis_1){
         sapply(sel_clusts, function(cl_id){
+          # get the paths for all visits all clusters 
             get_de_results_path(deseq_params_all, VISIT=sel_vis_1, formula_deseq_format,  prefix, cluster_id = cl_id)
             
         })
@@ -2369,19 +2382,31 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
                 outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP, '/' )
                 # 
                 de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
-                get_cluster_de(, view='')
 
                 de_results_prot<-read.csv(de_prot_file)
-                
                 view=paste0('proteomics_', tolower(TISSUE))
 
 
-                de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
+                match(unique(top_proteins$feature), de_results_prot$X)
 
-               de_results_prot_top<-de_results_prot[match(unique(top_proteins$feature), de_results_prot$X),]
+                
+
+                if (sig_only){
+                    de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = de_AND_in_factor
+                }else{
+                    #de_AND_in_factor<-intersect(top_proteins$feature,de_sig_all_top );de_AND_in_factor
+                    proteins_to_use = top_proteins$feature
+
+                }
+                
+
+                top_factor_feat<-match(unique(proteins_to_use), de_results_prot$X)
+                top_factor_feat<-top_factor_feat[!is.na(top_factor_feat)]
+                de_results_prot_top<-de_results_prot[top_factor_feat,]
+
+
                 # TODO: print only significant 
-                #print(paste('SIG in f',de_results_prot_sig$X %in% top_proteins$feature))
-
 
                 if (sig_only){
                         # filter the ones that are de 
@@ -2393,7 +2418,7 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 
                 # get also the pvalue 
                 de_all[[cluster_id]]<-as.data.frame(de_results_prot_top[, c(metric_p)])
-               print(de_results_prot_top$X)
+                 print(de_results_prot_top$X)
              
 
 
@@ -2401,9 +2426,11 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
         }
 
         names(de_all)
-        de_all
+
         # TODO: add top prot
-        names(de_all)<-paste0(VISIT_COMP,'_',c(1:length(clust_ids)))
+       
+
+        names(de_all)<-paste0(EVENT_MAP_YEAR[[VISIT_COMP]],'_',c(1:length(clust_ids)))
         de_all[[1]]
         
 
@@ -2413,6 +2440,8 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
        
         all_clusts_proteins_logFC<-as.data.frame(all_clusts_proteins_logFC)
         all_clusts_proteins_logFC
+
+        de_results_prot_top$X
         rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
         colnames(all_clusts_proteins_logFC)<-names(de_all)
 
@@ -2420,3 +2449,21 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
         return(all_clusts_proteins_logFC)
 
 }
+
+
+
+
+library(digest)
+#install.packages('digest')
+# 
+
+
+shorten_path <- function(directory_path) {
+
+  # hash table to shorten paths 
+  hashed <- digest(directory_path, algo = "crc32")  # You can choose different algorithms
+  shortened <- substr(hashed, 1, 8)  # Adjust the length of the shortened path as needed
+  return(shortened)
+}
+
+

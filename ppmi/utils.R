@@ -686,7 +686,7 @@ get_symbols_vector<-function(ens ){
   #' @returns symbols_ordered the total 
   #'  
   #'  
-  ens<-gsub('\\..*','', ens ) # remove if there is something after the dot 
+  ens<-gsub('\\..*','', ens ) # remove if there is something after the dot . standard ens do not have .
 
   symbols <- mapIds(org.Hs.eg.db, keys = ens,
                     column = c('SYMBOL'), keytype = 'ENSEMBL')
@@ -733,6 +733,8 @@ get_gene_symbol_uniprot<-function(my_protein_ids){
   #' 
   #' 
      uniprot_ids = gsub('_proteomics_csf', '', uniprot_ids)
+     uniprot_ids = gsub('_proteomics_plasma', '', uniprot_ids)
+
      
         gene_symbols<-AnnotationDbi::select(org.Hs.eg.db, uniprot_ids,"SYMBOL", "UNIPROT")
         gene_symbols$SYMBOL[is.na(gene_symbols$SYMBOL)]<-gene_symbols$UNIPROT[is.na(gene_symbols$SYMBOL)]

@@ -26,7 +26,7 @@ write_enrich<-function(res, sign_mode){
       all_fs<-colnames(results_enrich)
       results_enrich$Description=rownames(res$pval.adj); 
 
-      sapply(all_fs,pcgse_dot_by_factor, results_enrich=results_enrich )
+      # sapply(all_fs,pcgse_dot_by_factor, results_enrich=results_enrich ) # do not run dotplot
       
 
 
@@ -98,7 +98,6 @@ mode='proteomics_csf'
 
 assay(mofa_multi[,,3])
 
-mode='RNA'
 
 
 mode='proteomics_t_csf'
@@ -122,6 +121,11 @@ mode='proteomics_t_csf'
 mode = 'proteomics_csf'
 mode = 'proteomics_t_plasma'
 
+
+mode = 'proteomics_csf'
+
+mode='RNA'
+
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
 
 head(my_protein_ids)
@@ -131,7 +135,7 @@ head(my_protein_ids)
 #features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
 
 
-
+force_pcgse = TRUE
 get_feature_set_uniprot<-function(gs_original){
   #' map colnames of feature.sets with UNIRPOT SYMBOL
   #' @param gs_original: the feature set with gene symbols 
@@ -152,6 +156,13 @@ get_feature_set_uniprot<-function(gs_original){
     colnames(gs_uniprot_filt)
     return(gs_uniprot_filt)
 }
+
+
+
+
+
+
+
 #rownames(results_de)
 grepl('proteomics', mode)
 # 'GO:MF'
@@ -161,7 +172,7 @@ for (subcategory in c('GO:BP' )){
       gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
       gs_original<-as.matrix(read.csv(gs_file, header=1, row.names=1))
       gs<-gs_original
-    if (mode=='proteomics_csf'| mode=='proteomics_plasma'){
+    if (mode=='proteomics_csf'|| mode == 'proteomics_plasma'){
       # untargeted are in uniprot..
       gs<-get_feature_set_uniprot(gs_original)
     }
@@ -175,12 +186,15 @@ for (subcategory in c('GO:BP' )){
   }
 
 
+
+
   sign_mode='negative'
   subcategory_s<-gsub('\\:', '_', subcategory)
   enrich_res_file_neg<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
   enrich_res_file_pos<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
   
-  if (file.exists(enrich_res_file_neg)){
+
+  if (!force_pcgse & file.exists(enrich_res_file_neg)){
         res.negative=loadRDS(enrich_res_file_neg)
         res.positive=loadRDS(enrich_res_file_pos)
     
@@ -229,11 +243,45 @@ for (subcategory in c('GO:BP' )){
   ### PROBLEM: this is based on RNA only!!! 
   alpha=0.05
 dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
+
+## After having run with uniprot, convert the results to symbol before plotting ####
+
+
+
+
+  convert_to_gene_symbol<-function( x, view)(
+    #'view = proteomics csf/ proteomics targeted/rna 
+    #' 
+    #' 
+  
+
+    if (view == 'RNA'){
+      x = get_symbols_vector(x)
+    } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
+      x = get_symbol_from_uniprot(x)$SYMBOL
+
+    }
+  
+  
+  )
+
+  rownames(res.negative$feature.statistics) = convert_to_gene_symbol(rownames(res.negative$feature.statistics), view=mode)
+  colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
+
+
+  rownames(res.positive$feature.statistics)=convert_to_gene_symbol(rownames(res.positive$feature.statistics),  view=mode)
+  colnames(res.positive$feature.sets)<-convert_to_gene_symbol(colnames(res.positive$feature.sets),  view=mode)
+
+
+
+
+
 sapply(1:N_FACTORS, function(factor){
   tryCatch({
 
   plot_enrichment_detailed(res.negative, factor, 
-  alpha = alpha
+  alpha = alpha, 
+  max.genes=6
   )
   #graphics.off()
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
@@ -246,6 +294,8 @@ tryCatch({
  
 
   plot_enrichment_detailed(res.positive, factor, 
+    max.genes=6,
+
     alpha = alpha)
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
   width=6, height=4)
@@ -303,6 +353,41 @@ dev.off()
 
 
 ###### turn to enrichment result to plot 
+
+# MERGE RESULTS CSV
+
+all_modes<-c('proteomics_csf', 'proteomics_plasma', 'RNA')
+ all_enrichments =  list()
+
+i=1
+for (mode in all_modes){
+  for (sign_mode in c('positive', 'negative')){
+      
+       neg_file<-paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                       mode, '_enrichment', sign_mode,'_', T,  '.csv')
+
+        results_enrich_tmp<-read.csv(neg_file)
+        results_enrich_tmp$sign_mode = sign_mode
+        results_enrich_tmp$mode = mode
+        all_enrichments[[i]] = results_enrich_tmp
+        i=i+1
+#        print(head(results_enrich_tmp))
+
+
+  }
+
+
+}
+
+ 
+all_enrichments_bind<-do.call(bind_rows,all_enrichments)
+
+write.csv(all_enrichments_bind, paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
+                        '_enrichment','_', T,'all_modes',   '.csv'))
+
+
+
+
 
 
 

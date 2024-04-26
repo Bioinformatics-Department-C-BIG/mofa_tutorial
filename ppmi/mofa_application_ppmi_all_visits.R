@@ -7,7 +7,8 @@ source(paste0(script_dir, 'ppmi/setup_os.R'))
 # SCENARIOS: 
 # select cohort: 1,2,3,4: PD, Prodromal, , Healthy Control
 # select visit to run mofa: ALL, V02, V04, V06, V08 
-
+TISSUE='Plasma'
+tissue_un='Plasma'
 
 library(MOFA2)
 library(tidyverse)

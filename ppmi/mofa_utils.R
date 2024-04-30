@@ -300,12 +300,12 @@ get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20, pr
 #subcategory
 ##factors = sel_facts
 #sel_facts
-top_p = 3
+#stop_p = 3
 #view = 'proteomics_t_plasma'
 #pvalueCutoff=0.05
-config$subcategory
+#config$subcategory
 
-grepl('prot', view)
+
 
 
 concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view=FALSE, subcategory='GO:BP'){

@@ -132,7 +132,6 @@ for (cluster_id in clusters_indices){
 cluster_id = '2'
 sig_clust = 'V08'
 padjust_cutoff = 0.05
-padjust_cutoff = 0.001
 
 
 #' @param sig_clust: select top paths from which time point? 
@@ -251,6 +250,7 @@ use_top_mofa=TRUE
 
 
 logFC_merged_df2<-merged_df_all_tps_all_clusts
+merged_df_all_tps_all_clusts
 use_mofa_paths = TRUE
 
 if (use_mofa_paths){
@@ -271,6 +271,8 @@ if (use_mofa_paths){
   selected_paths<-top_sig_all_clusts
 }
 
+
+selected_paths
 # filter top 
 logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
 logFC_merged_df2[is.na(logFC_merged_df2)]<-0
@@ -350,6 +352,8 @@ metric
 ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
 
 logFC_merged_df2['regulation of innate immune response', ]
+
+
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
     column_split = rep(1:length(clusters_indices), each=length(times_sel)), 

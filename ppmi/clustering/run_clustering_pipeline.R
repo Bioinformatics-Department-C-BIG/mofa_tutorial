@@ -107,11 +107,10 @@ DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'moca'
 DIFF_VAR = 'sft'
 diff_vars<-c( 'COHORT')
-diff_vars<-c( )
 diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca',  'NP3TOT_LOG_V14', 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V12' )
 
 DIFF_VAR = 'COHORT'
-DIFF_VAR = 'sft'
+DIFF_VAR = 'NP3TOT_LOG'
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 

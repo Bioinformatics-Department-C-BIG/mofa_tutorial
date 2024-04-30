@@ -70,8 +70,8 @@ VISIT_COMP_SIG = 'V06'
         for (VISIT_COMP_SIG in c('BL', 'V06', 'V04', 'V08')){
 
         
-                outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP_SIG, '/' )
-                de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+                de_prot_file <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP_SIG, '/' ,
+                                         prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
                 de_results_prot<-read.csv(de_prot_file)
                 print(de_results_prot[,metric_p ])
                 

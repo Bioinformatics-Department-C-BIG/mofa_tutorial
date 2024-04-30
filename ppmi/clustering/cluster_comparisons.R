@@ -12,10 +12,12 @@ knitr_mode<-isTRUE(getOption('knitr.in.progress'))
 cell_corr_deseq
 #rm(se_rnas)
 #rm(se_mirs)
-se_mirs =NULL
-se_rnas = load_all_se(process_mirnas = FALSE)
-se_mirs = load_all_se(process_mirnas = TRUE)
-
+all_se_list<-load_all_se()
+se_rnas = all_se_list[[1]]
+se_mirs = all_se_list[[2]]
+#se_rnas=NULL
+se_rnas
+se_mirs
 ## 1. get Summarized Experiment with metrics from all time points 
 ## 2. Run deseq 
 ## 3. enrichment 
@@ -30,8 +32,8 @@ MOFAobject_clusts=MOFAobject_sel # take it from the clustering of the last visit
 
 # do not remove these because in the loading..
 #process_mirnas= FALSE
+process_mirnas
 
-se_mirs
 
 if (process_mirnas){
   se_sel = se_mirs
@@ -41,7 +43,7 @@ if (process_mirnas){
   prefix='rnas_'
 
 }
-  print(prefix)
+se_mirs
 view=ifelse(process_mirnas, 'miRNA', 'RNA');view
 
 
@@ -80,14 +82,14 @@ se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
 
 
-
+se_clusters$kmeans_grouping
 ## Outputs 
 # 1. DE files 
 # 2. Venns 
 # 3. Volcano plot
 # 4. Enrichment analysis 
 
-
+ 
 deseq_all_groups <- vector("list", length = 3);
 se_filt_all<- vector("list", length = 3);
 
@@ -164,18 +166,19 @@ get_deseq_formula<-function(process_mirnas, cell_corr_deseq,variates_to_correct_
                   }else if ((formula_deseq_format)=='all'){
                     formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
 
-                  }   else if ((formula_deseq_format)=='age'){
-                   formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT','+COHORT')
+                  }   else if((formula_deseq_format)=='age'){
+                    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE:COHORT+COHORT' # basic formula if no cell coreection
 
-                }
+                } 
+
               }else{
             # rnas
             if ((formula_deseq_format)=='n'){
                 formula_deseq = '~AGE_SCALED+SEX+Usable_Bases_SCALE+Neutrophils.LD+COHORT'
               }else if  ((formula_deseq_format)=='all'){
                 formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+', variates_to_correct_s,'+COHORT')
-                } else if ((formula_deseq_format)=='age'){
-                   formula_deseq = paste0('~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT','+COHORT')
+                }else if((formula_deseq_format)=='age'){
+                    formula_deseq = '~AGE_SCALED+SEX+Plate+Usable_Bases_SCALE+AGE_SCALED:COHORT+COHORT' # basic formula if no cell coreection
 
                 }
            }
@@ -200,7 +203,6 @@ gse_all<-vector("list", length = 0)
 #formula_deseq_format
 # if not cell corr ensure that the formula is empty
 #cell_corr_deseq=TRUE
-formula_deseq_format
 if (!cell_corr_deseq){
   formula_deseq_format=''
   formula_deseq_format<-''
@@ -429,15 +431,11 @@ gse_all_clusters=list()
 head(deseq2ResDF)
 
 pvalueCutoff = 0.05
-order_by_metric
-# MIRNAS enrichment analysis 
-if (process_mirnas ){
+if (process_mirnas & FALSE){
   # run a different test..
   cluster_id_num=4
   clusters_names
-
-  clusters_indices
-    for (cluster_id_num in 1:length(clusters_indices)){
+    for (cluster_id_num in 1:length(clusters_names)){
 
           print(paste('cluster:',cluster_id_num))
           cluster_id_index=clusters_indices[[cluster_id_num]]
@@ -454,18 +452,15 @@ if (process_mirnas ){
           results_file_cluster=paste0(deseq_params, '/enr_',prefix, '/', prefix, enrich_params_mirs, 'cl', cluster_id_name)
           gse_file<-paste0(results_file_cluster, '.Rds')
 
-        # if (TRUE){gene_list1
-           gene_list1
+        # if (TRUE){
+           
           if (!file.exists(gse_file) | force_gse){
 
-
+      
               gse1<-run_enrich_mirnas(gene_list1, pvalueCutoff = pvalueCutoff, test_type='GSEA')
               saveRDS(gse1,gse_file )
-              
               gse_all_clusters[[cluster_id_name]]<- gse1
            
-              if (dim(gse1)[1]>1){     
-                # continue if there are any results returned     
               mieaa_res<-mirna_enrich_res_postprocessing(gse1, mir_results_file=results_file_cluster)# convert to enrich result 
               enr_full=mieaa_res[[2]]
                gse_mofa_sig=write_filter_gse_results(enr_full, results_file_cluster, pvalueCutoff)
@@ -474,7 +469,6 @@ if (process_mirnas ){
                                                       results_file=results_file_cluster, 
                                                       N_DOT=20, N_EMAP = 50)    
                   
-                }
                 }
 
 

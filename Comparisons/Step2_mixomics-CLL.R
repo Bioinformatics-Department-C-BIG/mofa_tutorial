@@ -3,6 +3,7 @@
 
 #BiocManager::install("org.Hs.eg.db")
 
+CLL_data$mRNA
 library('org.Hs.eg.db')
 
 out_dir<-'Comparisons/plots/'
@@ -11,16 +12,8 @@ out_dir<-'Comparisons/plots/'
 outdir2<-'Comparisons/plots/mixomics/'
 #browseVignettes("mixOmics")
 
-
-utils::data("CLL_data")  
-data("CLL_data")
-
-drug_comps<-read.csv('Comparisons/Drug-compound cll.txt', sep='\t')
-
-
-
 library(mixOmics)
-#bbiocManager::install('mixOmics')
+
 
 data(liver.toxicity)
 CLL_data
@@ -47,23 +40,9 @@ data(breast.TCGA)
 # install.packages("gtools") ## Uncomment if not already installed
 library(gtools)
 mixedorder( CLL_metadata$sample)
-drug_comps$Drug
-
-#rename move to utils
-dr_only_full<-rownames(CLL_data$Drugs)
-remove_last_n <- 2
-dr_only<-substr(dr_only_full, 1, nchar(dr_only_full) - remove_last_n)
-dr_only_name<-drug_comps$Compound[match(dr_only,drug_comps$Drug)]
-dr_only_name
-dr_only_suf<-substr(dr_only_full, nchar(dr_only_full) - remove_last_n+1, nchar(dr_only_full))
-dr_only_name<-paste0(dr_only_name,dr_only_suf)
-
-X_drugs<-CLL_data$Drugs
-rownames(X_drugs)<-dr_only_name
-
 
 X <- list(mRNA = t(CLL_data$mRNA), 
-          drug = t(X_drugs))
+          drug = t(CLL_data$Drugs))
 Y <- CLL_metadata$IGHV[]
 
 
@@ -86,9 +65,6 @@ X <- list(mRNA = t(CLL_data$mRNA[,tokeep]),
 
           #mut=t(CLL_data$Mutations[,tokeep]))
 
-
-
-###### RENAME
 ensemblsIDS<-colnames(X$mRNA)
 symbols <- mapIds(org.Hs.eg.db, keys = ensemblsIDS, keytype = "ENSEMBL", column="SYMBOL")
 
@@ -104,11 +80,6 @@ new<-X$mRNA[,-c(ind_to_drop)]
 # remove duplicate names from X genes
 X$mRNA<-new
 
-
-new_drug_names<-rep(drug_comps$Compound, times=1, each=5)
-length(new_drug_names)
-rep(seq(1:5), times=length(drug_comps) )
-length(X$drug[1,])
 # Remove NAs in Y :
 
 
@@ -179,10 +150,8 @@ list.keepX
 
 
 
-#### Supervised
+####
 
 final.diablo.model = block.splsda(X = X, Y = Y, ncomp = ncomp, 
                                   keepX = list.keepX, design = design)
-
-MyResult.diablo<-final.diablo.model
 

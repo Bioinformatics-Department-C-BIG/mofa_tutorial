@@ -42,7 +42,7 @@ library(gtools)
 mixedorder( CLL_metadata$sample)
 
 X <- list(mRNA = t(CLL_data$mRNA), 
-          drug = t(CLL_data$Drugs))
+          drug = t(X_drugs))
 Y <- CLL_metadata$IGHV[]
 
 
@@ -60,7 +60,7 @@ tokeep<-which(!is.na(CLL_metadata_new_order$IGHV))
 
 
 X <- list(mRNA = t(CLL_data$mRNA[,tokeep]), 
-          drug = t(CLL_data$Drugs[,tokeep]), 
+          drug = t(X_drugs[,tokeep]), 
           meth=t(CLL_data$Methylation[,tokeep]))
 
           #mut=t(CLL_data$Mutations[,tokeep]))

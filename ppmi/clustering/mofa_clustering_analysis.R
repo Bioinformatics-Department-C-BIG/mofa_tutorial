@@ -16,7 +16,18 @@ PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_m
 MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 
 
+get_factors_for_metric<-function(diff_var){
 
+  # get associated factors, remove the ones related to confounding
+  fact <- which(all_fs_diff[,diff_var])
+
+        if (remove_cell_factors){
+          fact<-fact[!(fact %in% fact_neutro_pd)]
+
+        }
+       
+        return(fact)
+        }
 
 
 #### Create the MOFA clusters with the same K ####
@@ -29,9 +40,6 @@ rescale_option=TRUE
 
 DIFF_VAR='moca'
 DIFF_VAR='NP2PTOT_LOG'
-cors_all_pd['NP3TOT_LOG_V14']
-colnames(cors_all_pd)
-print(cors_all_pd$NP3TOT_diff_V14)
 if (DIFF_VAR=='updrs3_score_on'){
   k_centers_m=2
 }
@@ -44,21 +52,11 @@ if (sel_group_cors){
 }
 
 
-
-
-## mofa clustering 
 cors_both_clinical<-get_correlations(MOFAobjectPD_cors, all_diff_in_cors)
 cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_clinical = as.data.frame(cors_both_clinical[[1]])
 ## choose if the clu
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
-
-all_fs_diff
-which(cors$COHORT>(-log10(0.05)))
-
-all_fs_diff$COHORT<-cors$COHORT>(-log10(0.05))
-all_fs_diff$COHORT
-all_fs_diff['sft_V12']
 ### Select group for plotting
 sel_group=4
 if (length(groups_names(MOFAobject))>1){
@@ -85,7 +83,8 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
 
     
 
- all_fs_diff$COHORT
+ MOFAobjectPD_sel@samples_metadata$NP3TOT_clust
+ all_fs_diff
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
   #' @param diff_var: variable to cluster by 
@@ -135,7 +134,7 @@ for (diff_var in names(all_clusts_mofa)){
 }
 
 
-
+MOFAobject_sel@samples_metadata$sft_clust
 #grep('clust',colnames(MOFAobject_sel@samples_metadata))
 
 ### Boxplots by cluster 
@@ -152,16 +151,12 @@ diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score',
 
 #other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
 
-diff_variables_to_p=c('NP2PTOT', 'NP3TOT_LOG', 'NP2PTOT_LOG',  'NP3TOT',  'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
+diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'
 
          )
-
-
-
-
 
 
 

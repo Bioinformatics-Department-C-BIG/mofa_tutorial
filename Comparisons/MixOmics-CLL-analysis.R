@@ -8,12 +8,14 @@ MyResult.diablo<-final.diablo.model
 total_comps=ncomp
 dims_x<-length(names(X))
 params_str<-paste0('sup_',paste(unlist(names(X)), collapse='_'), '_', length(names(X)), '_', total_comps)
-
-png(paste0 (outdir2, 'feature_plot', params_str,'.png'))
+MyResult.diablo$names$colnames$drug<-rownames(X_drugs)
+selectVar(MyResult.diablo)
+  
 plotVar(MyResult.diablo, var.names = c(TRUE, TRUE, TRUE),
         legend=TRUE, pch=c(16,16,16))
 
-dev.off()
+ggsave(paste0 (outdir2, 'feature_plot', params_str,'.png'), dpi=300, 
+       height=10, width=10)
 # print the first component 
 selectVar(MyResult.diablo, block = 'mRNA', comp = 1)$mRNA$name
 selectVar(MyResult.diablo, block = 'meth', comp = 1)$meth$name

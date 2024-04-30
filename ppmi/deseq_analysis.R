@@ -18,7 +18,7 @@ source(paste0(script_dir,'ppmi/deseq_analysis_setup.R'))
 source(paste0(script_dir,'ppmi/plotting_utils.R'))
 
 
-suppressWarnings(dir.create(outdir_s, recursive=TRUE))
+
 write.csv(deseq2Results, paste0(outdir_s, '/results.csv'))
 
 deseq2ResDF <- as.data.frame(deseq2Results)
@@ -243,8 +243,16 @@ graphics.off()
 run_heatmap=TRUE
 
 
- 
 
+
+
+
+
+deseq2ResDF$SYMBOL
+
+
+ 
+plate
 
 cluster_id = 1
 
@@ -254,7 +262,8 @@ deseq2ResDF=deseq_all_groups[[cluster_id]]
 pvol<-plotVolcano(deseq2ResDF, se_filt)
 
 
-
+pvol
+fname
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT,'.jpeg')
 fname<-paste0(outdir_s, '/EnhancedVolcano_edited_', prefix, VISIT_S, '_cluster_',cluster_id, '.jpeg')
 

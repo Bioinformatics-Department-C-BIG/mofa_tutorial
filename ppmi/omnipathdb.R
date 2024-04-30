@@ -172,8 +172,8 @@ OPI_g_dor_target_genes
 OPI_g_de_mirs_de_genes_targets<- union(OPI_g_dor_target_genes, OPI_g_de_mirs_de_genes)
 OPI_g_de_mirs_de_genes_targets
 
-
-g_fc<-get_logFC_by_node(OPI_g_de_mirs_de_genes_targets)
+rnas$log2FoldChange
+g_fc<-get_logFC_by_node(OPI_g_de_mirs_de_genes_targets, de_rnas = rnas, de_mirnas = mirnas)
 V(g_fc)$name
 V(g_fc)$name[is.na(V(g_fc)$color)]
 V(g_fc)$group<-NA

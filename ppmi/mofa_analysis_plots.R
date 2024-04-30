@@ -837,9 +837,9 @@ modify_features_for_plotting<-function(MOFAobject){
     # map uniprot ids to gene symbols 
    
     
-
-    rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_proteomics_csf', '', rownames(MOFAobject@expectations$W$proteomics_csf))
-    rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('_proteomics_plasma', '', rownames(MOFAobject@expectations$W$proteomics_plasma))
+    # now moved this to get symbol from uniprot
+    #rownames(MOFAobject@expectations$W$proteomics_csf)<-gsub('_proteomics_csf', '', rownames(MOFAobject@expectations$W$proteomics_csf))
+    #rownames(MOFAobject@expectations$W$proteomics_plasma)<-gsub('_proteomics_plasma', '', rownames(MOFAobject@expectations$W$proteomics_plasma))
 
     rownames(MOFAobject@expectations$W$proteomics_t_csf)<-gsub('_proteomics_t_csf', '', rownames(MOFAobject@expectations$W$proteomics_t_csf))
     rownames(MOFAobject@expectations$W$proteomics_t_plasma)<-gsub('_proteomics_t_plasma', '', rownames(MOFAobject@expectations$W$proteomics_t_plasma))
@@ -1145,26 +1145,6 @@ if (n_groups>1){
 
 
 library(gridExtra)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

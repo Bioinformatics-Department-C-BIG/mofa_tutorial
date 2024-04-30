@@ -100,7 +100,7 @@ lv='V13_V14';
   
 
 times_sel = c('BL','V04', 'V06', 'V08')
-
+diff_variables_to_p
 cluster='NP3TOT_clust'
 
 df_plot_mol<-combined_bl_log_sel_mol
@@ -109,10 +109,10 @@ combined_bl_log_sel_mol$NP3TOT
 
 
 clust_name
-medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, paste0(DIFF_VAR, '_clust'))
+medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, 'NP3TOT_LOG_clust')
 medians_all_clusts$cluster
 
-medians_all_clusts
+
 
      # rownames(means_by_cluster)<-means_by_cluster$cluster
 
@@ -213,9 +213,7 @@ medians_all_clusts
         
         labs(y=y_name,x='year', caption = paste0('group numbers: ', paste0(nums)))
       
-      p<-p+ theme(axis.title.y =element_text(face='bold'))+
-          theme(text =element_text(size=15)) # same as other plot
-
+      p<-p+ theme(axis.title.y =element_text(face='bold'))
 
       p
       warnings()
@@ -227,7 +225,6 @@ medians_all_clusts
 
       ggsave(paste0(fname,  '.jpeg'), 
              width=width, height=height, dpi=300)
-      return(p)
       
     }
     
@@ -266,71 +263,33 @@ to_plot=c('NP3TOT')
 to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'con_putamen_V10')
 
 clust_metric='updrs3_score_on'
-#clust_vars=c('COHORT','moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'sft' )
-#clust_vars=c('NP3TOT_diff_V14')
+clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
+
 
   # todo: are there duplicates in SOME patients only? does this change the medians and confidence intervals?
-library(ggpubr)
-
- to_plot
- list_plots = list()
- clust_metric = 'COHORT'
- y
- clust_metric
-  for (clust_metric in clust_vars){
+  for (clust_metric in clust_metrics){
     for (y in to_plot){
 
       clust_name<-paste0(clust_metric, '_clust')
       fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
-      #fact
       cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
-      cluster_params
+
 
       dir.create(paste0(outdir, cluster_params, '/tr/clinical/'), recursive = TRUE)
 
       fname=paste0(outdir, cluster_params, '/tr/clinical/traj_','_', y,'_','_lv_' , lv_to_plot)
-      time_plot<-plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
+      plot_clinical_trajectory(y,clust_name=clust_name, df_plot_2k=df_plot,  lv='V08', fname=fname,
       add_individual_lines=add_individual_lines, 
       add_boxplots = TRUE)
-
-      time_plot
-      list_plots[[clust_metric]][[y]]<-time_plot
     
     
     }
 
     graphics.off()
-
-
-    # create the publication ready combined plot with visit 8 and all visits  #### 
-      e1<-list_plots[[clust_metric]][['NP2PTOT']]
-      e2<-list_plots[[clust_metric]][['NP3TOT']]
-      e3<-list_plots[[clust_metric]][['sft']]
-
-     
-      g2 = ggarrange(e1,e2,e3 ,common.legend = TRUE, ncol=3)
-
-
-
-
-
-      pall<-grid.arrange(grid_plots[[clust_metric]],g2,  ncol=1)
-      
-      fname_all<-paste0(outdir, cluster_params, '/tr/clinical/traj_', clust_metric)
-      # TODO: select the time variables that we want to extract 
-      print(paste0(fname_all, '_all.jpeg'))
-      ggsave(paste0(fname_all, '_all.jpeg'),plot=pall, width=12, height=10)
-
-
-
-
-
   }
- 
 
-
-#DIFF_VAR = 'NP3TOT_LOG'
-
+  
+fname
 
 
 #### ###################

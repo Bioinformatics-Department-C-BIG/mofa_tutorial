@@ -42,12 +42,12 @@ data(breast.TCGA)
 library(gtools)
 mixedorder( CLL_metadata$sample)
 
-X <- list(mRNA = t(CLL_data$mRNA), 
-          drug = t(CLL_data$Drugs))
-Y <- CLL_metadata$IGHV[]
+ X <- list(mRNA = t(CLL_data$mRNA), 
+          drug = t(X_drugs))
+Y <- CLL_metadata$IGHV
 
 
-
+#View(X_drugs)
 
 # FILTER MISSING VALUES 
 
@@ -61,7 +61,7 @@ tokeep<-which(!is.na(CLL_metadata_new_order$IGHV))
 
 
 X <- list(mRNA = t(CLL_data$mRNA[,tokeep]), 
-          drug = t(CLL_data$Drugs[,tokeep]), 
+          drug = t(X_drugs[,tokeep]), 
           meth=t(CLL_data$Methylation[,tokeep]),
           mut=t(CLL_data$Mutations[,tokeep]))
 
@@ -131,7 +131,7 @@ plot(tune.spls.liver)         # use
 
 
 ### UNSUPERVIED MODEL 
-### try to assopciate all others to the drugs! 
+### try to associate all others to the drugs! X= all others, Y=drugs? 
 block.pls.result <- block.spls(X, indY=2, keepX=list.keepX,ncomp = total_comps)
 MyResult.diablo<-block.pls.result
 
@@ -164,17 +164,19 @@ write.csv(v_set, paste0(outdir2, 'all_mutations_top_', total_comps, '.csv'))
 
 
 #plot the contributions of each feature to each dimension
+graphics.off()
 for (i in 1:5){
 
-  png(paste0(outdir3,'loadings_', total_comps, i, '.png'))
   plotLoadings(block.pls.result, ncomp = i) 
-  selectVar(MyResult.diablo, block = 'mRNA', comp = i)$mRNA$name
-  dev.off()
-
-  png(paste0(outdir3,'factor_space.png'))
+  #selectVar(MyResult.diablo, block = 'mRNA', comp = i)$mRNA$name
+  ggsave( paste0(outdir3,'loadings_', total_comps, i, '.png'), dpi=200, 
+          height=10, width=10)
+  
   plotIndiv(block.pls.result, group = Y, comp = 1:2) # plot the samples
-  dev.off()
-
+  ggsave( paste0(outdir3,'factor_space.png'), dpi=200, 
+          height=10, width=10)
+  
+  
   png(paste0(outdir3,'variable.png'))
   plotVar(block.pls.result, legend =TRUE, comp = 1:2 ) # plot the variables
   dev.off()

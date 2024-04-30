@@ -13,6 +13,7 @@ params:
 title:  `r params$title`
 ---
 
+
 ```{r setup, include=FALSE}
 
 knitr::opts_chunk$set(echo = TRUE)
@@ -50,14 +51,10 @@ process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
 cell_corr_mofa=FALSE
-TISSUE='Plasma'
-tissue_un = 'Cerebrospinal Fluid'
-prot_mode = 'u'
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
 source(paste0(script_dir,'ppmi/utils.R'))
-source(paste0(script_dir,'ppmi/mofa_utils.R'))
 
 
 
@@ -97,9 +94,7 @@ outdir_enrich<-paste0(outdir, '/enrichment/' )
 ```{r get_enrich_files, echo=FALSE}
 #nf=c(2,4,6,18,22)
 #nf=c(4,6)
-#nf=get_factors_for_metric('NP3TOT_LOG')
-nf=c(13,15,20,24,28)
-nf=c(2,11, 23)
+#nf=c(2,11, 23)
 
 
 get_files_weights<-function(outdir){
@@ -133,8 +128,8 @@ get_files<-function(outdir_enrich, type='_dot'){
 
 
 en_plots_all<-get_files(outdir_enrich)
-en_plots_all_proteins<-get_files(paste0(outdir_enrich, '/proteomics_t_plasma/ora/'))
-en_plots_all_proteins_csf<-get_files(paste0(outdir_enrich, '/proteomics_t_csf/ora/'))
+en_plots_all_proteins<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'))
+en_plots_all_proteins_csf<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'))
 
 
 
@@ -172,13 +167,13 @@ knitr::include_graphics(en_plots_all, dpi = 96 )
 
 
 
-#```{r plot_proteins, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins",fig.show='hold',fig.align='center'}
-#knitr::include_graphics(en_plots_all_proteins, dpi = 96 )
+```{r plot_proteins, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins",fig.show='hold',fig.align='center'}
+knitr::include_graphics(en_plots_all_proteins, dpi = 96 )
 
-#knitr::include_graphics(en_plots_all_proteins_csf, dpi = 96 )
+knitr::include_graphics(en_plots_all_proteins_csf, dpi = 96 )
 
 
-#```
+```
 
 
 
@@ -191,8 +186,8 @@ knitr::include_graphics(en_plots_all, dpi = 96 )
 ```{r gc_get_files, , echo=FALSE}
 en_plots_all_gc<-get_files(outdir_enrich, type='_gc')
 
-en_plots_all_proteins_gc<-get_files(paste0(outdir_enrich, '/proteomics_t_plasma/ora/'), type='gc')
-en_plots_all_proteins_csf_gc<-get_files(paste0(outdir_enrich, '/proteomics_t_csf/ora/'), type='gc')
+en_plots_all_proteins_gc<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'), type='gc')
+en_plots_all_proteins_csf_gc<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'), type='gc')
 
 
 ```
@@ -218,8 +213,8 @@ knitr::include_graphics(en_plots_all_proteins_csf_gc, dpi = 96 )
 
 ```{r plot_emap_files, echo=FALSE}
 en_plots_all_emap<-get_files(outdir_enrich, type='_emap')
-en_plots_all_proteins_emap<-get_files(paste0(outdir_enrich, '/proteomics_t_plasma/ora/'), type='_emap')
-en_plots_all_proteins_csf_emap<-get_files(paste0(outdir_enrich, '/proteomics_t_csf/ora/'), type='_emap')
+en_plots_all_proteins_emap<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'), type='_emap')
+en_plots_all_proteins_csf_emap<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'), type='_emap')
 
 ```
 

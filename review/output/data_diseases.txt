@@ -1,14 +1,18 @@
-
-no	metabolomics - proteomics	11	all diseases, Cardiovascular, Endrocrine, Gastrointestinal, hiv, ivdh, Metabolism, Nervous, Pulmonary, vogt-koyanagi-harada disease, NA
+Cancer	Var1	Freq	concat
+no	proteomics - transcriptomics	13	aging, all diseases, Cardiovascular, Endrocrine, Gastrointestinal, Immune, Metabolism, Musculoskeletal, Nervous, obesity, Pulmonary, Urinary, NA
+no	metabolomics - transcriptomics	13	all diseases, cancer, Cardiovascular, Endrocrine, Gastrointestinal, Immune, Metabolism, Musculoskeletal, Nervous, obesity, Pulmonary, toxoplasma, NA
+no	metabolomics - metagenomics	11	Cardiovascular, Endrocrine, Gastrointestinal, Immune, Metabolism, Nervous, obesity, periodontitis, psychological stress, Pulmonary, NA
+no	epigenomics - transcriptomics	10	aging, all, all diseases, Cardiovascular, Gastrointestinal, Immune, Musculoskeletal, Nervous, Pulmonary, NA
+no	metabolomics - proteomics	10	all diseases, Cardiovascular, Endrocrine, Gastrointestinal, Immune, ivdh, Metabolism, Nervous, Pulmonary, NA
 no	epigenomics - genomics	6	all diseases, Gastrointestinal, Musculoskeletal, Nervous, peripheral blood, NA
-no	epigenomics - proteomics	6	all diseases, Cardiovascular, Gastrointestinal, Nervous, pneumonia, NA
+no	epigenomics - proteomics	6	all diseases, Cardiovascular, Gastrointestinal, Nervous, Pulmonary, NA
 no	genomics - transcriptomics	5	all diseases, Gastrointestinal, Musculoskeletal, Nervous, NA
-no	metagenomics - transcriptomics	4	Gastrointestinal, ibd, Metabolism, obesity
-no	epigenomics - metabolomics	3	all diseases, huntington's disease, Musculoskeletal
-no	genomics - metabolomics	3	cytokine response, Musculoskeletal, Nervous
+no	epigenomics - metabolomics	3	all diseases, Musculoskeletal, Nervous
 no	genomics - proteomics	3	Gastrointestinal, Nervous, NA
+no	metagenomics - transcriptomics	3	Gastrointestinal, Metabolism, obesity
+no	genomics - metabolomics	3	Immune, Musculoskeletal, Nervous
 no	metagenomics - proteomics	2	Gastrointestinal, Metabolism
-no	genomics - metagenomics	1	cytokine response
+no	genomics - metagenomics	1	Immune
 yes	epigenomics - genomics	1	Cancer
 yes	epigenomics - metabolomics	1	Cancer
 yes	epigenomics - metagenomics	1	Cancer
@@ -22,3 +26,6 @@ yes	metabolomics - transcriptomics	1	Cancer
 yes	metagenomics - proteomics	1	Cancer
 yes	metagenomics - transcriptomics	1	Cancer
 yes	proteomics - transcriptomics	1	Cancer
+NA	metabolomics - proteomics	1	NA
+NA	metabolomics - transcriptomics	1	NA
+NA	proteomics - transcriptomics	1	NA

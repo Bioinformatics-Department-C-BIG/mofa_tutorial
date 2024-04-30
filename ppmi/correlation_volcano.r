@@ -17,13 +17,15 @@ view='miRNA'
 view='proteomics_csf'
 view='RNA'
 
-top_fr=0.2
+top_fr=0.05
 MOFAobjectPD
 top_genes<-select_top_bottom_perc(MOFAobjectPD,factor=fact[1], view=view)
+length(top_genes)
 top_genes_all<-concatenate_top_features(MOFAobjectPD,factors=fact, view=view, top_fr=top_fr)
 
 top_genes<-top_genes_all$feature
-top_genes
+
+
 patient_data<-as.data.frame(get_data(MOFAobjectPD, view=view)[[1]])
 
 patient_data
@@ -54,31 +56,37 @@ if (ens_true ){
 rownames(patient_data_top_filt)<-get_symbols_vector(rownames(patient_data_top_filt))
 }
 
-cor_test<-cor.test(as.numeric(x),patient_scores)
-cor_test$estimate
-result_cor<-apply(patient_data_top_filt,1, function(x){
+patient_data_top_filt
+cor_test<-corr.test(as.numeric(x),patient_scores)
+dim(patient_data_top_filt)
+length(patient_scores_filt)
+result_cor_1<-corr.test(t(patient_data_top_filt), patient_scores_filt,adjust = 'fdr')
+head(result_cor)
 
-    cor_test<-cor.test(x,patient_scores_filt)
-    return(c(cor_test$estimate, cor_test$p.value))
-    })
-result_cor<-as.data.frame(t(result_cor))
-result_cor
-
-
-max_pval<-max(-log10(result_cor$V2))+1
+result_cor<-data.frame(result_cor_1[c('r', 'p', 'p.adj')])
 
 
+
+patient_data_top_filt['ITGA2B',]
+patient_scores_filt
+corr.test(t(patient_data_top_filt['ITGA2B',]), patient_scores_filt)$r
+
+pval_sel = 'p'
+
+max_pval<-max(-log10(result_cor[, pval_sel]))+0.1
+
+result_cor$p
 
 #ylim = c(0, max(-log10(toptable[[y]]), na.rm = TRUE) + 1),
-xlim = c(-(max(abs(result_cor$cor))+0.2), max(abs(result_cor$cor))+0.2 )
-max(abs(result_cor$cor))
+xlim = c(-(max(abs(result_cor$r))+0.2), max(abs(result_cor$r))+0.2 )
+max(abs(result_cor$r))
 
 p<-EnhancedVolcano(result_cor, 
-x='cor', 
-y='V2', 
+x='r', 
+y=pval_sel, 
 lab=rownames(result_cor), 
 pCutoff = 0.05, 
-FCcutoff = 0.1,
+FCcutoff = 0.2,
 xlim =xlim, 
 ylim= c(0, max_pval), 
 xlab = bquote(correlation)
@@ -88,6 +96,8 @@ xlab = bquote(correlation)
 show(p)
 
 ggsave(paste0(outdir, '/correlations_',DIFF_VAR,'_', view,top_fr, '.jpeg'), dpi=300)
+
+
 
 
 

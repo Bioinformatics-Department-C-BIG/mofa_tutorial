@@ -263,7 +263,7 @@ lv_to_plot = 'V14'
 
 to_plot=c('NP3TOT')
 
-to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft')
+to_plot=c('NP3TOT','updrs2_score','updrs3_score_on', 'NP2PTOT', 'MCATOT', 'moca', 'abeta', 'sft', 'con_putamen_V10')
 
 clust_metric='updrs3_score_on'
 #clust_vars=c('COHORT','moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'sft' )

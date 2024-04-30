@@ -84,11 +84,11 @@ diff_vars<-c( 'NP2PTOT_LOG', 'moca' ,'NP2PTOT_LOG')
 DIFF_VAR= 'updrs3_score_on_LOG'
 DIFF_VAR = 'sft'
 diff_vars<-c( 'COHORT')
-diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca', 'NP3TOT_LOG_diff_V14', 'NP3TOT_LOG_V14')
-diff_vars<-c( 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V14', 'sft_V12', 'NP2PTOT_V14')
+diff_vars<-c( )
+diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca',  'NP3TOT_LOG_V14', 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V12' )
 
 DIFF_VAR = 'COHORT'
-DIFF_VAR = 'NP3TOT_LOG_diff_V14'
+DIFF_VAR = 'sft'
 
 formula_deseq_format='n' # so far e only run all for mirnas 
 formula_deseq_format='all' # so far we only run all for mirnas 
@@ -148,7 +148,7 @@ if (run_all){
 # TISSUE=Plasma, CSF
 #prefix='prot_'
 #DIFF_VAR
-diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
+diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca', 'sft')
 
 
 source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
@@ -164,7 +164,7 @@ prot_de_mode<-'u'
 
 #tissue_un<-'Plasma';tissue ='Plasma';
 
-diff_vars<-c('NP3TOT_LOG')
+diff_vars<-c('sft', 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
 
 DIFF_VAR= 'NP3TOT_LOG'
 DIFF_VAR= 'NP2PTOT_LOG'
@@ -176,21 +176,25 @@ TISSUE='Plasma';
 
 TISSUE='Plasma'
 tissue_un<-'Plasma'
-prot_de_mode = 't';
+prot_de_mode = 'u';
 
 tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
-
-visit_comps = c('V06', 'BL', 'V04', 'V08')
+tissue_un<-'Plasma'
 visit_comps  = c('V08' )
+visit_comps = c('V06', 'BL', 'V04', 'V08')
+
 DIFF_VAR;tissue_un;prot_de_mode
-sig_only =FALSE
+sig_only =TRUE
 VISIT_COMP='V06'
 DIFF_VAR
 
 # targeted plasma: not enough samples from cluster 1
     for (DIFF_VAR in c(diff_vars)){
 
-        for (VISIT_COMP in visit_comps){
+        for (tissue_un in c('Plasma','Cerebrospinal Fluid' )){
+            for (VISIT_COMP in visit_comps){
+
+           
         #for (VISIT_COMP in c( 'V04', 'V08')){
             # compares each time point separatelty 
             source(paste0(script_dir, 'ppmi/clustering/DE_tutorial_ppmi_cluster_compare.R'))
@@ -199,7 +203,10 @@ DIFF_VAR
             print(fact)
             print(cluster_params_dir)
                 }
-    source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R'))
+
+            source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R')) # for each tissue combine times 
+
+        }
 
     }
 # TODO: add mirs size effects using normalized data 
@@ -208,6 +215,22 @@ DIFF_VAR
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

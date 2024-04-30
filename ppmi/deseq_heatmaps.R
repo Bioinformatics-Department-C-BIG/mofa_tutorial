@@ -133,7 +133,7 @@ deseq2ResDF
   y='NP2PTOT_LOG'
   y='NP3TOT_LOG'
     y='NP3TOT_LOG'
-  y='NP2PTOT_LOG'
+  y='sft'
 
   df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)
   df_all<-fetch_metadata_by_patient_visit(vsd$PATNO_EVENT_ID , combined=combined_bl_log)

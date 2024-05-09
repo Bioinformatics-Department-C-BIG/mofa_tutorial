@@ -9,7 +9,7 @@ library('MOFA2')
 ## load res.positive to be used in the next script
 #res.positive$feature.sets
 #res=res.positive
-#es.positive$pval.adj
+#res.positive$pval.adj
 #res=res.negative
 
 write_enrich<-function(res, sign_mode){
@@ -61,11 +61,11 @@ write_enrich<-function(res, sign_mode){
 # plot: dot plot
 pcgse_dot_by_factor<-function(factor, results_enrich){
 
-      barpl_input<-results_enrich[ c('Description',factor )]
-      colnames(barpl_input)<-c('Description','p.adjust' )
-     barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
+    barpl_input<-results_enrich[ c('Description',factor )]
+    colnames(barpl_input)<-c('Description','p.adjust' )
+    barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
 
-      barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
+    barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
 
     barpl_input_top$x = factor
     barpl_input_top$log10=-log10(barpl_input_top$p.adjust)
@@ -109,22 +109,26 @@ features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA,
 
 MOFAobject_enr<-MOFAobject
 features_names(MOFAobject_enr)$proteomics_csf<-gsub('_proteomics_csf','',features_names(MOFAobject_enr)$proteomics_csf)
-features_names(MOFAobject_enr)$proteomics_csf
+length(features_names(MOFAobject_enr)$proteomics_csf)
 features_names(MOFAobject_enr)$proteomics_plasma<-gsub('_proteomics_plasma','',features_names(MOFAobject_enr)$proteomics_plasma)
 features_names(MOFAobject_enr)$proteomics_t_plasma<-gsub('_proteomics_t_plasma','',features_names(MOFAobject_enr)$proteomics_t_plasma)
 features_names(MOFAobject_enr)$proteomics_t_csf<-gsub('_proteomics_t_csf','',features_names(MOFAobject_enr)$proteomics_t_csf)
-#features_names(MOFAobject_enr)$proteomics_t_csf
+features_names(MOFAobject_enr)$proteomics_t_csf
+
+
 library('org.Hs.eg.db')
 library('AnnotationDbi')
 
 mode='proteomics_t_csf'
-mode = 'proteomics_csf'
+
+
+
+
+mode = 'proteomics_t_csf'
 mode = 'proteomics_t_plasma'
-
-
-mode = 'proteomics_csf'
-
+mode = 'proteomics_plasma'
 mode='RNA'
+
 
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
 
@@ -185,7 +189,7 @@ for (subcategory in c('GO:BP' )){
    
   }
 
-
+#colnames(gs)
 
 
   sign_mode='negative'
@@ -249,24 +253,29 @@ dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
 
 
 
-  convert_to_gene_symbol<-function( x, view)(
+  convert_to_gene_symbol <- function( x, view){
     #'view = proteomics csf/ proteomics targeted/rna 
     #' 
     #' 
   
 
-    if (view == 'RNA'){
-      x = get_symbols_vector(x)
-    } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
-      x = get_symbol_from_uniprot(x)$SYMBOL
+      if (view == 'RNA'){
+        x = get_symbols_vector(x)
+      } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
+        x = get_symbol_from_uniprot(x)$SYMBOL
 
-    }
+      }
+      
+      return(x)
   
+  }
   
-  )
+  res.negative$feature.statistics
+
+colnames(res.negative$feature.sets)
 
   rownames(res.negative$feature.statistics) = convert_to_gene_symbol(rownames(res.negative$feature.statistics), view=mode)
-  colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
+ colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
 
 
   rownames(res.positive$feature.statistics)=convert_to_gene_symbol(rownames(res.positive$feature.statistics),  view=mode)
@@ -274,14 +283,20 @@ dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
 
 
 
+res.positive$feature.sets
+factor=17
+ alpha=1
 
+ 
 
+ res.negative$feature.statistics
 sapply(1:N_FACTORS, function(factor){
   tryCatch({
 
   plot_enrichment_detailed(res.negative, factor, 
   alpha = alpha, 
-  max.genes=6
+  max.genes=10, 
+  text_size=3
   )
   #graphics.off()
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
@@ -294,7 +309,7 @@ tryCatch({
  
 
   plot_enrichment_detailed(res.positive, factor, 
-    max.genes=6,
+    max.genes=1,
 
     alpha = alpha)
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
@@ -315,12 +330,10 @@ tryCatch({
 }
 
 
-
-
 sign_mode='negative'
 subcategory<- 'GO:BP'
 T=0.05
-
+gs
 
 # Make enrichment plots for all factors 
 # threshold on p value to zoom in 

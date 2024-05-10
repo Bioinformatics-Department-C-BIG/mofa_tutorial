@@ -62,3 +62,28 @@ nf<-get_factors_for_metric(clust_metric)
 
 
 
+for (VISIT_COMP in c('V08', 'V06', 'BL', 'V04')){
+
+        rmarkdown::render("ppmi/clustering/cluster_compare_report.Rmd", params = list(
+            title=paste0('Mofa Clusters comparisons - ', VISIT_COMP, ' - ', cell_corr_deseq, ' - ', formula_deseq_format ), 
+            VISIT_COMP=VISIT_COMP,
+            cell_corr_deseq=cell_corr_deseq,
+            formula_deseq_format=formula_deseq_format
+
+        ), 
+        output_file = paste0("Cluster comparisons-", VISIT_COMP, "-", cell_corr_deseq, '-',formula_deseq_format, ".html")
+
+        )
+}
+
+# RUN MOFA ENRICH REPORT
+        rmarkdown::render("ppmi/mofa_enrich_report.Rmd", params = list(
+      
+                outdir = outdir,
+                title= 'Mofa ', 
+                nf= c(13,15,20,24,28)
+
+        ), 
+        output_file = paste0("mofa enrich report.html")
+
+        )

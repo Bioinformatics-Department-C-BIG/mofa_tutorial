@@ -124,11 +124,15 @@ mode='proteomics_t_csf'
 
 
 
-mode = 'proteomics_t_csf'
-mode = 'proteomics_t_plasma'
-mode = 'proteomics_plasma'
 mode='RNA'
+mode = 'proteomics_plasma'
+mode = 'proteomics_csf'
+mode = 'proteomics_t_csf'
 
+mode='RNA'
+mode = 'proteomics_plasma'
+mode = 'proteomics_t_plasma'
+mode = 'proteomics_t_csf'
 
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
 
@@ -285,7 +289,7 @@ colnames(res.negative$feature.sets)
 
 res.positive$feature.sets
 factor=17
- alpha=1
+ alpha=0.1
 
  
 
@@ -293,11 +297,15 @@ factor=17
 sapply(1:N_FACTORS, function(factor){
   tryCatch({
 
-  plot_enrichment_detailed(res.negative, factor, 
+  pl<-plot_enrichment_detailed(res.negative, factor, 
   alpha = alpha, 
-  max.genes=10, 
+  max.genes=6, 
   text_size=3
   )
+  pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
+
+  plot(pl)
+
   #graphics.off()
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
   width=6, height=4)
@@ -308,10 +316,12 @@ sapply(1:N_FACTORS, function(factor){
 tryCatch({
  
 
-  plot_enrichment_detailed(res.positive, factor, 
-    max.genes=1,
+  pl<-plot_enrichment_detailed(res.positive, factor, 
+    max.genes=6,
 
     alpha = alpha)
+    pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
+  plot(pl)
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
   width=6, height=4)
 

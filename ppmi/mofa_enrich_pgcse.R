@@ -58,31 +58,7 @@ write_enrich<-function(res, sign_mode){
       
 }
 
-# plot: dot plot
-pcgse_dot_by_factor<-function(factor, results_enrich){
 
-    barpl_input<-results_enrich[ c('Description',factor )]
-    colnames(barpl_input)<-c('Description','p.adjust' )
-    barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
-
-    barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
-
-    barpl_input_top$x = factor
-    barpl_input_top$log10=-log10(barpl_input_top$p.adjust)
-    barpl_input_top$log10
-    ggplot(data = barpl_input_top, aes( x=x,y = Description, 
-                            color = `p.adjust`, size=-log10(p.adjust))) + 
-      geom_point() +
-      scale_color_gradient(low = "red", high = "blue") +
-      theme_bw() + 
-      ylab("") + 
-      xlab("") + 
-      ggtitle("GO enrichment analysis")
-
-
-    dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
-    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
-    }
 
 
 subcategory<- 'CP:KEGG'
@@ -119,14 +95,16 @@ features_names(MOFAobject_enr)$proteomics_t_csf
 library('org.Hs.eg.db')
 library('AnnotationDbi')
 
+
+
+
+
+
 mode='proteomics_t_csf'
 
-
-
-
-mode = 'proteomics_t_csf'
-mode = 'proteomics_t_plasma'
 mode = 'proteomics_plasma'
+mode = 'proteomics_t_plasma'
+mode = 'proteomics_csf'
 mode='RNA'
 
 
@@ -284,39 +262,56 @@ colnames(res.negative$feature.sets)
 
 
 res.positive$feature.sets
-factor=17
- alpha=1
+factor=24
+ alpha=0.05
 
  
 
  res.negative$feature.statistics
+
+ genes_enrich = list()
+
+ out_enrich = paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s)
 sapply(1:N_FACTORS, function(factor){
   tryCatch({
 
   plot_enrichment_detailed(res.negative, factor, 
   alpha = alpha, 
-  max.genes=10, 
+  max.genes=6, 
   text_size=3
   )
   #graphics.off()
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
   width=6, height=4)
 
+
+  
+   ge_f<-plot_enrichment_detailed2(res.positive, factor, 
+  alpha = alpha, 
+  max.genes=6, 
+  text_size=3)
+  genes_enrich[[factor]]<-unique(ge_f$feature)
+  
+
   },
   error = function(e) {an.error.occured <<- TRUE}
+ #error = function(e) {
+ # print(e)}
+
   )
 tryCatch({
  
 
   plot_enrichment_detailed(res.positive, factor, 
-    max.genes=1,
+    max.genes=6,
 
     alpha = alpha)
-  ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
+  ggsave(paste0(out_enrich, '_detailed_pos', '_', factor, '.png'),
   width=6, height=4)
 
   },
-  error = function(e) {an.error.occured <<- TRUE}
+  error = function(e) {
+  print(e)}
   )
 
 
@@ -328,6 +323,11 @@ tryCatch({
 
   
 }
+
+genes_enrich
+write.csv(genes_enrich,paste0(out_enrich, '_detailed_pos', 'all_factors.csv') )
+genes_enrich
+
 
 
 sign_mode='negative'

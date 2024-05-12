@@ -119,3 +119,71 @@ plot_top_weights2 <- function(object, view = 1, factors = 1,
   
 }
 
+
+
+plot_enrichment_detailed2<-function (enrichment.results, factor, alpha = 0.1, max.genes = 5, 
+    max.pathways = 10, text_size = 3) {
+    stopifnot(is.list(enrichment.results))
+    stopifnot(length(factor) == 1)
+    if (!is.numeric(factor)) {
+        if (!factor %in% colnames(enrichment.results$pval)) 
+            stop(paste0("No feature set enrichment calculated for ", 
+                factor))
+    }
+    foo <- reshape2::melt(enrichment.results$feature.statistics[, 
+        factor], na.rm = TRUE, value.name = "feature.statistic")
+    foo$feature <- rownames(foo)
+    feature.sets <- enrichment.results$feature.sets
+    feature.sets[feature.sets == 0] <- NA
+    bar <- reshape2::melt(feature.sets, na.rm = TRUE)[, c(1, 
+        2)]
+    colnames(bar) <- c("pathway", "feature")
+    bar$pathway <- as.character(bar$pathway)
+    bar$feature <- as.character(bar$feature)
+    baz <- reshape2::melt(enrichment.results$pval.adj[, factor], 
+        value.name = "pvalue", na.rm = TRUE)
+    baz$pathway <- rownames(baz)
+    baz <- baz[baz$pvalue <= alpha, , drop = FALSE]
+    if (nrow(baz) == 0) {
+        stop("No siginificant pathways at the specified alpha threshold. \n\n         For an overview use plot_enrichment_heatmap().")
+    }
+    else {
+        if (nrow(baz) > max.pathways) 
+            baz <- head(baz[order(baz$pvalue), ], n = max.pathways)
+    }
+    baz$pathway <- factor(baz$pathway, levels = baz$pathway[order(baz$pvalue, 
+        decreasing = TRUE)])
+    foobar <- merge(foo, bar, by = "feature")
+    tmp <- merge(foobar, baz, by = "pathway")
+    tmp_filt <- top_n(group_by(tmp, pathway), n = max.genes, 
+        abs(feature.statistic))
+    pathways <- unique(tmp_filt$pathway)
+    df <- data.frame(pathway = pathways, nfeatures = rowSums(feature.sets, 
+        na.rm = TRUE)[pathways])
+    df <- merge(df, baz, by = "pathway")
+    df$pathway_long_name <- sprintf("%s\n (Ngenes = %d) \n (p-val = %0.2g)", 
+        df$pathway, df$nfeatures, df$pvalue)
+    tmp <- merge(tmp, df[, c("pathway", "pathway_long_name")], 
+        by = "pathway")
+    tmp_filt <- merge(tmp_filt, df[, c("pathway", "pathway_long_name")], 
+        by = "pathway")
+    order_pathways <- df$pathway_long_name[order(df$pvalue, decreasing = TRUE)]
+    tmp$pathway_long_name <- factor(tmp$pathway_long_name, levels = order_pathways)
+    tmp_filt$pathway_long_name <- factor(tmp_filt$pathway_long_name, 
+        levels = order_pathways)
+    p <- ggplot(tmp, aes(x = .data[["pathway_long_name"]], y = .data[["feature.statistic"]])) + 
+        geom_text_repel(aes(x = .data[["pathway_long_name"]], 
+            y = .data[["feature.statistic"]], label = .data$feature), 
+            size = text_size, color = "black", force = 1, data = tmp_filt) + 
+        geom_point(size = 0.5, color = "lightgrey") + geom_point(aes(x = .data[["pathway_long_name"]], 
+        y = .data[["feature.statistic"]]), size = 1, color = "black", 
+        data = tmp_filt) + labs(x = "", y = "Weight (scaled)", 
+        title = "") + coord_flip() + theme(axis.line = element_line(color = "black"), 
+        axis.text.y = element_text(size = rel(0.75), hjust = 1, 
+            color = "black"), axis.text.x = element_text(size = rel(1), 
+            vjust = 0.5, color = "black"), axis.title.y = element_blank(), 
+        legend.position = "none", panel.background = element_blank())
+    return(tmp_filt)
+}
+
+

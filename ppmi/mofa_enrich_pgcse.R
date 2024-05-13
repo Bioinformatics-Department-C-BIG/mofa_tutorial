@@ -2,6 +2,8 @@
 
 #library('MOFAdata')
 library('MOFA2')
+source(paste0('ppmi/mofa_my_utils.R'))
+
 
 
 
@@ -58,32 +60,6 @@ write_enrich<-function(res, sign_mode){
       
 }
 
-# plot: dot plot
-pcgse_dot_by_factor<-function(factor, results_enrich){
-
-    barpl_input<-results_enrich[ c('Description',factor )]
-    colnames(barpl_input)<-c('Description','p.adjust' )
-    barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
-
-    barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
-
-    barpl_input_top$x = factor
-    barpl_input_top$log10=-log10(barpl_input_top$p.adjust)
-    barpl_input_top$log10
-    ggplot(data = barpl_input_top, aes( x=x,y = Description, 
-                            color = `p.adjust`, size=-log10(p.adjust))) + 
-      geom_point() +
-      scale_color_gradient(low = "red", high = "blue") +
-      theme_bw() + 
-      ylab("") + 
-      xlab("") + 
-      ggtitle("GO enrichment analysis")
-
-
-    dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
-    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
-    }
-
 
 subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
@@ -92,15 +68,27 @@ subcategory<- 'GO:BP'
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
 
-mode='proteomics'
-mode='proteomics_csf'
+
+library('org.Hs.eg.db')
+library('AnnotationDbi')
+
+mode = 'proteomics_t_csf'
+
+mode = 'proteomics_plasma'
 
 
-assay(mofa_multi[,,3])
+
+
+mode = 'proteomics_t_csf'
 
 
 
-mode='proteomics_t_csf'
+mode = 'proteomics_plasma'
+
+mode = 'proteomics_t_plasma'
+mode='RNA'
+###
+mode = 'proteomics_csf'
 
    
 features_names(MOFAobject)$RNA
@@ -116,24 +104,6 @@ features_names(MOFAobject_enr)$proteomics_t_csf<-gsub('_proteomics_t_csf','',fea
 features_names(MOFAobject_enr)$proteomics_t_csf
 
 
-library('org.Hs.eg.db')
-library('AnnotationDbi')
-
-mode='proteomics_t_csf'
-
-
-
-
-mode='RNA'
-mode = 'proteomics_plasma'
-mode = 'proteomics_csf'
-mode = 'proteomics_t_csf'
-
-mode='RNA'
-mode = 'proteomics_plasma'
-mode = 'proteomics_t_plasma'
-mode = 'proteomics_t_csf'
-
 my_protein_ids = features_names(MOFAobject_enr)[[mode]]
 
 head(my_protein_ids)
@@ -143,7 +113,7 @@ head(my_protein_ids)
 #features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
 
 
-force_pcgse = TRUE
+force_pcgse = FALSE
 get_feature_set_uniprot<-function(gs_original){
   #' map colnames of feature.sets with UNIRPOT SYMBOL
   #' @param gs_original: the feature set with gene symbols 
@@ -205,6 +175,7 @@ for (subcategory in c('GO:BP' )){
   if (!force_pcgse & file.exists(enrich_res_file_neg)){
         res.negative=loadRDS(enrich_res_file_neg)
         res.positive=loadRDS(enrich_res_file_pos)
+        print('loading')
     
   }else{
     #res.negative
@@ -250,36 +221,15 @@ for (subcategory in c('GO:BP' )){
   ##### which factor is related to parkinsons disease in KEGG
   ### PROBLEM: this is based on RNA only!!! 
   alpha=0.05
-dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
+  dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
 
 ## After having run with uniprot, convert the results to symbol before plotting ####
 
 
-
-
-  convert_to_gene_symbol <- function( x, view){
-    #'view = proteomics csf/ proteomics targeted/rna 
-    #' 
-    #' 
-  
-
-      if (view == 'RNA'){
-        x = get_symbols_vector(x)
-      } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
-        x = get_symbol_from_uniprot(x)$SYMBOL
-
-      }
-      
-      return(x)
-  
-  }
-  
-  res.negative$feature.statistics
-
-colnames(res.negative$feature.sets)
+  colnames(res.negative$feature.sets)
 
   rownames(res.negative$feature.statistics) = convert_to_gene_symbol(rownames(res.negative$feature.statistics), view=mode)
- colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
+  colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
 
 
   rownames(res.positive$feature.statistics)=convert_to_gene_symbol(rownames(res.positive$feature.statistics),  view=mode)
@@ -287,41 +237,73 @@ colnames(res.negative$feature.sets)
 
 
 
-res.positive$feature.sets
-factor=17
- alpha=0.1
+
+factor=28
+ alpha=0.05
 
  
 
- res.negative$feature.statistics
-sapply(1:N_FACTORS, function(factor){
+enrich_genes_all_pos<-list()
+enrich_genes_all_neg<-list()
+
+for (factor in 1:N_FACTORS){
+  print(factor)
+
+
+
   tryCatch({
 
-  pl<-plot_enrichment_detailed(res.negative, factor, 
-  alpha = alpha, 
-  max.genes=6, 
-  text_size=3
+    enrich_list<-plot_enrichment_detailed_genes(res.negative, factor, 
+    alpha = alpha, 
+    max.genes=6, 
+    text_size=3
+    )
+    
+    # plotting
+    pl = enrich_list[[1]]
+    pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
+    plot(pl)
+
+    # genes
+    enrich_genes<-enrich_list[[2]]
+    cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
+    
+    
+    enrich_genes_all_neg[[factor]] = unique(enrich_genes$feature)
+    enrich_genes_all_neg[[factor]]
+
+
+
+    #graphics.off()
+    ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
+    width=6, height=4)
+
+    },
+    error = function(e) {an.error.occured <<- TRUE}
   )
-  pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
 
-  plot(pl)
 
-  #graphics.off()
-  ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
-  width=6, height=4)
-
-  },
-  error = function(e) {an.error.occured <<- TRUE}
-  )
 tryCatch({
  
 
-  pl<-plot_enrichment_detailed(res.positive, factor, 
+  enrich_list<-plot_enrichment_detailed_genes(res.positive, factor, 
     max.genes=6,
 
     alpha = alpha)
+    pl = enrich_list[[1]]
     pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
-  plot(pl)
+    plot(pl)
+
+
+  
+  
+  enrich_genes<-enrich_list[[2]]
+  enrich_genes_all_pos[[factor]] = unique(enrich_genes$feature)
+    cat( enrich_genes_all_pos[[factor]], sep='\n')
+  cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
+
+
+
   ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
   width=6, height=4)
 
@@ -329,48 +311,40 @@ tryCatch({
   error = function(e) {an.error.occured <<- TRUE}
   )
 
+  print(enrich_genes_all_pos)
+
+
 
 }
 
 
-
-)
+enrich_genes_all_pos
 
   
 }
+enrich_genes_all_pos
+
+#define file name
+neg_pos<-rbind(stack(setNames(enrich_genes_all_pos, seq_along(enrich_genes_all_pos))),
+stack(setNames(enrich_genes_all_neg, seq_along(enrich_genes_all_neg))))
+
+
+
+write.csv(neg_pos, 
+paste0(outdir, '/enrichment/pcgse/', 'features_', mode, '_', subcategory_s, '_detailed_pos_neg', '.csv'), 
+quote =FALSE
+)
+
+
+
+
+
 
 
 sign_mode='negative'
 subcategory<- 'GO:BP'
 T=0.05
-gs
 
-# Make enrichment plots for all factors 
-# threshold on p value to zoom in 
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_positive','.jpeg'), res=150, height=800, width=800)
-
-plot_enrichment_heatmap(res.positive, 
-                        alpha=0.5, 
-                        cap=0.0005,
-                        colnames=TRUE)
-dev.off()
-
-plot_enrichment_heatmap(res.positive$sigPathways, 
-                        alpha=0.5, cap=0.0005)
-
-#ggsave(paste0(outdir,'Enrichment_heatmap_positive','.jpeg'), width = 9, height=4, dpi=120)
-
-
-jpeg(paste0(outdir,'/enrichment/Enrichment_heatmap_negative','.jpeg'), res=150, height=800, width=800)
-
-
-#res.negative %>% 
-#  dplyr::filter(pval.adj<0.05)
-plot_enrichment_heatmap(res.negative, 
-                        alpha=0.00000000004, cap=0.00000000005 
-)
-
-dev.off()
 
 
 

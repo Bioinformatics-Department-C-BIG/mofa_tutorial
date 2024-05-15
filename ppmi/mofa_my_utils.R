@@ -121,7 +121,11 @@ plot_top_weights2 <- function(object, view = 1, factors = 1,
 
 
 
+<<<<<<< HEAD
+plot_enrichment_detailed2<-function (enrichment.results, factor, alpha = 0.1, max.genes = 5, 
+=======
 plot_enrichment_detailed_genes<-function (enrichment.results, factor, alpha = 0.1, max.genes = 5, 
+>>>>>>> f008f30270154bfca4f2c324a15d21d85841d561
     max.pathways = 10, text_size = 3) {
     stopifnot(is.list(enrichment.results))
     stopifnot(length(factor) == 1)
@@ -183,5 +187,12 @@ plot_enrichment_detailed_genes<-function (enrichment.results, factor, alpha = 0.
             color = "black"), axis.text.x = element_text(size = rel(1), 
             vjust = 0.5, color = "black"), axis.title.y = element_blank(), 
         legend.position = "none", panel.background = element_blank())
+<<<<<<< HEAD
+    return(tmp_filt)
+}
+
+
+=======
     return(list(p, tmp_filt))
 }
+>>>>>>> f008f30270154bfca4f2c324a15d21d85841d561

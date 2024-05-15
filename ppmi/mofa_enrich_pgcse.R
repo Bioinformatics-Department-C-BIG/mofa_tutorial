@@ -310,7 +310,8 @@ tryCatch({
   width=6, height=4)
 
   },
-  error = function(e) {an.error.occured <<- TRUE}
+  error = function(e) {
+  print(e)}
   )
 
   print(enrich_genes_all_pos)
@@ -340,6 +341,11 @@ quote =FALSE
 
 
 
+
+
+genes_enrich
+write.csv(genes_enrich,paste0(out_enrich, '_detailed_pos', 'all_factors.csv') )
+genes_enrich
 
 
 

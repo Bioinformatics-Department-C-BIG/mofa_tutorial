@@ -133,7 +133,7 @@ add_gg_interactions=FALSE){
       )
 
 
-      interactions_of_mirtargets_tar_is_de
+
       # 2. Now do the filter of gene targets 
       # 1. either de genes (in the network ) or de themselves 
 
@@ -159,9 +159,12 @@ add_gg_interactions=FALSE){
           dplyr::filter( source_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL )) )
 
       
+      # filter interactions of genes so that they are mir targets or target mir, optional! 
       interactions_dor_target_genes<-interactions_dor %>%
           dplyr::filter(target_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL ) ) %>% 
           dplyr::filter( source_genesymbol %in% c(rnas_sig_factor$GENE_SYMBOL )) 
+
+      interactions_dor_target_genes = interactions_dor
 
 
       dim(interactions_dor_target_genes)
@@ -172,6 +175,125 @@ add_gg_interactions=FALSE){
 
       if (add_gg_interactions){
           g_extended<-union(g_extended, g_genes_inter) ## add gene-gene interactions
+
+      }
+
+     
+     
+
+      return(g_extended)
+
+}
+
+rnas_net_input = rnas_sig_factor_all_clusts
+mirnas_net_input=mirnas_sig_factor_all_clusts
+
+resources =c( "SIGNOR", "STRING_talklr" )
+create_regulatory_net_backbone<-function(rnas_net_input, mirnas_net_input, resources =c( "SIGNOR", "STRING_talklr" ), 
+gene_mir_resources = c( "miRTarBase", "TransmiR"),
+add_gg_interactions=FALSE, mir_target_genes_only = FALSE){
+  #'
+  #' @param rnas_sig_factor significant de rnas
+  #' @param mirnas_sig_factor
+  #' take de rnas sig
+  #' take de mirnas sign
+  #' Load their interactions c
+#
+    ### Start loading dbs interactions, mirnas, mirtarges
+        
+      ## Until the DoRothEA issue gets fixed we have this here:
+      interactions_string <-
+          import_omnipath_interactions(resources=resources)
+
+
+      # These will be used for the intermediates
+      interactions_dor <- import_transcriptional_interactions(
+          resources = resources
+      )
+
+
+
+      ############# Add also gene-gene interactions that are not in the graph already ###
+      # add gene interactiosn that are not DE? 
+      
+      dim(interactions_dor)
+      dim(interactions_string)
+
+      ## ----mirnatarget--------------------------------------------------------------------------------------------
+      ## We query and store the interactions into a dataframe
+      #gene_mir_resources = c("miR2Disease", "miRDeathDB", "miRTarBase", "TransmiR")
+      interactions_mirs <-
+        import_mirnatarget_interactions(resources = gene_mir_resources)
+
+      ## 1. interactions_mirs- obtain its genes 
+      ## 2. filter by genes that have a de target OR are DE themselves 
+      interactions_de_mirs<-interactions_mirs %>% 
+                      dplyr::filter(source_genesymbol %in% mirnas_sig_factor$GENE_SYMBOL)
+
+      dim(interactions_de_mirs)
+      mirtargets<-interactions_de_mirs$target_genesymbol
+
+      # find out which mir targets have a de interaction
+      # TODO: this is only one way ie. if the mir is a source. 
+      interactions_of_mirtargets_tar_is_de<-interactions_string %>% dplyr::filter(
+          source_genesymbol %in% mirtargets) %>% dplyr::filter(
+          target_genesymbol %in% rnas_sig_factor$GENE_SYMBOL
+
+      )
+
+
+
+      # 2. Now do the filter of gene targets 
+      # 1. either de genes (in the network ) or de themselves 
+
+      interactions_de_mirs_targets_filt<-interactions_de_mirs %>%
+              dplyr::filter( target_genesymbol %in% interactions_of_mirtargets_tar_is_de$source_genesymbol | 
+              target_genesymbol %in% rnas_sig_factor$GENE_SYMBOL # CAREFUL to access these with gene symbol!!
+              )
+
+
+
+      interactions_mirs$source_genesymbol
+      interactions_de_mirs_targets_filt$source_genesymbol[grep( 'miR-7-5p',interactions_de_mirs_targets_filt$source_genesymbol)]
+      interactions_de_mirs_targets_filt$target_genesymbol[grep( 'SNCA',interactions_de_mirs_targets_filt$target_genesymbol)]
+
+      g_mirs_targets_filt<-interaction_graph(interactions_de_mirs_targets_filt)
+      g_targets<-interaction_graph(interactions_of_mirtargets_tar_is_de)
+
+
+
+      
+
+      # either the source or the target should be in the symbol
+
+      interactions_dor_target_genes<-interactions_dor[interactions_dor$target_genesymbol %in% c(rnas_net_input$GENE_SYMBOL ) |   interactions_dor$source_genesymbol %in% c(rnas_net_input$GENE_SYMBOL),]
+      
+      interactions_string_sel_genes<-interactions_string[interactions_string$target_genesymbol %in% c(rnas_net_input$GENE_SYMBOL ) |   interactions_string$source_genesymbol %in% c(rnas_net_input$GENE_SYMBOL),]
+      interactions_string_sel_genes <- interactions_string_sel_genes %>% dplyr::filter(curation_effort>2)
+      summary(interactions_string_sel_genes$curation_effort)
+  
+
+
+
+
+
+
+      
+      #mir_target_genes_only = FALSE
+  
+      g_genes_inter<-interaction_graph(interactions_dor_target_genes)
+      g_genes_inter2<-interaction_graph(interactions_string_sel_genes)
+
+   
+
+      g_extended<-union(g_mirs_targets_filt, g_targets) # mir-gene-gene interactions
+      
+
+    
+      if (add_gg_interactions){
+          g_extended<-union(g_extended, g_genes_inter) ## add gene-gene interactions
+          g_extended<-union(g_extended, g_genes_inter2) ## add gene-gene interactions
+
 
       }
 

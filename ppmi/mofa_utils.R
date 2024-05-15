@@ -306,6 +306,32 @@ get_top_pathways_by_factor<-function(factor, pvalueCutoff = 0.05, top_p = 20, pr
 #config$subcategory
 
 
+# plot: dot plot
+pcgse_dot_by_factor<-function(factor, results_enrich){
+  # creates a dotplot for pcgse results probably not needed 
+
+    barpl_input<-results_enrich[ c('Description',factor )]
+    colnames(barpl_input)<-c('Description','p.adjust' )
+    barpl_input<-barpl_input[barpl_input$p.adjust<0.05,]
+
+    barpl_input_top<-barpl_input[order(barpl_input[,2], decreasing=FALSE)[1:20],]
+
+    barpl_input_top$x = factor
+    barpl_input_top$log10=-log10(barpl_input_top$p.adjust)
+    barpl_input_top$log10
+    ggplot(data = barpl_input_top, aes( x=x,y = Description, 
+                            color = `p.adjust`, size=-log10(p.adjust))) + 
+      geom_point() +
+      scale_color_gradient(low = "red", high = "blue") +
+      theme_bw() + 
+      ylab("") + 
+      xlab("") + 
+      ggtitle("GO enrichment analysis")
+
+
+    dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
+    ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
+    }
 
 
 concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view=FALSE, subcategory='GO:BP'){

@@ -415,6 +415,23 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
 
 
 
+  convert_to_gene_symbol <- function( x, view){
+    #'view = proteomics csf/ proteomics targeted/rna 
+    #' 
+    #' 
+  
+
+      if (view == 'RNA'){
+        x = get_symbols_vector(x)
+      } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
+        x = get_symbol_from_uniprot(x)$SYMBOL
+
+      }
+      
+      return(x)
+  
+  }
+
 #object=MOFAobjectPD
 #factors=c(6)
 #cluster_samples_mofa_obj(MOFAobjectPD, k=2, factors=c(6))

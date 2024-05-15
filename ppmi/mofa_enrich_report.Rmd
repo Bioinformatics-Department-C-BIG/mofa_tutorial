@@ -4,8 +4,9 @@ output:
   pdf_document: default
   css: styles.css
 params: 
+      outdir: '/data8TB/efiath/git/mofa_tutorial/ppmi/plots/48bcb908/'
       title: 'Mofa Clusters comparisons - V08'
-      nf: c(2,11, 23)
+      nf: c(2, 11, 23)
 
 ---
 
@@ -51,6 +52,11 @@ process_mirnas=FALSE
 run_mofa_complete<-FALSE
 run_rna_mirna<-FALSE
 cell_corr_mofa=FALSE
+
+TISSUE='CSF'
+tissue_un = 'Cerebrospinal Fluid'
+prot_mode = 't'
+
 source(paste0(script_dir, '/ppmi/config.R'))
 source(paste0(script_dir, '/ppmi/mofa_config.R'))
 source(paste0(script_dir, '/ppmi/mofa_dirs.R'))
@@ -58,15 +64,6 @@ source(paste0(script_dir,'ppmi/utils.R'))
 
 
 
-N_FACTORS=25
-  ## MOFA parameters, set directory 
-  #'
-  mofa_params<-paste0(N_FACTORS,'_sig_',  as.numeric(use_signif) ,'c_', as.numeric(run_mofa_complete)  )
-  ruv_s<-(as.numeric(ruv))
-  out_params<- paste0( 'p_', p_params, 'g_', g_params, 'm_', m_params, mofa_params, '_coh_', sel_coh_s,'_', VISIT_S, '_', 
-                       as.numeric(scale_views[1]),'ruv_', as.numeric(ruv_s), '_c_',as.numeric(cell_corr_mofa))
-  
-  outdir = paste0(outdir_orig,out_params, '_split_', as.numeric(split ));outdir
 
 
 #source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
@@ -94,14 +91,15 @@ outdir_enrich<-paste0(outdir, '/enrichment/' )
 ```{r get_enrich_files, echo=FALSE}
 #nf=c(2,4,6,18,22)
 #nf=c(4,6)
-#nf=c(2,11, 23)
+nf=c(2,11, 23)
+nf=c(13,15,20,24,28)
 
 
 get_files_weights<-function(outdir){
     en_plots_all=c()
 
     for (f in nf){
-        regex_str<-paste0('top_weights_f_', f, '_')
+        regex_str<-paste0('top_weights_f_', f, '.*20')
         en_plots<-list.files(paste0(outdir, '/top_weights/'), pattern = regex_str, full.names =  TRUE)
         en_plots_all<-append(en_plots_all, en_plots)
 
@@ -111,11 +109,11 @@ get_files_weights<-function(outdir){
 
 
 
-get_files<-function(outdir_enrich, type='_dot'){
+get_files<-function(outdir_enrich, type=''){
     en_plots_all=c()
 
     for (f in nf){
-        regex_str<-paste0('gsego_', f,'_', type ,collapse='|')
+        regex_str<-paste0('detailed.*', f )
         en_plots<-list.files(outdir_enrich, pattern = regex_str, full.names =  TRUE)
         en_plots_all<-append(en_plots_all, en_plots)
 
@@ -128,10 +126,13 @@ get_files<-function(outdir_enrich, type='_dot'){
 
 
 en_plots_all<-get_files(outdir_enrich)
-en_plots_all_proteins<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'))
-en_plots_all_proteins_csf<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'))
+en_plots_all_proteins<-get_files(paste0(outdir_enrich, '/pcgse/proteomics_plasma/'))
+en_plots_all_proteins_csf<-get_files(paste0(outdir_enrich, '/pcgse/proteomics_csf/'))
+en_plots_all_proteins_t_csf<-get_files(paste0(outdir_enrich, '/pcgse/proteomics_t_csf/'))
+en_plots_all_proteins_t_plasma<-get_files(paste0(outdir_enrich, '/pcgse/proteomics_t_plasma/'))
+en_plots_all_rna<-get_files(paste0(outdir_enrich, '/pcgse/RNA/'))
 
-
+en_plots_all_proteins_csf
 
 #plot_settings
 out_width="33%"
@@ -146,10 +147,17 @@ out_width_w = "25%"
 
 weight_plots<-get_files_weights(outdir)
 
-knitr::include_graphics(weight_plots, dpi = 96 )
+length(weight_plots)
+#print(paste('plots', weight_plots))
+if (length(weight_plots)>1){
+  knitr::include_graphics(weight_plots, dpi = 96 )
+
+}else{
+  print('Could not find files ')
+}
 
 
-
+weight_plots
 
 ```
 
@@ -168,80 +176,21 @@ knitr::include_graphics(en_plots_all, dpi = 96 )
 
 
 ```{r plot_proteins, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins",fig.show='hold',fig.align='center'}
-knitr::include_graphics(en_plots_all_proteins, dpi = 96 )
-
-knitr::include_graphics(en_plots_all_proteins_csf, dpi = 96 )
 
 
+    knitr::include_graphics(en_plots_all_rna, dpi = 96 )
+
+    knitr::include_graphics(en_plots_all_proteins, dpi = 96 )
+    knitr::include_graphics(en_plots_all_proteins_csf, dpi = 96 )
+    knitr::include_graphics(en_plots_all_proteins_t_csf, dpi = 96 )
+
+    knitr::include_graphics(en_plots_all_proteins_t_plasma, dpi = 96 )
+    
+
+
+
+         
+
+#}
 ```
 
-
-
-
-
-
-### Gene plots
-
-
-```{r gc_get_files, , echo=FALSE}
-en_plots_all_gc<-get_files(outdir_enrich, type='_gc')
-
-en_plots_all_proteins_gc<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'), type='gc')
-en_plots_all_proteins_csf_gc<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'), type='gc')
-
-
-```
-
-
-
-```{r plot_gc, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="RNA",fig.show='hold',fig.align='center'}
-
-
-knitr::include_graphics(en_plots_all_gc, dpi = 96 )
-
-```
-
-```{r plot_gc_proteins, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins",fig.show='hold',fig.align='center'}
-knitr::include_graphics(en_plots_all_proteins_gc, dpi = 96 )
-
-knitr::include_graphics(en_plots_all_proteins_csf_gc, dpi = 96 )
-
-
-```
-
-
-
-```{r plot_emap_files, echo=FALSE}
-en_plots_all_emap<-get_files(outdir_enrich, type='_emap')
-en_plots_all_proteins_emap<-get_files(paste0(outdir_enrich, '/proteins_plasma/ora/'), type='_emap')
-en_plots_all_proteins_csf_emap<-get_files(paste0(outdir_enrich, '/proteins_csf/ora/'), type='_emap')
-
-```
-
-
-### Enrichment map
-
-```{r plot_emap, echo=FALSE, fig.width=25, fig.height=7, out.width =out_width, fig.cap="RNA",fig.show='hold',fig.align='center'}
-
-
-knitr::include_graphics(en_plots_all_emap, dpi = 96 )
-
-```
-
-```{r plot_proteins_emap, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins plasma",fig.show='hold',fig.align='center'}
-
-
-knitr::include_graphics(en_plots_all_proteins_emap, dpi = 96 )
-
-
-```
-
-
-
-```{r plot_proteins_csf_emap, echo=FALSE, fig.width=25, fig.height=7, out.width = out_width, fig.cap="proteins csf",fig.show='hold',fig.align='center'}
-
-
-knitr::include_graphics(en_plots_all_proteins_csf_emap, dpi = 96 )
-
-
-```

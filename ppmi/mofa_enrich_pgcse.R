@@ -79,18 +79,19 @@ mode = 'proteomics_plasma'
 
 
 
-mode = 'proteomics_t_csf'
 
 
 
-mode = 'proteomics_plasma'
 
 mode = 'proteomics_t_plasma'
-mode='RNA'
 ###
+mode='RNA'
+mode = 'proteomics_plasma'
 mode = 'proteomics_csf'
 
-   
+  mode = 'proteomics_t_csf'
+mode = 'proteomics_t_plasma'
+
 features_names(MOFAobject)$RNA
 features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
                                          function(x) {stringr::str_remove(x, '\\..*')})
@@ -113,7 +114,7 @@ head(my_protein_ids)
 #features_names(MOFAobject_enr)[[mode]]<-my_protein_mapping$SYMBOL
 
 
-force_pcgse = FALSE
+force_pcgse = TRUE
 get_feature_set_uniprot<-function(gs_original){
   #' map colnames of feature.sets with UNIRPOT SYMBOL
   #' @param gs_original: the feature set with gene symbols 
@@ -168,6 +169,7 @@ for (subcategory in c('GO:BP' )){
 
   sign_mode='negative'
   subcategory_s<-gsub('\\:', '_', subcategory)
+  dir.create(paste0(outdir,'/enrichment/pcgse/' ))
   enrich_res_file_neg<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
   enrich_res_file_pos<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
   
@@ -381,6 +383,9 @@ all_enrichments_bind<-do.call(bind_rows,all_enrichments)
 
 write.csv(all_enrichments_bind, paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
                         '_enrichment','_', T,'all_modes',   '.csv'))
+
+
+
 
 
 

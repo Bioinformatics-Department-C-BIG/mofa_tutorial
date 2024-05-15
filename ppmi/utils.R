@@ -588,7 +588,7 @@ fetch_metadata_by_patient_visit<-function(patno_event_ids, combined=combined_bl_
         
  }
 
-se=proteomics_se
+#se=proteomics_se
 ## Create the summarized experiment by selecting VISITS and cohorts 
 
 filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){

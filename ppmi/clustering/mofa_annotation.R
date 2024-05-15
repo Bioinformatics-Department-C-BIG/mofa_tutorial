@@ -22,6 +22,12 @@ estimations_in_df<-colnames(estimations)[colnames(estimations) %in% colnames(cor
 clinical_in_df<-c('NP2PTOT_LOG', 'NP3TOT_LOG',  'moca', 'sft')
 covars_age<-c('AGE_SCALED', 'SEX', 'LEDD', 'ab_asyn', 'tau_asyn', 'abeta', 'Neutrophil.Lymphocyte')
 sel_facts<-get_factors_for_scales(clinical_in_df)
+sel_facts
+sel_facts<-get_factors_for_scales(clinical_in_df)
+sel_facts2<-get_factors_for_metric('NP3TOT_LOG')
+
+sel_facts<-sel_facts[sel_facts %in% sel_facts2]
+#sel_facts
 #sel_facts<-sel_facts[!sel_facts %in% c(3)]
 #sel_facts<-sel_facts[!sel_facts %in% c(3)]
 
@@ -112,9 +118,9 @@ sel_facts
 
 ### other pathways analysis 
 sel_facts
-view='proteomics_csf'
+view='RNA'
 get_top_paths_matrix<-function(view){
-        top_paths<-concatenate_top_pathways_factors(as.numeric(sel_facts),top_p=3, view=view, prefix=FALSE)
+        top_paths<-concatenate_top_pathways_factors(as.numeric(sel_facts),top_p=4, view=view, prefix=FALSE)
         top_paths$p.adjust = -log10(top_paths$p.adjust)
         top_paths
         top_paths=top_paths[!duplicated(top_paths$Description),]
@@ -131,8 +137,11 @@ get_top_paths_matrix<-function(view){
 
         ### some factors are missing so add them to agree with the rest 
         empty_cols<-data.frame(matrix(rep(0,dim(top_paths_factors)[1] * length(sel_facts_m)), ncol=length(sel_facts_m) ))
-        colnames(empty_cols)<-sel_facts_m
-        top_paths_factors<-cbind(top_paths_factors, empty_cols)
+        if (length(empty_cols)>0){
+                empty_cols
+                colnames(empty_cols)<-sel_facts_m
+                top_paths_factors<-cbind(top_paths_factors, empty_cols)
+        }
 
 
         top_paths_factors[is.na(top_paths_factors)]<-0
@@ -146,9 +155,15 @@ get_top_paths_matrix<-function(view){
 
 top_paths_factors_prot_csf<-get_top_paths_matrix(view='proteomics_csf')
 top_paths_factors_prot_plasma<-get_top_paths_matrix(view='proteomics_plasma')
+top_paths_factors_RNA<-get_top_paths_matrix(view='RNA')
+top_paths_factors_prot_t_plasma<-get_top_paths_matrix(view='proteomics_t_plasma')
+
+top_paths_factors_prot_t_csf<-get_top_paths_matrix(view='proteomics_t_csf')
+
+top_paths_factors_RNA
+top_paths_factors_RNA
 #top_paths_factors_rna<-get_top_paths_matrix(view='RNA')
 
-top_paths_factors_prot_csf
 
 # TODO: protein enrichment analysis 
 
@@ -161,7 +176,6 @@ max_hm3<-max(abs(cors_covars))
 max_hm4<-max(abs(vars_factors))
 max_hm5<-max(abs(top_paths_factors_prot_csf))
 
-top_paths_factors
 vars_factors
 
 
@@ -212,16 +226,33 @@ clustering_method = 'median',
 cm_pathways<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_prot_csf),col =col_fun_paths, cluster_rows =  FALSE, 
 clustering_method = 'median',
  heatmap_legend_param = list(
-        title='Top features'
+        title='csf proteomics'
 ))
 
 cm_pathways_plasma<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_prot_plasma),col =col_fun_paths, cluster_rows =  FALSE, 
 clustering_method = 'median',
  heatmap_legend_param = list(
-        title='Top features'
+        title='Plasma proteomics'
+))
+
+cm_rna<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_RNA),col =col_fun_paths, cluster_rows =  FALSE, 
+clustering_method = 'median',
+ heatmap_legend_param = list(
+        title='RNA'
+))
+
+cm_t_csf<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_prot_t_csf),col =col_fun_paths, cluster_rows =  FALSE, 
+clustering_method = 'median',
+ heatmap_legend_param = list(
+        title='targeted csf proteomics'
 ))
 
 
+cm_t_plasma<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_prot_t_plasma),col =col_fun_paths, cluster_rows =  FALSE, 
+clustering_method = 'median',
+ heatmap_legend_param = list(
+        title='targeted plasma proteomics'
+))
 graphics.off()
 
 
@@ -234,7 +265,7 @@ dev.off()
 
 graphics.off()
 jpeg(paste0(outdir, '/heatmap_factor_info_mol',only_tfs, '.jpeg'), res=300, width=10, height=17, units='in')
-ht_list<- cm_pathways %v% cm_pathways_plasma %v% cm7 %v% cm5%v% cm6 
+ht_list<-cm_rna %v% cm_pathways %v% cm_pathways_plasma %v% cm_t_csf %v% cm_t_plasma %v% cm7 %v% cm5%v% cm6 
 draw(ht_list, padding = unit(c(2,2,2,80), 'mm'),  annotation_legend_side  = "bottom", 
 heatmap_legend_side="bottom")
 

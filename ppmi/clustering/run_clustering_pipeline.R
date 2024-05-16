@@ -49,7 +49,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 # Plotting for mofa run not needed for clustering analysis, excluded  
 
-#source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 

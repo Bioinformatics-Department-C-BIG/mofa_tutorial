@@ -1,0 +1,39 @@
+
+
+
+factor=4
+modes = c('proteomics_t_plasma', 'proteomics_t_csf', 'RNA')
+list_enrich_plots_views['proteomics_t_plasma'][[1]]R
+list_enrich_plots_views[mode][[1]]
+pl_view_factor = list()
+list_enrich_plots_views[[1]] 
+#list_enrich_plots_views[[1]] = NULL
+list_enrich_plots_views[[1]] 
+names(list_enrich_plots_views)
+for (mode_i in 1:length(modes) ){
+    list_enrich_plots_views[[mode_i]]
+    pl1<-list_enrich_plots_views[[mode_i]][[factor]]
+    if (!is.null(pl1)){
+        pl_view_factor[[mode_i]]<-list_enrich_plots_views[[mode_i]][[factor]]
+
+    }
+
+
+    
+
+}
+
+
+
+print(length(pl_view_factor))
+
+
+plot(pl_view_factor[[1]])
+plot(pl_view_factor[[3]])
+
+
+    ggarrange(pl_view_factor[[2]],pl_view_factor[[1]], pl_view_factor[[3]], nrow=2 )
+
+
+
+pl_view_factor[[1]]

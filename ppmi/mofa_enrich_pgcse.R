@@ -88,14 +88,20 @@ mode = 'proteomics_t_plasma'
 mode='RNA'
 mode = 'proteomics_plasma'
 mode = 'proteomics_csf'
+
 mode = 'proteomics_t_plasma'
 mode='RNA'
 mode = 'proteomics_plasma'
 
-mode = 'proteomics_t_csf'
 
-  mode = 'proteomics_t_csf'
 mode = 'proteomics_t_plasma'
+mode = 'proteomics_t_plasma'
+mode = 'proteomics_t_csf'
+mode='RNA'
+
+
+
+
 
 features_names(MOFAobject)$RNA
 features_names(MOFAobject)$RNA<-sapply(features_names(MOFAobject)$RNA, 
@@ -150,200 +156,222 @@ get_feature_set_uniprot<-function(gs_original){
 #rownames(results_de)
 grepl('proteomics', mode)
 # 'GO:MF'
-for (subcategory in c('GO:BP' )){
 
-  if (grepl('proteomics', mode)){
-      gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
-      gs_original<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-      gs<-gs_original
-    if (mode=='proteomics_csf'|| mode == 'proteomics_plasma'){
-      # untargeted are in uniprot..
-      gs<-get_feature_set_uniprot(gs_original)
+
+all_modes<-c('proteomics_csf', 'proteomics_plasma', 'RNA', 'proteomics_t_plasma', 'proteomics_t_csf')
+
+
+for (mode in all_modes){
+  for (subcategory in c('GO:BP' )){
+
+    if (grepl('proteomics', mode)){
+        gs_file<-paste0(data_dir,output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+        gs_original<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+        gs<-gs_original
+      if (mode=='proteomics_csf'|| mode == 'proteomics_plasma'){
+        # untargeted are in uniprot..
+        gs<-get_feature_set_uniprot(gs_original)
+      }
+
+    }else{
+      #output_files
+        gs_file<-paste0(data_dir,output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+        #gs_file
+        gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
+    
     }
 
-  }else{
-    #output_files
-      gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
-      #gs_file
-      gs<-as.matrix(read.csv(gs_file, header=1, row.names=1))
-   
-  }
-
-#colnames(gs)
+  #colnames(gs)
 
 
-  sign_mode='negative'
-  subcategory_s<-gsub('\\:', '_', subcategory)
-  dir.create(paste0(outdir,'/enrichment/pcgse/' ))
-  enrich_res_file_neg<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
-  enrich_res_file_pos<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
-  
-
-  if (!force_pcgse & file.exists(enrich_res_file_neg)){
-        res.negative=loadRDS(enrich_res_file_neg)
-        res.positive=loadRDS(enrich_res_file_pos)
-        print('loading')
+    sign_mode='negative'
+    subcategory_s<-gsub('\\:', '_', subcategory)
+    dir.create(paste0(outdir,'/enrichment/pcgse/' ))
+    enrich_res_file_neg<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'negative' )
+    enrich_res_file_pos<-paste0(outdir,'/enrichment/pcgse/' ,subcategory_s, '_', T, mode, '_enrichment_', 'positive' )
     
-  }else{
-    #res.negative
-          # GSEA on negative weights, with default options
-          res.negative <- run_enrichment(MOFAobject_enr, 
-                                         feature.sets = gs, 
-                                         view = mode,
-                                         sign = "negative"
-          )
-          
-          res.positive <- run_enrichment(MOFAobject_enr, 
-                                         feature.sets = gs, 
-                                         view = mode,
-                                         sign = "positive"
-          )
-          
-          sign_mode='negative'
-          res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
-          res_negative_df
-          saveRDS(res.negative, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
-          
-          sign_mode='positive'
 
-          res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
-          saveRDS(res.positive, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
-          res_negative_df
-          res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
-            by=c('Description','Factor' ))
-          #res_merged$pvalue_min<-c(rowMins(as.matrix(res_merged[,c('pvalue_n','pvalue_p')])))
-          
-          write.csv(res_merged, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
-  }
-  
-  
-  
-  
+    if (!force_pcgse & file.exists(enrich_res_file_neg)){
+          res.negative=loadRDS(enrich_res_file_neg)
+          res.positive=loadRDS(enrich_res_file_pos)
+          print('loading')
+      
+    }else{
+      #res.negative
+            # GSEA on negative weights, with default options
+            res.negative <- run_enrichment(MOFAobject_enr, 
+                                          feature.sets = gs, 
+                                          view = mode,
+                                          sign = "negative"
+            )
+            
+            res.positive <- run_enrichment(MOFAobject_enr, 
+                                          feature.sets = gs, 
+                                          view = mode,
+                                          sign = "positive"
+            )
+            
+            sign_mode='negative'
+            res_negative_df<-write_enrich(res.negative, sign_mode=sign_mode)
+            res_negative_df
+            saveRDS(res.negative, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'negative' ))
+            
+            sign_mode='positive'
 
-    ## TODO: create a function to do for both positive and negative 
-    #
-    T=0.05
-  
+            res_positive_df<-write_enrich(res.positive, sign_mode=sign_mode)
+            saveRDS(res.positive, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment_', 'positive' ))
+            res_negative_df
+            res_merged<-merge(res_negative_df, res_positive_df, suffixes=c('_n', '_p'),
+              by=c('Description','Factor' ))
+            #res_merged$pvalue_min<-c(rowMins(as.matrix(res_merged[,c('pvalue_n','pvalue_p')])))
+            
+            write.csv(res_merged, paste0(outdir,'/enrichment/pcgse/' ,gsub('\\:', '_', subcategory), '_', T, mode, '_enrichment.csv' ), row.names=FALSE)
+    }
+    
+    
+    
+    
 
-  ##### which factor is related to parkinsons disease in KEGG
-  ### PROBLEM: this is based on RNA only!!! 
+      ## TODO: create a function to do for both positive and negative 
+      #
+      T=0.05
+    
+
+    ##### which factor is related to parkinsons disease in KEGG
+    ### PROBLEM: this is based on RNA only!!! 
+    alpha=0.05
+    dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
+
+  ## After having run with uniprot, convert the results to symbol before plotting ####
+
+
+    colnames(res.negative$feature.sets)
+
+    rownames(res.negative$feature.statistics) = convert_to_gene_symbol(rownames(res.negative$feature.statistics), view=mode)
+    colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
+
+
+    rownames(res.positive$feature.statistics)=convert_to_gene_symbol(rownames(res.positive$feature.statistics),  view=mode)
+    colnames(res.positive$feature.sets)<-convert_to_gene_symbol(colnames(res.positive$feature.sets),  view=mode)
+
+
+
+
+  factor=28
   alpha=0.05
-  dir.create(paste0(outdir, '/enrichment/pcgse/', mode,'/'), recursive=TRUE)
 
-## After having run with uniprot, convert the results to symbol before plotting ####
+  
 
-
-  colnames(res.negative$feature.sets)
-
-  rownames(res.negative$feature.statistics) = convert_to_gene_symbol(rownames(res.negative$feature.statistics), view=mode)
-  colnames(res.negative$feature.sets)<-convert_to_gene_symbol(colnames(res.negative$feature.sets),  view=mode)
+  enrich_genes_all_pos<-list()
+  enrich_genes_all_neg<-list()
 
 
-  rownames(res.positive$feature.statistics)=convert_to_gene_symbol(rownames(res.positive$feature.statistics),  view=mode)
-  colnames(res.positive$feature.sets)<-convert_to_gene_symbol(colnames(res.positive$feature.sets),  view=mode)
+  list_enrich_plots = list()
+  #list_enrich_plots_views =list(list())
+
+
+  for (factor in 1:N_FACTORS){
+    print(factor)
 
 
 
+    tryCatch({
 
-factor=28
- alpha=0.05
+      enrich_list<-plot_enrichment_detailed_genes(res.negative, factor, 
+      alpha = alpha, 
+      max.genes=6, 
+      max.pathways=6,
+      text_size=3
+      )
+      
+      # plotting
+      pl = enrich_list[[1]]
+      pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
+      plot(pl)
 
- 
+      list_enrich_plots[[factor]]=pl
 
-enrich_genes_all_pos<-list()
-enrich_genes_all_neg<-list()
+      
 
-for (factor in 1:N_FACTORS){
-  print(factor)
 
+      # genes
+      enrich_genes<-enrich_list[[2]]
+      cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
+      
+      
+      enrich_genes_all_neg[[factor]] = unique(enrich_genes$feature)
+      enrich_genes_all_neg[[factor]]
+
+
+
+      #graphics.off()
+      ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
+      width=6, height=4)
+
+      },
+      error = function(e) {an.error.occured <<- TRUE}
+    )
 
 
   tryCatch({
+  
 
-    enrich_list<-plot_enrichment_detailed_genes(res.negative, factor, 
-    alpha = alpha, 
-    max.genes=6, 
-    text_size=3
-    )
+    enrich_list<-plot_enrichment_detailed_genes(res.positive, factor, 
+      max.genes=6,
+          max.pathways=6,
+
+
+      alpha = alpha)
+      pl = enrich_list[[1]]
+      pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
+      plot(pl)
+
+
     
-    # plotting
-    pl = enrich_list[[1]]
-    pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
-    plot(pl)
-
-    # genes
+    
     enrich_genes<-enrich_list[[2]]
-    cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
-    
-    
-    enrich_genes_all_neg[[factor]] = unique(enrich_genes$feature)
-    enrich_genes_all_neg[[factor]]
+    enrich_genes_all_pos[[factor]] = unique(enrich_genes$feature)
+      #cat( enrich_genes_all_pos[[factor]], sep='\n')
+    #cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
 
 
 
-    #graphics.off()
-    ggsave(paste0(outdir, '/enrichment/pcgse/', mode,'/',subcategory_s, '_detailed_neg', '_', factor, '.png'),
+    ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
     width=6, height=4)
 
     },
-    error = function(e) {an.error.occured <<- TRUE}
+    error = function(e) {
+    print(e)}
+    )
+
+    print(enrich_genes_all_pos)
+
+
+
+  }
+
+  length(list_enrich_plots)
+  list_enrich_plots_views[[mode]] <- list_enrich_plots
+  #list_enrich_plots_views[['proteomics_t_plasma']] <- list_enrich_plots
+  enrich_genes_all_pos
+
+    
+
+  enrich_genes_all_pos
+
+  #define file name
+  neg_pos<-rbind(stack(setNames(enrich_genes_all_pos, seq_along(enrich_genes_all_pos))),
+  stack(setNames(enrich_genes_all_neg, seq_along(enrich_genes_all_neg))))
+
+  neg_pos$view = mode
+
+  write.csv(neg_pos, 
+  paste0(outdir, '/enrichment/pcgse/', 'features_', mode, '_', subcategory_s, '_detailed_pos_neg', '.csv'), 
+  quote =FALSE
   )
 
-
-tryCatch({
- 
-
-  enrich_list<-plot_enrichment_detailed_genes(res.positive, factor, 
-    max.genes=6,
-
-    alpha = alpha)
-    pl = enrich_list[[1]]
-    pl<-pl+ggtitle(paste('Factor:',factor,',', mode))
-    plot(pl)
-
-
-  
-  
-  enrich_genes<-enrich_list[[2]]
-  enrich_genes_all_pos[[factor]] = unique(enrich_genes$feature)
-    cat( enrich_genes_all_pos[[factor]], sep='\n')
-  cat(unique(enrich_genes$feature[grep('APOPTO',enrich_genes$pathway)]), sep='\n')
-
-
-
-  ggsave(paste0(outdir, '/enrichment/pcgse/', mode, '/', subcategory_s, '_detailed_pos', '_', factor, '.png'),
-  width=6, height=4)
-
-  },
-  error = function(e) {
-  print(e)}
-  )
-
-  print(enrich_genes_all_pos)
-
-
-
+  }
 }
-
-
-enrich_genes_all_pos
-
-  
-}
-enrich_genes_all_pos
-
-#define file name
-neg_pos<-rbind(stack(setNames(enrich_genes_all_pos, seq_along(enrich_genes_all_pos))),
-stack(setNames(enrich_genes_all_neg, seq_along(enrich_genes_all_neg))))
-
-
-
-write.csv(neg_pos, 
-paste0(outdir, '/enrichment/pcgse/', 'features_', mode, '_', subcategory_s, '_detailed_pos_neg', '.csv'), 
-quote =FALSE
-)
-
-
 
 
 
@@ -366,7 +394,6 @@ T=0.05
 
 # MERGE RESULTS CSV
 
-all_modes<-c('proteomics_csf', 'proteomics_plasma', 'RNA')
  all_enrichments =  list()
 
 i=1

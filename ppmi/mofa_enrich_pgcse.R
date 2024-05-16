@@ -79,16 +79,17 @@ mode = 'proteomics_plasma'
 
 
 
-mode = 'proteomics_t_csf'
 
 
 
-mode = 'proteomics_plasma'
 
-mode = 'proteomics_t_plasma'
-mode='RNA'
 ###
 mode = 'proteomics_csf'
+mode = 'proteomics_t_plasma'
+mode='RNA'
+mode = 'proteomics_plasma'
+
+mode = 'proteomics_t_csf'
 
    
 features_names(MOFAobject)$RNA
@@ -341,9 +342,9 @@ quote =FALSE
 
 
 
-genes_enrich
-write.csv(genes_enrich,paste0(out_enrich, '_detailed_pos', 'all_factors.csv') )
-genes_enrich
+
+#write.csv(genes_enrich,paste0(out_enrich, '_detailed_pos', 'all_factors.csv') )
+#enes_enrich
 
 
 

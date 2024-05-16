@@ -368,19 +368,41 @@ plot_covars_mofa(selected_covars=imaging_variables_diff,fname,plot='r',factors,l
 
 #write.csv(covariate_corelations, paste0(outdir, '/covariate_corelations.csv'))
 dir.create(paste0(outdir, '/covariates/'))
+cors_pearson
+cors_all_pd
+
 write.csv(cors_pearson, paste0(outdir, '/covariates/covariate_corelations_pearson.csv'))
+
+covars_list<-list()
+N_FACTORS
 for (fx in 1:N_FACTORS){
-  sig<-cors[fx,]>1.5
-  c1<-cors[fx,][sig];
-   c2<-cors_pearson[fx,][sig]
+  sig<-cors_all_pd[fx,]>-log10(0.05)
+  c1<-round(as.numeric(cors_all_pd[fx,][sig]), digits=2);## significance
+  c2<-round(as.numeric(cors_pearson_pd[fx,][sig]), digits=2 )# pearson corelation
   sig_names<-colnames(sig)[which(t(sig))]
 
-  c3<-format(cbind(sig_names,c1,c2), digits=2); c3<-c3[order(c3[,1], decreasing = TRUE),]
+  # order by abs correlation
 
-  write.csv(c3, 
-            paste0(outdir, '/covariates/',fx, '.csv'))
+  c3 <- data.frame(cbind(sig_names,c1,c2));
+  c3[,3]
+   c3<-c3[order(abs(as.numeric(c3[,3])), decreasing = TRUE),]
+
+#c3<-format(c3, digits=2)
+covars_list[[fx]]<-as.data.frame(c3)
+names
+
+
+  
 }
+#names(covars_list)<-1:N_FACTORS
+covars_list
 
+covars_list_to_write<-do.call(rbind,setNames(covars_list, seq_along(covars_list)))
+
+
+
+write.csv(covars_list_to_write, 
+            paste0(outdir, '/covariates/all_factors_sig', '.csv'))
 top_covariates<-c()
 for (fx in 1:N_FACTORS){
   print(fx)
@@ -397,6 +419,9 @@ for (fx in 1:N_FACTORS){
    top_covariates<-unique(c(top_covariates,rownames(head(c3, n=6))))
 }
 length(top_covariates)
+
+sm_pd<-samples_metadata(MOFAobjectPD_sel)
+sm_pd$CSFSAA
 
 
 

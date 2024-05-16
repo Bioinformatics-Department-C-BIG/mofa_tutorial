@@ -157,7 +157,6 @@ if (length(weight_plots)>1){
 }
 
 
-weight_plots
 
 ```
 

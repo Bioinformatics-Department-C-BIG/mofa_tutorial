@@ -89,6 +89,11 @@ sem<-read.csv(paste0(input_data,'Non-motor_Assessments/Modified_Semantic_Fluency
 
 
 curated_v1<-read.csv(paste0(input_data,'curated data/Curated_Data_Cuts/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv'))
+
+#sm_pd_cur1<-curated_v1[curated_v1$PATNO %in% sm_pd$PATNO & curated_v1$EVENT_ID %in% 'V10' ,]
+#sm_pd_cur1$ai_putamen
+
+
 curated_v2<-read.csv(paste0(input_data,'curated data/PPMI_Curated_Data_Cut_Public_20230612.csv'))
 ## first bind the common columns 
 common_cols<-intersect(colnames(curated_v1), colnames(curated_v2))

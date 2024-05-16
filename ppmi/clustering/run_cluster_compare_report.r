@@ -77,6 +77,11 @@ for (VISIT_COMP in c('V08', 'V06', 'BL', 'V04')){
 }
 
 # RUN MOFA ENRICH REPORT
+Sys.setenv(RSTUDIO_PANDOC="--- insert directory here ---")
+Sys.getenv("RSTUDIO_PANDOC")
+
+Sys.setenv(RSTUDIO_PANDOC="--- insert directory here ---")
+
         rmarkdown::render("ppmi/mofa_enrich_report.Rmd", params = list(
       
                 outdir = outdir,

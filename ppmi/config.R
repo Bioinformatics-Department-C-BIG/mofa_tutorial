@@ -171,6 +171,7 @@ VISIT_S=paste(VISIT,sep='_',collapse='-')
 TOP_PN<-0.5
 TOP_PN
 #### read in proteomics 
+# this is untargeed
 pr_project_id='9000'
 p_params_in<- paste0( pr_project_id, '_',  TISSUE, '_', NORMALIZED)
 

@@ -332,7 +332,7 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
     dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
     ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
     }
-
+factors = c(13,15)
 
 concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view=FALSE, subcategory='GO:BP'){
     #'
@@ -341,9 +341,10 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
     #' 
     #' 
 
-      if (  grepl('prot', view)){
+     # if (  grepl('prot|RNA', view)){
         # take the pcgse results, concatenate the positive and negative 
         mode = view
+        view
         
         T=pvalueCutoff
         neg<-read.csv(paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
@@ -352,12 +353,14 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
                        mode, '_enrichment', 'positive','_', T, '.csv'))
 
         neg = bind_rows(neg, pos)
+        neg$Factor
 
 #        neg<-pos
         neg$Factor = gsub('Factor', '',neg$Factor  )
         # cut and select the top       
         #factors
         neg_sel <- neg[neg$Factor %in% factors, ]
+        neg_sel
 
         
         neg_sel<-neg_sel %>%  group_by(Factor) %>% slice_max(order_by = -p.adjust, n = top_p) %>% as.data.frame()
@@ -367,18 +370,19 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
         neg_sel$X=NULL
         neg_sel$pvalue=NULL; neg_sel$Factor=NULL
        return(neg_sel)
+       neg_sel
+
+#
+    # }else if (prefix == '_rnas'){
+
+    #   top_pathways_all_factors<-lapply(factors, 
+    #   get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p, prefix=prefix)
+
+    #   top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
+    #   return(top_pathways_all_factors)
 
 
-    }else if (prefix == '_rnas'){
-
-      top_pathways_all_factors<-lapply(factors, 
-      get_top_pathways_by_factor, pvalueCutoff = pvalueCutoff, top_p = top_p, prefix=prefix)
-
-      top_pathways_all_factors<-do.call(rbind, top_pathways_all_factors)
-      return(top_pathways_all_factors)
-
-
-    }
+    # }
     
 
 

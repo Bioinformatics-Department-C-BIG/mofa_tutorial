@@ -597,19 +597,21 @@ filter_se<-function(se, VISIT, sel_coh, sel_sub_coh=FALSE){
   #' Filters summarized experiment by selecting VISITS and cohorts 
   #' @param VISIT
   #' @param sel_coh
+  #' 
   
   ##### 2.   start filtering the experiment  to normalize as appropriate 
   ## Option 1: normalize cohort and EVENT separately!! 
   # ALSO MAKE SURE THAT they are in cohort in the conversion cohort too!!
 #  sel_coh
-  
+  print(paste('Filtered cohort', sel_coh))
   if (sel_subcoh==FALSE){
         se_filt<-se[,((se$EVENT_ID %in% VISIT) & (se$COHORT %in% sel_coh ) & (se$CONCOHORT %in% sel_coh ))]
     
   }else{
       se_visit<-se[,se$EVENT_ID %in% VISIT]
-      ids = c()
-      ids_control = c()
+      se_visit
+      ids = rep(FALSE,length(se_visit$INEXPAGE ))
+      ids_control =  rep(FALSE,length(se_visit$INEXPAGE ))
       if (1 %in% sel_coh){ 
         ids<-c(se_visit$INEXPAGE %in% sel_subcoh ) ## filter the ids in parkinsons 
       }

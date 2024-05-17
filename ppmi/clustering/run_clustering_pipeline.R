@@ -49,7 +49,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 # Plotting for mofa run not needed for clustering analysis, excluded  
 
-source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
+#source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich.R')) # SET TO FALSE IF EXISTS? 
 
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
@@ -57,18 +57,6 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_plots.R'))
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 #source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
-
-
- round(cors_all_pd[, 'NP3TOT_LOG'][cors_all_pd[, 'NP3TOT_LOG']>1.3], digits=2)
-  round(cors_pearson_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
-
-which(cors_all_pd[, 'NP2PTOT_LOG']>1.3)
-
-  round(cors_all_pd[, 'NP2PTOT_LOG'][cors_all_pd[, 'NP2PTOT_LOG']>1.3], digits=2)
-
-  round(cors_all_pd[, 'updrs3_score_LOG'][cors_all_pd[, 'updrs3_score_LOG']>1.3], digits=2)
-  round(cors_all_pd[, 'updrs2_score_LOG'][cors_all_pd[, 'updrs2_score_LOG']>1.3], digits=2)
-
 
 
 

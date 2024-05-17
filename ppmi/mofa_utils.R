@@ -339,7 +339,7 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
     #' @param factors 
     #' @param top_p: top number of pathways to extract from mofa factors 
     #' 
-    #' 
+    #' loads positive and negative, takes top 4
 
      # if (  grepl('prot|RNA', view)){
         # take the pcgse results, concatenate the positive and negative 

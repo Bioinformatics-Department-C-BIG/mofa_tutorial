@@ -16,6 +16,14 @@ all_gene_sets_long<-all_gene_sets[,c('gs_name','ensembl_gene' )]
 ### better to obtain it from a protein db! 
 all_gene_sets_long_prot<-all_gene_sets[,c('gs_name','gene_symbol' )]
 
+
+print(all_gene_sets_long[, 'gs_name'], n=300)
+
+all_unique_paths<-unique(all_gene_sets_long[, 'gs_name']) %>% as.data.frame()
+colnames(all_unique_paths)
+all_unique_paths$gs_name
+all_unique_paths<-gsub('GOBP_', '', all_unique_paths$gs_name)
+all_unique_paths
 #Convert the VST counts to long format for ggplot2
 library(reshape2)
 
@@ -31,6 +39,9 @@ all_gene_sets_wide<-all_gene_sets_long %>%
   spread(ensembl_gene, yesno, fill = 0)
 
 dim(all_gene_sets_wide)
+
+
+all_gene_sets_wide
 
 
 write.csv(all_gene_sets_wide,gs_file, row.names=FALSE )

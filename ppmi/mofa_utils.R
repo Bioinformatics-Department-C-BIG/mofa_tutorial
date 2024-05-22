@@ -332,9 +332,12 @@ pcgse_dot_by_factor<-function(factor, results_enrich){
     dir.create(paste0(outdir, '/enrichment/pcgse/',mode, '/'))
     ggsave(paste0(outdir, '/enrichment/pcgse/',mode, '/', subcategory_s,'_', sign_mode, '_dp_', factor, '.png'), width=7, height=5)
     }
-factors = c(13,15)
+#factors = c(13,15)
 
-concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view=FALSE, subcategory='GO:BP'){
+
+
+
+concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p = 20, prefix='rnas_', view='RNA', subcategory='GO:BP'){
     #'
     #' @param factors 
     #' @param top_p: top number of pathways to extract from mofa factors 
@@ -343,12 +346,13 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
 
      # if (  grepl('prot|RNA', view)){
         # take the pcgse results, concatenate the positive and negative 
-        mode = view
-        view
+        mode = view      
         
         T=pvalueCutoff
+
+
         neg<-read.csv(paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
-                       mode, '_enrichment', sign_mode,'_', T, '.csv'))
+                       mode, '_enrichment', 'negative','_', T, '.csv'))
         pos<-read.csv(paste0(outdir,'/enrichment/',gsub('\\:', '_', subcategory), 
                        mode, '_enrichment', 'positive','_', T, '.csv'))
 
@@ -364,7 +368,6 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
 
         
         neg_sel<-neg_sel %>%  group_by(Factor) %>% slice_max(order_by = -p.adjust, n = top_p) %>% as.data.frame()
-        print(neg_sel[neg_sel$Factor==22,])
 
         neg_sel$factor = neg_sel$Factor
         neg_sel$X=NULL

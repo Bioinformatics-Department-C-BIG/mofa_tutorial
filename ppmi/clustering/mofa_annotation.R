@@ -243,6 +243,7 @@ clustering_method = 'median',
 
 cm_t_csf<-ComplexHeatmap::pheatmap(as.matrix(top_paths_factors_prot_t_csf),col =col_fun_paths, cluster_rows =  FALSE, 
 clustering_method = 'median',
+
  heatmap_legend_param = list(
         title='targeted csf proteomics'
 ))
@@ -265,7 +266,7 @@ dev.off()
 
 graphics.off()
 jpeg(paste0(outdir, '/heatmap_factor_info_mol',only_tfs, '.jpeg'), res=300, width=10, height=17, units='in')
-ht_list<-cm_rna %v% cm_pathways %v% cm_pathways_plasma %v% cm_t_csf %v% cm_t_plasma %v% cm7 %v% cm5%v% cm6 
+ht_list<-cm_rna %v% cm_pathways %v% cm_pathways_plasma %v% cm_t_csf %v% cm_t_plasma
 draw(ht_list, padding = unit(c(2,2,2,80), 'mm'),  annotation_legend_side  = "bottom", 
 heatmap_legend_side="bottom")
 

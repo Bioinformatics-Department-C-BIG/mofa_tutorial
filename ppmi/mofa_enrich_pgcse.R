@@ -63,8 +63,10 @@ write_enrich<-function(res, sign_mode){
 
 subcategory<- 'CP:KEGG'
 subcategory<- 'CP:KEGG'
-subcategory<- 'GO:MF'
 subcategory<- 'GO:BP'
+
+subcategory<- 'GO:MF'
+
 dir.create(paste0(outdir, '/enrichment/'))
 #for (subcategory in c('GO:BP' ,'CP:KEGG')){
 
@@ -167,7 +169,7 @@ all_modes<-c('RNA', 'proteomics_t_plasma', 'proteomics_t_csf')
 for (mode in all_modes){
 
 #mode = 'proteomics_t_plasma'
-  for (subcategory in c('GO:BP' )){
+  for (subcategory in c('GO:MF' )){
 
     if (grepl('proteomics', mode)){
         gs_file<-paste0(data_dir,'/ppmi/output/', 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
@@ -416,7 +418,7 @@ for (mode in all_modes){
 
   }
 }
-saveRDS(list_enrich_plots_views, paste0(outdir, '/enrichment/pcgse/plots_all_views_all'))
+saveRDS(list_enrich_plots_views, paste0(outdir, '/enrichment/pcgse/plots_all_views_pos_neg', subcategory))
 
 
 

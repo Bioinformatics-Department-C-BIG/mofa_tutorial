@@ -52,3 +52,16 @@ rownames(df_wide4)<-rownames(df_wide3)
 gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
 write.csv(df_wide4,gs_file)
 
+
+
+
+gs_file<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), '.csv')
+gs_file_proteins<-paste0(output_files, 'gs', gsub('\\:', '_', subcategory), 'proteins.csv')
+
+gs_file_matrix<-read.csv(gs_file)
+rownames(gs_file_matrix)
+
+gs_file_matrix[,1]
+colnames(gs_file_matrix)<-convert_to_gene_symbol(colnames(gs_file_matrix), view='RNA') 
+write.csv(gs_file_matrix,gs_file_proteins, row.names=FALSE)
+gs_file_matrix

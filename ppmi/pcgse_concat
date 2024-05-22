@@ -1,4 +1,7 @@
-list_enrich_plots_views = loadRDS( paste0(outdir, '/enrichment/pcgse/plots_all_views_pos_neg'))
+
+
+
+list_enrich_plots_views = loadRDS( paste0(outdir, '/enrichment/pcgse/plots_all_views_pos_neg', subcategory))
 
 
 dim(list_enrich_plots_views)
@@ -42,7 +45,7 @@ for (factor in 1:N_FACTORS){
 
         if (length(pl_view_factor)>1){
             ggarrange(plotlist=pl_view_factor, nrow=length(pl_view_factor))
-            ggsave(paste0(outdir, '/enrichment/all_views_',sign_mode,'_', factor, '.jpeg'), width=8,
+            ggsave(paste0(outdir, '/enrichment/all_views_', subcategory, sign_mode,'_', factor, '.jpeg'), width=8,
              height = 2+3*length(pl_view_factor),dpi=150)
         }
 }

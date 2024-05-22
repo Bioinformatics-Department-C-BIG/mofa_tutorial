@@ -167,11 +167,11 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
 }
 
 fact=get_factors_for_metric(y_clust)
-fact=fact[!fact %in% c(13)]
+#fact=fact[!fact %in% c(13)]
 #fact<-fact[!fact %in% c(13)]
 fact
 cluster_id = '2' ; sig_time = 'V08';
-top_paths = 60
+top_paths = 50
 
 top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
 dim(top_paths_all_factors)
@@ -183,6 +183,21 @@ gse_compare_cl=gse_compare_all_vis[[1]]
 #' decide on pathways to keep 
 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
+
+
+canonicalize_go_names<-function(path_names){
+  path_names<-gsub('[[:punct:]]+',' ',toupper(path_names))
+  path_names<-gsub('\ ','_',toupper(path_names))
+  path_names<-gsub('\\_\\_','_',toupper(path_names))
+
+  return(path_names)
+
+}
+
+
+all_sig_all_clusts_canonical<-canonicalize_go_names(all_sig_all_clusts)
+all_sig_all_clusts_canonical
+
 metric_p = 'p.adjust'
 metric='NES'
 metric = 'logFC'
@@ -243,26 +258,46 @@ merged_df_all_tps_all_clusts_pvals <-  extract_pathway_metrics_clusters(gse_comp
 dim(merged_df_all_tps_all_clusts_pvals)
 colnames(merged_df_all_tps_all_clusts_pvals)[1]
 colnames(merged_df_all_tps_all_clusts)[1]
-
+merged_df_all_tps_all_clusts_pvals
 
 # get a merged df per cluster 
 use_top_mofa=TRUE
+merged_df_all_tps_all_clusts[,1]<-canonicalize_go_names(merged_df_all_tps_all_clusts[,1])
+merged_df_all_tps_all_clusts_pvals[,1]<-canonicalize_go_names(merged_df_all_tps_all_clusts_pvals[,1])
 
 
+merged_df_all_tps_all_clusts$Description<-merged_df_all_tps_all_clusts[,1]
 logFC_merged_df2<-merged_df_all_tps_all_clusts
+
 merged_df_all_tps_all_clusts
 use_mofa_paths = TRUE
 
-if (use_mofa_paths){
-  top_paths = 40
 
+#gsub('[[:punct:] ]+',' ',tolower(species_guess)))
+length(all_sig_all_clusts_canonical)
+length(all_unique_paths)
+
+not_found<-all_sig_all_clusts_canonical[!(all_sig_all_clusts_canonical %in% all_unique_paths)]
+length(not_found)
+
+
+length(all_sig_all_clusts_canonical)
+
+all_unique_paths[grep('VESICLE_TARGETING', all_unique_paths)]
+
+if (use_mofa_paths){
+  top_paths = 60
+
+# Intersection of top mofa paths and significant 
   top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
     dim(top_paths_all_factors)
+    top_paths_all_factors$Description
 
-  top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts,]
-   dim(top_paths_all_factors)
+# remove GOBP_ GOMF_ substrings to match the ones in the gsea enrichment 
+  top_paths_all_factors$Description<-gsub('GOBP_|GOMF_', '',top_paths_all_factors$Description )
+  top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts_canonical,]
   selected_paths<-top_paths_all_factors$Description
-
+  length(selected_paths)
 
 }else{
   top_paths=15
@@ -274,17 +309,22 @@ if (use_mofa_paths){
 
 selected_paths
 # filter top 
+
+
 logFC_merged_df2<-logFC_merged_df2[logFC_merged_df2$Description %in% selected_paths,]
+
+#logFC_merged_df2
 logFC_merged_df2[is.na(logFC_merged_df2)]<-0
 rownames(logFC_merged_df2)<-logFC_merged_df2$Description
 logFC_merged_df2$Description<-NULL
 
 
 
-
+merged_df_all_tps_all_clusts_pvals
 # same matrix but with pvals to overlay 
 pvals_merged_df2<-merged_df_all_tps_all_clusts_pvals[merged_df_all_tps_all_clusts_pvals$Description %in% selected_paths,]
 pvals_sign_merged_df2<-pvals_merged_df2
+pvals_merged_df2
 rownames(pvals_sign_merged_df2)<-pvals_sign_merged_df2$Description
 pvals_sign_merged_df2$Description<-NULL
 pvals_sign_merged_df2
@@ -351,7 +391,6 @@ medians_all_clusts_matched
 metric
 ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
 
-logFC_merged_df2['regulation of innate immune response', ]
 
 
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 

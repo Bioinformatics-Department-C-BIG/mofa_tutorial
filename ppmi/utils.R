@@ -2471,3 +2471,18 @@ shorten_path <- function(directory_path) {
 }
 
 
+
+
+
+convert_pvalues_to_stars<-function(p_vals){
+
+    p_vals_sign = p_vals
+    p_vals_sign[p_vals<0.05]<-'*'
+    p_vals_sign[p_vals<0.01]<-'**'
+    p_vals_sign[p_vals<0.001]<-'***'
+
+    p_vals_sign[p_vals>0.05]<-''
+    p_vals_sign[is.na(p_vals)]<-''
+    return(p_vals_sign)
+
+}

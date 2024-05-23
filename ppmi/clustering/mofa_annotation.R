@@ -34,19 +34,32 @@ sel_facts<-sel_facts[sel_facts %in% sel_facts2]
 
 # Correlations: Clinical 
 cors_cell_types<-t(cors_all_pd[sel_facts,estimations_in_df])
+
+cors_cell_types
+
 cors_cell_types_all<-t(cors[sel_facts,estimations_in_df])
 
-
-cors_cell_types<-cors_cell_types[rowSums(cors_cell_types)>0,]
+# filter first the cors then pearson values
+cors_cell_types_pearson<-t(cors_pearson_pd[sel_facts,estimations_in_df])
+cors_cell_types_pearson<-cors_cell_types_pearson[rowSums(cors_cell_types)>0,]
+cors_cell_types<-cors_cell_types[rowSums(cors_cell_types)>0,] # filter 
 
 
 # Correlations: Cell types  
 cors_clinical <-t(cors_all_pd[sel_facts,clinical_in_df])
+cors_clinical<-10^-(cors_clinical)
+cors_clinical
+
+cors_clinical_pearson<-t(cors_pearson_pd[sel_facts,clinical_in_df])
+
+cors_clinical_pearson
 
 # Correlations: Covariates 
 cors_covars <-t(cors_all_pd[sel_facts,covars_age])
+cors_covars_pearson <-t(cors_pearson_pd[sel_facts,covars_age])
 
-
+cors_covars
+cors_covars_pearson
 
 
 # Variances 
@@ -170,38 +183,98 @@ top_paths_factors_RNA
 # Heatmap format settings ####
 
 library(circlize)
-max_hm1<-max(abs(cors_cell_types))
-max_hm2<-max(abs(cors_clinical))
-max_hm3<-max(abs(cors_covars))
+max_hm1<-max(abs(cors_cell_types_pearson))
+max_hm2<-max(abs(cors_clinical_pearson))
+max_hm3<-max(abs(cors_covars_pearson))
 max_hm4<-max(abs(vars_factors))
 max_hm5<-max(abs(top_paths_factors_prot_csf))
 
+max_all<-max(c(max_hm1, max_hm2, max_hm3))
 vars_factors
 
 
 
 
-col_fun1 = colorRamp2(c(0, max_hm1), c("white", "red"))
-col_fun2 = colorRamp2(c(0, max_hm2), c("white", "orange"))
-col_fun3 = colorRamp2(c(0, max_hm3), c("white", "orange"))
+col_fun1 = colorRamp2(c(-max_hm1,0, max_hm1), c('green',"white", "orange"))
+col_fun2 = colorRamp2(c(-max_hm2, 0,  max_hm2), c("blue","white", "red"))
+col_fun3 = colorRamp2(c(-max_hm3, 0,  max_hm3), c("blue","white", "red"))
+
+max_all
+col_fun_merged<-colorRamp2(c(-max_all, 0,  max_all), c("blue","white", "red"))
+#col_fun3 = colorRamp2(c(0, max_hm3), c("white", "orange"))
 
 col_fun4 = colorRamp2(c(0, max_hm4), c("white", "purple"))
 col_fun5 = colorRamp2(c(0, max_hm5), c("white", "#16718f"))
 col_fun_paths = colorRamp2(c(0, max_hm5), c("white", "#168f48"))
 
 
-cm1<-ComplexHeatmap::pheatmap(cors_cell_types, 
-col =col_fun1, heatmap_legend_param = list(
-        title='Correlation \n log10padj '
+
+cors_cell_types_pearson_text<-edit_cors(cors_cell_types_pearson,cors_cell_types)
+
+cm1<-ComplexHeatmap::pheatmap(cors_cell_types_pearson, 
+  display_numbers = matrix(unlist(paste(cors_cell_types_pearson_text, convert_pvalues_to_stars(10^-cors_cell_types), sep = '\n')),
+                nrow=dim(cors_cell_types_pearson)[1], ncol=dim(cors_cell_types_pearson)[2]),
+                fontsize_number=5,
+col =col_fun_merged, heatmap_legend_param = list(
+        title='Correlation  '
         ))
 cors_cell_types
 
-cm2<-ComplexHeatmap::pheatmap(cors_clinical, col =col_fun2, heatmap_legend_param = list(
-        title='Correlation \n log10padj'
+
+
+
+#paste(round(cors_clinical_pearson, digits=1), convert_pvalues_to_stars(cors_clinical), sep = '\n')
+dim(cors_clinical_pearson)[1]
+dim(cors_clinical_pearson)[1]
+dim(cors_clinical_pearson)[2]
+
+
+
+cors_clinical
+edit_cors<-function(cors_clinical_pearson,cors_clinical){
+
+
+   
+        cors_clinical_pearson_text<-round(cors_clinical_pearson, digits=2)
+        cors_clinical_pearson_text[cors_clinical==1]<-''
+        cors_clinical_pearson_text[cors_clinical==0]<-''
+
+        return(cors_clinical_pearson_text)
+
+
+
+} 
+
+cors_clinical_pearson_text<-edit_cors(cors_clinical_pearson,cors_clinical)
+
+
+cm2<-ComplexHeatmap::pheatmap(cors_clinical_pearson,
+
+
+          display_numbers = matrix(unlist(paste(cors_clinical_pearson_text, convert_pvalues_to_stars(cors_clinical), sep = '\n')),
+                nrow=dim(cors_clinical_pearson)[1], ncol=dim(cors_clinical_pearson)[2]),
+                fontsize_number=5,
+             #   axis_param=list(gp=gpar(fontsize = 14)),
+                 col =col_fun_merged, heatmap_legend_param = list(
+        title='Correlation'
         ))
-cm_covars<-ComplexHeatmap::pheatmap(cors_covars, col =col_fun3,heatmap_legend_param = list(
-        title='Correlation \n log10padj'
+
+
+(cors_covars)
+
+
+cors_covars_pearson_text<-edit_cors(cors_covars_pearson,cors_covars)
+cors_covars_pearson_text
+cm_covars<-ComplexHeatmap::pheatmap(cors_covars_pearson,
+        display_numbers = matrix(unlist(paste(cors_covars_pearson_text, convert_pvalues_to_stars(10^-cors_covars), sep = '\n')),
+                nrow=dim(cors_covars_pearson)[1], ncol=dim(cors_covars_pearson)[2]),
+                fontsize_number=5,
+
+ col =col_fun_merged,heatmap_legend_param = list(
+        title='Correlation'
         ))
+
+
 cm4<-ComplexHeatmap::pheatmap(vars_factors, col =col_fun4, heatmap_legend_param = list(
         title='Var %'
 ))

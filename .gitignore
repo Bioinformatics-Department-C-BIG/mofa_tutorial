@@ -446,3 +446,4 @@ ppmi/output/rnas_cell_corr_TRUEvst_cor
 ppmi/output/rnas_cell_corr_TRUEvst_cor_filt
 ppmi/output/rnas_V08_100_coh_1-2_INEXPD_vst
 *.csv
+*.log

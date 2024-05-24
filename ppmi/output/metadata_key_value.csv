@@ -7,8 +7,11 @@ COHORT',Disease_status'
 'NP3TOT','MDS-UPDRS3'
 'NP4TOT','MDS-UPDRS4'
 updrs3_score,MDS-UPDRS3 (OFF)
-'updrs3_score_on',MDS-UPDRS3 (ON)
-updrs2_score,MDS-UPDRS2
+'updrs3_score_on', MDS-UPDRS3 (ON)
+'updrs3_score_on_LOG',log MDS-UPDRS3 (ON)
+'NP3TOT_LOG',log MDS-UPDRS3
+'NP2PTOT_LOG',log MDS-UPDRS2
+updrs2_score,MDS-UPDRS2 (OFF)
 updrs_score',MDS-UPDRS
 'NP1_TOT','MDS1_log'
 'NP2_TOT',MDS-UPDRS2_t

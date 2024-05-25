@@ -3,7 +3,19 @@
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
 
-cluster_id = 1
+
+top_paths = 200
+fact=get_factors_for_metric(y_clust)
+# Intersection of top mofa paths and significant 
+top_paths_all_factors_original<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
+
+# remove GOBP_ GOMF_ substrings to match the ones in the gsea enrichment 
+top_paths_all_factors_original$Description<-gsub('GOBP_|GOMF_', '',top_paths_all_factors_original$Description )
+
+top_paths_all_factors_original[grep('B_CELL',top_paths_all_factors_original$Description),]
+length(top_paths_all_factors_original$Description)
+
+
 get_de_results_path(deseq_params_all, VISIT='V08', formula_deseq_format,  
           prefix, cluster_id )
 #Apply to current combinations 
@@ -36,23 +48,23 @@ dir.create(deseq_params_all, '/all_time/enr/')
 
     force_compare_time=FALSE
     for (cluster_id in clusters_indices){
-
+      print(paste('cluster_id', cluster_id))
       # cluster compare all visits together  
     #print(colnames(deseq2ResDF_time))
      # deseq_all_times<-vector("list", length = 3)
 
       deseq_all_times<-sapply(times_sel, function(VISIT){
         
-        # deseq_params_all already loaded in cluster comparison script 
-        de_results_path<-get_de_results_path(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id)
+            # deseq_params_all already loaded in cluster comparison script 
+            de_results_path<-get_de_results_path(deseq_params_all, VISIT, formula_deseq_format,  prefix, cluster_id)
 
-        deseq2ResDF_time<-read.csv(de_results_path, row.names=1) 
-        
-        gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
-        names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
-        
-        return(gene_list1)
-        }
+            deseq2ResDF_time<-read.csv(de_results_path, row.names=1) 
+            
+            gene_list1<-get_ordered_gene_list(deseq2ResDF_time,  order_by_metric, padj_T=1, log2fol_T=0 )
+            names(gene_list1)<-gsub('\\..*', '',names(gene_list1))
+            
+            return(gene_list1)
+            }
       )
 
 
@@ -71,16 +83,30 @@ dir.create(deseq_params_all, '/all_time/enr/')
                                         pvalueCutoff=1)  # allow them all in to get log2FC for all paths 
 
 
-            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id), N_EMAP = 60, N_DOT=7, N_DOT_U=10)
+            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory), N_EMAP = 40,
+             N_DOT=7, N_DOT_U=10, showCategory = TRUE)
 
             saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
 
              gse_compare_all_vis[[cluster_id]]<-gse_compare_visit
             }else{
               gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
+             gse_compare_visit = gse_compare_all_vis[[cluster_id]] 
+
+              plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory), N_EMAP = 40, 
+              N_DOT=7, N_DOT_U=10, showCategory = TRUE, dpi=250)
+
+
+
+
+
             }
   }
+colnames(data.frame(gse_compare_visit@compareClusterResult))
+gse_compare_visit = gse_compare_all_vis[[2]] 
 
+gse_compare_visit@compareClusterResult[gse_compare_visit@compareClusterResult$Description %in% 'b cell',]
+gse_compare_visit@compareClusterResult$Description
 # TODO: load one with pvaluecutoff 1 and one with 0.05 
 
 
@@ -143,6 +169,7 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
 
   # return the top significant pathways by cluster
   # sig_time: for a specific time point
+  # 
      top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
     gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
     gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
@@ -166,7 +193,6 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
  
 }
 
-fact=get_factors_for_metric(y_clust)
 #fact=fact[!fact %in% c(13)]
 #fact<-fact[!fact %in% c(13)]
 fact
@@ -176,16 +202,19 @@ top_paths = 50
 top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
 dim(top_paths_all_factors)
 top_paths_all_factors$Description
+top_paths_all_factors
 #'  @param metric
 
 metric='logFC';
 gse_compare_cl=gse_compare_all_vis[[1]]
-#' decide on pathways to keep 
 
+#' decide on pathways to keep 
+# holds the top of each cluster and factor 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
 
 
 canonicalize_go_names<-function(path_names){
+  #'change names to match 
   path_names<-gsub('[[:punct:]]+',' ',toupper(path_names))
   path_names<-gsub('\ ','_',toupper(path_names))
   path_names<-gsub('\\_\\_','_',toupper(path_names))
@@ -196,6 +225,7 @@ canonicalize_go_names<-function(path_names){
 
 
 all_sig_all_clusts_canonical<-canonicalize_go_names(all_sig_all_clusts)
+all_sig_all_clusts_canonical
 all_sig_all_clusts_canonical
 
 metric_p = 'p.adjust'
@@ -275,26 +305,19 @@ use_mofa_paths = TRUE
 
 #gsub('[[:punct:] ]+',' ',tolower(species_guess)))
 length(all_sig_all_clusts_canonical)
-length(all_unique_paths)
 
-not_found<-all_sig_all_clusts_canonical[!(all_sig_all_clusts_canonical %in% all_unique_paths)]
-length(not_found)
+#not_found<-all_sig_all_clusts_canonical[!(all_sig_all_clusts_canonical %in% all_unique_paths)]
+#length(not_found)
 
 
 length(all_sig_all_clusts_canonical)
 
-all_unique_paths[grep('VESICLE_TARGETING', all_unique_paths)]
+#all_unique_paths[grep('VESICLE_TARGETING', all_unique_paths)]
 
 if (use_mofa_paths){
-  top_paths = 60
+ 
 
-# Intersection of top mofa paths and significant 
-  top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
-    dim(top_paths_all_factors)
-    top_paths_all_factors$Description
-
-# remove GOBP_ GOMF_ substrings to match the ones in the gsea enrichment 
-  top_paths_all_factors$Description<-gsub('GOBP_|GOMF_', '',top_paths_all_factors$Description )
+top_paths_all_factors = top_paths_all_factors_original
   top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts_canonical,]
   selected_paths<-top_paths_all_factors$Description
   length(selected_paths)
@@ -348,20 +371,17 @@ rownames(pvals_sign_merged_df2)
 
 
 ## TODO: attach metrics of age_scaled, sex, NP3TOT 
+# TODO: select by DIFF_VAR
 
-# TODO: select by diff var
-
-combined_bl_log_sel_mol[, clust_name]
+clust_name = paste0(DIFF_VAR, '_clust')
+clust_name
+combined_bl_log_sel_mol
 medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
-
-
+medians_all_clusts
 medians_all_clusts$year<-mapvalues(medians_all_clusts$EVENT_ID, names(EVENT_MAP_YEAR), 
                                     to=unlist(EVENT_MAP_YEAR))
-
 medians_all_clusts$year_clust<-paste0(medians_all_clusts$year,'_',medians_all_clusts$cluster )
-colnames(logFC_merged_df2)
 
-medians_all_clusts
 
 graphics.off()
 
@@ -393,9 +413,13 @@ medians_all_clusts_matched
 
 
 metric
-ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT)
 
+ medians_all_clusts_matched
+ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT, 
+     NP3TOT_year7 = medians_all_clusts_matched$NP3TOT_V12 ) 
+     # sft = medians_all_clusts_matched$sft  )
 
+medians_all_clusts_matched$sft 
 
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
@@ -410,19 +434,21 @@ ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2),
     heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ',metric)), 
       display_numbers = as.matrix(pvals_sign_merged_df2)
     )
-png(fname, width=30*100, height=30*100, res=300)
+png(fname, width=35*100, height=30*100, res=300)
 
 
     #
 draw(ch, heatmap_legend_side="bottom", 
   annotation_legend_side  = "bottom", 
-    padding = unit(c(2, 2, 2, 70), "mm"))
+  legend_grouping='adjusted',
+    padding = unit(c(2, 2, 2, 100), "mm"), 
+    merge_legends = TRUE)
 #ch
   #  title = paste(metric, 'p-adj:', padjust_hm))
 #draw(ht, padding = unit(c(2, 2, 2, 40), "mm")) ## see right heatmap in following
 dev.off()
 
-draw(ch, heatmap_legend_side="bottom", padding = unit(c(2, 2, 2, 70), "mm"))
+draw(ch, heatmap_legend_side="bottom",legend_grouping='adjusted',   annotation_legend_side  = "bottom", padding = unit(c(2, 2, 2, 70), "mm"))
 
 
 

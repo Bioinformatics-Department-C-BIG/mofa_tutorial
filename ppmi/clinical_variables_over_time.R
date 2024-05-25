@@ -1,6 +1,11 @@
 
 ##### ADD the groups from MOFA or other clusterings  #############
 #1. extract the diff variables and remove the diff
+
+
+
+
+
 to_plot<-c(scale_vars_diff)
 all_event_ids_p<-c('BL','V04','V06','V08','V10','V12','V14','V16', 'V18')
 all_event_ids_p<-c('BL','V08','V10','V12','V14','V16', 'V18')
@@ -36,6 +41,10 @@ patno_event_ids_mol = unlist(sapply(all_event_ids_match_molecular, function(even
 combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids ) # todo - filter selection on or off 
 
 combined_bl_log_sel_mol<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids_mol ) # todo - filter selection on or off 
+
+fetch
+
+
 
 
 
@@ -100,7 +109,7 @@ lv='V13_V14';
   
 
 times_sel = c('BL','V04', 'V06', 'V08')
-diff_variables_to_p
+
 cluster='NP3TOT_clust'
 
 df_plot_mol<-combined_bl_log_sel_mol

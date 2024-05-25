@@ -1023,7 +1023,9 @@ write_filter_gse_results<-function(gse_full,results_file,pvalueCutoff  ){
 }
 
 
-plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, dpi=150, pvalueCutoff_sig=0.05){
+N_DOT = 20
+
+plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=8, N_DOT_U=15,N_NET=20, dpi=150, pvalueCutoff_sig=0.05, showCategory = FALSE){
   
   ### GSE COMPARE ANALYSIS 
   enrich_compare_path = paste0(enrich_compare_path, pvalueCutoff_sig)
@@ -1048,13 +1050,41 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
   
    
   # Emap 
-  gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
   
-  emap_comp<-emapplot(gse_compare_x, showCategory=N_EMAP,
-                      cex.params = list(category_label = 0.9) ) 
+#showCategory = TRUE
+  if (is.logical(showCategory) && showCategory){
+    # need to convert to mofa nomenclature
+    in_factor<-c(gse_compare@compareClusterResult$Description[canonicalize_go_names(gse_compare@compareClusterResult$Description) %in% 
+    top_paths_all_factors_original$Description])
+
+    gse_compare<-gse_compare %>% dplyr::filter(
+    Description %in% in_factor
+
+
+    ) }
+
+
+
+  gse_compare_x <- enrichplot::pairwise_termsim(gse_compare)
+
+  
+#  N_EMAP=60 canonicalize_go_names
+# find overlap with mofa factors 
+if (showCategory){
+  showCategory = c(gse_compare_x@compareClusterResult$Description[canonicalize_go_names(gse_compare_x@compareClusterResult$Description) %in% 
+  top_paths_all_factors$Description])
+  
+}else{
+  showCategory = N_EMAP
+}
+
+
+  
+  emap_comp<-emapplot(gse_compare_x,
+                      cex.params = list(category_label = 1) ) 
   emap_comp
   ggsave(emap_path, plot=emap_comp,
-         dpi=dpi, width=10, height=10, units='in')
+         dpi=dpi, width=8, height=8, units='in')
   
 
 

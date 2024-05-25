@@ -170,18 +170,12 @@ MOFAobject_sel@samples_metadata$sft_clust
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 
 
-diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
-
-                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
-                      'upsit', 'VLTFRUIT', 'sft', 
-                      'stai_state', 'stai_trait', 
-                      'AGE' )
                       
 
 
 #other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
 
-diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
+diff_variables_to_p=c('NP2PTOT','NP3TOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'
@@ -189,6 +183,20 @@ diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa',
          )
 
 
+diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
+
+                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
+                      'upsit', 'VLTFRUIT', 'sft', 
+                      'stai_state', 'stai_trait', 
+                      'AGE' , 
+                            'NP2PTOT',
+         'NP3TOT',  'scopa', 'sft',  'moca',
+         'Neutrophil.Lymphocyte', 'AGE',
+         'duration', 
+         # f23
+         # added V12 because it is significant ? 
+         'RBD_TOT','rem_V12', 'NP3TOT_V12'
+                      )
 
 
 

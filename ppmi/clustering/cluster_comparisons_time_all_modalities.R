@@ -17,6 +17,8 @@ DIFF_VAR
 tissue_un_mofa<-ifelse(tissue_un=='Plasma', 'plasma', 'csf')
 tissue_un
 
+
+
 #' @param tissue is a global name that adjusts for targeted or untargeted 
 if (prot_de_mode=='t'){
         view=paste0('proteomics_t_', tolower(TISSUE))
@@ -26,7 +28,7 @@ if (prot_de_mode=='t'){
                 metric_p<-'adj.P.Val'; T_p=0.05 
 
 
-}else{
+}else if (prot_de_mode=='u'){
         view=paste0('proteomics_', tolower(tissue_un_mofa))
         print(view)
         tissue = tissue_un
@@ -35,6 +37,25 @@ if (prot_de_mode=='t'){
 
 
 }
+
+clust_ids<-c('1', '2', '3', '4')
+clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
+
+
+
+view = 'RNA'
+prefix='rnas_'
+
+
+if (view == 'RNA'){
+       metric_p<-'padj'; 
+       
+        clust_ids<-c('1', '2', '3', '1_2_3')
+        clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
+
+
+}
+
 #                view=paste0('proteomics_', tolower(TISSUE))
 
 #fact2 = c(13,22)
@@ -48,19 +69,30 @@ top_proteins$feature<-gsub(paste0('_',view),'', top_proteins$feature)
 top_proteins$feature
 
 
-clust_ids<-c('1', '2', '3', '4')
-clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
-
-
 
 #cluster_params_dir
 # outdir_s_p
 fact = get_factors_for_metric(DIFF_VAR)
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
+cluster_params_dir
 
 
+get_cluster_de_result_file<-function(outdir_s_p, view){
 
 
+                    if (grepl('prot', view)){
+                        de_file_cluster<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+
+                    }else if (view == 'RNA'){
+                    # example:    rnas_de_cluster_2
+                        de_file_cluster<-paste0(outdir_s_p, prefix, 'de_cluster_',cluster_id,  '.csv')
+
+                    }else if (view == 'miRNA'){
+                        de_file_cluster<-paste0(outdir_s_p, prefix, 'de_cluster_',cluster_id,  '.csv')
+
+                    }
+                    return(de_file_cluster)
+                }
 
 
 
@@ -68,19 +100,24 @@ cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 de_sig_all<-list()
 VISIT_COMP_SIG = 'V06'
 
+
+
+# TODO: this part is in progress- working on making it applicable to RNA modality as well !! 
   for (cluster_id in clust_ids){
         for (VISIT_COMP_SIG in c('BL', 'V06', 'V04', 'V08')){
 
         
                 outdir_s_p <- paste0(cluster_params_dir, '/de_c0/',VISIT_COMP_SIG, '/' )
                 de_prot_file<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
+                de_prot_file = get_cluster_de_result_file(outdir_s_p, view)
                 de_results_prot<-read.csv(de_prot_file)
-                print(de_results_prot[,metric_p ])
+                #print(de_results_prot[,metric_p ])
                 
-                view=paste0('proteomics_', tolower(TISSUE))
+               # view=paste0('proteomics_', tolower(TISSUE))
                 # TODO: take the top MOFA proteins from moca 
               
                 #}
+                colnames(de_results_prot)
                 de_results_prot_sig<-de_results_prot[de_results_prot$P.Value<0.01,] # take only the union of all at the end 
                 de_results_prot_sig<-de_results_prot[de_results_prot[,metric_p]<T_p,] # take only the union of all at the end 
 
@@ -96,21 +133,7 @@ cluster_params_dir
 view
 
 
-get_cluster_de_result_file<-function(outdir_s_p, view){
 
-
-                    if (grepl('prot', view)){
-                        de_file_cluster<-paste0(outdir_s_p, prefix, tissue,'_', prot_de_mode,'_de_cl',cluster_id,  '_results.csv')
-
-                    }else if (view == 'RNA'){
-                        de_file_cluster<-paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv')
-
-                    }else if (view == 'miRNA'){
-                        de_file_cluster<-paste0(outdir_s_p, prefix, '_de_cl',cluster_id,  '_results.csv')
-
-                    }
-                    return(de_file_cluster)
-                }
 
 
 
@@ -129,22 +152,30 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 
                 de_results_prot<-read.csv(de_prot_file) # read the file 
                de_results_prot_sig<-de_results_prot[de_results_prot[, metric_p]<T_p,] # take only the union of all at the end 
-
-               de_results_prot_top<-de_results_prot[match(unique(top_proteins$feature), de_results_prot$X),]
+               mofa_features<- unique(top_proteins$feature)
+               de_results_prot_top<-de_results_prot[match(mofa_features, de_results_prot$X),]
+               head(de_results_prot)
+               head(de_results_prot_top)
                 # TODO: print only significant 
                 #print(paste('SIG in f',de_results_prot_sig$X %in% top_proteins$feature))
 
 
+                        head(unique(de_sig_all_top))
+                        de_sig_all_top
                 if (sig_only){
                         # filter the ones that are de 
 #
-                        de_results_prot_top<-de_results_prot[match( unique(de_sig_all_top),de_results_prot$X),]
+                        de_results_prot_top<-de_results_prot[match( na.omit(unique(de_sig_all_top)),de_results_prot$X),]
 
                 }
+                               head(de_results_prot_top)
 
+            
+            
 
                 # get also the pvalue 
-                de_all[[cluster_id]]<-as.data.frame(de_results_prot_top[, c(metric_p)])
+                de_all[[cluster_id]]<-data.frame(de_results_prot_top[, metric_p])
+                head(de_results_prot_top)
                print(de_results_prot_top$X)
              
 
@@ -164,8 +195,8 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 
        
         all_clusts_proteins_logFC<-as.data.frame(all_clusts_proteins_logFC)
-        all_clusts_proteins_logFC
-        rownames(all_clusts_proteins_logFC)<-de_results_prot_top$X
+        rownames(all_clusts_proteins_logFC)<-unique_names
+
         colnames(all_clusts_proteins_logFC)<-names(de_all)
 
 
@@ -179,7 +210,7 @@ times<-c('BL', 'V04' ,'V06', 'V08')
 
 #colnames(results_de)
 
-all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp, sig_only=sig_only, de_sig_all_top = de_sig_all_top)
+all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp, sig_only=sig_only,metric=metric_p,  de_sig_all_top = de_sig_all_top)
 all_clusts_proteins_logFC_all_times
 
 all_clusts_proteins_pval_all_times<-lapply( times, get_de_proteins_per_tp,sig_only=sig_only,metric=metric_p, de_sig_all_top = de_sig_all_top )

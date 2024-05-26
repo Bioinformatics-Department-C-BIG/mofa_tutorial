@@ -1072,7 +1072,7 @@ plot_enrich_compare<-function(gse_compare,enrich_compare_path, N_EMAP=35, N_DOT=
 # find overlap with mofa factors 
 if (showCategory){
   showCategory = c(gse_compare_x@compareClusterResult$Description[canonicalize_go_names(gse_compare_x@compareClusterResult$Description) %in% 
-  top_paths_all_factors$Description])
+  top_paths_all_factors_original$Description])
   
 }else{
   showCategory = N_EMAP
@@ -2215,6 +2215,9 @@ get_variables_by_cluster_all_time<-function(df_plot_mol, cluster ){
   #' @param cluster cluster_name to get ids from mofa
 
   #'  #
+  #' diff_variables_to_p
+        diff_variables_to_p <- diff_variables_to_p[diff_variables_to_p %in% colnames(df_plot_mol)]
+        
         all_times_all_vars<-df_plot_mol[, c(diff_variables_to_p, 'EVENT_ID', cluster)]
         all_times_all_vars$cluster = all_times_all_vars[, cluster]
 

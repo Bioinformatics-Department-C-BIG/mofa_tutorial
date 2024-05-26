@@ -2,28 +2,49 @@
 
 source(paste0(script_dir, 'ppmi/enrich_utils.R'))
 
+## inherited parameters from earlier. 
+#' @param DIFF_VAR
+#' @param deseq_params_all - ensure that this matched the DIFF_VAR
+#' 
 
 
-top_paths = 200
+#' Newly defined
+#' @param top_paths
+
+
+canonicalize_go_names<-function(path_names){
+  #'change names to match 
+  path_names<-gsub('[[:punct:]]+',' ',toupper(path_names))
+  path_names<-gsub('\ ','_',toupper(path_names))
+  path_names<-gsub('\\_\\_','_',toupper(path_names))
+
+  return(path_names)
+
+}
+top_paths = 50
+
 fact=get_factors_for_metric(y_clust)
 # Intersection of top mofa paths and significant 
 top_paths_all_factors_original<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
 
+top_paths_all_factors_original
 # remove GOBP_ GOMF_ substrings to match the ones in the gsea enrichment 
 top_paths_all_factors_original$Description<-gsub('GOBP_|GOMF_', '',top_paths_all_factors_original$Description )
 
 top_paths_all_factors_original[grep('B_CELL',top_paths_all_factors_original$Description),]
 length(top_paths_all_factors_original$Description)
+top_paths_all_factors_original$Description
 
 
-get_de_results_path(deseq_params_all, VISIT='V08', formula_deseq_format,  
-          prefix, cluster_id )
+
+
+
+# HEATMAP  - SEPARATE from the rest? 
 #Apply to current combinations 
 # Clust comparisons for RNA/mirna
 
 #' Enrichment settings for RNA/miRNA
 #' This script takes the enrichment analysis results for all time points and concatenates them 
-#' 
 #' @value Produces a heatmap
 #' Compares the de pathways 
 order_by_metric='log2FoldChange'; order_by_metric_s='log2FC'
@@ -32,11 +53,16 @@ pvalueCutoff_sig=0.05
 
 
 clusters_indices=c('1','2','3')
+# 
 dir.create(deseq_params_all, '/all_time/enr/')
     ### Cluster compare by visit ### 
-    # 1. load all gene lists again
-    # deseq2ResDF<-read.csv(paste0(de_file), row.names=1 )
-#formula_deseq_format
+    #' 1. load all gene lists again
+    #' @return  gse_compare_all_vis
+    #' 
+    #' 
+
+
+
   if (!cell_corr_deseq){
     formula_deseq_format=''
   }
@@ -47,6 +73,7 @@ dir.create(deseq_params_all, '/all_time/enr/')
 
 
     force_compare_time=FALSE
+    force_plot = TRUE # just for the cluster profiler plotting below
     for (cluster_id in clusters_indices){
       print(paste('cluster_id', cluster_id))
       # cluster compare all visits together  
@@ -83,18 +110,20 @@ dir.create(deseq_params_all, '/all_time/enr/')
                                         pvalueCutoff=1)  # allow them all in to get log2FC for all paths 
 
 
-            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory), N_EMAP = 40,
+            plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory=TRUE), N_EMAP = 40,
              N_DOT=7, N_DOT_U=10, showCategory = TRUE)
 
             saveRDS(gse_compare_visit,paste0(enrich_compare_path, '.Rds' ))
 
              gse_compare_all_vis[[cluster_id]]<-gse_compare_visit
             }else{
-              gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
-             gse_compare_visit = gse_compare_all_vis[[cluster_id]] 
+                gse_compare_all_vis[[cluster_id]]<-loadRDS(paste0(enrich_compare_path, '.Rds' ))
+                if (force_plot){
+                  gse_compare_visit = gse_compare_all_vis[[cluster_id]] 
 
-              plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory), N_EMAP = 40, 
-              N_DOT=7, N_DOT_U=10, showCategory = TRUE, dpi=250)
+                  plot_enrich_compare(gse_compare_visit,paste0(enrich_compare_path,cluster_id, '_flter',showCategory=TRUE), N_EMAP = 40, 
+                  N_DOT=7, N_DOT_U=10, showCategory = TRUE, dpi=250)
+                }
 
 
 
@@ -102,12 +131,6 @@ dir.create(deseq_params_all, '/all_time/enr/')
 
             }
   }
-colnames(data.frame(gse_compare_visit@compareClusterResult))
-gse_compare_visit = gse_compare_all_vis[[2]] 
-
-gse_compare_visit@compareClusterResult[gse_compare_visit@compareClusterResult$Description %in% 'b cell',]
-gse_compare_visit@compareClusterResult$Description
-# TODO: load one with pvaluecutoff 1 and one with 0.05 
 
 
 
@@ -147,9 +170,6 @@ for (cluster_id in clusters_indices){
 
 }
 
-# [1] "Cluster"         "ID"              "Description"     "setSize"
-# [5] "enrichmentScore" "NES"             "pvalue"          "p.adjust"
-# [9] "qvalue"          "rank"            "leading_edge"    "core_enrichment"
 
 
 
@@ -170,7 +190,7 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
   # return the top significant pathways by cluster
   # sig_time: for a specific time point
   # 
-     top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
+    top_clust<-lapply(gse_compare_all_vis, function(gse_compare_cl){
     gse_all_cls<-split(gse_compare_cl@compareClusterResult,  gse_compare_cl@compareClusterResult$Cluster) # split by visit
     gene_list_cluster_1<-gse_compare_cl@geneClusters[[sig_time]]
     gse_cluster_1<-gse_all_cls[[sig_time]]
@@ -197,31 +217,19 @@ get_top_per_clust<-function(gse_compare_all_vis,top_paths=top_paths,sig_time=sig
 #fact<-fact[!fact %in% c(13)]
 fact
 cluster_id = '2' ; sig_time = 'V08';
-top_paths = 50
 
 top_paths_all_factors<-concatenate_top_pathways_factors(fact, pvalueCutoff = 0.05, top_p = top_paths)
-dim(top_paths_all_factors)
-top_paths_all_factors$Description
-top_paths_all_factors
+
 #'  @param metric
 
 metric='logFC';
-gse_compare_cl=gse_compare_all_vis[[1]]
+
 
 #' decide on pathways to keep 
 # holds the top of each cluster and factor 
 all_sig_all_clusts<-unlist(get_top_per_clust(gse_compare_all_vis, top_paths = FALSE,sig_time=sig_time))
 
 
-canonicalize_go_names<-function(path_names){
-  #'change names to match 
-  path_names<-gsub('[[:punct:]]+',' ',toupper(path_names))
-  path_names<-gsub('\ ','_',toupper(path_names))
-  path_names<-gsub('\\_\\_','_',toupper(path_names))
-
-  return(path_names)
-
-}
 
 
 all_sig_all_clusts_canonical<-canonicalize_go_names(all_sig_all_clusts)
@@ -317,10 +325,10 @@ length(all_sig_all_clusts_canonical)
 if (use_mofa_paths){
  
 
-top_paths_all_factors = top_paths_all_factors_original
-  top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts_canonical,]
-  selected_paths<-top_paths_all_factors$Description
-  length(selected_paths)
+    top_paths_all_factors = top_paths_all_factors_original
+    top_paths_all_factors<-top_paths_all_factors[top_paths_all_factors$Description %in% all_sig_all_clusts_canonical,]
+    selected_paths<-top_paths_all_factors$Description
+    length(selected_paths)
 
 }else{
   top_paths=15
@@ -375,27 +383,33 @@ rownames(pvals_sign_merged_df2)
 
 clust_name = paste0(DIFF_VAR, '_clust')
 clust_name
-combined_bl_log_sel_mol
+
+
+enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
+enrich_compare_path_all_clusts
+fname= paste0(enrich_compare_path_all_clusts,'clall_' , metric,'mofa_',as.numeric(use_mofa_paths),'_', top_paths, '_heatmap.png')
+fname
+
+
+
+combined_bl_log_sel_mol[, clust_name]
+#clust_name
+
+#TODO: add the metrics be caregful!! 
 medians_all_clusts<-get_variables_by_cluster_all_time(combined_bl_log_sel_mol, clust_name)
 medians_all_clusts
 medians_all_clusts$year<-mapvalues(medians_all_clusts$EVENT_ID, names(EVENT_MAP_YEAR), 
                                     to=unlist(EVENT_MAP_YEAR))
 medians_all_clusts$year_clust<-paste0(medians_all_clusts$year,'_',medians_all_clusts$cluster )
 
-
+medians_all_clusts_matched<-medians_all_clusts[match(colnames(logFC_merged_df2), medians_all_clusts$year_clust),]
+medians_all_clusts_matched
 graphics.off()
 
-enrich_compare_path_all_clusts=paste0(deseq_params_all, '/all_time/enr/', formula_deseq_format, '/', prefix, enrich_params)
-enrich_compare_path_all_clusts
 
-fname= paste0(enrich_compare_path_all_clusts,'clall_' , metric,'mofa_',as.numeric(use_mofa_paths),'_', top_paths, '_heatmap.png')
-fname
 row_an<-top_paths_all_factors[match( rownames(logFC_merged_df2), top_paths_all_factors$Description  ), ] 
 row_an2<-as.factor(row_an$factor); names(row_an2)<-row_an$Description
-
 row_ha = rowAnnotation( factor=row_an2)
-
-
 xminxmax<-get_limits(logFC_merged_df2)
 xminxmax
 #col_fun = colorRamp2(c(xminxmax[1], 0, xminxmax[2]), c("blue", "white", "red"))
@@ -408,18 +422,14 @@ length(rep(1:length(clusters_indices), each=3))
 
 
 
-medians_all_clusts_matched<-medians_all_clusts[match(colnames(logFC_merged_df2), medians_all_clusts$year_clust),]
-medians_all_clusts_matched
 
 
-metric
 
- medians_all_clusts_matched
+
 ha<-HeatmapAnnotation(  AGE = medians_all_clusts_matched$AGE, NP3TOT = medians_all_clusts_matched$NP3TOT, 
      NP3TOT_year7 = medians_all_clusts_matched$NP3TOT_V12 ) 
      # sft = medians_all_clusts_matched$sft  )
 
-medians_all_clusts_matched$sft 
 
 ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2), 
     show_rownames=TRUE, 
@@ -434,6 +444,8 @@ ch<-ComplexHeatmap::pheatmap(as.matrix(logFC_merged_df2),
     heatmap_legend_param  = list(direction = "horizontal", title=paste0('median ',metric)), 
       display_numbers = as.matrix(pvals_sign_merged_df2)
     )
+
+    graphics.off()
 png(fname, width=35*100, height=30*100, res=300)
 
 

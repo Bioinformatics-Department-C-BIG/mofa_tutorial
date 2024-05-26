@@ -42,7 +42,6 @@ combined_bl_log_sel<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event
 
 combined_bl_log_sel_mol<-fetch_metadata_by_patient_visit(patno_event_ids=patno_event_ids_mol ) # todo - filter selection on or off 
 
-fetch
 
 
 

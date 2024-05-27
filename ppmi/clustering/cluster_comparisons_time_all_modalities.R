@@ -1,5 +1,5 @@
-
-
+#
+# sig_only = TRUE
 
 
 
@@ -49,7 +49,7 @@ top_proteins$feature
 
 
 clust_ids<-c('1', '2', '3', '4')
-clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
+clusters_names = c( "1"  ,   "2" ,    "3" ,    "all")
 
 
 

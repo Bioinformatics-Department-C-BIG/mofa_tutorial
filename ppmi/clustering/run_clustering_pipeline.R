@@ -43,6 +43,13 @@ DIFF_VAR= 'NP3TOT_LOG'
 
 #source(paste0(script_dir, 'ppmi/utils.R'))
 
+# PREPROCESSING 
+
+#source(paste0(script_dir, 'ppmi/proteomics/olink-preprocessing_ppmi_se.R'))
+#source(paste0(script_dir, 'ppmi/proteomics/untargeted_preprocessing.R'))
+
+
+
 source(paste0(script_dir, 'ppmi/mofa_application_ppmi_all_visits.R'))
 source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
@@ -56,25 +63,13 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 
-
-  round(cors_all_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
-  round(cors_pearson_pd[, 'sft'][cors_all_pd[, 'sft']>1.3], digits=2)
-
-
-VISIT_COMP='BL'
-VISIT_COMP='V08'
 
 formula_deseq_format='n'
-
 cell_corr_deseq<-TRUE
 
-VISIT_COMP='BL'
-VISIT_COMP='V06'
-VISIT_COMP='BL'
-VISIT_COMP='V08'
 #VISIT='V08'
 #prefix='mirnas_'
 TISSUE='CSF'
@@ -96,6 +91,7 @@ DIFF_VAR = 'moca'
 DIFF_VAR = 'sft'
 diff_vars<-c( 'COHORT')
 diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca',  'NP3TOT_LOG_V14', 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V12' )
+diff_vars<-c('NP3TOT_LOG' )
 
 DIFF_VAR = 'COHORT'
 DIFF_VAR = 'NP3TOT_LOG'
@@ -163,6 +159,7 @@ diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','updrs3_score_on_LOG' ,'NP3TOT_LOG')
 diff_vars<-c( 'NP2PTOT_LOG', 'moca','NP3TOT_LOG')
 diff_vars<-c( 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca', 'sft')
+diff_vars<-c( 'NP3TOT_LOG')
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'moca'
@@ -198,14 +195,15 @@ tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid';
 tissue_un<-'Plasma'
 visit_comps  = c('V08' )
 visit_comps = c('V06', 'BL', 'V04', 'V08')
+visit_comps = c( 'V08','V06')
 
 DIFF_VAR;tissue_un;prot_de_mode
 sig_only =TRUE
-VISIT_COMP='V06'
+VISIT_COMP='V08'
 
     for (DIFF_VAR in c(diff_vars)){
 
-        for (tissue_un in c('Plasma','Cerebrospinal Fluid' )){
+        for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
             for (VISIT_COMP in visit_comps){
 
            
@@ -229,6 +227,16 @@ VISIT_COMP='V06'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
 
 
 

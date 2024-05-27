@@ -19,8 +19,6 @@ library("vsn")
 library("data.table")
 library("SummarizedExperiment")
 
-print(paste('processing',TISSUE))
-# TISSUE = 'Plasma'
 #### TODO: SAVE SE FILT SO WE CAN RELOAD in the next script 
 source(paste0(script_dir,'ppmi/utils.R'))
 output_1=paste0(data_dir,'ppmi/plots/proteomics/')

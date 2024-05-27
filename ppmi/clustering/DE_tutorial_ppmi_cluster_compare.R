@@ -146,7 +146,7 @@ for (cluster_id_num in  c(1:4)){
         results_de<-de_proteins_by_group(se_filt=se_filt_clust, protein_matrix=protein_matrix)
         #results_de<-topTable(fit.cont, coef='COHORT' ) 
         de_all_groups_proteins[[cluster_id_num]]<-results_de
-        print(se_filt_clust$COHORT)
+
         #FC= mean(condition_A_replicates)n/ mean(control_replicates)n   
 
 
@@ -202,9 +202,11 @@ for (cluster_id_num in  c(1:4)){
 
 ## Create a p-adjusted
 ## how many total proteins?
-dim(vsn_mat)
+print(paste('Number of DE proteins in: ', tissue, VISIT_COMP))
+de_proteins<-lapply(de_all_groups_proteins,function(x){(length(which(x$adj.P.Val<0.05)))})
+print(unlist(de_proteins))
 
-
+length(which(de_all_groups_proteins[[2]]$adj.P.Val<0.05))
 dim(vsn_mat)[1]
 
 #common_de<-intersect(all_sig_proteins,anova_results_oneway_significant)
@@ -404,7 +406,7 @@ for (cluster_id_num in 1:4){
 
 
 
-      pvalueCutoff=1
+      pvalueCutoff=0.05
       #outdir_s_p_enrich_file<-paste0(outdir_s_p_enrich, ONT, '_', order_statistic)
 
       dir.create(paste0(outdir_s_p, '/enr_prot', tissue,'_', prot_de_mode,'/'), recursive=TRUE)

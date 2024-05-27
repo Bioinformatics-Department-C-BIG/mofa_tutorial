@@ -235,9 +235,6 @@ clusters_names<-c('1','2','3','1_2_3')
     se_clusters[,se_clusters$kmeans_grouping %in% c(cluster_id)]} )
 
 
-
-
-
   names(se_filt_all)<-clusters_names
 
 se_filt_all<-lapply(se_filt_all, function(se_clust){
@@ -330,6 +327,9 @@ cluster_id_num
 #### 1. Venn from significant 
 length(deseq_all_names)
 head(deseq_all_names,3)
+number_of_de<- unlist(lapply(deseq_all_names, length))
+print(number_of_de)
+write.csv(number_of_de, fname_numbers_sig )
 create_venn(venn_list = head(deseq_all_names,3), fname_venn =fname_venn,
             main =paste0( ' DE molecules for each molecular cluster' ) )
 
@@ -355,9 +355,6 @@ deseq_all_top
 
 names(deseq_all_top)
 length(deseq_params)
-#fname_venn=paste0(deseq_params, prefix, 'venn_de_per_group_deseq', 'top_f', sel_factor ,  '.png')
-#create_venn(venn_list = deseq_all_top, fname_venn =fname_venn,main =paste0( ' DE molecules for each molecular cluster AND highly variable' ))
-
 
 
 
@@ -505,6 +502,7 @@ if (!process_mirnas){
 
 gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
 fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
+fname_numbers_sig=paste0(deseq_params, '/',prefix, 'de_numbers_per_group_sig.csv')
 
 force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 

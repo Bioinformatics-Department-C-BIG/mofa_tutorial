@@ -58,7 +58,6 @@ y_clust = 'NP3TOT_LOG'
 
 
 
-
   #clust_name %in% colnames(met)
   if (clust_name %in% colnames(met)){
     # for each cluster create boxplot 
@@ -126,6 +125,22 @@ aov_sig<-t(data.frame(aov_res_ll)[c('p', 'p<.05'),])
 print(aov_sig)
 aov_sig_names=rownames(aov_sig[aov_sig[,'p<.05'] == '*',])
 print(aov_sig_names)
+
+
+# START SAVING, GET PARAMS
+  fact=get_factors_for_metric(y_clust)
+
+
+    # also write vars for each cluster 
+    write_vars_output(MOFAobject, vars_by_factor, factors=fact)
+
+    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+
+  cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+  cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+
+
+
 write.csv(t(aov_res_ll), paste0(cluster_params_dir,'/aov.csv'))
 
 
@@ -133,10 +148,10 @@ write.csv(t(aov_res_ll), paste0(cluster_params_dir,'/aov.csv'))
 
 ## wilcox - compare with controls each cluster ##
 # medians
-medians_fname = paste0(cluster_params_dir, '/medians.csv')
-medians_fname_tex = paste0(cluster_params_dir, '/medians.tex')
-
-medians_cells_fname= paste0(cluster_params_dir, '/medians_cells.csv')
+medians_fname = paste0(cluster_params_dir, '/medians_sig.csv')
+medians_fname_tex = paste0(cluster_params_dir, '/medians_sig.tex')
+medians_cells_fname= paste0(cluster_params_dir, '/medians_cells_sig.csv')
+medians_fname_all= paste0(cluster_params_dir, '/medians_all.tex')
 
 DataControl  = col_data %>%
             filter(cluster==0) 
@@ -208,6 +223,12 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
           type = "latex", 
           file = medians_fname_tex ))
 
+      round(means_by_cluster, digits=2)
+          print(xtable( format(means_by_cluster, digits=2),
+          type = "latex", 
+          file = medians_fname_all))
+
+
           # separated to print with 2 digits
         aov_sig_names_cells<-aov_sig_names[aov_sig_names %in% colnames(estimations)]
             print(xtable( format(means_by_cluster[c('Neutrophil.Lymphocyte',aov_sig_names_cells),], digits=2),
@@ -261,7 +282,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     dir.create(cluster_params_dir, recursive=TRUE)
     diff_variables_to_p<-diff_variables_to_p[diff_variables_to_p %in% colnames(met)] 
 
-
+  factors=fact
     boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p), width=8+length(c(diff_variables_to_p))/facet_rows, 
     height=1+1.5*facet_rows, bn=bn_all_fname, facet_rows = 1, 
     text='')
@@ -294,18 +315,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     text='', plot_box=FALSE, add_caption = FALSE)
 
 
-
-
-
-
-  }
-
-
-
-# 2. Plot the clusters on the factor plot  ####
-#' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
-DIFF_VAR='NP2PTOT_LOG'
-y <- DIFF_VAR# cluster metric 
+  y <- y_clust# cluster metric 
 
 color_by=paste0(y, '_clust')
 clust_metric<-y
@@ -332,13 +342,27 @@ outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_grou
 
 
 p <- MOFA2::plot_factors(MOFAobjectPD_sel, 
-             factors=which(all_fs_diff[,y]),
+             factors=fact,
              color_by =color_by
-            # alpha=0.7
+            #alpha=0.7
 #             shape_by = color_by
 )
 p
-ggsave(outfile_clusters, width = 4, height = 4 )
+ggsave(outfile_clusters, width = 5, height = 5 )
+
+
+# RECLUSTER after removal of x patients ?? 
+MOFAobjectPD[which.max(get_factors(MOFAobjectPD)$group1[, 'Factor24'])]
+
+
+  }
+
+
+
+# 2. Plot the clusters on the factor plot  ####
+#' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
+#' 
+#' 
 
 
 

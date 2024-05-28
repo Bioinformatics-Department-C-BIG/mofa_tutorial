@@ -92,6 +92,7 @@ DIFF_VAR = 'sft'
 diff_vars<-c( 'COHORT')
 diff_vars<-c( 'NP2PTOT_LOG','sft', 'NP3TOT_LOG',  'moca',  'NP3TOT_LOG_V14', 'NP3TOT_diff_V14', 'NP3TOT_V14', 'sft_V12' )
 diff_vars<-c('NP3TOT_LOG' )
+diff_vars<-c('NP3TOT_LOG')
 
 DIFF_VAR = 'COHORT'
 DIFF_VAR = 'NP3TOT_LOG'
@@ -122,7 +123,8 @@ cell_corr_deseq = FALSE
 
 sig_only =FALSE
 
-
+ # NEED TO OBTAIN metrics from combined_bl_log_sel_mol
+ source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' )) 
 run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
@@ -138,7 +140,8 @@ if (run_all){
 
 
         }
-         source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' ))
+        
+
 
         source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_pathways_all_time.R'))
 
@@ -227,16 +230,6 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
-
-
-
-
-
-
-
-
-
-
 
 
 

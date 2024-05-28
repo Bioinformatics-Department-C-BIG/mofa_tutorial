@@ -37,6 +37,7 @@ samples_metadata(MOFAobject)$SCAU26CT<-as.factor(tolower(samples_metadata(MOFAob
 
 vars_by_factor_all<-calculate_variance_explained(MOFAobject)
 vars_by_factor<-vars_by_factor_all$r2_per_factor[[1]]
+write.csv(round(vars_by_factor_all[[1]][[1]], digits=2), paste0(outdir,'total_variance.csv'))
 
 write.csv(round(vars_by_factor_all[[1]][[1]], digits=2), paste0(outdir,'total_variance.csv'))
 

@@ -150,6 +150,8 @@ biochemical_markers_conf<-c( 'abeta','tau_ab', 'tau_asyn', 'ptau_ab', 'lowput_ra
 measured_cells
 #sm$updrs3_score_on
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT', 'NP3TOT_LOG', 'NP3TOT','updrs3_score_on')
+clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'NP3TOT_LOG', 'NP3TOT','updrs3_score_on')
+
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)
@@ -164,9 +166,12 @@ biochemical_markers_conf
 sm$updrs3_score_on
 variables_conf_only_clinical<-c(biochemical_markers_conf, clinical_scales_conf, 'AGE', 'SEX','LEDD', 'NP2PTOT_LOG', 'NP3TOT_LOG', 
 'updrs3_score_on', 'updrs3_score_on_LOG', 'NP3TOT')
+
+variables_conf_only_clinical_no_biochem<-c(clinical_scales_conf, 'AGE', 'SEX','LEDD', 'NP2PTOT_LOG', 'NP3TOT_LOG', 
+'updrs3_score_on', 'updrs3_score_on_LOG', 'NP3TOT')
    
 sel_factors_conf<-get_factors_for_scales(variables_conf_only_clinical)
-
+sel_factors_conf
 graphics.off()
 colnames(estimations)
 
@@ -213,10 +218,18 @@ plot='log_pval'
 #' variables_conf_only_clinical
 variables_conf_only_clinical
 sel_factors_conf<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG','NP3TOT', 'updrs3_score_on', 'updrs3_score_on_LOG'))
-sel_factors_conf
+# Investigate factors that are only relevant to the covariations 
+sel_factors_conf_covariates<-get_factors_for_scales(c('NP2PTOT_LOG','moca', 'scopa', 'NP3TOT_LOG','NP3TOT', 'updrs3_score_on', 'updrs3_score_on_LOG', 'AGE', 'SEX'))
+
 fname<-'factors_covariates_strict_PD_conference'
-plot_covars_mofa(selected_covars=all_diff_variables_prog_conf,fname,plot,
+plot_covars_mofa(selected_covars=variables_conf_only_clinical,fname,plot,
                  factors = sel_factors_conf,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 )
+
+
+fname<-'factors_covariates_strict_PD_conference_all_correlated_fs'
+plot_covars_mofa(selected_covars=variables_conf_only_clinical_no_biochem,fname,plot,
+                 factors = sel_factors_conf_covariates,labels_col=TRUE, MOFAobject_to_plot=MOFAobjectPD_sel, res=300 , height=1500)
+
 
 
 fname<-'factors_covariates_strict_PD_conference_clinical'
@@ -231,9 +244,13 @@ plot_covars_mofa(selected_covars=variables_conf_only_clinical,fname,plot='r',
 
 fname<-'factors_covariates_only_nonzero_strict_cor_PD_np3'
 plot_covars_mofa(selected_covars=all_diff_variables_prog,fname,plot='r',factors = sel_factors,labels_col=TRUE, MOFAobject=MOFAobjectPD_sel )
-graphics.off()
 
-mofa_multi_to_use
+
+
+
+
+
+
 estim_cors<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
 
 

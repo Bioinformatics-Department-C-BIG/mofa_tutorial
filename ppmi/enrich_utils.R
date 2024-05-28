@@ -22,7 +22,6 @@ calculate_log_fcs<-function( gse_all_cls, clust_names = c('BL', 'V06', 'V08'), m
 
         genes_in_spec_path<-unlist(genes_in_path[paths %in% 'regulation of innate immune response'])
 
-        print(gene_list_cluster_1[genes_in_spec_path])
         # logFC per pathway 
         log_fcs<-lapply(genes_in_path,function(genes){
                 if (return_abs){

@@ -315,55 +315,87 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     text='', plot_box=FALSE, add_caption = FALSE)
 
 
-  y <- y_clust# cluster metric 
 
-color_by=paste0(y, '_clust')
-clust_metric<-y
+      
 
-# Settings for each clustering 
+    # 2. Plot the clusters on the factor plot  ####
+    #' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
+    y <- y_clust# cluster metric 
 
-met<-met[!is.na(met[, clust_metric]),]
-clust_name<-paste0(clust_metric, '_clust')
-freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
+    color_by=paste0(y, '_clust')
+    clust_metric<-y
 
-#k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
+    # Settings for each clustering 
 
-fact=get_factors_for_metric(y_clust)
+    met<-met[!is.na(met[, clust_metric]),]
+    clust_name<-paste0(clust_metric, '_clust')
+    freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
 
-fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+    #k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
 
-cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
-cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+    fact=get_factors_for_metric(y_clust)
 
-dir.create(cluster_params_dir, recursive=TRUE)
-outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' ,sel_group, y, '_', color_by, '.png')
+    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
-# Plot clustering for scales 
+    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+    cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+
+    dir.create(cluster_params_dir, recursive=TRUE)
+   
+
+    paste0(factors_to_plot, collapse='_')
+
+    # Plot clustering for scales 
+   
+    factors_to_plot<-c(20,24)
+    factors_to_plot<-which(all_fs_diff[,y])
+
+    # remove outliers jhust for plotting
+    MOFAobjectPD_sel@samples_metadata[, color_by]
+    MOFAobjectPD_sel_outliers <- MOFA2::subset_samples( MOFAobjectPD_sel, c(remove_outlier ))
+    MOFAobjectPD_sel_outliers@samples_metadata[, color_by]
 
 
-p <- MOFA2::plot_factors(MOFAobjectPD_sel, 
-             factors=fact,
-             color_by =color_by
-            #alpha=0.7
-#             shape_by = color_by
-)
-p
-ggsave(outfile_clusters, width = 5, height = 5 )
+     outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g' , y, '_', color_by, 
+            paste0(factors_to_plot, collapse='_'), '.png')
+    p <- plot_factors(MOFAobjectPD_sel_outliers, 
+                factors=factors_to_plot,
+                color_by =color_by,
+                  alpha=0.7
+                # shape_by = color_by
+    )
+    p
+    ggsave(outfile_clusters, width = 4, height = 4 )
 
 
-# RECLUSTER after removal of x patients ?? 
-MOFAobjectPD[which.max(get_factors(MOFAobjectPD)$group1[, 'Factor24'])]
+      outfile_clusters<-paste0(cluster_params_dir, '/factor_plot_clusters_g_HC' ,sel_group, y, '_', color_by,
+        paste0(factors_to_plot, collapse='_'), '.png')
+
+
+    
+    p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
+                factors=which(all_fs_diff[,y]),
+                color_by =color_by
+                 # alpha=0.7
+    #             shape_by = color_by
+    )
+    p
+
+ p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
+                factors=c(24,20),
+                color_by =color_by
+                 # alpha=0.7
+    #             shape_by = color_by
+    )
+    p
+
+    ggsave(outfile_clusters, width = 4, height = 4 )
+
+
+
 
 
   }
-
-
-
-# 2. Plot the clusters on the factor plot  ####
-#' @param all_fs_diff # table of clinical scores and factors: which factors are sign with which score
-#' 
-#' 
-
 
 
 

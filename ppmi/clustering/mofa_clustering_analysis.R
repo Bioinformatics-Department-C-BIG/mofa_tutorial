@@ -85,6 +85,37 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
 
  MOFAobjectPD_sel@samples_metadata$NP3TOT_clust
  all_fs_diff
+    # function -- > remove mofa factor outliers
+    factor24_values = get_factors(MOFAobjectPD_sel, as.data.frame=TRUE, factors = 24)
+
+
+    x = factor24_values$value 
+  library(rstatix)
+
+  factor24_outliers<-identify_outliers(  data = factor24_values,  variable = "value")
+  factor24_outliers
+  outlier_sample<-factor24_outliers$sample
+
+
+    factor24_values = get_factors(MOFAobjectPD_sel, as.data.frame=TRUE, factors = 15)
+    factor24_outliers<-identify_outliers(  data = factor24_values,  variable = "value")
+    outlier_sample2<-factor24_outliers$sample
+
+
+
+    remove_outlier<-factor24_values$sample[!factor24_values$sample %in% c(outlier_sample, outlier_sample2)]
+    MOFAobjectPD_sel_outliers <- MOFA2::subset_samples( MOFAobjectPD_sel, c(remove_outlier ))
+# MOFAobjectPD_sel = MOFAobjectPD_sel_outliers -- > do not replace 
+
+  remove_outlier_all_ps<-MOFAobject_sel@samples_metadata$sample[!MOFAobject_sel@samples_metadata$sample %in% c(outlier_sample, outlier_sample2)]
+  remove_outlier_all_ps
+  MOFAobject_sel_outlier<- MOFA2::subset_samples( MOFAobject_sel, remove_outlier_all_ps)
+
+
+
+ # MOFAobject_sel  = MOFAobject_sel_outlier -- > do not replace
+
+
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
   #' @param diff_var: variable to cluster by 
@@ -123,7 +154,6 @@ write.csv(all_clusts_mofa_true_t,all_clusts_file, row.names=TRUE,sep=','  )
 
 
 
-names(all_clusts_mofa)
 
 for (diff_var in names(all_clusts_mofa)){
     MOFAobjectPD_sel@samples_metadata[,paste0(diff_var, '_clust')]<-all_clusts_mofa[[diff_var]];#all_clusts_mofa[[diff_var]]
@@ -140,23 +170,34 @@ MOFAobject_sel@samples_metadata$sft_clust
 ### Boxplots by cluster 
 ## Can produce for multiple metrics 
 
-diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
-
-                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
-                      'upsit', 'VLTFRUIT', 'sft', 
-                      'stai_state', 'stai_trait', 
-                      'AGE' )
                       
 
 
 #other_metrics<-t(cors_all_pd[all_fs_diff[,y],])
 
-diff_variables_to_p=c('NP2PTOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
+diff_variables_to_p=c('NP2PTOT','NP3TOT', 'Neutrophil.Lymphocyte', 'AGE_SCALED', 'scopa', 
          'Neutrophils....', 'Lymphocytes....' ,   'sft', 'hvlt_immediaterecall',  # current 
          'updrs3_score_LOG_V12',
           'hvlt_immediaterecall_V12'
 
          )
+
+
+diff_variables_to_p=c('NP2PTOT_LOG', 'NP2PTOT','scopa','updrs3_score', 
+
+                      'tremor','NP3BRADY', 'rigidity',   'rem', 'moca',
+                      'upsit', 'VLTFRUIT', 'sft', 
+                      'stai_state', 'stai_trait', 
+                      'AGE' , 
+                            'NP2PTOT',
+         'NP3TOT',  'scopa', 'sft',  'moca',
+         'Neutrophil.Lymphocyte', 'AGE',
+         'duration', 
+         # f23
+         # added V12 because it is significant ? 
+         'RBD_TOT','rem_V12', 'NP3TOT_V12'
+                      )
+
 
 
 

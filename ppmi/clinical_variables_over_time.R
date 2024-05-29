@@ -279,7 +279,7 @@ clust_metrics=c('moca', 'NP2PTOT_LOG', 'NP3TOT_LOG', 'updrs3_score_on')
     for (y in to_plot){
 
       clust_name<-paste0(clust_metric, '_clust')
-      fact<-get_factors_for_metric(clust_metric); fact_s=paste0(fact, collapse='_')
+      fact<-get_factors_for_metric(clust_metric, remove_facts = remove_facts); fact_s=paste0(fact, collapse='_')
       cluster_params<-paste0( '/clustering/',  fact_s,'/', k_centers_m,'/r',as.numeric(rescale_option), '/')
 
 

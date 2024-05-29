@@ -2193,7 +2193,7 @@ get_covariates_cells<-function(y_clust, thresh=0){
   # get the cell types that corelated with the metric
   #' 
   #' @thresh: -log10pvalue
-  fact=get_factors_for_metric(y_clust)
+  fact=get_factors_for_metric(y_clust, remove_facts = remove_facts )
   colnames(estimations)[!colnames(estimations) %in% colnames(cors_all_pd)]
   
   cell_types<-c(colnames(estimations), measured_cells)[c(colnames(estimations), measured_cells) %in% colnames(cors_all_pd) ]
@@ -2316,7 +2316,7 @@ pre_process_proteomics<-function(proteomics){
 
 
 get_cluster_params_dir<-function(DIFF_VAR){
-  fact<-get_factors_for_metric(DIFF_VAR); fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+  fact<-get_factors_for_metric(DIFF_VAR, remove_facts = remove_facts ); fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
   cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors)) 
   cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );

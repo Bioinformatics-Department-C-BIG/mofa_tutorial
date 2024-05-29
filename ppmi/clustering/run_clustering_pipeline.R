@@ -61,11 +61,12 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
 
+ remove_facts = FALSE
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-
+print(cluster_params_dir)
 
 formula_deseq_format='n'
 cell_corr_deseq<-TRUE
@@ -125,6 +126,7 @@ sig_only =FALSE
 
  # NEED TO OBTAIN metrics from combined_bl_log_sel_mol
  source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' )) 
+
 run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
@@ -180,6 +182,7 @@ prot_de_mode<-'u'
 #tissue_un<-'Plasma';tissue ='Plasma';
 
 diff_vars<-c('sft', 'NP3TOT_LOG', 'NP2PTOT_LOG', 'moca')
+diff_vars<-c('NP3TOT_LOG')
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'NP3TOT_LOG'
@@ -230,6 +233,24 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

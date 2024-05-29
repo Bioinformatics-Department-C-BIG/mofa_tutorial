@@ -217,6 +217,7 @@ dir.create(cluster_params_dir, recursive = TRUE)
 
 
 fname_venn=paste0(deseq_params,'/', prefix , 'min_',min.count,'venn.png');fname_venn
+fname_numbers_sig=paste0(deseq_params, '/',prefix, 'de_numbers_per_group_sig.csv')
 
 
 
@@ -502,7 +503,6 @@ if (!process_mirnas){
 
 gse_sig_all_clusters<-lapply(gse_all_clusters, function(x) {  x@result$ID[x@result$p.adjust<0.05] } )
 fname_venn=paste0(deseq_params, '/',prefix, 'venn_de_per_group_enrich.png')
-fname_numbers_sig=paste0(deseq_params, '/',prefix, 'de_numbers_per_group_sig.csv')
 
 force_compare=FALSE
 # Rerun them all together so that they are in one file for comparisons 

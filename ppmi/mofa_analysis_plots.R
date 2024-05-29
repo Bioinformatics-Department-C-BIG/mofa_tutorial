@@ -789,16 +789,16 @@ v_set=c()
 view='miRNA'
 
 fps=MOFAobject@dimensions$K
-vps
-fps
 seq(1,fps)
 seq(1,vps)
-factor=3; view='RNA'
+factor=24; view='proteomics_t_plasma'
+factor=24; view='proteomics_t_csf'
+
 plot_top_weights(MOFAobject,
                  view = view,
-                 factor = 3,
-                 nfeatures = 10,     # Top number of features to highlight
-                 scale = T           # Scale weights from -1 to 1
+                 factor = factor,
+                 nfeatures = 20,     # Top number of features to highlight
+                 scale = F           # Scale weights from -1 to 1
 )
 ggsave(paste0(outdir, 'top_weights_',factor, view,'_','.png'), width =3 , height=4, dpi=300)
 dir.create(paste0(outdir, 'top_weights/'))
@@ -838,6 +838,8 @@ data.frame()
 
 
 #### 
+
+
 
 
 modify_metadata_for_plotting<-function(MOFAobject){

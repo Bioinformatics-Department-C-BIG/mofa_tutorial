@@ -9,6 +9,17 @@ genes_files
 genes_all_modes= list()
 all_Fs<-list()
 
+mod1 = convert_to_gene_symbol(concatenate_top_features(MOFAobject,factors_all=c(24), view = 'RNA', top_fr=0.01)$feature, view='RNA')
+mod2 =convert_to_gene_symbol(concatenate_top_features(MOFAobject,factors_all=c(24), view = 'proteomics_t_plasma', top_fr=0.05)$feature,  view ='proteomics_t_plasma' )
+mod3 = convert_to_gene_symbol(concatenate_top_features(MOFAobject,factors_all=c(24), view = 'proteomics_t_csf', top_fr=0.05)$feature,  view ='proteomics_t_csf' )
+mod4 = convert_to_gene_symbol(concatenate_top_features(MOFAobject,factors_all=c(24), view = 'proteomics_csf', top_fr=0.05)$feature, view = 'proteomics_csf')
+write.csv(c(mod1, mod2, mod3, mod4),paste0(outdir, '/top_weights/top_weights_all_mods.csv'))
+
+
+mod4_u = concatenate_top_features(MOFAobject,factors_all=c(24), view = 'proteomics_csf', top_fr=0.05)$feature
+
+convert_to_gene_symbol(mod4_u, view = 'proteomics_csf' , conv_uniprot=TRUE)
+
 for (genes_file in genes_files ) {
 
     name_list<-unlist(regmatches(genes_file,regexec('features_.*_GO',genes_file )))

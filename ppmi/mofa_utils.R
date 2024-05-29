@@ -429,9 +429,14 @@ concatenate_top_pathways_factors<-function(factors, pvalueCutoff = 0.05, top_p =
   
 
       if (view == 'RNA'){
+        x = gsub('\\..*', '', mod1$feature)
         x = get_symbols_vector(x)
+        names(mod1) = NULL
       } else if (view %in% c('proteomics_csf', 'proteomics_plasma')){
-        x = get_symbol_from_uniprot(x)$SYMBOL
+        x = modify_prot_names(x, view =view, conv_uniprot = TRUE)
+
+      } else if (view %in% c('proteomics_t_csf', 'proteomics_t_plasma')){
+        x<-gsub(paste0('_',view), '', x)
 
       }
       

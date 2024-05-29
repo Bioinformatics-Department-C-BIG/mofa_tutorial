@@ -15,8 +15,12 @@ PD_samples_only<-MOFAobject@samples_metadata$PATNO_EVENT_ID[MOFAobject@samples_m
 
 MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 
+# clustering settings 
+# remove_facts = FALSE
 
-get_factors_for_metric<-function(diff_var){
+
+
+get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_facts = FALSE){
 
   # get associated factors, remove the ones related to confounding
   fact <- which(all_fs_diff[,diff_var])
@@ -26,12 +30,18 @@ get_factors_for_metric<-function(diff_var){
 
         }
        
+        if (remove_facts){
+          fact<-fact[!(fact %in% remove_facts)]
+
+        }
         return(fact)
         }
 
 
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
+#get_factors_for_metric('NP3TOT_LOG')
+
 
 remove_cell_factors = FALSE
 #diff_var=y;  # diff_var='NP2PTOT_diff_V16'
@@ -122,7 +132,7 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #'
   #'
 
-        fact <- get_factors_for_metric(diff_var)
+        fact <- get_factors_for_metric(diff_var, remove_facts = remove_facts)
     
         #print(paste(diff_var,paste(fact, collapse=', ')))
         xname = paste0(diff_var, '_clust')

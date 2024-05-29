@@ -131,13 +131,14 @@ print(aov_sig_names)
   fact=get_factors_for_metric(y_clust)
 
 
-    # also write vars for each cluster 
-    write_vars_output(MOFAobject, vars_by_factor, factors=fact)
+      # also write vars for each cluster 
+      write_vars_output(MOFAobject, vars_by_factor, factors=fact)
 
-    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+      fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
-  cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
-  cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+    cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
+    cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
+    dir.create(cluster_params_dir, recursive = TRUE)
 
 
 
@@ -343,12 +344,12 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     dir.create(cluster_params_dir, recursive=TRUE)
    
 
-    paste0(factors_to_plot, collapse='_')
 
     # Plot clustering for scales 
    
     factors_to_plot<-c(20,24)
     factors_to_plot<-which(all_fs_diff[,y])
+    paste0(factors_to_plot, collapse='_')
 
     # remove outliers jhust for plotting
     MOFAobjectPD_sel@samples_metadata[, color_by]
@@ -360,8 +361,8 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
             paste0(factors_to_plot, collapse='_'), '.png')
     p <- plot_factors(MOFAobjectPD_sel_outliers, 
                 factors=factors_to_plot,
-                color_by =color_by,
-                  alpha=0.7
+                color_by =color_by
+                 # alpha=0.7
                 # shape_by = color_by
     )
     p

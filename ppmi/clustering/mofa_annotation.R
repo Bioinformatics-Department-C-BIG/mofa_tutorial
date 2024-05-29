@@ -21,7 +21,7 @@ tfs<-unique(grn$source_genesymbol)
 estimations_in_df<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
 clinical_in_df<-c('NP2PTOT_LOG', 'NP3TOT_LOG',  'moca', 'sft')
 covars_age<-c('AGE_SCALED', 'SEX', 'LEDD', 'ab_asyn', 'tau_asyn', 'abeta', 'Neutrophil.Lymphocyte')
-sel_facts<-get_factors_for_scales(clinical_in_df)
+sel_facts<-get_factors_for_scales(clinical_in_df, )
 sel_facts
 sel_facts<-get_factors_for_scales(clinical_in_df)
 sel_facts2<-get_factors_for_metric('NP3TOT_LOG')

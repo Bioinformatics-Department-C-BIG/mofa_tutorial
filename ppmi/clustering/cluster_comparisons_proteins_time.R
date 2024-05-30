@@ -30,7 +30,7 @@ if (prot_de_mode=='t'){
         view=paste0('proteomics_', tolower(tissue_un_mofa))
         print(view)
         tissue = tissue_un
-        top_fr=0.025
+        top_fr=0.05
         metric_p<-'adj.P.Val'; T_p=0.05 
 
 
@@ -175,6 +175,7 @@ prot_de_mode
 
 prot_de_mode_s=ifelse(prot_de_mode=='u','untargeted', 'targeted' )
 column_title = paste(tissue, prot_de_mode_s,',',  metric_p, '<', T_p, ',',  'DE only:', sig_only )
+dir.create(paste0(outdir_s_p_all_vis,'all_time/'), recursive  =TRUE)
 hname<-paste0(outdir_s_p_all_vis,'all_time/',tissue_s[1], '_', prot_de_mode,'_c',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'_s',
                  as.numeric(sig_only), 'p_', metric_p,T_p,'_hm_log2FC.jpeg')
 print(hname)
@@ -200,8 +201,7 @@ cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df),
 
  draw(cm, column_title=column_title, 
   column_title_gp = gpar(fontsize = 10))
-dev.off()
-graphics.off()
+#graphics.off()
 
 
 
@@ -209,6 +209,9 @@ graphics.off()
 #tname<-paste0(outdir_s_p,'../all_time/',tissue,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'prot.csv')
 #print(tname)
 #write.csv(rownames(as.matrix(all_clusts_times_logFC_df)), tname)
+
+
+
 
 
 

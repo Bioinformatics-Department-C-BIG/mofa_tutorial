@@ -18,12 +18,13 @@ MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 # clustering settings 
 # remove_facts = FALSE
 
-
-
 get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_facts = FALSE){
 
   # get associated factors, remove the ones related to confounding
-  fact <- which(all_fs_diff[,diff_var])
+
+  all_fs_diff_T<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(T_CORRELATION)))
+
+  fact <- which(all_fs_diff_T[,diff_var])
 
         if (remove_cell_factors){
           fact<-fact[!(fact %in% fact_neutro_pd)]
@@ -39,7 +40,7 @@ get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_fa
 
 
 #### Create the MOFA clusters with the same K ####
-k_centers_m=4
+k_centers_m=3
 #get_factors_for_metric('NP3TOT_LOG')
 
 

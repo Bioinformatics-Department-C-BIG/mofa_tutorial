@@ -202,16 +202,16 @@ prot_de_mode = 'u';
 tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 tissue_un<-'Plasma'
 visit_comps  = c('V08' )
-visit_comps = c('V06', 'BL', 'V04', 'V08')
 visit_comps = c( 'V08','V06')
+visit_comps = c('V06', 'BL', 'V04', 'V08')
 
-DIFF_VAR;tissue_un;prot_de_mode
 sig_only =TRUE
 VISIT_COMP='V08'
 
     for (DIFF_VAR in c(diff_vars)){
 
         for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
+            tissue_un = 'Cerebrospinal Fluid'
             for (VISIT_COMP in visit_comps){
 
            

@@ -9,20 +9,30 @@ DIFF_VAR
 # And each cluster 
 # need to run after DE tutorial ppmi cluster_compare.R
 
+
+
+view = 'RNA'
+prefix='rnas_'
+
+
+view = 'miRNA'
+prefix='mirnas_'
+
 #write.csv(results_de, paste0(outdir_s_p, 'results.csv'))
 prefix='prot_'
 tissue_un_mofa<-ifelse(tissue_un=='Plasma', 'plasma', 'csf')
 
-
-
 #' @param tissue is a global name that adjusts for targeted or untargeted 
 if (prot_de_mode=='t'){
         view=paste0('proteomics_t_', tolower(TISSUE))
-        top_fr=0.01
+        top_fr=0.025
         tissue=TISSUE
-        metric_p='P.Value';  T_p=0.001
         metric_p<-'adj.P.Val'; T_p=0.05 
-        sig_only=FALSE
+         metric_p='P.Value';  T_p=0.001
+
+        metric_p_lfc  = 'logFC'
+
+        sig_only=TRUE
         view_s = paste0(tissue, prot_de_mode_s)
 
 
@@ -31,9 +41,13 @@ if (prot_de_mode=='t'){
         view=paste0('proteomics_', tolower(tissue_un_mofa))
         print(view)
         tissue = tissue_un
-        top_fr=0.025
+        top_fr=0.25
         metric_p<-'adj.P.Val'; T_p=0.05 
-        sig_only=FALSE
+        metric_p='P.Value';  T_p=0.001
+
+        metric_p_lfc  = 'logFC'
+
+        sig_only=TRUE
         view_s = paste0(tissue, prot_de_mode_s)
 
 
@@ -46,15 +60,11 @@ clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
 clusters_names =  c( "1"  ,   "2" ,    "3" ,    "all")
 
 
-view = 'RNA'
-prefix='rnas_'
-
-
-view = 'miRNA'
-prefix='mirnas_'
 
 if (view %in% c('RNA', 'miRNA')){
        metric_p<-'padj'; 
+       metric_p_lfc  = 'log2FoldChange'
+
        
         clust_ids<-c('1', '2', '3', '1_2_3')
         clusters_names_h = c( "1"  ,   "2" ,    "3" ,    "all")
@@ -80,7 +90,7 @@ if (view %in% c( 'miRNA')){
 # outdir_s_p
 fact = get_factors_for_metric(DIFF_VAR)
 
-fact = fact[fact!=13]
+#fact = fact[fact!=13]
 fact
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 cluster_params_dir
@@ -90,7 +100,7 @@ top_proteins<-concatenate_top_features(MOFAobject, factors_all=fact, view=view, 
 top_proteins
 top_proteins$feature<-gsub(paste0('_',view),'', top_proteins$feature)
 
-
+top_proteins$feature
 
 
 
@@ -138,7 +148,7 @@ cluster_id = 2
                 #}
                 colnames(de_results_prot)
                 de_results_prot_sig<-de_results_prot[de_results_prot$P.Value<0.01,] # take only the union of all at the end 
-                pass_pval<-which(de_results_prot[, 'padj']<0.05)
+                pass_pval<-which(de_results_prot[, metric_p]<0.05)
                 de_results_prot_sig<-de_results_prot[pass_pval,] # take only the union of all at the end 
                # print(paste(cluster_id))
               #   print(de_results_prot_sig[de_results_prot_sig$GENE_SYMBOL == 'GZMH',])
@@ -242,7 +252,6 @@ get_de_proteins_per_tp<-function(VISIT_COMP, metric_p='logFC', sig_only =FALSE, 
 times<-c('BL', 'V04' ,'V06', 'V08')
 
 #colnames(results_de)
-metric_p_lfc  = 'log2FoldChange'
 
 all_clusts_proteins_logFC_all_times<-lapply( times, get_de_proteins_per_tp, sig_only=sig_only,metric=metric_p_lfc,  de_sig_all_top = de_sig_all_top)
 

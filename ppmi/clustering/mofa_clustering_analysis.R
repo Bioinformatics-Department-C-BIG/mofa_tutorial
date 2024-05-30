@@ -39,7 +39,7 @@ get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_fa
 
 
 #### Create the MOFA clusters with the same K ####
-k_centers_m=3
+k_centers_m=4
 #get_factors_for_metric('NP3TOT_LOG')
 
 

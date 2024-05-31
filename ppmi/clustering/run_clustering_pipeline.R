@@ -16,6 +16,7 @@ try(
 )
 
 #source(paste0(script_dir, 'ppmi/setup_os.R'))
+#source(( 'ppmi/setup_os.R'))
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'moca'
@@ -61,7 +62,8 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
 
- remove_facts = FALSE
+remove_facts = FALSE
+T_CORRELATION=0.01
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 #source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
@@ -127,7 +129,7 @@ sig_only =FALSE
  # NEED TO OBTAIN metrics from combined_bl_log_sel_mol
  source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' )) 
 
-run_all=TRUE 
+run_all=FALSE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
@@ -200,16 +202,16 @@ prot_de_mode = 'u';
 tissue_un<-'Cerebrospinal Fluid';tissue<-'Cerebrospinal Fluid'; 
 tissue_un<-'Plasma'
 visit_comps  = c('V08' )
-visit_comps = c('V06', 'BL', 'V04', 'V08')
 visit_comps = c( 'V08','V06')
+visit_comps = c('V06', 'BL', 'V04', 'V08')
 
-DIFF_VAR;tissue_un;prot_de_mode
 sig_only =TRUE
 VISIT_COMP='V08'
 
     for (DIFF_VAR in c(diff_vars)){
 
         for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
+            tissue_un = 'Cerebrospinal Fluid'
             for (VISIT_COMP in visit_comps){
 
            
@@ -233,20 +235,6 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

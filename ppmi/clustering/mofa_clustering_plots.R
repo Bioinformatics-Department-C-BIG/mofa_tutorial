@@ -375,21 +375,21 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
 
     
-    p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
-                factors=which(all_fs_diff[,y]),
-                color_by =color_by
-                 # alpha=0.7
+    # p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
+    #             factors=which(all_fs_diff[,y]),
+    #             color_by =color_by
+    #              # alpha=0.7
     #             shape_by = color_by
-    )
-    p
+    # )
+    # p
 
- p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
-                factors=c(24,20),
-                color_by =color_by
+#  p <- MOFA2::plot_factors(MOFAobject_sel_outlier, 
+#                 factors=c(24,20),
+#                 color_by =color_by
                  # alpha=0.7
     #             shape_by = color_by
-    )
-    p
+    # )
+    # p
 
     ggsave(outfile_clusters, width = 4, height = 4 )
 

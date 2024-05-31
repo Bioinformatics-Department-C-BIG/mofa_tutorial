@@ -869,11 +869,15 @@ run_enrich_per_cluster<-function(deseq2ResDF, results_file,N_DOT=15, N_EMAP=25, 
 
                         mieaa_return<-mieaa_all_gsea_mofa
                    }else{
-                          mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = names(gene_list_ord)[1:top_mirs_ora],
+
+                    test_set = names(gene_list_ord)[1:top_mirs_ora]
+                    test_set = gene_list_ord[1:top_mirs_ora]
+
+                          mieaa_all_gsea_mofa_target <- rba_mieaa_enrich(test_set = test_set,
                                                                   mirna_type = "mature",
                                                                   test_type = "ORA",
-                                                                  species = 'Homo sapiens'                      ,
-                                                                categories = c('Target genes (miRTarBase)'),
+                                                                  species = 'Homo sapiens' ,
+                                                            categories = c('miRPathDB_GO_Biological_process_mature'),
                                                                   sig_level=pvalueCutoff
                           ) 
 

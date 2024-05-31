@@ -1,6 +1,6 @@
 
 DIFF_VAR
-
+# cm_all=list()
 
 
 ### Heatmaps of the log2FC values 
@@ -23,7 +23,9 @@ if (prot_de_mode=='t'){
         metric_p='P.Value';  T_p=0.001
         metric_p<-'adj.P.Val'; T_p=0.05 
         sig_only=FALSE
-        view_s = paste0(tissue, prot_de_mode_s)
+
+
+        view_s = paste0(tissue, 'targeted')
 
 
 
@@ -34,7 +36,7 @@ if (prot_de_mode=='t'){
         top_fr=0.025
         metric_p<-'adj.P.Val'; T_p=0.05 
         sig_only=FALSE
-        view_s = paste0(tissue, prot_de_mode_s)
+        view_s = paste0(tissue, 'untargeted')
 
 
 
@@ -80,7 +82,7 @@ if (view %in% c( 'miRNA')){
 # outdir_s_p
 fact = get_factors_for_metric(DIFF_VAR)
 
-fact = fact[fact!=13]
+#fact = fact[fact!=13]
 fact
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 cluster_params_dir
@@ -155,8 +157,7 @@ de_sig_all
 de_results_prot_sig
 de_results_prot_sig$GENE_SYMBOL
 # TODO: separate to get top 
-cluster_params_dir
-view
+
 
 
 
@@ -284,6 +285,7 @@ colnames(all_clusts_times_logFC_df)
 
 # add factor annotation 
 #top_proteins
+# heatmap 
 row_an<-as.factor(top_proteins$Factor[match(rownames(all_clusts_times_logFC_df),top_proteins$feature)])
 row_ha<-rowAnnotation(factor=row_an)
 cluster_cols=FALSE
@@ -317,7 +319,6 @@ dir.create(outdir_s_p_all_vis,'all_time/', recursive=TRUE)
 all_clusts_times_logFC_df[is.na(all_clusts_times_logFC_df)]<-0
 all_clusts_times_pval_df1[is.na(all_clusts_times_pval_df1)]<-''
 
-all_clusts_times_logFC_df
 
 
 xminxmax<-get_limits(apply(all_clusts_times_logFC_df,2, as.numeric))
@@ -330,30 +331,22 @@ tissue_s
 
 prot_de_mode
 
-prot_de_mode_s=ifelse(prot_de_mode=='u','untargeted', 'targeted' )
 column_title = paste(view_s, ',',  metric_p, '<', T_p, ',',  'DE only:', sig_only )
 
 
 hname<-paste0(outdir_s_p_all_vis,'all_time/',view, tissue_s[1], '_', prot_de_mode,'_c',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'_s',
-                 as.numeric(sig_only), 'p_', metric_p,T_p,'_hm_log2FC.jpeg')
+                 as.numeric(sig_only), 'p_', metric_p,T_p)
 print(hname)
 height=1+log(nf)
 
 cluster_cols=FALSE
-all_clusts_times_logFC_df
-as.matrix(all_clusts_times_logFC_df$BL_2)
 
 
 
-rep(clusters_names, length(times))
-jpeg(hname,  res=200, width=5, height=1+log(nf), units='in')
+jpeg(paste0(hname,'_hm_log2FC.jpeg'),  res=200, width=5, height=1+log(nf), units='in')
 
-
-rep(clusters_names_h, length(times))
-dim(all_clusts_times_pval_df1)
-
-
-cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
+print(paste(rownames(as.matrix(all_clusts_times_logFC_df))))
+ cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
  column_split = rep(clusters_names_h, length(times)), 
   col = col_fun, 
   cluster_cols = cluster_cols,
@@ -364,8 +357,9 @@ cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df),
   )
 
 
+ cm_all[[view]] =cm
 
- draw(cm, column_title=column_title, 
+draw(cm, column_title=column_title, 
   column_title_gp = gpar(fontsize = 10))
 dev.off()
 graphics.off()
@@ -376,10 +370,19 @@ graphics.off()
 #tname<-paste0(outdir_s_p,'../all_time/',tissue,'_cc_',as.numeric(cluster_cols),'_tp_', length(times), '_',top_fr,'prot.csv')
 #print(tname)
 #write.csv(rownames(as.matrix(all_clusts_times_logFC_df)), tname)
+print('cluster1')
+View(data.frame(c(rownames(all_clusts_times_pval_df1)[which(all_clusts_times_pval_df1[, 'V08_1']!='')])))
+View(c(rownames(all_clusts_times_pval_df1)[which(all_clusts_times_pval_df1[, 'V08_1']!='')]))
 
-
-
-
+all_clusts_times_pval_df1
+feats<-c(rownames(all_clusts_times_pval_df1)[which(all_clusts_times_pval_df1[, 'V08_1']!='')])
+feats
+mirs_to_enrich<-run_enrich_mirnas(feats, test_type = 'ORA',top_mirs_ora = length(feats))
+colnames(mirs_to_enrich)
+mirs_to_enrich$`P-adjusted`
+write.csv(mirs_to_enrich_ord<-mirs_to_enrich %>% arrange(`P-adjusted`), paste0(hname, 'enrichment.csv'))
+mirs_to_enrich_ord$Subcategory[1:5]
+#mirna_enrich_res_postprocessing
 
 
 

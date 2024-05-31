@@ -324,6 +324,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     y <- y_clust# cluster metric 
 
     color_by=paste0(y, '_clust')
+  #  color_by = paste0(y)
     clust_metric<-y
 
     # Settings for each clustering 

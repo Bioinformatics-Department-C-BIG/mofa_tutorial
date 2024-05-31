@@ -64,7 +64,7 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
  remove_facts = FALSE
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
-source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
+#source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 print(cluster_params_dir)
 
@@ -233,6 +233,20 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -9,6 +9,22 @@ grn <-
         resources = c('DoRothEA')
     )
 tfs<-unique(grn$source_genesymbol)
+
+
+
+edit_cors<-function(cors_clinical_pearson,cors_clinical){
+
+
+   
+        cors_clinical_pearson_text<-round(cors_clinical_pearson, digits=2)
+        cors_clinical_pearson_text[cors_clinical==1]<-''
+        cors_clinical_pearson_text[cors_clinical==0]<-''
+
+        return(cors_clinical_pearson_text)
+
+
+
+} 
 # Plot heatmap with dotted line for information of different groups 
 # Factor X 
 # Obtain for mofa plots 
@@ -20,11 +36,13 @@ tfs<-unique(grn$source_genesymbol)
 
 estimations_in_df<-colnames(estimations)[colnames(estimations) %in% colnames(cors_all_pd)]
 clinical_in_df<-c('NP2PTOT_LOG', 'NP3TOT_LOG',  'moca', 'sft')
-covars_age<-c('AGE_SCALED', 'SEX', 'LEDD', 'ab_asyn', 'tau_asyn', 'abeta', 'Neutrophil.Lymphocyte')
+covars_age<-c('AGE_SCALED', 'SEX', 'LEDD', 'ab_asyn', 'tau_asyn', 'abeta', 'Neutrophil.Lymphocyte', 'con_putamen_V10')
 sel_facts<-get_factors_for_scales(clinical_in_df, )
 sel_facts
 sel_facts<-get_factors_for_scales(clinical_in_df)
 sel_facts2<-get_factors_for_metric('NP3TOT_LOG')
+#sel_facts2<-get_factors_for_metric('sft')
+
 
 sel_facts<-sel_facts[sel_facts %in% sel_facts2]
 #sel_facts
@@ -231,19 +249,6 @@ dim(cors_clinical_pearson)[2]
 
 
 cors_clinical
-edit_cors<-function(cors_clinical_pearson,cors_clinical){
-
-
-   
-        cors_clinical_pearson_text<-round(cors_clinical_pearson, digits=2)
-        cors_clinical_pearson_text[cors_clinical==1]<-''
-        cors_clinical_pearson_text[cors_clinical==0]<-''
-
-        return(cors_clinical_pearson_text)
-
-
-
-} 
 
 cors_clinical_pearson_text<-edit_cors(cors_clinical_pearson,cors_clinical)
 
@@ -276,7 +281,7 @@ cm_covars<-ComplexHeatmap::pheatmap(cors_covars_pearson,
 
 
 cm4<-ComplexHeatmap::pheatmap(vars_factors, col =col_fun4, heatmap_legend_param = list(
-        title='Var %'
+        title='Variance %'
 ))
 
 top_ws_hm

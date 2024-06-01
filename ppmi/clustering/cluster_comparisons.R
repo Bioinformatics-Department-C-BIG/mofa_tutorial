@@ -63,10 +63,27 @@ clust_name=paste0(y_clust, '_clust')
 sel_sub_coh=TRUE
 
 se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP, sel_coh = sel_coh, sel_sub_coh = sel_sub_coh)
-se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
-se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
 
-se_clusters$kmeans_grouping
+
+# count numbers in each group
+get_frequencies<-function(se_sel){
+for (VISIT_COMP1 in c('BL','V04' ,'V06', 'V08')){
+    se_clusters<-filter_se(se_sel, VISIT=VISIT_COMP1, sel_coh = sel_coh, sel_sub_coh = sel_sub_coh)
+    se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
+    se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
+
+    print(table(se_clusters$kmeans_grouping))
+    se_clusters$kmeans_grouping
+
+  write.csv(table(se_clusters$kmeans_grouping), paste0(cluster_params_dir, '/',prefix,VISIT_COMP1, 'counts.csv'))
+
+
+}
+}
+
+get_frequencies(se_sel)
+
+
 
 
 

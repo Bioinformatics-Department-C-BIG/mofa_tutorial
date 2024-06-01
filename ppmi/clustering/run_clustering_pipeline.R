@@ -63,14 +63,13 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
 
 remove_facts = FALSE
-T_CORRELATION=0.01
+T_CORRELATION=0.05
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 #source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
 print(cluster_params_dir)
 
-formula_deseq_format='n'
 cell_corr_deseq<-TRUE
 
 #VISIT='V08'
@@ -110,10 +109,12 @@ formula_deseq_format='age' # so far we only run all for mirnas
 ONT='BP'
 process_mirnas = FALSE 
 source(paste0(script_dir, 'ppmi/config.R'))
-VISIT_COMP='V08'
+VISIT_COMP='BL'
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 se_clust$kmeans_grouping
+
+
 
 
 
@@ -210,8 +211,10 @@ VISIT_COMP='V08'
 
     for (DIFF_VAR in c(diff_vars)){
 
-        for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
-            tissue_un = 'Cerebrospinal Fluid'
+       # for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
+                    for (tissue_un in c('Plasma' )){
+
+            #tissue_un = 'Cerebrospinal Fluid'
             for (VISIT_COMP in visit_comps){
 
            
@@ -225,16 +228,21 @@ VISIT_COMP='V08'
                 }
 
             source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_proteins_time.R')) # for each tissue combine times 
+                source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons_all_modalities_time.R')) # for each tissue combine times 
 
         }
 
     }
+
 # TODO: add mirs size effects using normalized data 
 # correct for RIN and mapped bases 
 ## Add future scales 
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
 
 
 

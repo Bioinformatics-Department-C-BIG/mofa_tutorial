@@ -91,7 +91,11 @@ cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 
 se_clusters$kmeans_grouping<- groups_from_mofa_factors(se_clusters$PATNO, MOFAobject_clusts, y_clust );
 #se_clusters$kmeans_grouping=as.numeric(se_clusters$kmeans_grouping)
-se_clusters$kmeans_grouping
+print(VISIT_COMP)
+print(table(se_clusters$kmeans_grouping))
+
+
+
 
 protein_matrices<-list()
 
@@ -194,7 +198,6 @@ for (cluster_id_num in  c(1:4)){
     )
     pvol
     fname_vol<-paste0(outdir_s_p,'/Volcano_', prefix_full,'_',VISIT_COMP,'_cluster_',cluster_id_num,'.jpeg')
-    print(fname_vol)
     ggsave(fname_vol,pvol, width=6,height=8, dpi=300)
 }
 

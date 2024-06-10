@@ -32,7 +32,7 @@ if (prot_de_mode=='t'){
 
         metric_p_lfc  = 'logFC'
 
-        sig_only=TRUE
+        sig_only=FALSE
         view_s = paste0(tissue, prot_de_mode_s)
 
 
@@ -41,9 +41,13 @@ if (prot_de_mode=='t'){
         view=paste0('proteomics_', tolower(tissue_un_mofa))
         print(view)
         tissue = tissue_un
-        top_fr=0.25
+        
         metric_p<-'adj.P.Val'; T_p=0.05 
-        sig_only=FALSE
+        metric_p_lfc = 'logFC'
+        sig_only=TRUE; top_fr=0.3
+        sig_only=FALSE; top_fr=0.05
+
+
         view_s = paste0(tissue, prot_de_mode_s)
 
 
@@ -85,8 +89,9 @@ if (view %in% c( 'miRNA')){
 #cluster_params_dir
 # outdir_s_p
 fact = get_factors_for_metric(DIFF_VAR)
+fact = get_factors_for_metric(DIFF_VAR)
 
-#fact = fact[fact!=13]
+#fact = fact[fact %in% c(24)]
 fact
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 cluster_params_dir
@@ -346,7 +351,7 @@ cluster_cols=FALSE
 
 
 
-jpeg(paste0(hname,'_hm_log2FC.jpeg'),  res=200, width=5, height=1+log(nf), units='in')
+jpeg(paste0(hname,'_hm_log2FC.jpeg'),  res=200, width=5, height=1.5+log(nf), units='in')
 
 print(paste(rownames(as.matrix(all_clusts_times_logFC_df))))
  cm<-ComplexHeatmap::pheatmap(as.matrix(all_clusts_times_logFC_df), 
@@ -354,15 +359,17 @@ print(paste(rownames(as.matrix(all_clusts_times_logFC_df))))
   col = col_fun, 
   cluster_cols = cluster_cols,
   right_annotation=row_ha,
-  display_numbers = as.matrix(all_clusts_times_pval_df1), 
+   fontsize_row = 9,
+   display_numbers = as.matrix(all_clusts_times_pval_df1)
   
 
   )
 
 
- cm_all[[view]] =cm
+ #cm_all[[view]] =cm
 
 draw(cm, column_title=column_title, 
+
   column_title_gp = gpar(fontsize = 10))
 dev.off()
 graphics.off()

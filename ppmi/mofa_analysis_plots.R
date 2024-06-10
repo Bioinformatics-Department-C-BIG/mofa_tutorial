@@ -152,6 +152,40 @@ measured_cells
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'sft_V12', 'RBD_TOT', 'NP3TOT_LOG', 'NP3TOT','updrs3_score_on')
 clinical_scales_conf<-c('NP2PTOT', 'updrs3_score', 'moca', 'scopa', 'sft', 'NP3TOT_LOG', 'NP3TOT','updrs3_score_on')
 
+
+put<-colnames(sm)[grep('putamen.*V10',colnames(sm))]
+
+sm[,put]
+sm[, 'con_putamen_diff_V10_perc'] # highest corelation is 0.44 with factor 10!! 
+sm[, 'con_putamen_diff_V10_perc'] # highest corelation is 0.44 with factor 10!! 
+
+fact = get_factors_for_metric('NP3TOT_LOG')
+fact = get_factors_for_metric('NP1RTOT')
+
+sm$updrs1_score
+
+sm_pd<-samples_metadata(MOFAobjectPD)
+ get_factors(MOFAobjectPD)
+ sm_pd$NP1RTOT
+ samples_metadata(MOFAobjectPD)$NP1RTOT_LOG<-log(sm_pd[, 'NP1RTOT']+0.0001)
+corr.test(log(sm_pd[, 'NP1RTOT']+0.000000001), get_factors(MOFAobjectPD)[[1]])[[4]]<0.05
+corr.test(log(as.numeric(sm_pd[, 'updrs1_score'])+1), get_factors(MOFAobjectPD)[[1]])[[4]]<0.05
+sm_pd[, 'updrs1_score']
+
+correlate_factors_with_covariates(MOFAobjectPD, 'NP1RTOT_LOG' )
+
+
+
+
+
+fact
+cors_all_pd[fact,put]
+cors_all_pd[,put]
+
+cors_pearson_pd[fact,put]
+cors_pearson_pd[,put]
+
+
 clinical_scales<-c(imaging_variables_diff, scale_vars_diff)
 MOFAobject@samples_metadata$Plate<-as.factor(MOFAobject@samples_metadata$Plate)
 vars_to_plot=c(clinical_scales,progression_markers ); sel_factors<-get_factors_for_scales(clinical_scales)

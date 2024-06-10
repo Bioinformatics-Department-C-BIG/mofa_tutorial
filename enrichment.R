@@ -2,20 +2,26 @@
 
 #install.packages("msigdbr")
 library(msigdbr)
+packageVersion("msigdbr")
+packageVersion("clusterProfiler")
+
 library(data.table)
-library(MOFAdata)
+#library(MOFAdata)
 data("reactomeGS")
+
+# GO annotations as present in the GO-basic obo file released on 2021-12-15 and NCBI gene2go annotations downloaded on 2022-01-03.
+
 
 # Choose pathway gene list GO/KEGG etc 
 #all_gene_sets = msigdbr(species = "Homo sapiens", category = 'C5', subcategory = 'GO:BP')
-category='C5';subcategory<-'GO:BP';
 category='C2';subcategory<-'CP:KEGG';
 category='C5';subcategory<-'GO:MF';
+category='C5';subcategory<-'GO:BP'; # total 7658 pathways
 
 
 
 all_gene_sets = msigdbr(species = "Homo sapiens", category = category, subcategory =subcategory )
-
+unique(all_gene_sets$gs_name) # total
 df<-all_gene_sets[c('gs_name', 'ensembl_gene')]
 
 df_wide<-data.table::dcast(as.data.table(df), 
@@ -64,4 +70,8 @@ rownames(gs_file_matrix)
 gs_file_matrix[,1]
 colnames(gs_file_matrix)<-convert_to_gene_symbol(colnames(gs_file_matrix), view='RNA') 
 write.csv(gs_file_matrix,gs_file_proteins, row.names=FALSE)
-gs_file_matrix
+
+
+gs_file_matrix$X
+
+

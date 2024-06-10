@@ -63,12 +63,11 @@ source(paste0(script_dir, 'ppmi/mofa_analysis_time_diff.R'))
 #source(paste0(script_dir, 'ppmi/mofa_enrich_pgcse.R')) # SET TO FALSE IF EXISTS? 
 
 remove_facts = FALSE
-T_CORRELATION=0.01
+T_CORRELATION=0.05
 
 source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_analysis.R'))
 #source(paste0(script_dir, 'ppmi/clustering/mofa_clustering_plots.R'))
 
-print(cluster_params_dir)
 
 formula_deseq_format='n'
 cell_corr_deseq<-TRUE
@@ -129,7 +128,7 @@ sig_only =FALSE
  # NEED TO OBTAIN metrics from combined_bl_log_sel_mol
  source(paste0(script_dir,'/ppmi/clinical_variables_over_time.R' )) 
 
-run_all=FALSE 
+run_all=TRUE 
 if (run_all){
     for (DIFF_VAR in c(diff_vars)){
         print(DIFF_VAR)
@@ -211,7 +210,7 @@ VISIT_COMP='V08'
     for (DIFF_VAR in c(diff_vars)){
 
         for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
-            tissue_un = 'Cerebrospinal Fluid'
+            # tissue_un = 'Cerebrospinal Fluid'
             for (VISIT_COMP in visit_comps){
 
            

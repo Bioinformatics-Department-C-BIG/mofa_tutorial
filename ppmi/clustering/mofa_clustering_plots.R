@@ -35,24 +35,25 @@ sel_group=4
 
 y_clust="NP2PTOT_LOG"
 y_clust=DIFF_VAR
-clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
-
-get_factors_for_metric('updrs3_score_on')
-facet_rows = 2
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft', 'NP3TOT_LOG-sft')
 
 
 
 
 
 #### Boxplots ####
-clust_vars=c('NP3TOT_LOG')
+clust_vars=c('NP3TOT_LOG-sft')
+clust_vars<-c('NP2PTOT_LOG', 'moca', 'NP3TOT_LOG', 'scopa', 'updrs3_score_on', 'sft')
 
 y_clust = 'NP3TOT_LOG'
 
 #sapply(clust_vars, function(y_clust){
 
   for (y_clust in  clust_vars){
-  clust_name = paste0(y_clust, '_clust')
+
+ # y_clust = c('NP3TOT_LOG', 'sft')
+
+  clust_name = paste0(paste0(y_clust, collapse='-'), '_clust')
   ## check if there are clusters for this variable
 
 
@@ -128,13 +129,13 @@ print(aov_sig_names)
 
 
 # START SAVING, GET PARAMS
-  fact=get_factors_for_metric(y_clust)
+  fact=get_factors_for_metric(c(y_clust))
 
 
       # also write vars for each cluster 
       write_vars_output(MOFAobject, vars_by_factor, factors=fact)
 
-      fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+      fact_s=paste(fact[order(fact)], collapse='_'); print(paste(paste0(y_clust, collapse='-'), fact_s))
 
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors) )
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
@@ -273,7 +274,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     # also write vars for each cluster 
     write_vars_output(MOFAobject, vars_by_factor, factors=fact)
 
-    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
+    fact_s=paste(fact[order(fact)], collapse='_'); print(paste(paste0(y_clust, collapse='-'), fact_s))
 
     cluster_params<-paste0(fact_s ,'/', k_centers_m,'/r',as.numeric(rescale_option),'/g', as.numeric(sel_group_cors))
     cluster_params_dir<-paste0(outdir,'/clustering/',cluster_params );
@@ -284,7 +285,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
     diff_variables_to_p<-diff_variables_to_p[diff_variables_to_p %in% colnames(met)] 
 
   factors=fact
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(diff_variables_to_p), width=8+length(c(diff_variables_to_p))/facet_rows, 
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name, y_clust = y_clust, c(diff_variables_to_p), width=8+length(c(diff_variables_to_p))/facet_rows, 
     height=1+1.5*facet_rows, bn=bn_all_fname, facet_rows = 1, 
     text='')
 
@@ -292,7 +293,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
     bn_all_fname<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'cell_types',  '.png')
     variates_to_p = colnames(estimations)[!colnames(estimations) %in% c('T.gd.Vd2',"Plasmablasts" , 'mDCs', 'Monocytes.NC.I' )] # TODO: check for zero variance to exclude 
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=8+length(c(variates_to_p))/facet_rows , bn=bn_all_fname, facet_rows = facet_rows, 
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  y_clust = y_clust, c(variates_to_p), width=8+length(c(variates_to_p))/facet_rows , bn=bn_all_fname, facet_rows = facet_rows, 
     text='')
 
 
@@ -300,7 +301,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
     bn_all_fname_sig<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'_sig',  '.png')
     variates_to_p  = aov_sig_names[!aov_sig_names %in% c(colnames(estimations), 'scopa', 'NP3TOT_V14')]
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
+    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,y_clust = y_clust,   c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
      bn=bn_all_fname_sig, facet_rows = facet_rows,     height=4,
 
     text='')
@@ -310,7 +311,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
   variates_to_p = variates_to_p[!variates_to_p %in% c('Basophils.LD', 'T.CD8.Naive', 'T.gd.non.Vd2')]
   facet_rows = 1
     bn_all_fname_sig<-paste0(cluster_params_dir, '/all_vars_g_' ,sel_group,'_cells_sig',  '.png')
-    boxplot_by_cluster_multiple(met=met, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
+    boxplot_by_cluster_multiple(met=met,y_clust=y_clust, clust_name=clust_name,  c(variates_to_p), width=4+length(c(variates_to_p))/facet_rows ,
     height=4,
      bn=bn_all_fname_sig, facet_rows = facet_rows, 
     text='', plot_box=FALSE, add_caption = FALSE)
@@ -335,7 +336,7 @@ pvals_sig_any_true_names<-names(pvals_sig_any_true)
 
     #k_centers <- max(as.numeric(unique(met[!(met[, clust_name] %in% 'HC'), clust_name] )) , na.rm = TRUE)
 
-    fact=get_factors_for_metric(y_clust)
+    fact=get_factors_for_metric(c(y_clust))
 
     fact_s=paste(fact[order(fact)], collapse='_'); print(paste(y_clust, fact_s))
 
@@ -540,7 +541,7 @@ samples_metadata(MOFAobject)[selected_covars2]
 
 
 ## Split Mofa objects by cluster 
-diff_var='sft'
+
 clust_name<-paste0(diff_var,'_clust')
 clust_id=3
 fact<-get_factors_for_metric(diff_var)

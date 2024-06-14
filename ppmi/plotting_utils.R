@@ -635,7 +635,9 @@ mt_kv_list_labeller <- function(variable){
 }
 
 
-boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn,  height=5,
+clust_name
+diff_variables_to_p = variates_to_p
+boxplot_by_cluster_multiple<-function(met, clust_name, y_clust, diff_variables_to_p, bn,  height=5,
  width=10,facet_rows=1, text='', plot_box = TRUE, add_caption=TRUE){
   #'
   #' Create boxplot by cluster 
@@ -647,11 +649,11 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   clust_metric<-gsub('_clust', '', clust_name)
   
 
-  as.numeric(met[,clust_metric])
-  met[,clust_metric ]<-as.numeric(met[,clust_metric])
-  met<-met[!is.na(met[, clust_metric]),]
+ # as.numeric(met[,clust_metric])
+   #met[,clust_metric ]<-as.numeric(met[,clust_metric])
+  #met<-met[!is.na(met[, clust_metric]),]
   #print(paste('Using subset of  ', dim(met)[1], ' patients'))
-  freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
+  #freqs<-paste0('n=', paste0(table(met[, clust_name]), collapse = ', '))
   
 
 
@@ -679,9 +681,9 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   k_centers
   ## Add kruskal wallis to the total plot and separately to each one 
   ## 
-  factors<-paste0(which(all_fs_diff[,clust_metric]), collapse=', ')
+  factors<-paste0(get_factors_for_metric(y_clust))
 
-
+ diff_variables_to_p = c(diff_variables_to_p, 'NP3TOT_LOG')
   met_diff<-met[,c( 'PATNO',clust_name,diff_variables_to_p)]
   to_replace<-colnames(met_diff)[colnames(met_diff) %in% mt_kv[,1]]
   colnames(met_diff)[colnames(met_diff) %in% to_replace]<-mt_kv$V2[match(to_replace ,mt_kv$V1)]
@@ -689,13 +691,15 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   met_diff_val=reshape::melt(met_diff, id.vars=c('PATNO', clust_name))
   met_diff_val[, clust_name] = as.factor(met_diff_val[, clust_name] )
   met_diff_val[, 'value'] = as.numeric(met_diff_val[, 'value'] )
+unique(met_diff_val$variable)
+
 #  num_log<-is.numeric(met_diff_val)
 
 
 
 
     p<-ggplot(met_diff_val ,aes_string(x=clust_name , y='value'))
-
+  #plot_box =FALSE
     if (plot_box){
            p<-p+geom_boxplot(aes_string( x=clust_name,# color=clust_name, 
                              fill=clust_name, y='value'), alpha=0.9, 
@@ -722,7 +726,8 @@ boxplot_by_cluster_multiple<-function(met, clust_name, diff_variables_to_p, bn, 
   p<-p+labs(#title = paste(y),  
          #subtitle=paste(freqs, '\n','Kruskal.wallis p.val', format(kw$p.value, digits=2)),
          caption = caption, 
-         x=mt_kv[which(mt_kv[,1]==clust_metric),2])+
+         x=mt_kv[which(mt_kv[,1]==clust_name),2]
+  )+
     guides(fill=guide_legend(title='PD subgroup' ), color=guide_legend(title='PD subgroup' ))+
     theme(text =element_text(size=15), axis.title.y=element_blank())+
 

@@ -270,6 +270,8 @@ all_diff_variables=c('NP1RTOT', 'NP2PTOT','NP2PTOT_LOG', 'NP2PTOT_LOG_V10', 'NP3
 
 all_diff_in_cors<-all_diff_variables[all_diff_variables %in% colnames(cors_all_pd)]
 all_diff_in_cors<-all_diff_in_cors[!grepl('clust', all_diff_in_cors)]
+all_diff_in_cors
+
 #round(cors_all_pd[,'moca'], digits=2)
 #round(cors_all_pd[,'NP2PTOT_LOG'], digits=2)
 #round(cors_pearson_pd[,'NP2PTOT_LOG'], digits=2)

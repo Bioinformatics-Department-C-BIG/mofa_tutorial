@@ -40,11 +40,18 @@ covars_age<-c('AGE_SCALED', 'SEX', 'LEDD', 'ab_asyn', 'tau_asyn', 'abeta', 'Neut
 sel_facts<-get_factors_for_scales(clinical_in_df, )
 sel_facts
 sel_facts<-get_factors_for_scales(clinical_in_df)
+<<<<<<< HEAD
+sel_facts2<-get_factors_for_metric('sft')
+=======
 sel_facts2<-get_factors_for_metric('NP3TOT_LOG')
 #sel_facts2<-get_factors_for_metric('sft')
 
+>>>>>>> c44c6bb43b76fbb3afa135d807736f60770fd2ac
 
 sel_facts<-sel_facts[sel_facts %in% sel_facts2]
+
+which(cors[,'COHORT']>0)
+
 #sel_facts
 #sel_facts<-sel_facts[!sel_facts %in% c(3)]
 #sel_facts<-sel_facts[!sel_facts %in% c(3)]
@@ -150,6 +157,8 @@ sel_facts
 ### other pathways analysis 
 sel_facts
 view='RNA'
+
+
 get_top_paths_matrix<-function(view){
         top_paths<-concatenate_top_pathways_factors(as.numeric(sel_facts),top_p=4, view=view, prefix=FALSE)
         top_paths$p.adjust = -log10(top_paths$p.adjust)
@@ -184,15 +193,19 @@ get_top_paths_matrix<-function(view){
 
 }
 
-top_paths_factors_prot_csf<-get_top_paths_matrix(view='proteomics_csf')
-top_paths_factors_prot_plasma<-get_top_paths_matrix(view='proteomics_plasma')
-top_paths_factors_RNA<-get_top_paths_matrix(view='RNA')
-top_paths_factors_prot_t_plasma<-get_top_paths_matrix(view='proteomics_t_plasma')
+add_paths = FALSE
+if (add_paths){
+                top_paths_factors_prot_csf<-get_top_paths_matrix(view='proteomics_csf')
+                top_paths_factors_prot_plasma<-get_top_paths_matrix(view='proteomics_plasma')
+                top_paths_factors_RNA<-get_top_paths_matrix(view='RNA')
+                top_paths_factors_prot_t_plasma<-get_top_paths_matrix(view='proteomics_t_plasma')
 
-top_paths_factors_prot_t_csf<-get_top_paths_matrix(view='proteomics_t_csf')
+                top_paths_factors_prot_t_csf<-get_top_paths_matrix(view='proteomics_t_csf')
 
-top_paths_factors_RNA
-top_paths_factors_RNA
+                top_paths_factors_RNA
+                top_paths_factors_RNA
+}
+
 #top_paths_factors_rna<-get_top_paths_matrix(view='RNA')
 
 
@@ -444,6 +457,22 @@ gan_long_wide2[,grep('Purkinje',colnames(gan_long_wide2))]
 jpeg(paste0(outdir, '/gene_annotations.jpeg'), units='in', res=90, width=10,height=10)
 pheatmap(t(gan_long_wide2), show_rownames = TRUE)
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

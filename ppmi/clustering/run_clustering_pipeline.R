@@ -16,7 +16,8 @@ try(
 )
 
 # source(paste0(script_dir, 'ppmi/setup_os.R'))
-#source(( '../ppmi/setup_os.R'))
+# source(( '../ppmi/setup_os.R'))
+source(( 'ppmi/setup_os.R'))
 
 
 DIFF_VAR= 'NP2PTOT_LOG'

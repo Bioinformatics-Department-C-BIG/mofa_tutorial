@@ -47,7 +47,7 @@ get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_fa
   }
 
 
-diff_var
+
 
 get_clusters_for_metric<-function(diff_var, remove_facts =FALSE){
   # for a specific metric / or two metrics get the cluster ids and also attach to mofa! 

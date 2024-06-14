@@ -634,9 +634,7 @@ mt_kv_list_labeller <- function(variable){
   return(mt_kv_list[variable])
 }
 
-
-clust_name
-diff_variables_to_p = variates_to_p
+ 
 boxplot_by_cluster_multiple<-function(met, clust_name, y_clust, diff_variables_to_p, bn,  height=5,
  width=10,facet_rows=1, text='', plot_box = TRUE, add_caption=TRUE){
   #'

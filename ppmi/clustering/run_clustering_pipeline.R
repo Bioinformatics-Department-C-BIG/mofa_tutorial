@@ -11,12 +11,13 @@ try(
 )
 
 try(
-   source(paste0('../../ppmi/setup_os.R')), silent = TRUE
+   source(paste0('../../ppmi/setup_os.R'))
 
 )
 
 #source(paste0(script_dir, 'ppmi/setup_os.R'))
-#source(( 'ppmi/setup_os.R'))
+
+source(( 'ppmi/setup_os.R'))
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'moca'
@@ -210,15 +211,10 @@ VISIT_COMP='V08'
 
     for (DIFF_VAR in c(diff_vars)){
 
-<<<<<<< HEAD
-        for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
-            # tissue_un = 'Cerebrospinal Fluid'
-=======
        # for (tissue_un in c('Cerebrospinal Fluid','Plasma' )){
                     for (tissue_un in c('Plasma' )){
 
             #tissue_un = 'Cerebrospinal Fluid'
->>>>>>> c44c6bb43b76fbb3afa135d807736f60770fd2ac
             for (VISIT_COMP in visit_comps){
 
            
@@ -244,6 +240,20 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

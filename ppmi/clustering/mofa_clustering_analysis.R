@@ -18,13 +18,21 @@ MOFAobjectPD <- MOFA2::subset_samples(MOFAobject, samples=PD_samples_only)
 # clustering settings 
 # remove_facts = FALSE
 
+
 get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_facts = FALSE){
 
   # get associated factors, remove the ones related to confounding
-
   all_fs_diff_T<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(T_CORRELATION)))
 
-  fact <- which(all_fs_diff_T[,diff_var])
+    if (length(diff_var)>1){
+              fact <- which(apply(all_fs_diff_T[,diff_var], 1, any))
+
+    }else{
+              fact <- which(all_fs_diff_T[,diff_var])
+
+    }
+  fact
+
 
         if (remove_cell_factors){
           fact<-fact[!(fact %in% fact_neutro_pd)]
@@ -35,9 +43,30 @@ get_factors_for_metric<-function(diff_var, remove_cell_factors =FALSE, remove_fa
           fact<-fact[!(fact %in% remove_facts)]
 
         }
-        return(fact)
-        }
+    return(fact)
+  }
 
+
+
+
+get_clusters_for_metric<-function(diff_var, remove_facts =FALSE){
+  # for a specific metric / or two metrics get the cluster ids and also attach to mofa! 
+    fact <- get_factors_for_metric(diff_var, remove_facts = remove_facts)
+    
+        #print(paste(diff_var,paste(fact, collapse=', ')))
+        xname = paste0(paste0(diff_var, collapse='-'), '_clust')
+        print(xname)
+      if (length(fact) > 0){
+        set.seed(60)
+        clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD_sel, centers=k_centers_m,
+             factors=fact, rescale=rescale_option) # Cluster using kmeans
+
+        clust_ps<-clusters_x;
+        MOFAobjectPD_sel@samples_metadata[, xname] = as.factor(clust_ps)
+        # TODO: save labels
+        return(clust_ps)
+  }
+}
 
 #### Create the MOFA clusters with the same K ####
 k_centers_m=3
@@ -68,6 +97,15 @@ cors_pearson_pd_clinical = as.data.frame(cors_both_clinical[[2]]);  cors_all_pd_
 ## choose if the clu
 all_fs_diff_all_time<-as.data.frame(cors_all_pd_clinical[,all_diff_in_cors]>(-log10(0.05)))
 all_fs_diff = all_fs_diff_all_time
+
+combo_diff_var <- c('NP3TOT_LOG', 'sft')
+combo_diff_var
+combo_diff_var_fact<-as.data.frame(cors_all_pd_clinical[,combo_diff_var]>(-log10(T_CORRELATION)))
+ combo_diff_var_factors<-Reduce(`|`, combo_diff_var_fact)
+
+combo_diff_var_factors
+
+
 ### Select group for plotting
 sel_group=4
 if (length(groups_names(MOFAobject))>1){
@@ -125,6 +163,8 @@ fact_neutro_pd<-c(  (which(cors$`Lymphocytes....`>-log10(0.05))), which(cors$`Ne
 
 
  # MOFAobject_sel  = MOFAobject_sel_outlier -- > do not replace
+all_metrics_to_clust<-colnames(all_fs_diff)
+
 
 
 all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
@@ -132,30 +172,20 @@ all_clusts_mofa <- sapply(colnames(all_fs_diff),function(diff_var){
   #' @param diff_var: variable to cluster by 
   #'
   #'
+        return(get_clusters_for_metric(diff_var, remove_facts=remove_facts))
+       
 
-        fact <- get_factors_for_metric(diff_var, remove_facts = remove_facts)
-    
-        #print(paste(diff_var,paste(fact, collapse=', ')))
-        xname = paste0(diff_var, '_clust')
-      if (length(fact) > 0){
-        set.seed(60)
-        clusters_x=cluster_by_mofa_factors(MOFAobject=MOFAobjectPD_sel, centers=k_centers_m,
-             factors=fact, rescale=rescale_option) # Cluster using kmeans
-
-        clust_ps<-clusters_x;
-        MOFAobjectPD_sel@samples_metadata[, xname] = as.factor(clust_ps)
-        # TODO: save labels
-        return(clust_ps)
-
-}}
+}
 )
 
+
+all_clusts_mofa$'NP3TOT_LOG-sft' = get_clusters_for_metric(combo_diff_var)
 
 
 
 all_clusts_mofa_true<-all_clusts_mofa[!as.logical(lapply(all_clusts_mofa, is.null))]
-
 all_clusts_mofa_true_t<-do.call(cbind,all_clusts_mofa_true)
+
 
 dir.create(paste0(outdir,'/clustering/'))
 all_clusts_file<-paste0(outdir,'/clustering/all_clusts_mofa.csv')
@@ -172,6 +202,7 @@ for (diff_var in names(all_clusts_mofa)){
     clusters_ids<-all_clusts_mofa[[diff_var]]
     MOFAobject_sel@samples_metadata[,paste0(diff_var, '_clust')]<-clusters_ids[match(sm$PATNO_EVENT_ID,rownames(clusters_ids ) )]
     MOFAobject_sel@samples_metadata[(sm$INEXPAGE %in% c('INEXHC')),paste0(diff_var, '_clust')]<-'HC'
+    print(diff_var)
 }
 
 

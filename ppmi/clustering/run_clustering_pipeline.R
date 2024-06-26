@@ -15,9 +15,10 @@ try(
 
 )
 
-#source(paste0(script_dir, 'ppmi/setup_os.R'))
-
+# source(paste0(script_dir, 'ppmi/setup_os.R'))
+# source(( '../ppmi/setup_os.R'))
 source(( 'ppmi/setup_os.R'))
+
 
 DIFF_VAR= 'NP2PTOT_LOG'
 DIFF_VAR= 'moca'
@@ -32,7 +33,7 @@ tissue_un<-'Plasma'
 prot_de_mode = 't'
 TISSUE='Plasma';tissue_un<-'Plasma'
 tissue ='Plasma'; tissue_un<-'Plasma'
-DIFF_VAR= 'NP3TOT_LOG'
+DIFF_VAR= c('NP3TOT_LOG', 'sft')
 
 
 #source(paste0(script_dir, 'ppmi/extract_metadata.R'))
@@ -109,7 +110,8 @@ formula_deseq_format='age' # so far we only run all for mirnas
 ONT='BP'
 process_mirnas = FALSE 
 source(paste0(script_dir, 'ppmi/config.R'))
-VISIT_COMP='BL'
+VISIT_COMP='V08'
+DIFF_VAR= c('NP3TOT_LOG')
 
 source(paste0(script_dir, 'ppmi/clustering/cluster_comparisons.R'))
 se_clust$kmeans_grouping

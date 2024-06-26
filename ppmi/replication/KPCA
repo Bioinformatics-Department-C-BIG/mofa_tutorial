@@ -1,0 +1,79 @@
+
+
+
+library(mixOmics)
+
+BiocManager::install('phyloseq')
+library(mixKernel)
+library(phyloseq)
+
+mofa_multi
+mofa_multi[[1]]
+
+common_ids<-intersect(colnames(mofa_multi[[1]]), colnames(mofa_multi[[2]]))
+common_ids
+RNA1<-mofa_multi[[2]][,common_ids]
+MIRNA1<-mofa_multi[[1]][,common_ids]
+
+
+
+
+ mofa_multi_common<-subsetByColumn(mofa_multi,common_ids)
+mofa_multi_common
+top_rnas<-concatenate_top_features(MOFAobject, view='RNA', top_fr = 0.1,factors_all=c(13,15,20,24,28))
+unique(top_rnas$feature)
+RNA1_filt<-RNA1[rownames(RNA1)%in%top_rnas$feature, ]
+RNA1_filt
+MIRNA1
+
+colnames(mofa_multi_common)
+phychem.kernel = compute.kernel(t(RNA1_filt), 
+                                kernel.func = "linear")
+pro.phylo.kernel = compute.kernel(t(MIRNA1), 
+                                  kernel.func = "abundance")
+
+
+cim.kernel(phychem = phychem.kernel,
+           pro.phylo = pro.phylo.kernel,
+           method = "square")
+
+
+meta.kernel = combine.kernels(phychem = phychem.kernel,
+                               pro.phylo = pro.phylo.kernel,
+                               method = "full-UMKL")
+
+
+kernel.pca.result = kernel.pca(meta.kernel, ncomp = 10)
+
+#Visualize 
+all.depths = levels(factor(mofa_multi_common$NHY))
+max(mofa_multi_common$NP3TOT)
+cat_np3<-cut(mofa_multi_common$NP3TOT, breaks=c(0,10,20, 30,60), right = FALSE)
+
+all.depths = levels(cat_np3)
+
+
+depth.pch
+
+
+
+
+
+plotIndiv(kernel.pca.result,
+          comp = c(1, 2),
+          ind.names = FALSE,
+          legend = TRUE,
+          group = as.vector( cat_np3),
+          #col.per.group = c("#f99943", "#44a7c4", "#05b052", "#2f6395", 
+           #                 "#bb5352", "#87c242", "#07080a", "#92bbdb"),
+       #   pch = depth.pch,
+          pch.levels = cat_np3,
+          legend.title = "Ocean / Sea",
+          title = "Projection of TARA Oceans stations",
+          size.title = 10,
+          legend.title.pch = "Depth")
+
+
+
+
+

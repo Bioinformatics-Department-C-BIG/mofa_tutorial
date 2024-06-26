@@ -81,7 +81,6 @@ for (VISIT_COMP1 in c('BL','V04' ,'V06', 'V08')){
 }
 }
 
-get_frequencies(se_sel)
 
 
 
@@ -112,6 +111,7 @@ nclusts = length(table(se_clusters$kmeans_grouping));nclusts
 cluster_params_dir<-paste0(outdir, '/clustering/', clust_name, '/',nclusts,'/', rescale_option, '/')
 cluster_params_dir<-get_cluster_params_dir(DIFF_VAR)
 
+get_frequencies(se_sel)
 
 
 cd <- colData(se_clusters)

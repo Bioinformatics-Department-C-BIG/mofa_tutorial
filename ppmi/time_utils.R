@@ -169,6 +169,8 @@ get_clinvar_changes<-function(df_future_clinvars, sel_visit, cl_var, sel_state){
 
 library(dplyr)
 
+# TODO: 
+make it paired
 wilcox_all_vars<-function(merged_melt_filt_group, var_to_diff){
   
   wilcox_stats_group<-merged_melt_filt_group %>%

@@ -87,7 +87,7 @@ top_factor_feats_rna = gsub('\\..*', '',top_factor_feats_rna)
 top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.01)
 top_factor_feats_pl<-select_top_bottom_perc(MOFAobject=MOFAobject,view='proteomics_plasma', factor, top_fr = 0.05)
 
-top_factor_feats_pl
+
 
 if (names(top_view)=='miRNA'){
   view='miRNA'; process_mirnas=TRUE; se=se_mirs
@@ -146,8 +146,8 @@ if (view=='proteomics_plasma' || view=='proteomics_csf' ){
 
 #rescale_option
 merged_melt_filt_rna<-create_merged_melt(se_rnas, feats_rna_all, view='RNA', MOFAobject_clusts=MOFAobject_sel)
-merged_melt_filt_pl<-create_merged_melt(se_filt_proteins, feats_pl_all, view='proteomics_plasma', MOFAobject_clusts=MOFAobject_sel, 
-                run_cpm = FALSE)
+#merged_melt_filt_pl<-create_merged_melt(se_filt_proteins, feats_pl_all, view='proteomics_plasma', MOFAobject_clusts=MOFAobject_sel, #
+  #              run_cpm = FALSE)
 
 #merged_melt_filt_mirna<-create_merged_melt(se_mirnas, feats_mirna_all, view='miRNA')
 
@@ -169,6 +169,7 @@ library(stringr)
 # TODO: load these from the other file
 
 deseq_all<- vector("list", length = 3)
+deseq_params # load/inherti from cluster_comparisons.R script
 
 de_files<-paste0(deseq_params, '/', prefix, 'de_cluster_' )
 
@@ -208,7 +209,7 @@ most_sig_over_time_list<-lapply(1:3, function(clust_id){
 # remove the ones in the controls
 most_sig_over_time<-do.call(rbind, most_sig_over_time_list)
 
-
+most_sig_over_time
 ## ECHECK DIRECTORIIONS
 #geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v79, keys= c('CSAD'), keytype = c("SYMBOL"), columns=c('SYMBOL', 'GENEID'))
 
@@ -229,10 +230,11 @@ most_sig_over_time<-do.call(rbind, most_sig_over_time_list)
 choose_group<-1
 
 #most_sig_over_time1$symbol
-
+most_sig_over_time_list
+most_sig_over_time_list[[choose_group]]$symbol
 de_group_vs_control_and_time<-intersect(most_sig_over_time_list[[choose_group]]$symbol, de_group_vs_control[[choose_group]])
 
-
+get_symbols_vector(de_group_vs_control_and_time)
 
 #'ENSG00000205683' %in% de_group_vs_control_and_time
 ##### CHECK MONOTONICITY AND REMOVE ####
@@ -262,7 +264,6 @@ if (view=='RNA'){
 }
 
 
-choose_group=2
 most_sig_over_time
 ### We get the most significant by group for different factor top variables 
 write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
@@ -270,7 +271,6 @@ write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_'
                                     'de_group_',  choose_group, 
                                      '.csv'))
 
-dim(de_group_vs_control1)
 write.csv(de_group_vs_control$SG1, paste0(outdir, '/trajectories/most_sig_vs_control_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
                                       view,'_' ,
                                       'de_group_',  choose_group, 
@@ -326,7 +326,6 @@ de_group_vs_control3_unique_top<-intersect(top_factor_feats_rna,deseq_all_top$SG
 head(deseq_all_names$SG2)
 
 
-choose_group=1
 
 merged_melt_filt$symbol
 merged_melt_filt_most_sig$symbol
@@ -337,15 +336,17 @@ top_factor_feats
 top_factor_feats
 
 de_group_vs_control
-
+filt_top = 'time_and_sig'
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control[[choose_group]][1:30],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats,]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control[[choose_group]][1:24],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control[[choose_group]][1:24],]
+
   
-  nrow=NULL; height=7; width=18
+  nrow=NULL; height=7; width=12
   nrow=6
 }else if (filt_top=='selected'){
   ## keep specific mirs for presentation 
@@ -354,13 +355,14 @@ if (filt_top=='top'){
   
   nrow=1; height=3; width=9;
   
-}else{
+}else if (filt_top=='time_and_sig'){
   merged_melt_filt_most_sig<-merged_melt_filt
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time,]
   #merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control_and_time2,]
   
   nrow=NULL; height=12; 
 }
+get_symbols_vector(de_group_vs_control_and_time)
 merged_melt_filt_most_sig$symbol
 merged_melt_filt_most_sig
 unique(merged_melt_filt_most_sig$GENE_SYMBOL)
@@ -412,6 +414,15 @@ plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory
 
 length(feats_rna_all)
 #top_factor_feats_rna
+
+
+
+
+
+
+
+
+
 
 
 

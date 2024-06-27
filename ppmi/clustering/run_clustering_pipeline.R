@@ -11,7 +11,7 @@ try(
 )
 
 try(
-   source(paste0('../../ppmi/setup_os.R')), silent = TRUE
+   source(paste0('../../ppmi/setup_os.R'))
 
 )
 
@@ -242,6 +242,20 @@ VISIT_COMP='V08'
 
 # Run the proteins too 
 # Concatenates all time points 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

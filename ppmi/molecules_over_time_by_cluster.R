@@ -35,10 +35,14 @@ se_rnas<-vsd_cor_filt
 # TODO: load proteins 
 VISIT=c('BL', 'V04', 'V06', 'V08')
 process_mirnas=FALSE; source(paste0(script_dir, 'ppmi/config.R'));deseq_file;
-prot_vsn_se_filt_file
-datalist<-loadRDS(prot_vsn_se_filt_file)
-vsn_mat_proteins<-datalist[[1]]
-se_filt_proteins<-datalist[[2]]
+load_prot=FALSE
+if (load_prot){ 
+  prot_vsn_se_filt_file
+  datalist<-loadRDS(prot_vsn_se_filt_file)
+  vsn_mat_proteins<-datalist[[1]]
+  se_filt_proteins<-datalist[[2]]
+}
+
 
 
 
@@ -75,10 +79,11 @@ top_view<-which.max(vars_by_factor[factor,])
 
 
 names(top_view)<-'miRNA'; keep_all_feats=TRUE
-names(top_view)<-'RNA'; keep_all_feats=TRUE 
 names(top_view)<-'proteomics_plasma'; keep_all_feats=TRUE 
+names(top_view)<-'RNA'; keep_all_feats=TRUE 
 
 top_factor_feats_rna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='RNA', factor, top_fr = 0.01)
+top_factor_feats_rna = gsub('\\..*', '',top_factor_feats_rna)
 top_factor_feats_mirna<-select_top_bottom_perc(MOFAobject=MOFAobject,view='miRNA', factor, top_fr = 0.01)
 top_factor_feats_pl<-select_top_bottom_perc(MOFAobject=MOFAobject,view='proteomics_plasma', factor, top_fr = 0.05)
 
@@ -97,7 +102,7 @@ if (names(top_view)=='miRNA'){
   
   }
 
-se_filt_proteins
+
 
 #### mofa preprocess
 ##### Collect molecules that we want to plot over time #### 
@@ -148,7 +153,7 @@ merged_melt_filt_pl<-create_merged_melt(se_filt_proteins, feats_pl_all, view='pr
 
 
 ### List of merged per group
-merged_melt_filt=merged_melt_filt_pl
+merged_melt_filt=merged_melt_filt_rna
 merged_melt_filt$symbol
 
 
@@ -258,14 +263,15 @@ if (view=='RNA'){
 
 
 choose_group=2
+most_sig_over_time
 ### We get the most significant by group for different factor top variables 
-write.csv(most_sig_over_time1, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
+write.csv(most_sig_over_time, paste0(outdir, '/trajectories/most_sig_over_time_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
                                      view,'_' ,
                                     'de_group_',  choose_group, 
                                      '.csv'))
 
 dim(de_group_vs_control1)
-write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_control_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
+write.csv(de_group_vs_control$SG1, paste0(outdir, '/trajectories/most_sig_vs_control_',factor,'feats_', keep_all_feats, '_cl_fs_',factors_to_cluster_s,'_', 
                                       view,'_' ,
                                       'de_group_',  choose_group, 
                                       '.csv'))
@@ -279,7 +285,7 @@ write.csv(de_group_vs_control1, paste0(outdir, '/trajectories/most_sig_vs_contro
 #######################################################
 ############ TIME TRAJECTORY FOR ALL VISITS ###########
 #######################################################
-merged_melt_filt = merged_melt_filt_pl
+#merged_melt_filt = merged_melt_filt_pl
 
 filt_top='top'; filt_top='selected'; filt_top='all' 
 filt_top='top'; 
@@ -330,13 +336,13 @@ merged_melt_filt$symbol
 top_factor_feats
 top_factor_feats
 
-
+de_group_vs_control
 
 if (filt_top=='top'){
 
   # TODO: ADD the clinical variables here? 
 #  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$GENE_SYMBOL %in% top10_selected_paths,]
-  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control2[1:30],]
+  merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% de_group_vs_control[[choose_group]][1:30],]
   merged_melt_filt_most_sig<-merged_melt_filt[merged_melt_filt$symbol %in% top_factor_feats,]
   
   nrow=NULL; height=7; width=18
@@ -356,6 +362,7 @@ if (filt_top=='top'){
   nrow=NULL; height=12; 
 }
 merged_melt_filt_most_sig$symbol
+merged_melt_filt_most_sig
 unique(merged_melt_filt_most_sig$GENE_SYMBOL)
 view
 if (view=='RNA'){
@@ -389,18 +396,24 @@ merged_melt_filt_most_sig$month <-as.factor(as.numeric( mapvalues(as.character(m
                                                    from= names(EVENT_MAP), 
                                                    to=unlist(EVENT_MAP, use.names=FALSE))))
 
+
+
+factors_to_clust = get_factors_for_metric(DIFF_VAR)
 factors_to_clust_s<-paste0(unlist(factors_to_clust), collapse='_')
 trajectory_fname<-paste0(outdir, '/trajectories/trajectory', factor,'_',keep_all_feats,'_', view, 
        '_',  factors_to_clust_s, filt_top,
        'cluster_',choose_group,'.jpeg')
 
 trajectory_fname
+merged_melt_filt_most_sig
 plot_molecular_trajectories_line(merged_melt_filt_most_sig,x='month', trajectory_fname = trajectory_fname )
 
 
 
 length(feats_rna_all)
 #top_factor_feats_rna
+
+
 
 
 
